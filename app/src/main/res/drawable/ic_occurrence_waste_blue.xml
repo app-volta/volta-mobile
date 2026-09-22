@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+    <!-- Plástico de embalagem - garrafa/bottle 20x20, ocupa 15px como lixeira Figma -->
+    <path
+        android:pathData="M7,3 H13 V6 H15 V18 H5 V6 H7 V3 Z"
+        android:strokeWidth="1.6"
+        android:strokeColor="@color/occurrence_icon_tint_blue"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M7,6 H15"
+        android:strokeWidth="1.6"
+        android:strokeColor="@color/occurrence_icon_tint_blue"
+        android:fillColor="@android:color/transparent" />
+    <path
+        android:pathData="M6,9 H15"
+        android:strokeWidth="1.3"
+        android:strokeColor="@color/occurrence_icon_tint_blue"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round" />
+</vector>
