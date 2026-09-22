@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_nav_home_figma"
+        android:title="@string/nav_home" />
+    <item
+        android:id="@+id/nav_occurrences"
+        android:icon="@drawable/ic_nav_coops_figma"
+        android:title="@string/nav_coops" />
+    <!-- placeholder central para espaçar o FAB - invisível mas ocupa espaço -->
+    <item
+        android:id="@+id/nav_placeholder"
+        android:icon="@android:color/transparent"
+        android:title=""
+        android:enabled="false" />
+    <item
+        android:id="@+id/nav_reports"
+        android:icon="@drawable/ic_nav_reports_figma"
+        android:title="@string/nav_reports" />
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@drawable/ic_nav_profile_figma"
+        android:title="@string/nav_profile" />
+</menu>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.aula.volta.HomeFragment"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_occurrences"
+        android:name="com.aula.volta.OccurrencesFragment"
+        android:label="@string/nav_occurrences"
+        tools:layout="@layout/fragment_occurrences" />
+
+    <fragment
+        android:id="@+id/nav_register"
+        android:name="com.aula.volta.NewOccurrenceFragment"
+        android:label="@string/occurrence_new_title"
+        tools:layout="@layout/fragment_new_occurrence" />
+
+    <fragment
+        android:id="@+id/nav_reports"
+        android:name="com.aula.volta.ReportsFragment"
+        android:label="@string/nav_reports"
+        tools:layout="@layout/fragment_reports" />
+
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.aula.volta.ProfileFragment"
+        android:label="@string/nav_profile"
+        tools:layout="@layout/fragment_profile" />
+
+</navigation>

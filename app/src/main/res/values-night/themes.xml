@@ -1,0 +1,20 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Volta" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Cores Primárias -->
+        <item name="colorPrimary">@color/volta_green_primary</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorPrimaryContainer">@color/volta_card_dark</item>
+        <item name="colorOnPrimaryContainer">@color/volta_green_light</item>
+
+        <!-- Superfícies e Backgrounds -->
+        <item name="android:colorBackground">@color/volta_background_dark</item>
+        <item name="colorSurface">@color/volta_surface_dark</item>
+        <item name="colorOnSurface">@color/volta_text_primary_dark</item>
+        <item name="colorOutline">@color/volta_card_border_dark</item>
+
+        <!-- Status Bar -->
+        <item name="android:statusBarColor">@color/volta_background_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

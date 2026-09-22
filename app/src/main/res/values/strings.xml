@@ -1,0 +1,46 @@
+<resources>
+    <string name="app_name">VOLTA</string>
+    <string name="app_tagline">Gestão Inteligente de Ocorrências</string>
+
+    <!-- Navegação Inferior - conforme Figma iconBar.svg -->
+    <string name="nav_home">Início</string>
+    <string name="nav_coops">Coops</string>
+    <string name="nav_occurrences">Ocorrências</string>
+    <string name="nav_register">Registrar</string>
+    <string name="nav_reports">Relatórios</string>
+    <string name="nav_profile">Perfil</string>
+
+    <!-- Home -->
+    <string name="greeting_morning">Bom dia,</string>
+    <string name="greeting_afternoon">Boa tarde,</string>
+    <string name="greeting_evening">Boa noite,</string>
+    <string name="home_stat_open">abertas</string>
+    <string name="home_stat_resolved">resolvidas</string>
+    <string name="home_stat_recycled">kg reciclados</string>
+    <string name="home_summary_title">Resumo da unidade</string>
+    <string name="home_recent_occurrences">Ocorrências recentes</string>
+    <string name="home_see_all">Ver todas</string>
+    <string name="home_cta_title">Achou resíduo fora\ndo lugar?</string>
+    <string name="home_cta_subtitle">Tira uma foto — a gente cuida do\nresto pra você.</string>
+    <string name="home_cta_button">Registrar agora</string>
+
+    <!-- Nova Ocorrência -->
+    <string name="occurrence_new_title">Nova ocorrência</string>
+    <string name="occurrence_step_1">Passo 1 de 2 · Registro</string>
+    <string name="occurrence_step_2">Passo 2 de 2 · Confirmação</string>
+    <string name="occurrence_take_photo">Tire uma foto do resíduo</string>
+    <string name="occurrence_photo_hint">Não precisa ficar perfeita — a gente identifica tudo</string>
+    <string name="occurrence_btn_camera">Câmera</string>
+    <string name="occurrence_btn_gallery">Galeria</string>
+    <string name="occurrence_desc_label">Descrição (opcional)</string>
+    <string name="occurrence_desc_hint">Ex.: caixas de papelão molhadas acumuladas ao lado da câmara fria...</string>
+    <string name="occurrence_location_label">Onde está?</string>
+    <string name="occurrence_notify_switch_title">Avisar quem cuida do descarte</string>
+    <string name="occurrence_notify_switch_desc">A pessoa recebe na hora, sem burocracia</string>
+    <string name="occurrence_btn_send_analysis">Enviar para análise</string>
+
+    <!-- Prioridades -->
+    <string name="priority_alta">ALTA</string>
+    <string name="priority_media">MÉDIA</string>
+    <string name="priority_baixa">BAIXA</string>
+</resources>

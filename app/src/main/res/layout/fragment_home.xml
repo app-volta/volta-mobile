@@ -166,7 +166,7 @@
                     app:iconGravity="textStart"
                     app:iconSize="18dp"
                     app:iconTint="#0E7C48"
-                    app:iconPadding="6dp" />
+                    app:iconPadding="10dp" />
             </LinearLayout>
 
             <!-- Ícone Volta branco (seta circular) - Figma NovoRegistro.svg top-end -->

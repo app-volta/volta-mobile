@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/volta_background_light"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing_normal">
+
+    <ImageView
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@drawable/ic_nav_profile"
+        app:tint="@color/volta_green_primary" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_medium"
+        android:text="@string/nav_profile"
+        android:textColor="@color/volta_text_primary_light"
+        android:textSize="@dimen/text_size_title"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_xs"
+        android:text="Dados do usuário, unidade e configurações."
+        android:textColor="@color/volta_text_secondary_light"
+        android:textSize="@dimen/text_size_body_small" />
+</LinearLayout>

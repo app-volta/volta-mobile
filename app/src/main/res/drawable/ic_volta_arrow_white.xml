@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="60dp"
-    android:height="60dp"
-    android:viewportWidth="60"
-    android:viewportHeight="60">
-    <!-- Ícone Volta branco - seta circular extraída de NovoRegistro.svg -->
-    <!-- Arco circular espesso branco -->
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Volta - seta circular branca PNG - baseado no PNG enviado (círculo espesso com seta no topo) -->
+    <!-- Arco circular 270° espesso -->
     <path
-        android:pathData="M45,28 C45.9,33.2 44.1,38.5 40,42.5 C35.8,46.5 30,48.5 24,47 C18,45.5 12.5,41 9,34.5 C5.5,28 5,20.5 8,14 C11,7.5 16.5,2.5 23,1"
-        android:strokeWidth="5.5"
+        android:pathData="M17,8 A7,7 0 1,0 7,12 M7,12 A7,7 0 0,0 17,8"
+        android:strokeWidth="3.2"
         android:strokeColor="#FFFFFF"
         android:fillColor="@android:color/transparent"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
-    <!-- Cabeça da seta -->
+    <!-- Cabeça da seta - triângulo branco no topo-direita -->
     <path
-        android:pathData="M14.5,13 L28,3 L32,22 Z"
+        android:pathData="M17,8 L19.5,2.5 L13.5,4.5 Z"
         android:fillColor="#FFFFFF"
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
+        android:strokeWidth="0.8"
         android:strokeLineJoin="round" />
 </vector>

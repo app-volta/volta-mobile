@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cores Principais do VOLTA -->
+    <color name="volta_green_primary">#16C784</color>
+    <color name="volta_green_light">#35D98A</color>
+    <color name="volta_green_dark">#087A50</color>
+    <color name="volta_green_subtle">#E8F9F2</color>
+
+    <!-- Backgrounds e Superfícies (Modo Claro) -->
+    <color name="volta_background_light">#F7F8FA</color>
+    <color name="volta_surface_light">#FFFFFF</color>
+    <color name="volta_card_light">#FFFFFF</color>
+    <color name="volta_card_border_light">#E5E7EB</color>
+
+    <!-- Backgrounds e Superfícies (Modo Escuro) -->
+    <color name="volta_background_dark">#07110D</color>
+    <color name="volta_surface_dark">#0E1B15</color>
+    <color name="volta_card_dark">#13221B</color>
+    <color name="volta_card_border_dark">#1F2E26</color>
+
+    <!-- Tipografia (Modo Claro) -->
+    <color name="volta_text_primary_light">#171A19</color>
+    <color name="volta_text_secondary_light">#6B7280</color>
+    <color name="volta_text_muted_light">#9CA3AF</color>
+
+    <!-- Tipografia (Modo Escuro) -->
+    <color name="volta_text_primary_dark">#FFFFFF</color>
+    <color name="volta_text_secondary_dark">#9CA3AF</color>
+    <color name="volta_text_muted_dark">#6B7280</color>
+
+    <!-- Badges de Prioridade -->
+    <color name="priority_high_text">#DC2626</color>
+    <color name="priority_high_bg">#FEE2E2</color>
+    <color name="priority_medium_text">#D97706</color>
+    <color name="priority_medium_bg">#FEF3C7</color>
+    <color name="priority_low_text">#059669</color>
+    <color name="priority_low_bg">#D1FAE5</color>
+
+    <!-- Status da Ocorrência -->
+    <color name="status_novo_text">#2563EB</color>
+    <color name="status_novo_bg">#DBEAFE</color>
+    <color name="status_em_analise_text">#D97706</color>
+    <color name="status_em_analise_bg">#FEF3C7</color>
+    <color name="status_resolvido_text">#059669</color>
+    <color name="status_resolvido_bg">#D1FAE5</color>
+    <color name="status_aguardando_text">#7C3AED</color>
+    <color name="status_aguardando_bg">#EDE9FE</color>
+
+    <!-- Indicadores de Estatísticas (Home) - cores exatas do Figma/Assets -->
+    <color name="stat_open_icon">#E08A3C</color>
+    <color name="stat_open_bg">#FFEFE2</color>
+    <color name="stat_resolved_icon">#12A05E</color>
+    <color name="stat_resolved_bg">#E2F7EC</color>
+    <color name="stat_recycled_icon">#3B82F6</color>
+    <color name="stat_recycled_bg">#E4EFFF</color>
+    <!-- Card backgrounds (mesma cor do bg) -->
+    <color name="stat_card_open">#FFEFE2</color>
+    <color name="stat_card_resolved">#E2F7EC</color>
+    <color name="stat_card_recycled">#E4EFFF</color>
+    <!-- Círculo branco 75% para ícones das stats -->
+    <color name="stat_icon_circle">#BFFFFFFF</color>
+
+    <!-- Ícones de Ocorrência Recente - 3 variantes Figma -->
+    <color name="occurrence_icon_tint">#C68A10</color>
+    <color name="occurrence_icon_bg">#FDF3DE</color>
+    <color name="occurrence_icon_tint_blue">#3B82F6</color>
+    <color name="occurrence_icon_bg_blue">#E6EFFF</color>
+    <color name="occurrence_icon_tint_purple">#8B5CF6</color>
+    <color name="occurrence_icon_bg_purple">#EDE9FE</color>
+
+    <!-- Notificação -->
+    <color name="notification_dot">#E8556C</color>
+    <color name="notification_circle_border">#EEF0F5</color>
+
+    <!-- CTA Gradiente -->
+    <color name="cta_gradient_start">#16C784</color>
+    <color name="cta_gradient_end">#0D9B5E</color>
+
+    <!-- Cores de Apoio -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="transparent">#00000000</color>
+    <color name="nav_item_unselected">#9CA3AF</color>
+</resources>
