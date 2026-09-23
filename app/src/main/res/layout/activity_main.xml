@@ -34,13 +34,13 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         app:navGraph="@navigation/nav_graph" />
 
-    <!-- Barra de Navegação Inferior - 4 itens + FAB central sobreposto (Figma iconBar.svg) -->
+    <!-- Barra de Navegação Inferior - 4 itens + FAB central sobreposto (Figma iconBar.svg) - altura compacta -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="64dp"
         android:background="@color/bottom_bar_bg"
-        android:elevation="8dp"
+        android:elevation="4dp"
         app:itemIconTint="@color/bottom_nav_selector"
         app:itemTextColor="@color/bottom_nav_selector"
         app:itemActiveIndicatorStyle="@style/TransparentActiveIndicator"
@@ -52,17 +52,17 @@
         app:menu="@menu/bottom_nav_menu" />
 
     <!-- FAB Central - Registrar (Figma: Ellipse 64dp gradient #22C06F→#0E7C48 + câmera oficial branca) -->
-    <!-- Container elevado acima da BottomBar -->
+    <!-- Container elevado acima da BottomBar com layout_marginBottom para ficar acima do horizontal layout -->
     <FrameLayout
         android:id="@+id/fabRegister"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:layout_marginBottom="28dp"
+        android:layout_marginBottom="36dp"
         android:background="@drawable/bg_fab_gradient"
         android:clickable="true"
         android:focusable="true"
         android:contentDescription="@string/nav_register"
-        android:elevation="10dp"
+        android:elevation="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
