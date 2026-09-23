@@ -7,7 +7,7 @@
     <color name="volta_green_subtle">#E8F9F2</color>
 
     <!-- Backgrounds e Superfícies (Modo Claro) -->
-    <color name="volta_background_light">#F7F8FA</color>
+    <color name="volta_background_light">#F7F8FC</color>
     <color name="volta_surface_light">#FFFFFF</color>
     <color name="volta_card_light">#FFFFFF</color>
     <color name="volta_card_border_light">#E5E7EB</color>
@@ -82,5 +82,5 @@
     <color name="transparent">#00000000</color>
     <color name="nav_item_unselected">#A7A2B3</color>
     <color name="nav_item_selected">#1BA463</color>
-    <color name="bottom_bar_bg">#0F0D261A</color>
+    <color name="bottom_bar_bg">#FFFFFF</color>
 </resources>

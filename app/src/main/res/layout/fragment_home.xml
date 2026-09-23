@@ -80,8 +80,8 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:clickable="true"
-                android:focusable="true"
-                android:contentDescription="Notificações">
+                android:contentDescription="Notificações"
+                android:focusable="true">
 
                 <!-- Círculo branco com borda sutil -->
                 <View
@@ -129,28 +129,28 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:layout_toStartOf="@+id/ctaIllustration"
                 android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/ctaIllustration"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:lineSpacingExtra="1dp"
                     android:text="@string/home_cta_title"
                     android:textColor="@color/white"
                     android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold"
-                    android:lineSpacingExtra="1dp" />
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="@dimen/spacing_medium"
+                    android:lineSpacingExtra="1dp"
                     android:text="@string/home_cta_subtitle"
                     android:textColor="#CCFFFFFF"
-                    android:textSize="@dimen/text_size_body_small"
-                    android:lineSpacingExtra="1dp" />
+                    android:textSize="@dimen/text_size_body_small" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCtaRegister"
@@ -164,9 +164,9 @@
                     app:cornerRadius="12dp"
                     app:icon="@drawable/ic_camera_official"
                     app:iconGravity="textStart"
+                    app:iconPadding="10dp"
                     app:iconSize="18dp"
-                    app:iconTint="#0E7C48"
-                    app:iconPadding="10dp" />
+                    app:iconTint="#0E7C48" />
             </LinearLayout>
 
             <!-- Ícone Volta branco - AssetsVolta/Volta.png exato (PNG oficial) -->
@@ -174,30 +174,30 @@
                 android:id="@+id/ctaIllustration"
                 android:layout_width="84dp"
                 android:layout_height="84dp"
-                android:layout_alignParentEnd="true"
                 android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
                 android:layout_marginTop="4dp"
                 android:layout_marginEnd="0dp"
-                android:src="@drawable/volta_arrow"
-                android:scaleType="fitCenter" />
+                android:scaleType="fitCenter"
+                android:src="@drawable/volta_arrow" />
         </RelativeLayout>
 
         <!-- =================================================================================== -->
         <!--                            RESUMO DA UNIDADE — Título                               -->
         <!-- =================================================================================== -->
 
+        <!-- =================================================================================== -->
+        <!--                            BIG NUMBERS — 3 Cards de Estatísticas                    -->
+        <!-- =================================================================================== -->
+
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="163dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing_medium"
             android:text="@string/home_summary_title"
             android:textColor="@color/volta_text_primary_light"
             android:textSize="@dimen/text_size_subtitle"
             android:textStyle="bold" />
-
-        <!-- =================================================================================== -->
-        <!--                            BIG NUMBERS — 3 Cards de Estatísticas                    -->
-        <!-- =================================================================================== -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -292,7 +292,7 @@
             <!-- Card 3: kg Reciclados (azul) - bg #E4EFFF conforme Assets KgReciclados/Rectangle.svg -->
             <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_marginStart="@dimen/spacing_xs"
                 android:layout_weight="1"
                 android:background="@drawable/bg_card_stat_recycled"
@@ -336,15 +336,15 @@
         <!-- =================================================================================== -->
 
         <RelativeLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing_small">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="192dp"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
+                android:layout_marginStart="0dp"
                 android:text="@string/home_recent_occurrences"
                 android:textColor="@color/volta_text_primary_light"
                 android:textSize="@dimen/text_size_subtitle"
@@ -355,7 +355,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="6dp"
                 android:text="@string/home_see_all"
                 android:textColor="@color/volta_green_dark"
                 android:textSize="@dimen/text_size_body_small"
