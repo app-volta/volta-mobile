@@ -19,4 +19,9 @@
     </style>
 
     <style name="Theme.Volta" parent="Base.Theme.Volta" />
+
+    <!-- Remove elipse rosa do BottomNavigationView (active indicator transparente) -->
+    <style name="TransparentActiveIndicator">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
 </resources>
