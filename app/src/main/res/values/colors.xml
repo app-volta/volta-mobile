@@ -82,5 +82,5 @@
     <color name="transparent">#00000000</color>
     <color name="nav_item_unselected">#A7A2B3</color>
     <color name="nav_item_selected">#1BA463</color>
-    <color name="bottom_bar_bg">#FFFFFF</color>
+    <color name="bottom_bar_bg">#0F0D261A</color>
 </resources>
