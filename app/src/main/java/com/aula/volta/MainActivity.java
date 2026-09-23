@@ -81,8 +81,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // FAB Central - navega para Registrar (Figma: círculo verde com câmera)
-        com.google.android.material.floatingactionbutton.FloatingActionButton fabRegister = findViewById(R.id.fabRegister);
+        // FAB Central - navega para Registrar (Figma: Ellipse 64dp gradient + câmera oficial branca, elevado 10dp)
+        android.view.View fabRegister = findViewById(R.id.fabRegister);
         fabRegister.setOnClickListener(v -> navController.navigate(R.id.nav_register));
 
         // Ocultar Toolbar na Home (header é interno ao fragmento)
