@@ -4,16 +4,10 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- BottomBarIcons/Frame.svg - Início (selected green #1BA463, unselected #A7A2B3 via selector) -->
     <path
-        android:pathData="M5,13 L12,6 L19,13 V19 C19,19.55 18.55,20 18,20 H6 C5.45,20 5,19.55 5,19 Z"
-        android:strokeWidth="1.7"
-        android:strokeColor="#FF000000"
-        android:fillColor="@android:color/transparent"
-        android:strokeLineJoin="round"
-        android:strokeLineCap="round" />
-    <path
-        android:pathData="M9,20 V14 H15 V20"
-        android:strokeWidth="1.7"
+        android:pathData="M3,10 L12,3 L21,10 V20 C21,20.3978 20.842,20.7794 20.5607,21.0607 C20.2794,21.342 19.8978,21.5 19.5,21.5 H4.5 C4.10218,21.5 3.72064,21.342 3.43934,21.0607 C3.15804,20.7794 3,20.3978 3,20 V10 Z"
+        android:strokeWidth="1.9"
         android:strokeColor="#FF000000"
         android:fillColor="@android:color/transparent"
         android:strokeLineJoin="round" />
