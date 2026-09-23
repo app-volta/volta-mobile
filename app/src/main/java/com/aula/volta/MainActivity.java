@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         // _________________________________________________________________________________________
 
         BottomNavigationView navView = findViewById(R.id.bottomNavigationView);
+        navView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.bottom_bar_bg));
 
         // Habilitar menu button (dizendo quais os fragments de nível superior) - 4 tabs reais + FAB central
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
