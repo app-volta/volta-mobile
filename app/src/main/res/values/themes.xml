@@ -21,7 +21,8 @@
     <style name="Theme.Volta" parent="Base.Theme.Volta" />
 
     <!-- Remove elipse rosa do BottomNavigationView (active indicator transparente) -->
-    <style name="TransparentActiveIndicator">
+    <style name="TransparentActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@android:color/transparent</item>
         <item name="android:background">@android:color/transparent</item>
     </style>
 </resources>
