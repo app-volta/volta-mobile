@@ -34,4 +34,17 @@
         android:label="@string/nav_profile"
         tools:layout="@layout/fragment_profile" />
 
+    <!-- Rotas internas (Fase 0): sem item na bottom bar, abertas via navigate() com args -->
+    <dialog
+        android:id="@+id/nav_occurrence_detail"
+        android:name="com.aula.volta.ui.detail.OccurrenceDetailSheet">
+        <argument
+            android:name="occurrenceId"
+            app:argType="string" />
+    </dialog>
+
+    <dialog
+        android:id="@+id/nav_notifications"
+        android:name="com.aula.volta.ui.notifications.NotificationsSheet" />
+
 </navigation>

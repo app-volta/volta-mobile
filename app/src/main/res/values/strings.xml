@@ -43,4 +43,9 @@
     <string name="priority_alta">ALTA</string>
     <string name="priority_media">MÉDIA</string>
     <string name="priority_baixa">BAIXA</string>
+
+    <!-- Estados de dados (Fase 0) -->
+    <string name="offline_cache">Sem internet - carregando cache</string>
+    <string name="error_load">Não foi possível carregar. Toque para tentar de novo.</string>
+    <string name="empty_list">Nada por aqui ainda.</string>
 </resources>
