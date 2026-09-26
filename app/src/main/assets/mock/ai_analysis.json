@@ -1,0 +1,11 @@
+{
+  "material": "Papelão A",
+  "quantidade_estimada": 38.0,
+  "unidade": "kg",
+  "contaminacao": {
+    "presente": false,
+    "nivel": "Baixa"
+  },
+  "confianca": 0.88,
+  "observacoes": "Guarde num lugar seco e coberto. Coleta em até 24h mantém o material valioso."
+}

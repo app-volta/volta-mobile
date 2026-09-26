@@ -1,0 +1,15 @@
+{
+  "id": "48291",
+  "titulo": "Papelão molhado",
+  "setor": "Frigorífico · Setor B2",
+  "status": "EM_ANALISE",
+  "peso_estimado": 38.0,
+  "unidade": "kg",
+  "registrado_por": "Breno Gomes",
+  "data": "Hoje, 09:12",
+  "confianca_ia": 94,
+  "historico": [
+    {"acao": "CRIAR", "usuario": "Breno Gomes", "quando": "Hoje, 09:12"},
+    {"acao": "IA_ANALISOU", "usuario": "VOLTA IA", "quando": "Hoje, 09:13"}
+  ]
+}

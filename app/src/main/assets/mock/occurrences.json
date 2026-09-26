@@ -1,0 +1,35 @@
+[
+  {
+    "id": "48291",
+    "titulo": "Papelão molhado",
+    "setor": "Frigorífico",
+    "tempo_relativo": "12 min",
+    "prioridade": "ALTA",
+    "status": "EM_ANALISE",
+    "material": "Papelão",
+    "quantidade_estimada": 38.0,
+    "unidade": "kg"
+  },
+  {
+    "id": "48290",
+    "titulo": "Plástico de embalagem",
+    "setor": "Expedição",
+    "tempo_relativo": "há 1 h",
+    "prioridade": "MEDIA",
+    "status": "NOVO",
+    "material": "Plástico",
+    "quantidade_estimada": 12.5,
+    "unidade": "kg"
+  },
+  {
+    "id": "48288",
+    "titulo": "Sucata metálica",
+    "setor": "Manutenção",
+    "tempo_relativo": "ontem",
+    "prioridade": "BAIXA",
+    "status": "RESOLVIDO",
+    "material": "Metal",
+    "quantidade_estimada": 64.0,
+    "unidade": "kg"
+  }
+]
