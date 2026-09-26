@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider da câmera (Fase 3): só cache dir, nada permanente no aparelho -->
+<paths>
+    <cache-path
+        name="volta_photos"
+        path="." />
+</paths>
