@@ -34,6 +34,24 @@
         android:label="@string/nav_profile"
         tools:layout="@layout/fragment_profile" />
 
+    <fragment
+        android:id="@+id/nav_ai_analysis"
+        android:name="com.aula.volta.ui.analysis.AiAnalysisFragment"
+        android:label="@string/occurrence_step_2">
+        <argument
+            android:name="photoPath"
+            app:argType="string" />
+        <argument
+            android:name="descricao"
+            app:argType="string" />
+        <argument
+            android:name="setor"
+            app:argType="string" />
+        <argument
+            android:name="avisar"
+            app:argType="boolean" />
+    </fragment>
+
     <!-- Rotas internas (Fase 0): sem item na bottom bar, abertas via navigate() com args -->
     <dialog
         android:id="@+id/nav_occurrence_detail"

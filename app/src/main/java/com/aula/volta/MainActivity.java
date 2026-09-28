@@ -86,9 +86,11 @@ public class MainActivity extends AppCompatActivity {
         android.view.View fabRegister = findViewById(R.id.fabRegister);
         fabRegister.setOnClickListener(v -> navController.navigate(R.id.nav_register));
 
-        // Ocultar Toolbar na Home (header é interno ao fragmento)
+        // Ocultar Toolbar na Home e no Registrar (headers internos aos fragmentos — Figma)
+        // (demais correções de navegação vivem na feat/home e chegam via merge)
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-            if (destination.getId() == R.id.nav_home) {
+            int destId = destination.getId();
+            if (destId == R.id.nav_home || destId == R.id.nav_register) {
                 toolbar.setVisibility(android.view.View.GONE);
             } else {
                 toolbar.setVisibility(android.view.View.VISIBLE);

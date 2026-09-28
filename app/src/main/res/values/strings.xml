@@ -29,7 +29,10 @@
     <string name="occurrence_step_1">Passo 1 de 2 · Registro</string>
     <string name="occurrence_step_2">Passo 2 de 2 · Confirmação</string>
     <string name="occurrence_take_photo">Tire uma foto do resíduo</string>
-    <string name="occurrence_photo_hint">Não precisa ficar perfeita — a gente identifica tudo</string>
+    <string name="occurrence_photo_hint">É obrigatório anexar uma foto pra continuar</string>
+    <string name="occurrence_send_disabled_hint">Adicione uma foto do resíduo pra habilitar o envio</string>
+    <string name="occurrence_retake">Refazer</string>
+    <string name="occurrence_back">Voltar</string>
     <string name="occurrence_btn_camera">Câmera</string>
     <string name="occurrence_btn_gallery">Galeria</string>
     <string name="occurrence_desc_label">Descrição (opcional)</string>
@@ -48,4 +51,12 @@
     <string name="offline_cache">Sem internet - carregando cache</string>
     <string name="error_load">Não foi possível carregar. Toque para tentar de novo.</string>
     <string name="empty_list">Nada por aqui ainda.</string>
+
+    <!-- Setores (mock Fase 3, lista vem da empresa na API) -->
+    <string-array name="occurrence_sector_options">
+        <item>Frigorífico — Setor B2</item>
+        <item>Expedição</item>
+        <item>Manutenção</item>
+        <item>Armazenamento</item>
+    </string-array>
 </resources>
