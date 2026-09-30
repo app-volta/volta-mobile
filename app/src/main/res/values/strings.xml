@@ -69,4 +69,14 @@
     <string name="notifications_new">%1$d novas</string>
     <string name="notifications_mark_all">Marcar todas como lidas</string>
     <string name="notifications_badge_new">NOVA</string>
+
+    <!-- Filtrar ocorrências (Figma 554:24) -->
+    <string name="filter_title">Filtrar ocorrências</string>
+    <string name="filter_clear">Limpar</string>
+    <string name="filter_material">Material</string>
+    <string name="filter_status">Status</string>
+    <string name="filter_apply">Aplicar filtros</string>
+    <string name="filter_status_open">Aberta</string>
+    <string name="filter_status_analyzing">Em análise</string>
+    <string name="filter_status_collected">Coletada</string>
 </resources>

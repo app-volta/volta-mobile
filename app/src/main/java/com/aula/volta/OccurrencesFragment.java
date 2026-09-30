@@ -20,9 +20,11 @@ import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.model.OccurrenceJSON;
+import com.aula.volta.ui.occurrences.OccurrencesFilterSheet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -40,6 +42,9 @@ public class OccurrencesFragment extends Fragment {
     private ProgressBar loadingOccurrences;
     private TextView tvEmptyOccurrencesList;
     private OccurrenceAdapter adapter;
+    private final List<Occurrence> allOccurrences = new ArrayList<>();
+    private final ArrayList<String> filterMaterials = new ArrayList<>();
+    private final ArrayList<String> filterStatuses = new ArrayList<>();
 
     public OccurrencesFragment() {
         // Construtor vazio obrigatório
@@ -66,6 +71,32 @@ public class OccurrencesFragment extends Fragment {
         });
         rvOccurrences.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvOccurrences.setAdapter(adapter);
+
+        View btnFilter = view.findViewById(R.id.btnFilterOccurrences);
+        if (btnFilter != null) {
+            btnFilter.setOnClickListener(v -> {
+                OccurrencesFilterSheet sheet = OccurrencesFilterSheet.newInstance(
+                        new ArrayList<>(filterMaterials), new ArrayList<>(filterStatuses));
+                sheet.show(getParentFragmentManager(), "filter");
+            });
+        }
+
+        getParentFragmentManager().setFragmentResultListener(
+                OccurrencesFilterSheet.REQUEST_KEY, this, (requestKey, result) -> {
+                    filterMaterials.clear();
+                    filterStatuses.clear();
+                    ArrayList<String> mats =
+                            result.getStringArrayList(OccurrencesFilterSheet.ARG_MATERIALS);
+                    ArrayList<String> stats =
+                            result.getStringArrayList(OccurrencesFilterSheet.ARG_STATUSES);
+                    if (mats != null) {
+                        filterMaterials.addAll(mats);
+                    }
+                    if (stats != null) {
+                        filterStatuses.addAll(stats);
+                    }
+                    applyFilter();
+                });
 
         loadOccurrences();
     }
@@ -105,11 +136,41 @@ public class OccurrencesFragment extends Fragment {
     }
 
     private void applyOccurrences(List<Occurrence> occurrences) {
-        adapter.setItems(occurrences);
+        allOccurrences.clear();
+        if (occurrences != null) {
+            allOccurrences.addAll(occurrences);
+        }
+        applyFilter();
+    }
+
+    /** Filtra localmente (mock); depois vira query param da API. Vazio = mostra tudo. */
+    private void applyFilter() {
+        List<Occurrence> filtered = new ArrayList<>();
+        for (Occurrence o : allOccurrences) {
+            if (!filterMaterials.isEmpty() && !matchesMaterial(o)) {
+                continue;
+            }
+            if (!filterStatuses.isEmpty() && !filterStatuses.contains(o.getStatus())) {
+                continue;
+            }
+            filtered.add(o);
+        }
+        adapter.setItems(filtered);
         if (tvEmptyOccurrencesList != null) {
             tvEmptyOccurrencesList.setVisibility(
-                    occurrences == null || occurrences.isEmpty() ? View.VISIBLE : View.GONE);
+                    filtered.isEmpty() ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private boolean matchesMaterial(Occurrence o) {
+        String material = o.getMaterial() == null ? ""
+                : o.getMaterial().toLowerCase(Locale.ROOT);
+        for (String filter : filterMaterials) {
+            if (material.contains(filter.toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void hideLoading() {

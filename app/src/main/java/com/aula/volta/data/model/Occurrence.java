@@ -9,15 +9,17 @@ public class Occurrence {
     private final String tempoRelativo;
     private final String prioridade;
     private final String status;
+    private final String material;
 
     public Occurrence(String id, String titulo, String setor, String tempoRelativo,
-                      String prioridade, String status) {
+                      String prioridade, String status, String material) {
         this.id = id;
         this.titulo = titulo;
         this.setor = setor;
         this.tempoRelativo = tempoRelativo;
         this.prioridade = prioridade;
         this.status = status;
+        this.material = material;
     }
 
     public static Occurrence fromJson(OccurrenceJSON json) {
@@ -27,7 +29,8 @@ public class Occurrence {
                 json.getSetor(),
                 json.getTempoRelativo(),
                 json.getPrioridade(),
-                json.getStatus());
+                json.getStatus(),
+                json.getMaterial());
     }
 
     public String getId() {
@@ -52,5 +55,9 @@ public class Occurrence {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getMaterial() {
+        return material;
     }
 }
