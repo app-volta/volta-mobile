@@ -15,6 +15,7 @@ public class AiAnalysisJSON {
 
     private String unidade;
     private Contaminacao contaminacao;
+    private Unidades unidades;
     private double confianca;
     private String observacoes;
 
@@ -32,6 +33,10 @@ public class AiAnalysisJSON {
 
     public Contaminacao getContaminacao() {
         return contaminacao;
+    }
+
+    public Unidades getUnidades() {
+        return unidades;
     }
 
     public double getConfianca() {
@@ -52,6 +57,19 @@ public class AiAnalysisJSON {
 
         public String getNivel() {
             return nivel;
+        }
+    }
+
+    public static class Unidades {
+        private String tipo;
+        private int quantidade;
+
+        public String getTipo() {
+            return tipo;
+        }
+
+        public int getQuantidade() {
+            return quantidade;
         }
     }
 }

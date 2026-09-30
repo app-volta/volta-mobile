@@ -20,7 +20,7 @@
 
     <!-- Tipografia (Modo Claro) -->
     <color name="volta_text_primary_light">#171A19</color>
-    <color name="volta_text_secondary_light">#6B7280</color>
+    <color name="volta_text_secondary_light">#7C8698</color>
     <color name="volta_text_muted_light">#9CA3AF</color>
 
     <!-- Tipografia (Modo Escuro) -->
@@ -75,6 +75,13 @@
     <!-- CTA Gradiente -->
     <color name="cta_gradient_start">#16C784</color>
     <color name="cta_gradient_end">#0D9B5E</color>
+
+    <!-- Verdes/detalhes Figma (telas Registro/IA) -->
+    <color name="volta_green_deep">#0E7C48</color>
+    <color name="pill_dark_bg">#0A3D25</color>
+    <color name="sparkle_light">#8CF0BE</color>
+    <color name="recommendation_text">#2E6B4C</color>
+    <color name="confidence_row_bg">#F1F3F8</color>
 
     <!-- Cores de Apoio -->
     <color name="white">#FFFFFFFF</color>

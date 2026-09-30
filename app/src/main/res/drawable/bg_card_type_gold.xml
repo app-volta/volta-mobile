@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Card Tipo na Análise IA (Figma 626:327: #FDF3DE r16) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/occurrence_icon_bg" />
+    <corners android:radius="16dp" />
+</shape>

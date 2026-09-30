@@ -1,5 +1,7 @@
 package com.aula.volta;
 
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,6 +9,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.ColorRes;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -76,26 +80,31 @@ public class CooperativeAdapter extends RecyclerView.Adapter<CooperativeAdapter.
     private void applyPositionStyle(ViewHolder holder, int position) {
         int style = position % 4;
         if (style == 0) {
-            holder.itemView.setBackgroundResource(R.drawable.bg_card_stat_resolved);
+            holder.itemLayout.setBackgroundResource(R.drawable.bg_card_stat_resolved);
             holder.iconContainer.setBackgroundResource(R.drawable.bg_occurrence_icon_green);
-            holder.icon.setColorFilter(holder.itemView.getContext().getColor(R.color.stat_resolved_icon));
+            tintIcon(holder, R.color.stat_resolved_icon);
             holder.distance.setTextColor(holder.itemView.getContext().getColor(R.color.stat_resolved_icon));
         } else if (style == 1) {
             holder.itemLayout.setBackgroundResource(R.drawable.bg_card_surface);
             holder.iconContainer.setBackgroundResource(R.drawable.bg_occurrence_icon);
-            holder.icon.setColorFilter(holder.itemView.getContext().getColor(R.color.occurrence_icon_tint));
+            tintIcon(holder, R.color.occurrence_icon_tint);
             holder.distance.setTextColor(holder.itemView.getContext().getColor(R.color.occurrence_icon_tint));
         } else if (style == 2) {
             holder.itemLayout.setBackgroundResource(R.drawable.bg_card_surface);
             holder.iconContainer.setBackgroundResource(R.drawable.bg_occurrence_icon_blue);
-            holder.icon.setColorFilter(holder.itemView.getContext().getColor(R.color.occurrence_icon_tint_blue));
+            tintIcon(holder, R.color.occurrence_icon_tint_blue);
             holder.distance.setTextColor(holder.itemView.getContext().getColor(R.color.occurrence_icon_tint_blue));
         } else {
             holder.itemLayout.setBackgroundResource(R.drawable.bg_card_surface);
             holder.iconContainer.setBackgroundResource(R.drawable.bg_occurrence_icon_purple);
-            holder.icon.setColorFilter(holder.itemView.getContext().getColor(R.color.occurrence_icon_tint_purple));
+            tintIcon(holder, R.color.occurrence_icon_tint_purple);
             holder.distance.setTextColor(holder.itemView.getContext().getColor(R.color.occurrence_icon_tint_purple));
         }
+    }
+
+    private void tintIcon(ViewHolder holder, @ColorRes int colorRes) {
+        int color = holder.itemView.getContext().getColor(colorRes);
+        holder.icon.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN));
     }
 
     @Override

@@ -27,6 +27,7 @@
     <dimen name="text_size_body_small">13sp</dimen>
     <dimen name="text_size_body">15sp</dimen>
     <dimen name="text_size_subtitle">17sp</dimen>
+    <dimen name="text_size_section">16sp</dimen>
     <dimen name="text_size_title">20sp</dimen>
     <dimen name="text_size_headline">24sp</dimen>
 </resources>
