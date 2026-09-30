@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
@@ -23,7 +26,6 @@ import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.model.OccurrenceJSON;
-import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -46,7 +48,7 @@ public class HomeFragment extends Fragment {
     private TextView tvStatRecycledCount;
     private ProgressBar loadingHome;
     private TextView tvEmptyOccurrences;
-    private View notificationDot;
+    private TextView tvNotifCount;
     private OccurrenceAdapter adapter;
 
     /** Contador das 3 cargas (resumo, ocorrências, notificações) para esconder o loading. */
@@ -70,18 +72,28 @@ public class HomeFragment extends Fragment {
         tvStatOpenCount = view.findViewById(R.id.tvStatOpenCount);
         tvStatResolvedCount = view.findViewById(R.id.tvStatResolvedCount);
         tvStatRecycledCount = view.findViewById(R.id.tvStatRecycledCount);
-        notificationDot = view.findViewById(R.id.notificationDot);
+        tvNotifCount = view.findViewById(R.id.tvNotifCount);
 
         // _________________________________________________________________________________________
         //            AÇÕES DA HOME (navegação interna, sem item na bottom bar)
         // _________________________________________________________________________________________
 
-        // Botão do banner CTA para abrir o registro de ocorrência
-        MaterialButton btnCtaRegister = view.findViewById(R.id.btnCtaRegister);
-        if (btnCtaRegister != null) {
-            btnCtaRegister.setOnClickListener(v -> {
-                Navigation.findNavController(v).navigate(R.id.nav_register);
-            });
+        // Carrossel da Home (Figma 790:1624): slide CTA + slide Últimos 7 dias
+        ViewPager2 vpCarousel = view.findViewById(R.id.vpCarousel);
+        LinearLayout carouselDots = view.findViewById(R.id.carouselDots);
+        if (vpCarousel != null) {
+            CarouselAdapter carouselAdapter = new CarouselAdapter(() ->
+                    Navigation.findNavController(view).navigate(R.id.nav_register));
+            vpCarousel.setAdapter(carouselAdapter);
+            if (carouselDots != null) {
+                setupDots(carouselDots, carouselAdapter.getItemCount(), 0);
+                vpCarousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        setupDots(carouselDots, carouselAdapter.getItemCount(), position);
+                    }
+                });
+            }
         }
 
         // Link "Ver todas" para navegar para a aba de Ocorrências
@@ -231,15 +243,33 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /** Dot do sino = não lidas via NotificationStore (Fase 7 deixa a lista real). */
+    /** Badge do sino = contagem de não lidas (Figma Home nova: círculo com número). */
     private void loadNotificationDot() {
         NotificationStore.refresh(requireContext(), notifications -> {
             int unread = NotificationStore.unreadCount(notifications);
-            if (notificationDot != null) {
-                notificationDot.setVisibility(unread > 0 ? View.VISIBLE : View.GONE);
+            if (tvNotifCount != null) {
+                tvNotifCount.setVisibility(unread > 0 ? View.VISIBLE : View.GONE);
+                tvNotifCount.setText(String.valueOf(unread));
             }
             onLoadFinished();
         });
+    }
+
+    private void setupDots(LinearLayout container, int count, int selected) {
+        container.removeAllViews();
+        float density = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < count; i++) {
+            ImageView dot = new ImageView(requireContext());
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            int margin = (int) (4 * density);
+            params.setMargins(margin, 0, margin, 0);
+            dot.setLayoutParams(params);
+            dot.setBackgroundResource(i == selected
+                    ? R.drawable.bg_dot_active : R.drawable.bg_dot_inactive);
+            container.addView(dot);
+        }
     }
 
     private void onLoadFinished() {

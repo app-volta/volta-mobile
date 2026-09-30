@@ -23,6 +23,7 @@
     <string name="home_cta_title">Achou resíduo fora\ndo lugar?</string>
     <string name="home_cta_subtitle">Tira uma foto — a gente cuida do\nresto pra você.</string>
     <string name="home_cta_button">Registrar agora</string>
+    <string name="home_week_title">Últimos 7 dias</string>
 
     <!-- Nova Ocorrência -->
     <string name="occurrence_new_title">Nova ocorrência</string>

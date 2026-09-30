@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
     implementation(libs.fragment)
+    implementation(libs.viewpager2)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.gson)
