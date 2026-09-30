@@ -186,6 +186,14 @@
         <!--                            RESUMO DA UNIDADE — Título                               -->
         <!-- =================================================================================== -->
 
+        <!-- Loading da Home (Fase 2: some quando resumo + recentes + dot carregam) -->
+        <ProgressBar
+            android:id="@+id/loadingHome"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="@dimen/spacing_medium" />
+
         <!-- =================================================================================== -->
         <!--                            BIG NUMBERS — 3 Cards de Estatísticas                    -->
         <!-- =================================================================================== -->
@@ -364,193 +372,26 @@
         </RelativeLayout>
 
         <!-- =================================================================================== -->
-        <!--                            CARD RECENTE 1 — Papelão molhado (ALTA)                  -->
+        <!--              OCORRÊNCIAS RECENTES — lista dinâmica (Fase 2, mesmo visual Figma)     -->
         <!-- =================================================================================== -->
 
-        <LinearLayout
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvRecentOccurrences"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
+            android:nestedScrollingEnabled="false" />
 
-            <!-- Ícone lixeira dentro de círculo amarelado -->
-            <FrameLayout
-                android:layout_width="@dimen/thumbnail_size_occurrence"
-                android:layout_height="@dimen/thumbnail_size_occurrence"
-                android:background="@drawable/bg_occurrence_icon">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_occurrence_waste" />
-            </FrameLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Papelão molhado"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Frigorífico · 12 min"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_alta"
-                android:paddingStart="10dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
-                android:text="@string/priority_alta"
-                android:textColor="@color/priority_high_text"
-                android:textSize="@dimen/text_size_caption"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- =================================================================================== -->
-        <!--                            CARD RECENTE 2 — Plástico de embalagem (MÉDIA) - azul #E6EFFF  -->
-        <!-- =================================================================================== -->
-
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvEmptyOccurrences"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
-
-            <!-- Ícone garrafa/plástico dentro de círculo azul clarinho -->
-            <FrameLayout
-                android:layout_width="@dimen/thumbnail_size_occurrence"
-                android:layout_height="@dimen/thumbnail_size_occurrence"
-                android:background="@drawable/bg_occurrence_icon_blue">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_occurrence_waste_blue" />
-            </FrameLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Plástico de embalagem"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Expedição · há 1 h"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_media"
-                android:paddingStart="10dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
-                android:text="@string/priority_media"
-                android:textColor="@color/priority_medium_text"
-                android:textSize="@dimen/text_size_caption"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- =================================================================================== -->
-        <!--                            CARD RECENTE 3 — Sucata metálica (BAIXA) - lilás #EDE9FE    -->
-        <!-- =================================================================================== -->
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
-
-            <!-- Ícone cadeado/metal dentro de círculo lilás -->
-            <FrameLayout
-                android:layout_width="@dimen/thumbnail_size_occurrence"
-                android:layout_height="@dimen/thumbnail_size_occurrence"
-                android:background="@drawable/bg_occurrence_icon_purple">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_occurrence_waste_purple" />
-            </FrameLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sucata metálica"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Manutenção · ontem"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_baixa"
-                android:paddingStart="10dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
-                android:text="@string/priority_baixa"
-                android:textColor="@color/priority_low_text"
-                android:textSize="@dimen/text_size_caption"
-                android:textStyle="bold" />
-        </LinearLayout>
+            android:gravity="center"
+            android:padding="@dimen/spacing_large"
+            android:text="@string/empty_list"
+            android:textColor="@color/volta_text_secondary_light"
+            android:textSize="@dimen/text_size_body_small"
+            android:visibility="gone" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

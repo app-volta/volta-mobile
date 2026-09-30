@@ -11,16 +11,36 @@ import java.util.List;
 public class CooperativeJSON {
 
     private String nome;
-    private int compatibilidade;
+    private String descricao;
 
     @SerializedName("distancia_km")
     private double distanciaKm;
 
+    private String coleta;
+    private String tag;
+    private Double avaliacao;
+    private int compatibilidade;
     private List<String> materiais;
     private String disponibilidade;
 
     public String getNome() {
         return nome;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public String getColeta() {
+        return coleta;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public Double getAvaliacao() {
+        return avaliacao;
     }
 
     public int getCompatibilidade() {

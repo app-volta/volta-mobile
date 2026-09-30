@@ -23,6 +23,12 @@
         tools:layout="@layout/fragment_new_occurrence" />
 
     <fragment
+        android:id="@+id/nav_cooperatives"
+        android:name="com.aula.volta.CooperativesFragment"
+        android:label="@string/nav_coops"
+        tools:layout="@layout/fragment_cooperatives" />
+
+    <fragment
         android:id="@+id/nav_reports"
         android:name="com.aula.volta.ReportsFragment"
         android:label="@string/nav_reports"

@@ -59,4 +59,14 @@
         <item>Manutenção</item>
         <item>Armazenamento</item>
     </string-array>
+
+    <!-- Cooperativas (Figma 626:582) -->
+    <string name="coops_title">Cooperativas próximas</string>
+    <string name="coops_subtitle">As mais pertinho da sua unidade primeiro</string>
+
+    <!-- Notificações (Figma 626:780) -->
+    <string name="notifications_title">Notificações</string>
+    <string name="notifications_new">%1$d novas</string>
+    <string name="notifications_mark_all">Marcar todas como lidas</string>
+    <string name="notifications_badge_new">NOVA</string>
 </resources>

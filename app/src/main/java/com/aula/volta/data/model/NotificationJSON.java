@@ -14,6 +14,8 @@ public class NotificationJSON {
     private String tempoRelativo;
 
     private String icone;
+    private String tint;
+    private String bg;
     private boolean lida;
 
     @SerializedName("occurrence_id")
@@ -41,6 +43,14 @@ public class NotificationJSON {
 
     public String getIcone() {
         return icone;
+    }
+
+    public String getTint() {
+        return tint;
+    }
+
+    public String getBg() {
+        return bg;
     }
 
     public boolean isLida() {

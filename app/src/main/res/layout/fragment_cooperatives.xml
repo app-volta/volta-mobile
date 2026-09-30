@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Lista completa de ocorrências ("Ver todas" da Home). Mesmo card da Home via adapter.
-     Modal Filtrar vem na Fase 5 (feat/occurrences). -->
+<!-- Aba Coops: SÓ cooperativas (nunca ocorrências). Figma Cooperativas (626:582, sem mapa — Maps key pendente).
+     Versão contextual por ocorrência chega na Fase 8 (feat/cooperatives). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,28 +11,36 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing_small"
-        android:text="@string/home_recent_occurrences"
+        android:text="@string/coops_title"
         android:textColor="@color/volta_text_primary_light"
-        android:textSize="@dimen/text_size_subtitle"
+        android:textSize="@dimen/text_size_title"
         android:textStyle="bold" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_xs"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:text="@string/coops_subtitle"
+        android:textColor="@color/volta_text_secondary_light"
+        android:textSize="@dimen/text_size_body_small" />
+
     <ProgressBar
-        android:id="@+id/loadingOccurrences"
+        android:id="@+id/loadingCooperatives"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="@dimen/spacing_large" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvOccurrences"
+        android:id="@+id/rvCooperatives"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false" />
 
     <TextView
-        android:id="@+id/tvEmptyOccurrencesList"
+        android:id="@+id/tvEmptyCooperatives"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"

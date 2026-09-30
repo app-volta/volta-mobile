@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icones Notificações/Frame-6.svg - troféu roxo #8B6FE0 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:pathData="M8.80002,13.2 V15.4 H13.2 V13.2 M6.60002,17.6 H15.4 M6.60002,4.40002 H15.4 V7.70002 C15.4,8.86698 14.9365,9.98613 14.1113,10.8113 C13.2861,11.6365 12.167,12.1 11,12.1 C9.83307,12.1 8.71391,11.6365 7.88875,10.8113 C7.06359,9.98613 6.60002,8.86698 6.60002,7.70002 V4.40002 Z M4.40002,5.50002 H6.60002 V8.80002 C6.60002,8.21655 6.36824,7.65697 5.95566,7.24439 C5.54308,6.83181 4.9835,6.60002 4.40002,6.60002 V5.50002 Z M15.4,5.50002 H17.6 V8.80002 C17.6,8.21655 17.8318,7.65697 18.2444,7.24439 C18.657,6.83181 19.2165,6.60002 19.8,6.60002 L15.4,5.50002 Z"
+        android:strokeWidth="1.76"
+        android:strokeColor="#8B6FE0"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

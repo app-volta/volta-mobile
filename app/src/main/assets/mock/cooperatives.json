@@ -1,23 +1,46 @@
 [
   {
     "nome": "JBS Ambiental",
+    "descricao": "Transforma resíduo em matéria-prima",
+    "distancia_km": 2.4,
+    "coleta": "coleta em até 24h",
+    "tag": "PARCEIRA J&F",
+    "avaliacao": null,
     "compatibilidade": 95,
-    "distancia_km": 3.2,
     "materiais": ["PEBD", "PP", "PET"],
     "disponibilidade": "Disponível"
   },
   {
-    "nome": "Cooperativa Esperança",
+    "nome": "Recicla Vida",
+    "descricao": "Papelão, plástico e metal",
+    "distancia_km": 3.1,
+    "coleta": null,
+    "tag": null,
+    "avaliacao": 4.8,
     "compatibilidade": 89,
-    "distancia_km": 4.8,
-    "materiais": ["PEBD"],
+    "materiais": ["Papelão", "Plástico", "Metal"],
     "disponibilidade": "Disponível"
   },
   {
-    "nome": "Cooperativa União",
+    "nome": "Cooperviva",
+    "descricao": "Papelão e papel misto",
+    "distancia_km": 5.7,
+    "coleta": null,
+    "tag": null,
+    "avaliacao": 4.6,
+    "compatibilidade": 84,
+    "materiais": ["Papelão"],
+    "disponibilidade": "Disponível"
+  },
+  {
+    "nome": "EcoNorte",
+    "descricao": "Plástico e vidro",
+    "distancia_km": 8.2,
+    "coleta": null,
+    "tag": null,
+    "avaliacao": 4.5,
     "compatibilidade": 81,
-    "distancia_km": 7.2,
-    "materiais": ["PEBD", "Papelão"],
+    "materiais": ["Plástico", "Vidro"],
     "disponibilidade": "Agenda cheia"
   }
 ]
