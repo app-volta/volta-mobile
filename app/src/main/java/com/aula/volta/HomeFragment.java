@@ -147,6 +147,9 @@ public class HomeFragment extends Fragment {
         api.getSummary().enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (!isAdded()) {
+                    return;
+                }
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject summary = response.body();
                     PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY,
@@ -160,6 +163,9 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
                 loadSummaryFromCache();
                 Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_LONG).show();
                 onLoadFinished();
@@ -198,6 +204,9 @@ public class HomeFragment extends Fragment {
             @Override
             public void onResponse(Call<List<OccurrenceJSON>> call,
                                    Response<List<OccurrenceJSON>> response) {
+                if (!isAdded()) {
+                    return;
+                }
                 if (response.isSuccessful() && response.body() != null) {
                     List<Occurrence> occurrences = new ArrayList<>();
                     for (OccurrenceJSON json : response.body()) {
@@ -215,6 +224,9 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onFailure(Call<List<OccurrenceJSON>> call, Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
                 applyOccurrences(cachedOccurrences());
                 Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_LONG).show();
                 onLoadFinished();

@@ -68,6 +68,9 @@ public class CooperativesFragment extends Fragment {
             @Override
             public void onResponse(Call<List<CooperativeJSON>> call,
                                    Response<List<CooperativeJSON>> response) {
+                if (!isAdded()) {
+                    return;
+                }
                 if (response.isSuccessful() && response.body() != null) {
                     PrefsHelper.putList(requireContext(), PREFS, KEY_LIST, response.body());
                     applyCooperatives(response.body());
@@ -79,6 +82,9 @@ public class CooperativesFragment extends Fragment {
 
             @Override
             public void onFailure(Call<List<CooperativeJSON>> call, Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
                 applyCooperatives(cachedCooperatives());
                 Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_LONG).show();
                 hideLoading();

@@ -2,7 +2,7 @@
 <!-- Slide 2 do carrossel Home (Figma 790:1624): Últimos 7 dias + mini gráfico -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
+    android:layout_height="match_parent"
     android:background="@drawable/bg_card_cta"
     android:gravity="center_vertical"
     android:orientation="vertical"

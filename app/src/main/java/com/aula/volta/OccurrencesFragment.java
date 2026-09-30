@@ -107,6 +107,9 @@ public class OccurrencesFragment extends Fragment {
             @Override
             public void onResponse(Call<List<OccurrenceJSON>> call,
                                    Response<List<OccurrenceJSON>> response) {
+                if (!isAdded()) {
+                    return;
+                }
                 if (response.isSuccessful() && response.body() != null) {
                     List<Occurrence> occurrences = new ArrayList<>();
                     for (OccurrenceJSON json : response.body()) {
@@ -123,6 +126,9 @@ public class OccurrencesFragment extends Fragment {
 
             @Override
             public void onFailure(Call<List<OccurrenceJSON>> call, Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
                 applyOccurrences(cachedOccurrences());
                 Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_LONG).show();
                 hideLoading();
