@@ -109,6 +109,18 @@ public class HomeFragment extends Fragment {
             });
         }
 
+        // Mascote VOLTA Flutuante + Balão (Figma 790:1732 e 790:1734) -> abre o assistente
+        View fabMascot = view.findViewById(R.id.fabMascot);
+        View balloonMascot = view.findViewById(R.id.balloonMascot);
+        View.OnClickListener openAssistant = v ->
+                Navigation.findNavController(v).navigate(R.id.nav_assistant);
+        if (fabMascot != null) {
+            fabMascot.setOnClickListener(openAssistant);
+        }
+        if (balloonMascot != null) {
+            balloonMascot.setOnClickListener(openAssistant);
+        }
+
         // _________________________________________________________________________________________
         //            LISTA DINÂMICA (Fase 2 — mesmo visual Figma via adapter)
         // _________________________________________________________________________________________

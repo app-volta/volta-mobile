@@ -1,20 +1,24 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/volta_background_light"
-    android:fillViewport="true">
+    android:background="@color/volta_background_light">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="@dimen/spacing_normal"
-        android:paddingTop="@dimen/spacing_medium"
-        android:paddingEnd="@dimen/spacing_normal"
-        android:paddingBottom="@dimen/spacing_large">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingTop="@dimen/spacing_medium"
+            android:paddingEnd="@dimen/spacing_normal"
+            android:paddingBottom="96dp">
+
 
         <!-- =================================================================================== -->
         <!--                            HEADER: Avatar + Saudação + Notificação                  -->
@@ -344,6 +348,61 @@
             android:textColor="@color/volta_text_secondary_light"
             android:textSize="@dimen/text_size_body_small"
             android:visibility="gone" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
+    <!-- Mascote VOLTA Flutuante + Balão de fala (Figma 790:1732 e 790:1734) -->
+    <LinearLayout
+        android:id="@+id/floatingMascotGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="18dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Balão: "Dúvida no descarte? Me chama!" (Figma 790:1732) -->
+        <FrameLayout
+            android:id="@+id/balloonMascot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_mascot_balloon"
+            android:clickable="true"
+            android:elevation="6dp"
+            android:focusable="true"
+            android:paddingStart="14dp"
+            android:paddingTop="9dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="9dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dúvida no descarte? Me chama!"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- Botão circular do Mascote (Figma 790:1734: 66x66dp) -->
+        <FrameLayout
+            android:id="@+id/fabMascot"
+            android:layout_width="66dp"
+            android:layout_height="66dp"
+            android:background="@drawable/bg_mascot_circle"
+            android:clickable="true"
+            android:contentDescription="Assistente VOLTA"
+            android:elevation="8dp"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="44dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:src="@drawable/mascote_volta" />
+        </FrameLayout>
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+
+</FrameLayout>
