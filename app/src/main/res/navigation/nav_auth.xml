@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_auth"
+    app:startDestination="@id/auth_login">
+
+    <fragment
+        android:id="@+id/auth_login"
+        android:name="com.aula.volta.ui.auth.LoginFragment"
+        tools:layout="@layout/fragment_login" />
+
+    <fragment
+        android:id="@+id/auth_register"
+        android:name="com.aula.volta.ui.auth.RegisterFragment"
+        tools:layout="@layout/fragment_register" />
+
+    <fragment
+        android:id="@+id/auth_confirm"
+        android:name="com.aula.volta.ui.auth.ConfirmEmailFragment"
+        tools:layout="@layout/fragment_confirm_email">
+        <argument
+            android:name="email"
+            app:argType="string" />
+        <argument
+            android:name="name"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/auth_success"
+        android:name="com.aula.volta.ui.auth.SuccessFragment"
+        tools:layout="@layout/fragment_auth_success">
+        <argument
+            android:name="email"
+            app:argType="string" />
+        <argument
+            android:name="name"
+            app:argType="string" />
+    </fragment>
+
+</navigation>

@@ -21,6 +21,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Gate de sessão (Fase 13): sem login volta ao fluxo de acesso.
+        if (!com.aula.volta.data.local.SessionManager.isLoggedIn(this)) {
+            android.content.Intent intent = new android.content.Intent(
+                    this, com.aula.volta.ui.auth.AuthActivity.class);
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                    | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 

@@ -219,4 +219,32 @@
     <string name="assistant_a_coop">A JBS Ambiental é a parceira mais perto: 2,4 km, coleta em até 24h. Quer que eu abra a lista?</string>
     <string name="assistant_a_thanks">De nada! Precisou, é só chamar.</string>
     <string name="assistant_a_fallback">Ainda estou aprendendo… tenta perguntar sobre materiais, coletas ou a meta do mês.</string>
+
+    <!-- Acesso (Figma 790:955+, mock Fase 13) -->
+    <string name="auth_welcome">Bem-vindo de VOLTA!</string>
+    <string name="auth_welcome_sub">Entre para continuar cuidando do descarte certo na sua unidade.</string>
+    <string name="auth_email">E-mail</string>
+    <string name="auth_email_hint">voce@empresa.com</string>
+    <string name="auth_password">Senha</string>
+    <string name="auth_forgot">Esqueci minha senha</string>
+    <string name="auth_login_btn">Entrar</string>
+    <string name="auth_or">ou</string>
+    <string name="auth_google">Continuar com Google</string>
+    <string name="auth_no_account">Novo por aqui?</string>
+    <string name="auth_create">Criar conta</string>
+    <string name="auth_register_title">Criar conta</string>
+    <string name="auth_register_sub">Leva menos de um minuto.</string>
+    <string name="auth_name">Nome</string>
+    <string name="auth_name_hint">Como podemos te chamar?</string>
+    <string name="auth_create_btn">Criar conta</string>
+    <string name="auth_have_account">Já tem conta?</string>
+    <string name="auth_enter">Entrar</string>
+    <string name="auth_confirm_title">Confirmar e-mail</string>
+    <string name="auth_confirm_sub">Enviamos um código de 4 números para %1$s</string>
+    <string name="auth_confirm_btn">Confirmar</string>
+    <string name="auth_bad_code">Digite os 4 números</string>
+    <string name="auth_success_title">Conta criada!</string>
+    <string name="auth_success_sub">Tudo pronto pra cuidar do descarte certo.</string>
+    <string name="auth_start">Começar</string>
+    <string name="auth_invalid">Verifique e-mail e senha</string>
 </resources>
