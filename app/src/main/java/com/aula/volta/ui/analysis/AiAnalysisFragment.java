@@ -42,6 +42,7 @@ public class AiAnalysisFragment extends Fragment {
     private LinearLayout aiLoadingGroup;
     private LinearLayout aiResultGroup;
     private AiAnalysisJSON analysis;
+    private android.animation.ObjectAnimator scanAnimator;
 
     private String photoPath;
     private String setor;
@@ -72,6 +73,11 @@ public class AiAnalysisFragment extends Fragment {
             imgAiPhoto.setImageBitmap(BitmapFactory.decodeFile(photoPath));
         }
 
+        ImageView imgAiPhotoScan = view.findViewById(R.id.imgAiPhotoScan);
+        if (imgAiPhotoScan != null && photoPath != null) {
+            imgAiPhotoScan.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+        }
+
         View btnBack = view.findViewById(R.id.btnBackAnalysis);
         btnBack.setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
@@ -83,7 +89,41 @@ public class AiAnalysisFragment extends Fragment {
         MaterialButton btnConfirm = view.findViewById(R.id.btnConfirmAnalysis);
         btnConfirm.setOnClickListener(v -> confirmOccurrence(v));
 
+        startScanAnimation(view);
         analyzePhoto();
+    }
+
+    @Override
+    public void onDestroyView() {
+        stopScanAnimation();
+        super.onDestroyView();
+    }
+
+    /** Laser verde varrendo a foto em loop (protótipo novo 851:3975). */
+    private void startScanAnimation(View root) {
+        View band = root.findViewById(R.id.viewScanBand);
+        View frame = root.findViewById(R.id.scanPhotoFrame);
+        if (band == null || frame == null) {
+            return;
+        }
+        frame.post(() -> {
+            if (!isAdded() || getView() == null) {
+                return;
+            }
+            stopScanAnimation();
+            scanAnimator = android.animation.ObjectAnimator.ofFloat(
+                    band, "translationY", -band.getHeight(), frame.getHeight());
+            scanAnimator.setDuration(1600);
+            scanAnimator.setRepeatCount(android.animation.ObjectAnimator.INFINITE);
+            scanAnimator.start();
+        });
+    }
+
+    private void stopScanAnimation() {
+        if (scanAnimator != null) {
+            scanAnimator.cancel();
+            scanAnimator = null;
+        }
     }
 
     /** Chama POST /occurrences/{id}/analysis (mock com delay → loading real). */
@@ -121,6 +161,7 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void applyAnalysis(View view) {
+        stopScanAnimation();
         aiLoadingGroup.setVisibility(View.GONE);
         aiResultGroup.setVisibility(View.VISIBLE);
 

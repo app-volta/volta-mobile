@@ -45,7 +45,10 @@ public class OccurrenceDetailFragment extends Fragment {
     private TextView tvSubtitle;
     private TextView tvStatus;
     private TextView tvCardTitle;
+    private TextView tvCardLine;
     private TextView tvCardSubtitle;
+    private TextView tvPriority;
+    private TextView tvAutoReport;
     private TextView tvWeight;
     private TextView tvAuthor;
     private TextView tvDate;
@@ -71,7 +74,10 @@ public class OccurrenceDetailFragment extends Fragment {
         tvSubtitle = view.findViewById(R.id.tvOccSubtitle);
         tvStatus = view.findViewById(R.id.tvOccStatus);
         tvCardTitle = view.findViewById(R.id.tvOccCardTitle);
+        tvCardLine = view.findViewById(R.id.tvOccCardLine);
         tvCardSubtitle = view.findViewById(R.id.tvOccCardSubtitle);
+        tvPriority = view.findViewById(R.id.tvOccPriority);
+        tvAutoReport = view.findViewById(R.id.tvOccAutoReport);
         tvWeight = view.findViewById(R.id.tvOccWeight);
         tvAuthor = view.findViewById(R.id.tvOccAuthor);
         tvDate = view.findViewById(R.id.tvOccDate);
@@ -92,20 +98,13 @@ public class OccurrenceDetailFragment extends Fragment {
                 R.color.occurrence_icon_bg_blue, R.color.occurrence_icon_tint_blue);
         tintChip(view, R.id.chipObserve, R.id.iconObserve,
                 R.color.occurrence_icon_bg_purple, R.color.occurrence_icon_tint_purple);
-        tintChip(view, R.id.chipFinalize, R.id.iconFinalize,
-                R.color.stat_resolved_bg, R.color.stat_resolved_icon);
 
         view.findViewById(R.id.rowEditClass).setOnClickListener(v -> soon(v));
         view.findViewById(R.id.rowForward).setOnClickListener(v -> soon(v));
         view.findViewById(R.id.rowObserve).setOnClickListener(v -> soon(v));
-        view.findViewById(R.id.rowFinalize).setOnClickListener(v -> showFinalizeDialog(v));
 
-        MaterialButton btnPick = view.findViewById(R.id.btnPickCoop);
-        btnPick.setOnClickListener(v -> {
-            Bundle args = new Bundle();
-            args.putString("occurrenceId", occurrenceId);
-            Navigation.findNavController(v).navigate(R.id.nav_cooperative_pick, args);
-        });
+        MaterialButton btnFinalize = view.findViewById(R.id.btnFinalizeOcc);
+        btnFinalize.setOnClickListener(v -> showFinalizeDialog(v));
 
         loadDetail();
     }
@@ -175,13 +174,36 @@ public class OccurrenceDetailFragment extends Fragment {
 
         tvTitle.setText(titulo.isEmpty() ? getString(R.string.occ_title) : titulo);
         tvSubtitle.setText(setor);
-        tvCardTitle.setText(titulo);
-        tvCardSubtitle.setText(setor);
-        tvStatus.setText(prettyStatus(currentStatus));
-        applyTracker(requireView(), doneSteps(currentStatus));
 
+        String material = opt(detail, "material");
+        String classe = opt(detail, "classe");
+        if (!material.isEmpty() && !classe.isEmpty()) {
+            tvCardTitle.setText(material + " (" + classe + ")");
+        } else {
+            tvCardTitle.setText(titulo);
+        }
+        String cont = capitalize(opt(detail, "contaminacao_nivel"));
         String peso = opt(detail, "peso_estimado");
         String unidade = opt(detail, "unidade");
+        String line = "";
+        if (!cont.isEmpty()) {
+            line = "Contaminação " + cont.toLowerCase(new java.util.Locale("pt", "BR"));
+        }
+        if (!peso.isEmpty()) {
+            if (!line.isEmpty()) {
+                line += " · ";
+            }
+            line += "≈" + peso + (unidade.isEmpty() ? "" : " " + unidade);
+        }
+        tvCardLine.setText(line);
+        tvCardSubtitle.setText(setor);
+        applyPriority(opt(detail, "prioridade"));
+        setText(tvAutoReport, opt(detail, "relatorio_automatico"));
+
+        tvStatus.setText(prettyStatus(currentStatus));
+        applyTracker(requireView(), doneSteps(currentStatus));
+        syncFinalizedUi();
+
         tvWeight.setText(peso.isEmpty() ? "-" : "≈" + peso + (unidade.isEmpty() ? "" : " " + unidade));
         setText(tvAuthor, opt(detail, "registrado_por"));
         setText(tvDate, opt(detail, "data"));
@@ -265,7 +287,7 @@ public class OccurrenceDetailFragment extends Fragment {
         return action;
     }
 
-    /** Tracker: NOVO=1, EM_ANALISE=2, demais=4 (Figma 790:2725). */
+    /** Tracker: NOVO=1, EM_ANALISE=2, demais=4 (protótipo novo 851). */
     private int doneSteps(String status) {
         if ("NOVO".equals(status)) {
             return 1;
@@ -274,6 +296,63 @@ public class OccurrenceDetailFragment extends Fragment {
             return 2;
         }
         return 4;
+    }
+
+    /** Badge de prioridade do card (ALTA/MÉDIA/BAIXA, cores do Figma). */
+    private void applyPriority(String priority) {
+        if (tvPriority == null) {
+            return;
+        }
+        if ("ALTA".equals(priority)) {
+            tvPriority.setText(R.string.priority_alta);
+            tvPriority.setBackgroundResource(R.drawable.bg_badge_alta);
+            tvPriority.setTextColor(requireContext().getColor(R.color.priority_high_text));
+            tvPriority.setVisibility(View.VISIBLE);
+        } else if ("MEDIA".equals(priority)) {
+            tvPriority.setText(R.string.priority_media);
+            tvPriority.setBackgroundResource(R.drawable.bg_badge_media);
+            tvPriority.setTextColor(requireContext().getColor(R.color.priority_medium_text));
+            tvPriority.setVisibility(View.VISIBLE);
+        } else if ("BAIXA".equals(priority)) {
+            tvPriority.setText(R.string.priority_baixa);
+            tvPriority.setBackgroundResource(R.drawable.bg_badge_baixa);
+            tvPriority.setTextColor(requireContext().getColor(R.color.priority_low_text));
+            tvPriority.setVisibility(View.VISIBLE);
+        } else {
+            tvPriority.setVisibility(View.GONE);
+        }
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
+        return s.substring(0, 1).toUpperCase(new java.util.Locale("pt", "BR")) + s.substring(1);
+    }
+
+    /** Estado finalizada (851:4403): só Observação resta, sem botão Finalizar. */
+    private void syncFinalizedUi() {
+        boolean done = isFinalized(currentStatus);
+        View root = getView();
+        if (root == null) {
+            return;
+        }
+        View rowEdit = root.findViewById(R.id.rowEditClass);
+        View rowForward = root.findViewById(R.id.rowForward);
+        View btnFinalize = root.findViewById(R.id.btnFinalizeOcc);
+        if (rowEdit != null) {
+            rowEdit.setVisibility(done ? View.GONE : View.VISIBLE);
+        }
+        if (rowForward != null) {
+            rowForward.setVisibility(done ? View.GONE : View.VISIBLE);
+        }
+        if (btnFinalize != null) {
+            btnFinalize.setVisibility(done ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private boolean isFinalized(String status) {
+        return "RESOLVIDO".equals(status) || "APROVADA".equals(status);
     }
 
     private void applyTracker(View root, int done) {
@@ -309,7 +388,7 @@ public class OccurrenceDetailFragment extends Fragment {
         }
         dialogView.findViewById(R.id.btnFinalizeYes).setOnClickListener(b -> {
             AuditLog.append(requireContext(), "Breno Gomes", "FINALIZAR",
-                    "ocorrencia", occurrenceId, currentStatus, "RESOLVIDO");
+                    "ocorrencia", occurrenceId, currentStatus, "APROVADA");
             NotificationStore.pushLocal(requireContext(), new Notification(
                     "local_" + System.currentTimeMillis(),
                     "OCORRENCIA_FINALIZADA",
@@ -324,9 +403,10 @@ public class OccurrenceDetailFragment extends Fragment {
             Toast.makeText(requireContext(), R.string.occ_finalize_done,
                     Toast.LENGTH_LONG).show();
             dialog.dismiss();
-            currentStatus = "RESOLVIDO";
+            currentStatus = "APROVADA";
             tvStatus.setText(prettyStatus(currentStatus));
             applyTracker(requireView(), doneSteps(currentStatus));
+            syncFinalizedUi();
         });
         dialogView.findViewById(R.id.btnFinalizeNo).setOnClickListener(b -> dialog.dismiss());
         dialog.show();
@@ -341,8 +421,8 @@ public class OccurrenceDetailFragment extends Fragment {
         if ("EM_ANALISE".equals(status)) {
             return "EM ANÁLISE";
         }
-        if ("RESOLVIDO".equals(status)) {
-            return "RESOLVIDO";
+        if ("RESOLVIDO".equals(status) || "APROVADA".equals(status)) {
+            return "APROVADA";
         }
         if ("NOVO".equals(status)) {
             return "NOVO";

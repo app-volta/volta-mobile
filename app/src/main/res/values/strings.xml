@@ -92,6 +92,8 @@
     <!-- Análise IA (Figma 626:327) -->
     <string name="ai_title">Análise da IA</string>
     <string name="ai_analyzing">Analisando imagem…</string>
+    <string name="ai_scanning">Analisando…</string>
+    <string name="ai_loading_recommendation">carregando…</string>
     <string name="ai_done">Análise concluída</string>
     <string name="ai_found_title">O que a IA encontrou</string>
     <string name="ai_label_type">Tipo</string>
@@ -124,6 +126,7 @@
     <string name="occ_action_finalize">Finalizar ocorrência</string>
     <string name="occ_pick_coop">Escolher cooperativa para coleta</string>
     <string name="occ_details_title">Detalhes</string>
+    <string name="occ_report_auto">Relatório automático</string>
     <string name="occ_history_title">Histórico</string>
     <string name="occ_history_empty">Sem movimentações ainda.</string>
     <string name="occ_finalize_title">Finalizar ocorrência?</string>
