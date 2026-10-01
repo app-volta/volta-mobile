@@ -56,6 +56,12 @@ public class AssistantFragment extends Fragment {
         addBot(getString(R.string.assistant_intro));
         addActionChips();
 
+        View chipIsopor = view.findViewById(R.id.chipSuggestIsopor);
+        if (chipIsopor != null) {
+            chipIsopor.setOnClickListener(v ->
+                    ask(((TextView) v).getText().toString()));
+        }
+
         view.findViewById(R.id.chipSuggestPapelao).setOnClickListener(v ->
                 ask(((TextView) v).getText().toString()));
         view.findViewById(R.id.chipSuggestMeta).setOnClickListener(v ->
@@ -158,7 +164,59 @@ public class AssistantFragment extends Fragment {
     }
 
     private void addBot(String text) {
-        messages.addView(bubble(text, false));
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.TOP);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowParams.topMargin = dp(6);
+        rowParams.bottomMargin = dp(6);
+        row.setLayoutParams(rowParams);
+
+        // Mascote avatar à esquerda (Figma 790:1932)
+        android.widget.ImageView mascot = new android.widget.ImageView(requireContext());
+        mascot.setImageResource(R.drawable.mascote_volta);
+        LinearLayout.LayoutParams mascotParams = new LinearLayout.LayoutParams(dp(32), dp(36));
+        mascotParams.rightMargin = dp(8);
+        mascotParams.topMargin = dp(4);
+        mascot.setLayoutParams(mascotParams);
+        row.addView(mascot);
+
+        // Coluna com balão + ações contextuais
+        LinearLayout contentCol = new LinearLayout(requireContext());
+        contentCol.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams colParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+        contentCol.setLayoutParams(colParams);
+
+        contentCol.addView(bubble(text, false));
+
+        // Se a resposta for sobre isopor, exibe ações contextuais (Figma 790:1940 e 790:1945)
+        if (text != null && (text.contains("Isopor") || text.contains("EPS"))) {
+            LinearLayout actionsRow = new LinearLayout(requireContext());
+            actionsRow.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            actionsParams.topMargin = dp(6);
+            actionsRow.setLayoutParams(actionsParams);
+
+            TextView btnReg = chip(getString(R.string.assistant_chip_register));
+            btnReg.setOnClickListener(v ->
+                    Navigation.findNavController(requireView()).navigate(R.id.nav_register));
+
+            TextView btnCoop = chip(getString(R.string.assistant_chip_coops));
+            btnCoop.setOnClickListener(v ->
+                    Navigation.findNavController(requireView()).navigate(R.id.nav_cooperatives));
+
+            actionsRow.addView(btnReg);
+            actionsRow.addView(btnCoop);
+            contentCol.addView(actionsRow);
+        }
+
+        row.addView(contentCol);
+        messages.addView(row);
         scrollToBottom();
     }
 
