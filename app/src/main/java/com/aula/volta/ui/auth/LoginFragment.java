@@ -55,8 +55,7 @@ public class LoginFragment extends Fragment {
         view.findViewById(R.id.btnGoRegister).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.auth_register));
         view.findViewById(R.id.btnForgotPassword).setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.occ_soon,
-                        Toast.LENGTH_SHORT).show());
+                Navigation.findNavController(v).navigate(R.id.auth_forgot));
         view.findViewById(R.id.btnGoogle).setOnClickListener(v ->
                 Toast.makeText(requireContext(), R.string.occ_soon,
                         Toast.LENGTH_SHORT).show());
