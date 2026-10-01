@@ -102,8 +102,29 @@
     <string name="detail_full_report">Ver relatório completo</string>
     <string name="detail_report_soon">Relatório completo chega na Fase 9</string>
     <string name="detail_request_pickup">Solicitar destinação</string>
+
+    <!-- Ocorrência cheia (Figma 790:2725) -->
+    <string name="occ_title">Ocorrência</string>
+    <string name="occ_step_registered">Registrada</string>
+    <string name="occ_step_analysis">Análise IA</string>
+    <string name="occ_step_approval">Aprovação</string>
+    <string name="occ_step_pickup">Coleta</string>
+    <string name="occ_action_edit_class">Alterar classificação</string>
+    <string name="occ_action_forward">Encaminhar para outro setor</string>
+    <string name="occ_action_observe">Adicionar observação</string>
+    <string name="occ_action_finalize">Finalizar ocorrência</string>
+    <string name="occ_pick_coop">Escolher cooperativa para coleta</string>
+    <string name="occ_finalize_title">Finalizar ocorrência?</string>
+    <string name="occ_finalize_text">A ocorrência será marcada como concluída e entra no relatório PGRS do mês.</string>
+    <string name="occ_finalize_yes">Sim, finalizar</string>
+    <string name="occ_finalize_done">Ocorrência finalizada</string>
+    <string name="occ_soon">Disponível em breve</string>
+    <string name="pick_confirm_title">Solicitar coleta</string>
+    <string name="pick_confirm_yes">Solicitar</string>
+    <string name="pick_confirm_no">Voltar</string>
     <string name="pick_title">Cooperativas compatíveis</string>
     <string name="pick_request_sent">Solicitação enviada</string>
+    <string name="pick_confirm_msg">Solicitar coleta para %1$s?</string>
 
     <!-- Home nova (Figma 790:1624) -->
     <string name="home_week_title">Últimos 7 dias</string>

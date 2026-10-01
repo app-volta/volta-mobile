@@ -28,7 +28,16 @@ import java.util.Locale;
  */
 public class CooperativeAdapter extends RecyclerView.Adapter<CooperativeAdapter.ViewHolder> {
 
+    public interface OnItemClickListener {
+        void onItemClick(CooperativeJSON cooperative);
+    }
+
     private final List<CooperativeJSON> items = new ArrayList<>();
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
 
     public void setItems(List<CooperativeJSON> cooperatives) {
         items.clear();
@@ -74,6 +83,12 @@ public class CooperativeAdapter extends RecyclerView.Adapter<CooperativeAdapter.
         }
 
         applyPositionStyle(holder, position);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(coop);
+            }
+        });
     }
 
     /** Destaque verde no primeiro; dourado/azul/roxo nos demais (Figma). */

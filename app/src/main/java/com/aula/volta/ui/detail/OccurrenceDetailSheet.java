@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.aula.volta.R;
 import com.aula.volta.data.api.ApiClient;
@@ -71,6 +72,17 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
         if (occurrenceId == null || occurrenceId.isEmpty()) {
             dismiss();
             return;
+        }
+
+        View btnPickup = view.findViewById(R.id.btnRequestPickup);
+        if (btnPickup != null) {
+            btnPickup.setOnClickListener(v -> {
+                Bundle args = new Bundle();
+                args.putString("occurrenceId", occurrenceId);
+                dismiss();
+                NavHostFragment.findNavController(this)
+                        .navigate(R.id.nav_cooperative_pick, args);
+            });
         }
         loadDetail(occurrenceId);
     }

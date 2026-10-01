@@ -123,7 +123,7 @@ public class HomeFragment extends Fragment {
         adapter = new OccurrenceAdapter(occurrence -> {
             Bundle args = new Bundle();
             args.putString("occurrenceId", occurrence.getId());
-            Navigation.findNavController(requireView()).navigate(R.id.nav_occurrence_detail, args);
+            Navigation.findNavController(requireView()).navigate(R.id.nav_occurrence_full, args);
         });
         rvRecent.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvRecent.setNestedScrollingEnabled(false);

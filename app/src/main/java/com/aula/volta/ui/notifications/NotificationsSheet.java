@@ -65,7 +65,7 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
                 args.putString("occurrenceId", notification.getOccurrenceId());
                 dismiss();
                 NavHostFragment.findNavController(this)
-                        .navigate(R.id.nav_occurrence_detail, args);
+                        .navigate(R.id.nav_occurrence_full, args);
             } else {
                 reload();
             }

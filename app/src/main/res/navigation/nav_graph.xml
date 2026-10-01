@@ -67,6 +67,26 @@
             app:argType="string" />
     </dialog>
 
+    <!-- Ocorrência cheia — Figma 790:2725 (Fase 8): tracker, ações, escolher cooperativa -->
+    <fragment
+        android:id="@+id/nav_occurrence_full"
+        android:name="com.aula.volta.ui.detail.OccurrenceDetailFragment"
+        tools:layout="@layout/fragment_occurrence_detail">
+        <argument
+            android:name="occurrenceId"
+            app:argType="string" />
+    </fragment>
+
+    <!-- Destinação contextual — Fase 8: cooperativas da ocorrência, backend ordena -->
+    <fragment
+        android:id="@+id/nav_cooperative_pick"
+        android:name="com.aula.volta.ui.cooperatives.CooperativePickFragment"
+        tools:layout="@layout/fragment_cooperative_pick">
+        <argument
+            android:name="occurrenceId"
+            app:argType="string" />
+    </fragment>
+
     <dialog
         android:id="@+id/nav_notifications"
         android:name="com.aula.volta.ui.notifications.NotificationsSheet" />

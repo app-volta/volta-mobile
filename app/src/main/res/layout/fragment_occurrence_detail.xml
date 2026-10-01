@@ -1,0 +1,485 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ocorrência cheia — Figma (790:2725): tracker, foto, ações, escolher cooperativa -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/volta_background_light"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_normal">
+
+        <FrameLayout
+            android:id="@+id/btnBackOcc"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="@drawable/bg_notification_circle"
+            android:clickable="true"
+            android:contentDescription="@string/occurrence_back"
+            android:elevation="2dp"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_chevron_left" />
+        </FrameLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:layout_toStartOf="@+id/tvOccStatus"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvOccTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/occ_title"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="@dimen/text_size_title"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvOccSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="@dimen/text_size_body_small" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvOccStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_badge_media"
+                android:paddingStart="12dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="6dp"
+                android:textColor="@color/priority_medium_text"
+                android:textSize="@dimen/text_size_caption"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <!-- Tracker Registrada → Análise IA → Aprovação → Coleta -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:id="@+id/stepCircle0"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:background="@drawable/bg_notification_circle">
+
+                    <ImageView
+                        android:id="@+id/stepCheck0"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_notif_check"
+                        android:visibility="gone"
+                        app:tint="@color/white" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/stepLabel0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="4dp"
+                    android:singleLine="true"
+                    android:text="@string/occ_step_registered"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/stepLine0"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:layout_marginBottom="20dp"
+                android:layout_weight="1"
+                android:background="@color/notification_circle_border" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:id="@+id/stepCircle1"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:background="@drawable/bg_notification_circle">
+
+                    <ImageView
+                        android:id="@+id/stepCheck1"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_notif_check"
+                        android:visibility="gone"
+                        app:tint="@color/white" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/stepLabel1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="4dp"
+                    android:singleLine="true"
+                    android:text="@string/occ_step_analysis"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/stepLine1"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:layout_marginBottom="20dp"
+                android:layout_weight="1"
+                android:background="@color/notification_circle_border" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:id="@+id/stepCircle2"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:background="@drawable/bg_notification_circle">
+
+                    <ImageView
+                        android:id="@+id/stepCheck2"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_notif_check"
+                        android:visibility="gone"
+                        app:tint="@color/white" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/stepLabel2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="4dp"
+                    android:singleLine="true"
+                    android:text="@string/occ_step_approval"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/stepLine2"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:layout_marginBottom="20dp"
+                android:layout_weight="1"
+                android:background="@color/notification_circle_border" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:id="@+id/stepCircle3"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:background="@drawable/bg_notification_circle">
+
+                    <ImageView
+                        android:id="@+id/stepCheck3"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_notif_check"
+                        android:visibility="gone"
+                        app:tint="@color/white" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/stepLabel3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="4dp"
+                    android:singleLine="true"
+                    android:text="@string/occ_step_pickup"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Card foto + título -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="@drawable/bg_card_surface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_medium">
+
+            <FrameLayout
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_occurrence_icon">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_occurrence_waste" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_medium"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvOccCardTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="@dimen/text_size_body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvOccCardSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="@dimen/text_size_caption" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Ações do responsável -->
+        <LinearLayout
+            android:id="@+id/rowEditClass"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:background="@drawable/bg_card_surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_medium">
+
+            <FrameLayout
+                android:id="@+id/chipEditClass"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/bg_action_chip">
+
+                <ImageView
+                    android:id="@+id/iconEditClass"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_pencil" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_medium"
+                android:layout_weight="1"
+                android:text="@string/occ_action_edit_class"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:rotation="180"
+                android:src="@drawable/ic_chevron_left"
+                android:tint="@color/volta_text_muted_light" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowForward"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:background="@drawable/bg_card_surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_medium">
+
+            <FrameLayout
+                android:id="@+id/chipForward"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/bg_action_chip">
+
+                <ImageView
+                    android:id="@+id/iconForward"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_forward" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_medium"
+                android:layout_weight="1"
+                android:text="@string/occ_action_forward"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:rotation="180"
+                android:src="@drawable/ic_chevron_left"
+                android:tint="@color/volta_text_muted_light" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowObserve"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:background="@drawable/bg_card_surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_medium">
+
+            <FrameLayout
+                android:id="@+id/chipObserve"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/bg_action_chip">
+
+                <ImageView
+                    android:id="@+id/iconObserve"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_stat_open" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_medium"
+                android:layout_weight="1"
+                android:text="@string/occ_action_observe"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:rotation="180"
+                android:src="@drawable/ic_chevron_left"
+                android:tint="@color/volta_text_muted_light" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowFinalize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:background="@drawable/bg_card_surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_medium">
+
+            <FrameLayout
+                android:id="@+id/chipFinalize"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/bg_action_chip">
+
+                <ImageView
+                    android:id="@+id/iconFinalize"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_stat_resolved" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_medium"
+                android:layout_weight="1"
+                android:text="@string/occ_action_finalize"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:rotation="180"
+                android:src="@drawable/ic_chevron_left"
+                android:tint="@color/volta_text_muted_light" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPickCoop"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height_primary"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:backgroundTint="@color/volta_green_primary"
+            android:text="@string/occ_pick_coop"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body_small"
+            android:textStyle="bold"
+            app:cornerRadius="@dimen/corner_radius_button" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
