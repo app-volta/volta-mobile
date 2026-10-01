@@ -22,8 +22,10 @@ import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.CooperativeAPI;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
+import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.CooperativeJSON;
+import com.aula.volta.data.model.Notification;
 import com.google.gson.JsonObject;
 
 import java.util.List;
@@ -161,6 +163,17 @@ public class CooperativePickFragment extends Fragment {
                 .setPositiveButton(R.string.pick_confirm_yes, (dialog, which) -> {
                     AuditLog.append(requireContext(), "Breno Gomes", "SOLICITAR_DESTINACAO",
                             "ocorrencia", occurrenceId, null, coop.getNome());
+                    NotificationStore.pushLocal(requireContext(), new Notification(
+                            "local_" + System.currentTimeMillis(),
+                            "COLETA_SOLICITADA",
+                            getString(R.string.notif_pick_title, coop.getNome()),
+                            getString(R.string.notif_pick_desc, occurrenceId),
+                            getString(R.string.notif_now),
+                            "truck",
+                            "#3B82F6",
+                            "#E4EFFF",
+                            false,
+                            occurrenceId));
                     Toast.makeText(requireContext(), R.string.pick_request_sent,
                             Toast.LENGTH_LONG).show();
                     Navigation.findNavController(requireView()).navigateUp();
