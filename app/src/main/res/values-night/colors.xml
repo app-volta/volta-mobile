@@ -24,4 +24,8 @@
 
     <!-- Círculo de notificação -->
     <color name="notification_circle_border">#1F2E26</color>
+
+    <!-- Inputs de Autenticação (fixos sobre background branco mesmo no Dark Mode) -->
+    <color name="auth_input_text">#171A19</color>
+    <color name="auth_input_hint">#7C8698</color>
 </resources>
