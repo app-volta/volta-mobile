@@ -17,8 +17,8 @@
         <!-- Voltar (círculo branco, header interno — toolbar oculta nesta tela) -->
         <FrameLayout
             android:id="@+id/btnBackRegister"
-            android:layout_width="@dimen/tap_target_min"
-            android:layout_height="@dimen/tap_target_min"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_marginBottom="@dimen/spacing_medium"
             android:background="@drawable/bg_notification_circle"
             android:clickable="true"
@@ -73,11 +73,11 @@
                 android:background="@drawable/bg_progress_track" />
         </LinearLayout>
 
-        <!-- Card tracejado da foto -->
+        <!-- Card da foto (Figma 626:288: borda sólida verde) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_photo_dashed"
+            android:background="@drawable/bg_photo_card"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="@dimen/spacing_large">
@@ -172,9 +172,9 @@
                     android:layout_height="@dimen/tap_target_min"
                     android:layout_marginStart="@dimen/spacing_small"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/volta_green_subtle"
+                    android:backgroundTint="@color/stat_resolved_bg"
                     android:text="@string/occurrence_btn_gallery"
-                    android:textColor="@color/volta_green_dark"
+                    android:textColor="@color/stat_resolved_icon"
                     app:cornerRadius="@dimen/corner_radius_button" />
             </LinearLayout>
         </LinearLayout>
@@ -299,15 +299,14 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSendAnalysis"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height_primary"
+            android:layout_height="56dp"
             android:layout_marginTop="@dimen/spacing_large"
-            android:backgroundTint="@color/volta_card_border_light"
+            android:background="@drawable/bg_button_disabled"
             android:enabled="false"
             android:text="@string/occurrence_btn_send_analysis"
             android:textColor="@color/volta_text_muted_light"
             android:textSize="@dimen/text_size_body"
-            android:textStyle="bold"
-            app:cornerRadius="@dimen/corner_radius_button" />
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvSendHint"

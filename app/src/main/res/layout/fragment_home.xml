@@ -99,92 +99,52 @@
                     android:elevation="3dp"
                     android:src="@drawable/ic_notification_bell" />
 
-                <!-- Dot vermelho no canto superior direito -->
-                <View
-                    android:id="@+id/notificationDot"
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
+                <!-- Badge contador (Figma Home nova: círculo vermelho com número) -->
+                <TextView
+                    android:id="@+id/tvNotifCount"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="top|end"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:background="@drawable/ic_notification_dot"
-                    android:elevation="4dp" />
+                    android:background="@drawable/bg_badge_count"
+                    android:elevation="4dp"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
             </FrameLayout>
         </RelativeLayout>
 
         <!-- =================================================================================== -->
-        <!--                            CTA BANNER: "Achou resíduo fora do lugar?"               -->
+        <!--                   CARROSSEL HOME (Figma 790:1624: CTA + Últimos 7 dias)            -->
         <!-- =================================================================================== -->
 
-        <RelativeLayout
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/vpCarousel"
             android:layout_width="match_parent"
+            android:layout_height="200dp" />
+
+        <LinearLayout
+            android:id="@+id/carouselDots"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:background="@drawable/bg_card_cta"
-            android:padding="@dimen/spacing_large">
-
-            <!-- Textos e botão alinhados à esquerda - disposição Figma NovoRegistro.svg -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="8dp"
-                android:layout_toStartOf="@+id/ctaIllustration"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:lineSpacingExtra="1dp"
-                    android:text="@string/home_cta_title"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="@dimen/spacing_medium"
-                    android:lineSpacingExtra="1dp"
-                    android:text="@string/home_cta_subtitle"
-                    android:textColor="#CCFFFFFF"
-                    android:textSize="@dimen/text_size_body_small" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCtaRegister"
-                    android:layout_width="wrap_content"
-                    android:layout_height="42dp"
-                    android:backgroundTint="@color/white"
-                    android:text="@string/home_cta_button"
-                    android:textColor="#0E7C48"
-                    android:textSize="@dimen/text_size_body_small"
-                    android:textStyle="bold"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/ic_camera_official"
-                    app:iconGravity="textStart"
-                    app:iconPadding="10dp"
-                    app:iconSize="18dp"
-                    app:iconTint="#0E7C48" />
-            </LinearLayout>
-
-            <!-- Ícone Volta branco - AssetsVolta/Volta.png exato (PNG oficial) -->
-            <ImageView
-                android:id="@+id/ctaIllustration"
-                android:layout_width="84dp"
-                android:layout_height="84dp"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentEnd="true"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="0dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/volta_arrow" />
-        </RelativeLayout>
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:gravity="center"
+            android:orientation="horizontal" />
 
         <!-- =================================================================================== -->
         <!--                            RESUMO DA UNIDADE — Título                               -->
         <!-- =================================================================================== -->
+
+        <!-- Loading da Home (Fase 2: some quando resumo + recentes + dot carregam) -->
+        <ProgressBar
+            android:id="@+id/loadingHome"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="@dimen/spacing_medium" />
 
         <!-- =================================================================================== -->
         <!--                            BIG NUMBERS — 3 Cards de Estatísticas                    -->
@@ -364,193 +324,26 @@
         </RelativeLayout>
 
         <!-- =================================================================================== -->
-        <!--                            CARD RECENTE 1 — Papelão molhado (ALTA)                  -->
+        <!--              OCORRÊNCIAS RECENTES — lista dinâmica (Fase 2, mesmo visual Figma)     -->
         <!-- =================================================================================== -->
 
-        <LinearLayout
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvRecentOccurrences"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
+            android:nestedScrollingEnabled="false" />
 
-            <!-- Ícone lixeira dentro de círculo amarelado -->
-            <FrameLayout
-                android:layout_width="@dimen/thumbnail_size_occurrence"
-                android:layout_height="@dimen/thumbnail_size_occurrence"
-                android:background="@drawable/bg_occurrence_icon">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_occurrence_waste" />
-            </FrameLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Papelão molhado"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Frigorífico · 12 min"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_alta"
-                android:paddingStart="10dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
-                android:text="@string/priority_alta"
-                android:textColor="@color/priority_high_text"
-                android:textSize="@dimen/text_size_caption"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- =================================================================================== -->
-        <!--                            CARD RECENTE 2 — Plástico de embalagem (MÉDIA) - azul #E6EFFF  -->
-        <!-- =================================================================================== -->
-
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvEmptyOccurrences"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
-
-            <!-- Ícone garrafa/plástico dentro de círculo azul clarinho -->
-            <FrameLayout
-                android:layout_width="@dimen/thumbnail_size_occurrence"
-                android:layout_height="@dimen/thumbnail_size_occurrence"
-                android:background="@drawable/bg_occurrence_icon_blue">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_occurrence_waste_blue" />
-            </FrameLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Plástico de embalagem"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Expedição · há 1 h"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_media"
-                android:paddingStart="10dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
-                android:text="@string/priority_media"
-                android:textColor="@color/priority_medium_text"
-                android:textSize="@dimen/text_size_caption"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- =================================================================================== -->
-        <!--                            CARD RECENTE 3 — Sucata metálica (BAIXA) - lilás #EDE9FE    -->
-        <!-- =================================================================================== -->
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
-
-            <!-- Ícone cadeado/metal dentro de círculo lilás -->
-            <FrameLayout
-                android:layout_width="@dimen/thumbnail_size_occurrence"
-                android:layout_height="@dimen/thumbnail_size_occurrence"
-                android:background="@drawable/bg_occurrence_icon_purple">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_occurrence_waste_purple" />
-            </FrameLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sucata metálica"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Manutenção · ontem"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_baixa"
-                android:paddingStart="10dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
-                android:text="@string/priority_baixa"
-                android:textColor="@color/priority_low_text"
-                android:textSize="@dimen/text_size_caption"
-                android:textStyle="bold" />
-        </LinearLayout>
+            android:gravity="center"
+            android:padding="@dimen/spacing_large"
+            android:text="@string/empty_list"
+            android:textColor="@color/volta_text_secondary_light"
+            android:textSize="@dimen/text_size_body_small"
+            android:visibility="gone" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

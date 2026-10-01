@@ -23,13 +23,14 @@
     <string name="home_cta_title">Achou resíduo fora\ndo lugar?</string>
     <string name="home_cta_subtitle">Tira uma foto — a gente cuida do\nresto pra você.</string>
     <string name="home_cta_button">Registrar agora</string>
+    <string name="home_week_title">Últimos 7 dias</string>
 
     <!-- Nova Ocorrência -->
     <string name="occurrence_new_title">Nova ocorrência</string>
     <string name="occurrence_step_1">Passo 1 de 2 · Registro</string>
-    <string name="occurrence_step_2">Passo 2 de 2 · Confirmação</string>
+    <string name="occurrence_step_2">Passo 2 de 2 · Revisão</string>
     <string name="occurrence_take_photo">Tire uma foto do resíduo</string>
-    <string name="occurrence_photo_hint">É obrigatório anexar uma foto pra continuar</string>
+    <string name="occurrence_photo_hint">Não precisa ficar perfeita — a gente identifica tudo</string>
     <string name="occurrence_send_disabled_hint">Adicione uma foto do resíduo pra habilitar o envio</string>
     <string name="occurrence_retake">Refazer</string>
     <string name="occurrence_back">Voltar</string>
@@ -59,4 +60,38 @@
         <item>Manutenção</item>
         <item>Armazenamento</item>
     </string-array>
+
+    <!-- Cooperativas (Figma 626:582) -->
+    <string name="coops_title">Cooperativas próximas</string>
+    <string name="coops_subtitle">As mais pertinho da sua unidade primeiro</string>
+
+    <!-- Notificações (Figma 626:780) -->
+    <string name="notifications_title">Notificações</string>
+    <string name="notifications_new">%1$d novas</string>
+    <string name="notifications_mark_all">Marcar todas como lidas</string>
+    <string name="notifications_badge_new">NOVA</string>
+
+    <!-- Filtrar ocorrências (Figma 554:24) -->
+    <string name="filter_title">Filtrar ocorrências</string>
+    <string name="filter_clear">Limpar</string>
+    <string name="filter_material">Material</string>
+    <string name="filter_status">Status</string>
+    <string name="filter_apply">Aplicar filtros</string>
+    <string name="filter_status_open">Aberta</string>
+    <string name="filter_status_analyzing">Em análise</string>
+    <string name="filter_status_collected">Coletada</string>
+
+    <!-- Análise IA (Figma 626:327) -->
+    <string name="ai_title">Análise da IA</string>
+    <string name="ai_analyzing">Analisando imagem…</string>
+    <string name="ai_done">Análise concluída</string>
+    <string name="ai_found_title">O que a IA encontrou</string>
+    <string name="ai_label_type">Tipo</string>
+    <string name="ai_label_contamination">Contaminação</string>
+    <string name="ai_label_quantity">Quantidade</string>
+    <string name="ai_label_confidence">Confiança da IA</string>
+    <string name="ai_label_recommendation">Recomendação</string>
+    <string name="ai_confirm">Confirmar e gerar relatório</string>
+    <string name="ai_edit">Editar</string>
+    <string name="ai_registered">Ocorrência registrada</string>
 </resources>

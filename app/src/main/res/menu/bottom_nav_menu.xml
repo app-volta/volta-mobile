@@ -5,14 +5,15 @@
         android:icon="@drawable/ic_nav_home_figma"
         android:title="@string/nav_home" />
     <item
-        android:id="@+id/nav_occurrences"
+        android:id="@+id/nav_cooperatives"
         android:icon="@drawable/ic_nav_coops_figma"
         android:title="@string/nav_coops" />
-    <!-- placeholder central para espaçar o FAB - invisível mas ocupa espaço -->
+    <!-- placeholder central para espaçar o FAB - invisível, nunca selecionável -->
     <item
         android:id="@+id/nav_placeholder"
         android:icon="@android:color/transparent"
         android:title=""
+        android:checkable="false"
         android:enabled="false" />
     <item
         android:id="@+id/nav_reports"

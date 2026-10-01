@@ -12,17 +12,22 @@ public class Notification {
     private final String descricao;
     private final String tempoRelativo;
     private final String icone;
+    private final String tint;
+    private final String bg;
     private boolean lida;
     private final String occurrenceId;
 
     public Notification(String id, String tipo, String titulo, String descricao,
-                        String tempoRelativo, String icone, boolean lida, String occurrenceId) {
+                        String tempoRelativo, String icone, String tint, String bg,
+                        boolean lida, String occurrenceId) {
         this.id = id;
         this.tipo = tipo;
         this.titulo = titulo;
         this.descricao = descricao;
         this.tempoRelativo = tempoRelativo;
         this.icone = icone;
+        this.tint = tint;
+        this.bg = bg;
         this.lida = lida;
         this.occurrenceId = occurrenceId;
     }
@@ -35,6 +40,8 @@ public class Notification {
                 json.getDescricao(),
                 json.getTempoRelativo(),
                 json.getIcone(),
+                json.getTint(),
+                json.getBg(),
                 json.isLida(),
                 json.getOccurrenceId());
     }
@@ -61,6 +68,14 @@ public class Notification {
 
     public String getIcone() {
         return icone;
+    }
+
+    public String getTint() {
+        return tint;
+    }
+
+    public String getBg() {
+        return bg;
     }
 
     public boolean isLida() {

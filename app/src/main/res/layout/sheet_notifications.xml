@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom sheet Notificações — Figma (626:780): título + pill + X + marcar lidas + lista. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/volta_surface_light"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing_normal">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_small">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/notifications_title"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_title"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvNewCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_small"
+                android:background="@drawable/bg_badge_baixa"
+                android:paddingStart="10dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/priority_low_text"
+                android:textSize="@dimen/text_size_caption"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnCloseNotifications"
+            android:layout_width="@dimen/tap_target_min"
+            android:layout_height="@dimen/tap_target_min"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/notifications_title"
+            android:padding="@dimen/spacing_medium"
+            android:src="@drawable/ic_close" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tvMarkAllRead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:text="@string/notifications_mark_all"
+        android:textColor="@color/volta_green_dark"
+        android:textSize="@dimen/text_size_body_small"
+        android:textStyle="bold" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false" />
+
+    <TextView
+        android:id="@+id/tvEmptyNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="@dimen/spacing_large"
+        android:text="@string/empty_list"
+        android:textColor="@color/volta_text_secondary_light"
+        android:textSize="@dimen/text_size_body_small"
+        android:visibility="gone" />
+</LinearLayout>

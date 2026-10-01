@@ -173,13 +173,11 @@ public class NewOccurrenceFragment extends Fragment {
 
         btnSendAnalysis.setEnabled(hasPhoto);
         if (hasPhoto) {
-            btnSendAnalysis.setBackgroundTintList(
-                    getResources().getColorStateList(R.color.volta_green_primary, null));
+            btnSendAnalysis.setBackgroundResource(R.drawable.bg_button_gradient);
             btnSendAnalysis.setTextColor(getResources().getColor(R.color.white, null));
             tvSendHint.setVisibility(View.GONE);
         } else {
-            btnSendAnalysis.setBackgroundTintList(
-                    getResources().getColorStateList(R.color.volta_card_border_light, null));
+            btnSendAnalysis.setBackgroundResource(R.drawable.bg_button_disabled);
             btnSendAnalysis.setTextColor(
                     getResources().getColor(R.color.volta_text_muted_light, null));
             tvSendHint.setVisibility(View.VISIBLE);

@@ -20,7 +20,7 @@
 
     <!-- Tipografia (Modo Claro) -->
     <color name="volta_text_primary_light">#171A19</color>
-    <color name="volta_text_secondary_light">#6B7280</color>
+    <color name="volta_text_secondary_light">#7C8698</color>
     <color name="volta_text_muted_light">#9CA3AF</color>
 
     <!-- Tipografia (Modo Escuro) -->
@@ -28,13 +28,13 @@
     <color name="volta_text_secondary_dark">#9CA3AF</color>
     <color name="volta_text_muted_dark">#6B7280</color>
 
-    <!-- Badges de Prioridade -->
-    <color name="priority_high_text">#DC2626</color>
-    <color name="priority_high_bg">#FEE2E2</color>
-    <color name="priority_medium_text">#D97706</color>
-    <color name="priority_medium_bg">#FEF3C7</color>
-    <color name="priority_low_text">#059669</color>
-    <color name="priority_low_bg">#D1FAE5</color>
+    <!-- Badges de Prioridade - cores exatas do Figma (Home 626:202 via API) -->
+    <color name="priority_high_text">#E8556C</color>
+    <color name="priority_high_bg">#FDEAEC</color>
+    <color name="priority_medium_text">#C68A10</color>
+    <color name="priority_medium_bg">#FDF3DE</color>
+    <color name="priority_low_text">#12A05E</color>
+    <color name="priority_low_bg">#E2F7EC</color>
 
     <!-- Status da Ocorrência -->
     <color name="status_novo_text">#2563EB</color>
@@ -65,8 +65,8 @@
     <color name="occurrence_icon_bg">#FDF3DE</color>
     <color name="occurrence_icon_tint_blue">#3B82F6</color>
     <color name="occurrence_icon_bg_blue">#E6EFFF</color>
-    <color name="occurrence_icon_tint_purple">#8B5CF6</color>
-    <color name="occurrence_icon_bg_purple">#EDE9FE</color>
+    <color name="occurrence_icon_tint_purple">#8B6FE0</color>
+    <color name="occurrence_icon_bg_purple">#EFEAFB</color>
 
     <!-- Notificação -->
     <color name="notification_dot">#E8556C</color>
@@ -75,6 +75,13 @@
     <!-- CTA Gradiente -->
     <color name="cta_gradient_start">#16C784</color>
     <color name="cta_gradient_end">#0D9B5E</color>
+
+    <!-- Verdes/detalhes Figma (telas Registro/IA) -->
+    <color name="volta_green_deep">#0E7C48</color>
+    <color name="pill_dark_bg">#0A3D25</color>
+    <color name="sparkle_light">#8CF0BE</color>
+    <color name="recommendation_text">#2E6B4C</color>
+    <color name="confidence_row_bg">#F1F3F8</color>
 
     <!-- Cores de Apoio -->
     <color name="white">#FFFFFFFF</color>

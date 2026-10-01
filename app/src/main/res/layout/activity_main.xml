@@ -58,7 +58,7 @@
         android:layout_width="72dp"
         android:layout_height="72dp"
         android:layout_marginBottom="80dp"
-        android:background="@drawable/bg_fab_gradient"
+        android:background="@drawable/bg_fab_ring"
         android:clickable="true"
         android:focusable="true"
         android:contentDescription="@string/nav_register"
