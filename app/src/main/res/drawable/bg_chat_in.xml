@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bolha de mensagem recebida (Chat, Figma 790:3191) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#EFF0F6" />
+    <corners android:radius="16dp" />
+</shape>
