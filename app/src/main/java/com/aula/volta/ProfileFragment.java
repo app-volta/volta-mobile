@@ -165,9 +165,15 @@ public class ProfileFragment extends Fragment {
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.profile_logout_title)
                 .setMessage(R.string.profile_logout_msg)
-                .setPositiveButton(R.string.profile_logout, (dialog, which) ->
-                        Toast.makeText(requireContext(), R.string.occ_soon,
-                                Toast.LENGTH_SHORT).show())
+                .setPositiveButton(R.string.profile_logout, (dialog, which) -> {
+                    com.aula.volta.data.local.SessionManager.logout(requireContext());
+                    android.content.Intent intent = new android.content.Intent(
+                            requireContext(), com.aula.volta.ui.auth.AuthActivity.class);
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                            | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                })
                 .setNegativeButton(R.string.pick_confirm_no, null)
                 .show();
     }
