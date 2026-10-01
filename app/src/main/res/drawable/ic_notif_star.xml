@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icones Notificações/Frame-7.svg - estrela laranja #E08A3C -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:pathData="M11,2.20001 L13.2,7.70001 H18.7 L14.3,11 L15.4,16.5 L11,13.2 L6.59999,16.5 L7.69999,11 L3.29999,7.70001 H8.79999 L11,2.20001 Z"
+        android:strokeWidth="1.65"
+        android:strokeColor="#E08A3C"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineJoin="round" />
+</vector>

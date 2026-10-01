@@ -27,9 +27,12 @@
     <!-- Nova Ocorrência -->
     <string name="occurrence_new_title">Nova ocorrência</string>
     <string name="occurrence_step_1">Passo 1 de 2 · Registro</string>
-    <string name="occurrence_step_2">Passo 2 de 2 · Confirmação</string>
+    <string name="occurrence_step_2">Passo 2 de 2 · Revisão</string>
     <string name="occurrence_take_photo">Tire uma foto do resíduo</string>
     <string name="occurrence_photo_hint">Não precisa ficar perfeita — a gente identifica tudo</string>
+    <string name="occurrence_send_disabled_hint">Adicione uma foto do resíduo pra habilitar o envio</string>
+    <string name="occurrence_retake">Refazer</string>
+    <string name="occurrence_back">Voltar</string>
     <string name="occurrence_btn_camera">Câmera</string>
     <string name="occurrence_btn_gallery">Galeria</string>
     <string name="occurrence_desc_label">Descrição (opcional)</string>
@@ -43,4 +46,231 @@
     <string name="priority_alta">ALTA</string>
     <string name="priority_media">MÉDIA</string>
     <string name="priority_baixa">BAIXA</string>
+
+    <!-- Estados de dados (Fase 0) -->
+    <string name="offline_cache">Sem internet - carregando cache</string>
+    <string name="error_load">Não foi possível carregar. Toque para tentar de novo.</string>
+    <string name="empty_list">Nada por aqui ainda.</string>
+
+    <!-- Setores (mock Fase 3, lista vem da empresa na API) -->
+    <string-array name="occurrence_sector_options">
+        <item>Frigorífico — Setor B2</item>
+        <item>Expedição</item>
+        <item>Manutenção</item>
+        <item>Armazenamento</item>
+    </string-array>
+
+    <!-- Cooperativas (Figma 626:582) -->
+    <string name="coops_title">Cooperativas próximas</string>
+    <string name="coops_subtitle">As mais pertinho da sua unidade primeiro</string>
+
+    <!-- Notificações (Figma 626:780) -->
+    <string name="notifications_title">Notificações</string>
+    <string name="notifications_new">%1$d novas</string>
+    <string name="notifications_mark_all">Marcar todas como lidas</string>
+    <string name="notifications_badge_new">NOVA</string>
+    <!-- Nova ocorrência → notificação local (Fase 8b) -->
+    <string name="notif_occurrence_title">Ocorrência #%1$s registrada</string>
+    <string name="notif_occurrence_desc">%1$s · %2$s</string>
+    <string name="notif_occurrence_desc_fallback">Toque para acompanhar</string>
+    <string name="notif_now">agora</string>
+    <string name="notif_finalize_title">Ocorrência #%1$s finalizada</string>
+    <string name="notif_finalize_desc">Entra no relatório PGRS do mês</string>
+    <string name="notif_pick_title">Coleta solicitada · %1$s</string>
+    <string name="notif_pick_desc">Ocorrência #%1$s</string>
+
+    <!-- Filtrar ocorrências (Figma 554:24) -->
+    <string name="filter_title">Filtrar ocorrências</string>
+    <string name="filter_clear">Limpar</string>
+    <string name="filter_material">Material</string>
+    <string name="filter_status">Status</string>
+    <string name="filter_apply">Aplicar filtros</string>
+    <string name="filter_status_open">Aberta</string>
+    <string name="filter_status_analyzing">Em análise</string>
+    <string name="filter_status_collected">Coletada</string>
+
+    <!-- Análise IA (Figma 626:327) -->
+    <string name="ai_title">Análise da IA</string>
+    <string name="ai_analyzing">Analisando imagem…</string>
+    <string name="ai_scanning">Analisando…</string>
+    <string name="ai_loading_recommendation">carregando…</string>
+    <string name="ai_done">Análise concluída</string>
+    <string name="ai_found_title">O que a IA encontrou</string>
+    <string name="ai_label_type">Tipo</string>
+    <string name="ai_label_contamination">Contaminação</string>
+    <string name="ai_label_quantity">Quantidade</string>
+    <string name="ai_label_confidence">Confiança da IA</string>
+    <string name="ai_label_recommendation">Recomendação</string>
+    <string name="ai_confirm">Confirmar e gerar relatório</string>
+    <string name="ai_edit">Editar</string>
+    <string name="ai_registered">Ocorrência registrada</string>
+
+    <!-- Detalhe da ocorrência (Figma 554:27) -->
+    <string name="detail_weight">Peso estimado</string>
+    <string name="detail_registered_by">Registrado por</string>
+    <string name="detail_date">Data</string>
+    <string name="detail_confidence">Confiança IA</string>
+    <string name="detail_full_report">Ver relatório completo</string>
+    <string name="detail_report_soon">Relatório completo chega na Fase 9</string>
+    <string name="detail_request_pickup">Solicitar destinação</string>
+
+    <!-- Ocorrência cheia (Figma 790:2725) -->
+    <string name="occ_title">Ocorrência</string>
+    <string name="occ_step_registered">Registrada</string>
+    <string name="occ_step_analysis">Análise IA</string>
+    <string name="occ_step_approval">Aprovação</string>
+    <string name="occ_step_pickup">Coleta</string>
+    <string name="occ_action_edit_class">Alterar classificação</string>
+    <string name="occ_action_forward">Encaminhar para outro setor</string>
+    <string name="occ_action_observe">Adicionar observação</string>
+    <string name="occ_action_finalize">Finalizar ocorrência</string>
+    <string name="occ_pick_coop">Escolher cooperativa para coleta</string>
+    <string name="occ_details_title">Detalhes</string>
+    <string name="occ_report_auto">Relatório automático</string>
+    <string name="occ_history_title">Histórico</string>
+    <string name="occ_history_empty">Sem movimentações ainda.</string>
+    <string name="occ_finalize_title">Finalizar ocorrência?</string>
+    <string name="occ_finalize_text">A ocorrência será marcada como concluída e entra no relatório PGRS do mês.</string>
+    <string name="occ_finalize_yes">Sim, finalizar</string>
+    <string name="occ_finalize_done">Ocorrência finalizada</string>
+    <string name="occ_soon">Disponível em breve</string>
+    <string name="pick_confirm_title">Solicitar coleta</string>
+    <string name="pick_confirm_yes">Solicitar</string>
+    <string name="pick_confirm_no">Voltar</string>
+    <string name="pick_title">Cooperativas compatíveis</string>
+    <string name="pick_request_sent">Solicitação enviada</string>
+    <string name="pick_confirm_msg">Solicitar coleta para %1$s?</string>
+
+    <!-- Home nova (Figma 790:1624) -->
+    <string name="home_week_title">Últimos 7 dias</string>
+
+    <!-- Relatórios (Figma 790:3322) -->
+    <string name="reports_subtitle">Acompanhe o que sua unidade recuperou</string>
+    <string name="reports_period_week">Semana</string>
+    <string name="reports_period_month">Mês</string>
+    <string name="reports_period_quarter">Trimestre</string>
+    <string name="reports_pgrs_title">Relatório PGRS trimestral</string>
+    <string name="reports_pgrs_sub">Pronto pra baixar e enviar</string>
+    <string name="reports_pgrs_button">Gerar relatório</string>
+    <string name="reports_month_title">Neste mês</string>
+    <string name="reports_stat_occurrences">ocorrências</string>
+    <string name="reports_stat_kg">kg recuperados</string>
+    <string name="reports_stat_rate">taxa coleta</string>
+    <string name="reports_goal_title">Meta do mês</string>
+    <string name="reports_goal_of">de %1$s</string>
+    <string name="reports_by_material">Por tipo de material</string>
+    <string name="reports_material_count">%1$d ocorrências</string>
+    <string name="reports_share">Compartilhar relatório</string>
+    <string name="reports_nothing">Nada para incluir no relatório ainda.</string>
+
+    <!-- Perfil (Figma 790:3470) -->
+    <string name="profile_name">Breno Gomes</string>
+    <string name="profile_role">Responsável PGRS</string>
+    <string name="profile_unit">Frigorífico · Setor B2</string>
+    <string name="profile_about">Sobre você</string>
+    <string name="profile_edit">Editar</string>
+    <string name="profile_email">E-mail</string>
+    <string name="profile_email_value">breno@empresa.com</string>
+    <string name="profile_since">Cadastro</string>
+    <string name="profile_since_value">março 2024</string>
+    <string name="profile_occ">Ocorrências</string>
+    <string name="profile_occ_value">%1$d registradas</string>
+    <string name="profile_recovered">Recuperado</string>
+    <string name="profile_recovered_value">%1$s kg</string>
+    <string name="profile_settings">Configurações</string>
+    <string name="profile_notifications">Notificações</string>
+    <string name="profile_my_unit">Minha unidade</string>
+    <string name="profile_my_unit_value">Frigorífico B2</string>
+    <string name="profile_help">Ajuda com o VOLTA</string>
+    <string name="profile_help_hint">assistente IA</string>
+    <string name="profile_logout">Sair da conta</string>
+    <string name="profile_logout_title">Sair da conta?</string>
+    <string name="profile_logout_msg">Você vai precisar entrar de novo.</string>
+
+    <!-- Chat com a cooperativa (Figma 790:3191, mock Fase 11) -->
+    <string name="chat_online">Parceira J&amp;F · Responde rápido</string>
+    <string name="chat_hint">Escrever mensagem…</string>
+    <string name="chat_pickup_title">Coleta agendada · hoje, 15h30</string>
+    <string name="chat_pickup_sub">%1$s · ≈38 kg de papelão</string>
+    <string name="chat_quick_1">Pode vir hoje?</string>
+    <string name="chat_quick_2">Material está no Setor B2</string>
+    <string name="chat_quick_3">Obrigado!</string>
+    <string name="chat_msg_1">Oi! Vimos que vocês têm papelão molhado pra coleta. Podemos buscar hoje até as 17h?</string>
+    <string name="chat_msg_1_time">09:14</string>
+    <string name="chat_msg_2">Perfeito! Vai estar separado na área da câmara fria, Setor B2.</string>
+    <string name="chat_msg_2_time">09:15</string>
+    <string name="chat_msg_3">Fechado! Nosso motorista chega por volta das 15h30.</string>
+    <string name="chat_msg_3_time">09:16</string>
+    <string name="chat_talk_to">Conversar com %1$s</string>
+    <string name="chat_talk_generic">Conversar com a cooperativa</string>
+    <string name="chat_now">agora</string>
+
+    <!-- Assistente VOLTA (Figma 790:1911, mock Fase 12) -->
+    <string name="assistant_online">seu assistente de descarte · online</string>
+    <string name="assistant_hello">Oi, Breno Liu!</string>
+    <string name="assistant_hello_sub">Pergunta qualquer coisa sobre resíduos, coletas ou as metas da unidade.</string>
+    <string name="assistant_intro">Eu sou o VOLTA, a setinha que ajuda a sua unidade a descartar certo. Escolhe uma pergunta aí embaixo ou escreve do seu jeito.</string>
+    <string name="assistant_hint">Pergunte ao VOLTA…</string>
+    <string name="assistant_chip_register">Registrar isopor</string>
+    <string name="assistant_chip_coops">Ver cooperativas</string>
+    <string name="assistant_chip_papelao">Papelão molhado recicla?</string>
+    <string name="assistant_chip_meta">Como está a meta do mês?</string>
+    <string name="assistant_a_isopor">Isopor (EPS) é reciclável, sim! Só precisa estar limpo e seco. A Recicla Vida aceita e fica a 3,1 km da unidade.</string>
+    <string name="assistant_a_papelao">Papelão molhado recicla, mas precisa secar antes. Guarda em área coberta e registra a ocorrência que a gente cuida.</string>
+    <string name="assistant_a_meta">Vocês recuperaram %1$s de %2$s no mês (%3$d%% da meta). Bora!</string>
+    <string name="assistant_a_coop">A JBS Ambiental é a parceira mais perto: 2,4 km, coleta em até 24h. Quer que eu abra a lista?</string>
+    <string name="assistant_a_thanks">De nada! Precisou, é só chamar.</string>
+    <string name="assistant_a_fallback">Ainda estou aprendendo… tenta perguntar sobre materiais, coletas ou a meta do mês.</string>
+
+    <!-- Acesso (Figma 790:955+, mock Fase 13) -->
+    <string name="auth_welcome">Bem-vindo de VOLTA!</string>
+    <string name="auth_welcome_sub">Entre para continuar cuidando do descarte certo na sua unidade.</string>
+    <string name="auth_email">E-mail</string>
+    <string name="auth_email_hint">voce@empresa.com</string>
+    <string name="auth_password">Senha</string>
+    <string name="auth_forgot">Esqueci minha senha</string>
+    <string name="auth_login_btn">Entrar</string>
+    <string name="auth_or">ou</string>
+    <string name="auth_google">Continuar com Google</string>
+    <string name="auth_no_account">Novo por aqui?</string>
+    <string name="auth_create">Criar conta</string>
+    <string name="auth_register_title">Criar conta</string>
+    <string name="auth_register_sub">Leva menos de um minuto.</string>
+    <string name="auth_name">Nome</string>
+    <string name="auth_name_hint">Como podemos te chamar?</string>
+    <string name="auth_create_btn">Criar conta</string>
+    <string name="auth_have_account">Já tem conta?</string>
+    <string name="auth_enter">Entrar</string>
+    <string name="auth_confirm_title">Confirmar e-mail</string>
+    <string name="auth_confirm_sub">Enviamos um código de 4 números para %1$s</string>
+    <string name="auth_confirm_btn">Confirmar</string>
+    <string name="auth_bad_code">Digite os 4 números</string>
+    <string name="auth_success_title">Conta criada!</string>
+    <string name="auth_success_sub">Tudo pronto pra cuidar do descarte certo.</string>
+    <string name="auth_start">Começar</string>
+    <string name="auth_invalid">Verifique e-mail e senha</string>
+    <string name="auth_forgot_title">Esqueceu a senha?</string>
+    <string name="auth_forgot_sub">Sem problema. Digite o e-mail da sua unidade e enviamos um código pra você criar uma nova senha.</string>
+    <string name="auth_send_code">Enviar código</string>
+    <string name="auth_remembered">Lembrou a senha?</string>
+    <string name="auth_back_login">Voltar ao login</string>
+    <string name="auth_code_title">Confirme seu e-mail</string>
+    <string name="auth_code_sub">Enviamos um código de 4 dígitos para %1$s</string>
+    <string name="auth_no_code">Não recebeu o código?</string>
+    <string name="auth_resend_in">Reenviar em 0:%1$02d</string>
+    <string name="auth_resend">Reenviar código</string>
+    <string name="auth_code_sent">Código reenviado</string>
+    <string name="auth_reset_title">Criar nova senha</string>
+    <string name="auth_reset_sub">Sua nova senha precisa ser diferente da anterior. Escolha uma que você lembre.</string>
+    <string name="auth_new_password">Nova senha</string>
+    <string name="auth_confirm_password">Confirmar nova senha</string>
+    <string name="auth_save_password">Salvar nova senha</string>
+    <string name="auth_pw_weak">Fraca</string>
+    <string name="auth_pw_fair">Razoável</string>
+    <string name="auth_pw_good">Boa</string>
+    <string name="auth_pw_strong">Forte</string>
+    <string name="auth_pw_mismatch">As senhas não conferem</string>
+    <string name="auth_passok_title">Tudo certo!</string>
+    <string name="auth_passok_sub">Sua senha foi atualizada com sucesso. Já pode entrar e continuar cuidando do descarte na sua unidade.</string>
+    <string name="auth_go_login">Ir para o login</string>
 </resources>

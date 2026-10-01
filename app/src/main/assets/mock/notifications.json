@@ -1,0 +1,62 @@
+[
+  {
+    "id": "n1",
+    "tipo": "APROVACAO",
+    "titulo": "Priscila aprovou sua ocorrência #0483",
+    "descricao": "Papelão Classe A · 38 kg",
+    "tempo_relativo": "há 5 min",
+    "icone": "check",
+    "tint": "#12A05E",
+    "bg": "#E2F7EC",
+    "lida": false,
+    "occurrence_id": "48291"
+  },
+  {
+    "id": "n2",
+    "tipo": "NOVA_OCORRENCIA",
+    "titulo": "Nova ocorrência no Setor B2",
+    "descricao": "Você foi marcado como responsável",
+    "tempo_relativo": "há 20 min",
+    "icone": "bell",
+    "tint": "#C68A10",
+    "bg": "#FDF3DE",
+    "lida": false,
+    "occurrence_id": null
+  },
+  {
+    "id": "n3",
+    "tipo": "COLETA_AGENDADA",
+    "titulo": "Coleta agendada pra amanhã",
+    "descricao": "JBS Ambiental · 14h no Frigorífico B2",
+    "tempo_relativo": "há 2h",
+    "icone": "truck",
+    "tint": "#3B82F6",
+    "bg": "#E4EFFF",
+    "lida": false,
+    "occurrence_id": null
+  },
+  {
+    "id": "n4",
+    "tipo": "META",
+    "titulo": "Você bateu 76% da meta do mês",
+    "descricao": "1.147 kg de 1.500 kg recuperados",
+    "tempo_relativo": "há ontem",
+    "icone": "trophy",
+    "tint": "#8B6FE0",
+    "bg": "#EFEAFB",
+    "lida": true,
+    "occurrence_id": null
+  },
+  {
+    "id": "n5",
+    "tipo": "RANKING",
+    "titulo": "Setor B2 subiu pro 2º lugar",
+    "descricao": "Ranking mensal atualizado",
+    "tempo_relativo": "há 3 dias",
+    "icone": "star",
+    "tint": "#E08A3C",
+    "bg": "#FFEFE2",
+    "lida": true,
+    "occurrence_id": null
+  }
+]

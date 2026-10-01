@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Círculo verde cheio do tracker (etapa concluída, Figma 790:2725) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/nav_item_selected" />
+    <size
+        android:width="24dp"
+        android:height="24dp" />
+</shape>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FAB com anel branco (Figma Home nova 790:1624) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+    <item
+        android:left="5dp"
+        android:top="5dp"
+        android:right="5dp"
+        android:bottom="5dp">
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#22C06F"
+                android:endColor="#0E7C48"
+                android:angle="135"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

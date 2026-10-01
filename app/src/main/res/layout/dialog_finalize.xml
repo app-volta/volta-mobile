@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Diálogo Finalizar ocorrência (Figma 790:2725) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing_large">
+
+    <FrameLayout
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:background="@drawable/bg_occurrence_icon_green">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_notif_check" />
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_small"
+        android:gravity="center"
+        android:text="@string/occ_finalize_title"
+        android:textColor="@color/volta_text_primary_light"
+        android:textSize="@dimen/text_size_title"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_large"
+        android:gravity="center"
+        android:text="@string/occ_finalize_text"
+        android:textColor="@color/volta_text_secondary_light"
+        android:textSize="@dimen/text_size_body_small" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnFinalizeYes"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height_primary"
+        android:backgroundTint="@color/volta_green_primary"
+        android:text="@string/occ_finalize_yes"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_size_body"
+        android:textStyle="bold"
+        app:cornerRadius="@dimen/corner_radius_button" />
+
+    <TextView
+        android:id="@+id/btnFinalizeNo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_medium"
+        android:padding="@dimen/spacing_small"
+        android:text="@string/pick_confirm_no"
+        android:textColor="@color/volta_text_secondary_light"
+        android:textSize="@dimen/text_size_body"
+        android:textStyle="bold" />
+</LinearLayout>

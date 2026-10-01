@@ -1,33 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Lista completa de ocorrências ("Ver todas" da Home). Mesmo card da Home via adapter.
+     Modal Filtrar vem na Fase 5 (feat/occurrences). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/volta_background_light"
-    android:gravity="center"
     android:orientation="vertical"
     android:padding="@dimen/spacing_normal">
 
-    <ImageView
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:src="@drawable/ic_nav_occurrences"
-        app:tint="@color/volta_green_primary" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_small">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:text="@string/home_recent_occurrences"
+            android:textColor="@color/volta_text_primary_light"
+            android:textSize="@dimen/text_size_subtitle"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/btnFilterOccurrences"
+            android:layout_width="@dimen/tap_target_min"
+            android:layout_height="@dimen/tap_target_min"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_notification_circle"
+            android:clickable="true"
+            android:contentDescription="@string/filter_title"
+            android:elevation="2dp"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_filter" />
+        </FrameLayout>
+    </RelativeLayout>
+
+    <ProgressBar
+        android:id="@+id/loadingOccurrences"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/spacing_large" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvOccurrences"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/tvEmptyOccurrencesList"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_medium"
-        android:text="@string/nav_occurrences"
-        android:textColor="@color/volta_text_primary_light"
-        android:textSize="@dimen/text_size_title"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_xs"
-        android:text="Histórico completo e filtros de chamados."
+        android:gravity="center"
+        android:padding="@dimen/spacing_large"
+        android:text="@string/empty_list"
         android:textColor="@color/volta_text_secondary_light"
-        android:textSize="@dimen/text_size_body_small" />
+        android:textSize="@dimen/text_size_body_small"
+        android:visibility="gone" />
 </LinearLayout>

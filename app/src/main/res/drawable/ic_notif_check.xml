@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icones Notificações/Frame-3.svg - check verde #12A05E -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <path
+        android:pathData="M11,19.8 C15.8601,19.8 19.8,15.8601 19.8,11 C19.8,6.13985 15.8601,2.19995 11,2.19995 C6.13991,2.19995 2.20001,6.13985 2.20001,11 C2.20001,15.8601 6.13991,19.8 11,19.8 Z"
+        android:strokeWidth="1.98"
+        android:strokeColor="#12A05E"
+        android:fillColor="@android:color/transparent" />
+    <path
+        android:pathData="M6.59998,11 L9.89998,14.3 L15.4,7.69995"
+        android:strokeWidth="1.98"
+        android:strokeColor="#12A05E"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

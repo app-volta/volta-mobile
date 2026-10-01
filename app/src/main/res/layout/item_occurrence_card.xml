@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Card de ocorrência — mesmo visual dos cards estáticos da Home (Figma).
+     Reutilizado na Home (recentes) e na Fase 5 (lista Ocorrências). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/spacing_small"
+    android:background="@drawable/bg_card_surface"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="@dimen/spacing_medium">
+
+    <FrameLayout
+        android:id="@+id/cardIconContainer"
+        android:layout_width="@dimen/thumbnail_size_occurrence"
+        android:layout_height="@dimen/thumbnail_size_occurrence"
+        android:background="@drawable/bg_occurrence_icon">
+
+        <ImageView
+            android:id="@+id/cardIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_occurrence_waste" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_medium"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/cardTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/volta_text_primary_light"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/cardSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/volta_text_secondary_light"
+            android:textSize="@dimen/text_size_caption" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/cardBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_badge_media"
+        android:paddingStart="10dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="4dp"
+        android:textColor="@color/priority_medium_text"
+        android:textSize="@dimen/text_size_caption"
+        android:textStyle="bold" />
+</LinearLayout>
