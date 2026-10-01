@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botão flutuante do Mascote VOLTA (Figma 790:1734) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/white" />
+    <stroke
+        android:width="2dp"
+        android:color="#E2F7EC" />
+</shape>

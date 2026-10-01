@@ -94,6 +94,12 @@ public class AiAnalysisFragment extends Fragment {
         MaterialButton btnConfirm = view.findViewById(R.id.btnConfirmAnalysis);
         btnConfirm.setOnClickListener(v -> confirmOccurrence(v));
 
+        View btnAskVolta = view.findViewById(R.id.btnAskVolta);
+        if (btnAskVolta != null) {
+            btnAskVolta.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigate(R.id.nav_assistant));
+        }
+
         startScanAnimation(view);
         analyzePhoto();
     }

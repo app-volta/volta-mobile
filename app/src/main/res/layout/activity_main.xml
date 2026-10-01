@@ -52,12 +52,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 
-    <!-- FAB Central - Registrar (ajuste manual seu: 80dp margin + círculo/icon maior) -->
+    <!-- FAB Central - Registrar (Figma tab-camera 790:1736: 68x68dp, sobreposto no entalhe central) -->
     <FrameLayout
         android:id="@+id/fabRegister"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:layout_marginBottom="80dp"
+        android:layout_width="68dp"
+        android:layout_height="68dp"
+        android:layout_marginBottom="28dp"
         android:background="@drawable/bg_fab_ring"
         android:clickable="true"
         android:focusable="true"
