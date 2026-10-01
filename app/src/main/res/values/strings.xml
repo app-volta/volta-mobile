@@ -133,6 +133,10 @@
     <string name="occ_finalize_text">A ocorrência será marcada como concluída e entra no relatório PGRS do mês.</string>
     <string name="occ_finalize_yes">Sim, finalizar</string>
     <string name="occ_finalize_done">Ocorrência finalizada</string>
+    <string name="toast_finalized_title">Ocorrência finalizada</string>
+    <string name="toast_finalized_sub">Já entrou no relatório PGRS do mês</string>
+    <string name="toast_finalized_action">Ver PGRS</string>
+    <string name="status_aprovada">APROVADA</string>
     <string name="occ_soon">Disponível em breve</string>
     <string name="pick_confirm_title">Solicitar coleta</string>
     <string name="pick_confirm_yes">Solicitar</string>

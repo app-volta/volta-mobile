@@ -87,6 +87,16 @@
     <color name="auth_input_text">#171A19</color>
     <color name="auth_input_hint">#7C8698</color>
 
+    <!-- Feedback e Toast Finalizado (Figma 851:4403, 851:4885) -->
+    <color name="toast_finalized_bg">#1B2430</color>
+    <color name="toast_finalized_subtitle">#B4BCC9</color>
+    <color name="toast_finalized_check">#22C06F</color>
+    <color name="status_aprovada_text">#0E7C48</color>
+    <color name="status_aprovada_bg">#E2F7EC</color>
+    <color name="dialog_finalize_bg">#FFFFFF</color>
+    <color name="dialog_finalize_title">#0F172A</color>
+    <color name="dialog_finalize_sub">#64748B</color>
+
     <!-- Cores de Apoio -->
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
