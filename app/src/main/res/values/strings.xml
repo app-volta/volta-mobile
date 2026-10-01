@@ -59,4 +59,12 @@
         <item>Manutenção</item>
         <item>Armazenamento</item>
     </string-array>
+
+    <!-- Detalhe da ocorrência (Figma 554:27) -->
+    <string name="detail_weight">Peso estimado</string>
+    <string name="detail_registered_by">Registrado por</string>
+    <string name="detail_date">Data</string>
+    <string name="detail_confidence">Confiança IA</string>
+    <string name="detail_full_report">Ver relatório completo</string>
+    <string name="detail_report_soon">Relatório completo chega na Fase 9</string>
 </resources>
