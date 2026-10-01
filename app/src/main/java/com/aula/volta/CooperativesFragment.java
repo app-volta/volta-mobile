@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,6 +38,7 @@ public class CooperativesFragment extends Fragment {
     private ProgressBar loadingCooperatives;
     private TextView tvEmptyCooperatives;
     private CooperativeAdapter adapter;
+    private String firstCoopName;
 
     public CooperativesFragment() {
     }
@@ -56,10 +58,23 @@ public class CooperativesFragment extends Fragment {
 
         RecyclerView rvCooperatives = view.findViewById(R.id.rvCooperatives);
         adapter = new CooperativeAdapter();
+        adapter.setOnItemClickListener(coop -> openChat(view, coop.getNome()));
         rvCooperatives.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvCooperatives.setAdapter(adapter);
 
+        view.findViewById(R.id.btnTalkTo).setOnClickListener(v -> {
+            if (firstCoopName != null) {
+                openChat(view, firstCoopName);
+            }
+        });
+
         loadCooperatives();
+    }
+
+    private void openChat(View view, String coopName) {
+        Bundle args = new Bundle();
+        args.putString("coopName", coopName == null ? "" : coopName);
+        Navigation.findNavController(view).navigate(R.id.nav_chat, args);
     }
 
     private void loadCooperatives() {
@@ -99,6 +114,14 @@ public class CooperativesFragment extends Fragment {
 
     private void applyCooperatives(List<CooperativeJSON> cooperatives) {
         adapter.setItems(cooperatives);
+        if (cooperatives != null && !cooperatives.isEmpty()
+                && cooperatives.get(0).getNome() != null) {
+            firstCoopName = cooperatives.get(0).getNome();
+            TextView btnTalk = requireView().findViewById(R.id.btnTalkTo);
+            if (btnTalk != null) {
+                btnTalk.setText(getString(R.string.chat_talk_to, firstCoopName));
+            }
+        }
         if (tvEmptyCooperatives != null) {
             tvEmptyCooperatives.setVisibility(
                     cooperatives == null || cooperatives.isEmpty() ? View.VISIBLE : View.GONE);

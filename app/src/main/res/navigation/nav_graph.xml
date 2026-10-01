@@ -87,6 +87,16 @@
             app:argType="string" />
     </fragment>
 
+    <!-- Chat com a cooperativa — Figma 790:3191 (Fase 11, mock local) -->
+    <fragment
+        android:id="@+id/nav_chat"
+        android:name="com.aula.volta.ui.chat.ChatFragment"
+        tools:layout="@layout/fragment_chat">
+        <argument
+            android:name="coopName"
+            app:argType="string" />
+    </fragment>
+
     <dialog
         android:id="@+id/nav_notifications"
         android:name="com.aula.volta.ui.notifications.NotificationsSheet" />

@@ -2,6 +2,7 @@
 <!-- Aba Coops: SÓ cooperativas (nunca ocorrências). Figma Cooperativas (626:582, sem mapa — Maps key pendente).
      Versão contextual por ocorrência chega na Fase 8 (feat/cooperatives). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/volta_background_light"
@@ -49,4 +50,16 @@
         android:textColor="@color/volta_text_secondary_light"
         android:textSize="@dimen/text_size_body_small"
         android:visibility="gone" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnTalkTo"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height_primary"
+        android:layout_marginTop="@dimen/spacing_medium"
+        android:backgroundTint="@color/volta_green_primary"
+        android:text="@string/chat_talk_generic"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_size_body_small"
+        android:textStyle="bold"
+        app:cornerRadius="@dimen/corner_radius_button" />
 </LinearLayout>

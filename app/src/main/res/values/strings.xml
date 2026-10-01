@@ -184,4 +184,22 @@
     <string name="profile_logout">Sair da conta</string>
     <string name="profile_logout_title">Sair da conta?</string>
     <string name="profile_logout_msg">Você vai precisar entrar de novo.</string>
+
+    <!-- Chat com a cooperativa (Figma 790:3191, mock Fase 11) -->
+    <string name="chat_online">Parceira J&amp;F · Responde rápido</string>
+    <string name="chat_hint">Escrever mensagem…</string>
+    <string name="chat_pickup_title">Coleta agendada · hoje, 15h30</string>
+    <string name="chat_pickup_sub">%1$s · ≈38 kg de papelão</string>
+    <string name="chat_quick_1">Pode vir hoje?</string>
+    <string name="chat_quick_2">Material está no Setor B2</string>
+    <string name="chat_quick_3">Obrigado!</string>
+    <string name="chat_msg_1">Oi! Vimos que vocês têm papelão molhado pra coleta. Podemos buscar hoje até as 17h?</string>
+    <string name="chat_msg_1_time">09:14</string>
+    <string name="chat_msg_2">Perfeito! Vai estar separado na área da câmara fria, Setor B2.</string>
+    <string name="chat_msg_2_time">09:15</string>
+    <string name="chat_msg_3">Fechado! Nosso motorista chega por volta das 15h30.</string>
+    <string name="chat_msg_3_time">09:16</string>
+    <string name="chat_talk_to">Conversar com %1$s</string>
+    <string name="chat_talk_generic">Conversar com a cooperativa</string>
+    <string name="chat_now">agora</string>
 </resources>
