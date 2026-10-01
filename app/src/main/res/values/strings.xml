@@ -202,4 +202,21 @@
     <string name="chat_talk_to">Conversar com %1$s</string>
     <string name="chat_talk_generic">Conversar com a cooperativa</string>
     <string name="chat_now">agora</string>
+
+    <!-- Assistente VOLTA (Figma 790:1911, mock Fase 12) -->
+    <string name="assistant_online">seu assistente de descarte · online</string>
+    <string name="assistant_hello">Oi, Breno Liu!</string>
+    <string name="assistant_hello_sub">Pergunta qualquer coisa sobre resíduos, coletas ou as metas da unidade.</string>
+    <string name="assistant_intro">Eu sou o VOLTA, a setinha que ajuda a sua unidade a descartar certo. Escolhe uma pergunta aí embaixo ou escreve do seu jeito.</string>
+    <string name="assistant_hint">Pergunte ao VOLTA…</string>
+    <string name="assistant_chip_register">Registrar isopor</string>
+    <string name="assistant_chip_coops">Ver cooperativas</string>
+    <string name="assistant_chip_papelao">Papelão molhado recicla?</string>
+    <string name="assistant_chip_meta">Como está a meta do mês?</string>
+    <string name="assistant_a_isopor">Isopor (EPS) é reciclável, sim! Só precisa estar limpo e seco. A Recicla Vida aceita e fica a 3,1 km da unidade.</string>
+    <string name="assistant_a_papelao">Papelão molhado recicla, mas precisa secar antes. Guarda em área coberta e registra a ocorrência que a gente cuida.</string>
+    <string name="assistant_a_meta">Vocês recuperaram %1$s de %2$s no mês (%3$d%% da meta). Bora!</string>
+    <string name="assistant_a_coop">A JBS Ambiental é a parceira mais perto: 2,4 km, coleta em até 24h. Quer que eu abra a lista?</string>
+    <string name="assistant_a_thanks">De nada! Precisou, é só chamar.</string>
+    <string name="assistant_a_fallback">Ainda estou aprendendo… tenta perguntar sobre materiais, coletas ou a meta do mês.</string>
 </resources>

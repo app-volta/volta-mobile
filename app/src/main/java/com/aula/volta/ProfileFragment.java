@@ -71,8 +71,7 @@ public class ProfileFragment extends Fragment {
                         Toast.LENGTH_SHORT).show());
 
         view.findViewById(R.id.rowProfileHelp).setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.occ_soon,
-                        Toast.LENGTH_SHORT).show());
+                Navigation.findNavController(v).navigate(R.id.nav_assistant));
 
         view.findViewById(R.id.btnLogout).setOnClickListener(v -> showLogoutDialog());
 
