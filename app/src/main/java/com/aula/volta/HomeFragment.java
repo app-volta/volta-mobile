@@ -19,13 +19,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.aula.volta.data.api.ApiClient;
-import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.api.ReportAPI;
 import com.aula.volta.data.local.NotificationStore;
+import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
-import com.aula.volta.data.model.OccurrenceJSON;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -38,8 +37,6 @@ import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
 
-    private static final String PREFS_OCCURRENCES = "cache_occurrences";
-    private static final String KEY_OCCURRENCE_LIST = "list";
     private static final String PREFS_REPORTS = "cache_reports";
     private static final String KEY_SUMMARY = "summary";
 
@@ -197,46 +194,16 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /** Ocorrências recentes via GET /occurrences (mock → API-ready). */
+    /** Ocorrências recentes via OccurrenceStore (API + locais lançados no app). */
     private void loadOccurrences() {
-        OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
-        api.getOccurrences().enqueue(new Callback<List<OccurrenceJSON>>() {
-            @Override
-            public void onResponse(Call<List<OccurrenceJSON>> call,
-                                   Response<List<OccurrenceJSON>> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Occurrence> occurrences = new ArrayList<>();
-                    for (OccurrenceJSON json : response.body()) {
-                        occurrences.add(Occurrence.fromJson(json));
-                    }
-                    PrefsHelper.putList(requireContext(), PREFS_OCCURRENCES,
-                            KEY_OCCURRENCE_LIST, occurrences);
-                    // Home exibe só as 3 mais recentes (mock ordenado); "Ver todas" abre a lista
-                    applyOccurrences(recentOnly(occurrences));
-                } else {
-                    applyOccurrences(cachedOccurrences());
-                }
-                onLoadFinished();
+        OccurrenceStore.refresh(requireContext(), occurrences -> {
+            if (!isAdded()) {
+                return;
             }
-
-            @Override
-            public void onFailure(Call<List<OccurrenceJSON>> call, Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                applyOccurrences(cachedOccurrences());
-                Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_LONG).show();
-                onLoadFinished();
-            }
+            // Home exibe só as 3 mais recentes (mock ordenado); "Ver todas" abre a lista
+            applyOccurrences(recentOnly(occurrences));
+            onLoadFinished();
         });
-    }
-
-    private List<Occurrence> cachedOccurrences() {
-        return recentOnly(PrefsHelper.getList(requireContext(), PREFS_OCCURRENCES,
-                KEY_OCCURRENCE_LIST, PrefsHelper.listType(Occurrence.class)));
     }
 
     /** Home mostra só as 3 mais recentes; a lista completa vive em nav_occurrences. */

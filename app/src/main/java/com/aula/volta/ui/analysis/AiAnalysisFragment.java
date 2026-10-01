@@ -21,8 +21,10 @@ import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.NotificationStore;
+import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.model.Notification;
+import com.aula.volta.data.model.Occurrence;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
@@ -45,6 +47,7 @@ public class AiAnalysisFragment extends Fragment {
     private android.animation.ObjectAnimator scanAnimator;
 
     private String photoPath;
+    private String descricao;
     private String setor;
 
     public AiAnalysisFragment() {
@@ -63,6 +66,8 @@ public class AiAnalysisFragment extends Fragment {
 
         Bundle args = getArguments();
         photoPath = args != null ? args.getString("photoPath") : null;
+        descricao = args != null && args.getString("descricao") != null
+                ? args.getString("descricao").trim() : "";
         setor = args != null ? args.getString("setor") : null;
 
         aiLoadingGroup = view.findViewById(R.id.aiLoadingGroup);
@@ -230,6 +235,7 @@ public class AiAnalysisFragment extends Fragment {
                 AuditLog.append(requireContext(), "Breno Gomes", "CRIAR",
                         "ocorrencia", id, null, "NOVO");
                 pushOccurrenceNotification(id);
+                pushOccurrenceToList(id);
                 Toast.makeText(requireContext(), R.string.ai_registered,
                         Toast.LENGTH_LONG).show();
                 Navigation.findNavController(v).popBackStack(R.id.nav_home, false);
@@ -272,5 +278,26 @@ public class AiAnalysisFragment extends Fragment {
                 false,
                 occurrenceId);
         NotificationStore.pushLocal(requireContext(), notification);
+    }
+
+    /** Ocorrência nova entra no topo de Recentes + Ver todas (merge local do store). */
+    private void pushOccurrenceToList(String occurrenceId) {
+        String material = analysis != null && analysis.getMaterial() != null
+                ? analysis.getMaterial() : "";
+        String title = descricao != null ? descricao : "";
+        if (title.isEmpty()) {
+            title = material;
+        }
+        if (title.isEmpty() && setor != null) {
+            title = setor;
+        }
+        OccurrenceStore.pushLocal(requireContext(), new Occurrence(
+                occurrenceId,
+                title,
+                setor == null ? "" : setor,
+                getString(R.string.notif_now),
+                "MEDIA",
+                "NOVO",
+                material));
     }
 }
