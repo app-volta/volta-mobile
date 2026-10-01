@@ -83,6 +83,10 @@
     <color name="recommendation_text">#2E6B4C</color>
     <color name="confidence_row_bg">#F1F3F8</color>
 
+    <!-- Inputs de Autenticação (fixos sobre background branco) -->
+    <color name="auth_input_text">#171A19</color>
+    <color name="auth_input_hint">#7C8698</color>
+
     <!-- Cores de Apoio -->
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>

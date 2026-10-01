@@ -60,8 +60,8 @@
             android:minHeight="@dimen/button_height_primary"
             android:paddingStart="@dimen/spacing_normal"
             android:paddingEnd="@dimen/spacing_normal"
-            android:textColor="@color/volta_text_primary_light"
-            android:textColorHint="@color/volta_text_muted_light"
+            android:textColor="@color/auth_input_text"
+            android:textColorHint="@color/auth_input_hint"
             android:textSize="@dimen/text_size_body" />
 
         <TextView
@@ -85,8 +85,8 @@
             android:minHeight="@dimen/button_height_primary"
             android:paddingStart="@dimen/spacing_normal"
             android:paddingEnd="@dimen/spacing_normal"
-            android:textColor="@color/volta_text_primary_light"
-            android:textColorHint="@color/volta_text_muted_light"
+            android:textColor="@color/auth_input_text"
+            android:textColorHint="@color/auth_input_hint"
             android:textSize="@dimen/text_size_body" />
 
         <TextView
@@ -110,8 +110,8 @@
             android:minHeight="@dimen/button_height_primary"
             android:paddingStart="@dimen/spacing_normal"
             android:paddingEnd="@dimen/spacing_normal"
-            android:textColor="@color/volta_text_primary_light"
-            android:textColorHint="@color/volta_text_muted_light"
+            android:textColor="@color/auth_input_text"
+            android:textColorHint="@color/auth_input_hint"
             android:textSize="@dimen/text_size_body" />
 
         <com.google.android.material.button.MaterialButton

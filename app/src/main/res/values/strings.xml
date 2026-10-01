@@ -230,6 +230,9 @@
     <string name="auth_password">Senha</string>
     <string name="auth_forgot">Esqueci minha senha</string>
     <string name="auth_login_btn">Entrar</string>
+    <string name="auth_demo_btn">Entrar como demonstração (Breno)</string>
+    <string name="auth_demo_title">💡 Modo de Demonstração VOLTA</string>
+    <string name="auth_demo_desc">E-mail: breno@volta.com  ·  Senha: 1234\n(Ou use qualquer e-mail e senha de 4+ dígitos)</string>
     <string name="auth_or">ou</string>
     <string name="auth_google">Continuar com Google</string>
     <string name="auth_no_account">Novo por aqui?</string>
