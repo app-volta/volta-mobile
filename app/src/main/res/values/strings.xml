@@ -123,6 +123,9 @@
     <string name="occ_action_observe">Adicionar observação</string>
     <string name="occ_action_finalize">Finalizar ocorrência</string>
     <string name="occ_pick_coop">Escolher cooperativa para coleta</string>
+    <string name="occ_details_title">Detalhes</string>
+    <string name="occ_history_title">Histórico</string>
+    <string name="occ_history_empty">Sem movimentações ainda.</string>
     <string name="occ_finalize_title">Finalizar ocorrência?</string>
     <string name="occ_finalize_text">A ocorrência será marcada como concluída e entra no relatório PGRS do mês.</string>
     <string name="occ_finalize_yes">Sim, finalizar</string>
