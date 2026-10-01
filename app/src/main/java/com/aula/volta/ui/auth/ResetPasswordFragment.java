@@ -100,23 +100,29 @@ public class ResetPasswordFragment extends Fragment {
     private void updateStrength(int length) {
         int level;
         int labelRes;
+        int colorRes;
         if (length >= 8) {
             level = 4;
             labelRes = R.string.auth_pw_strong;
+            colorRes = R.color.status_aprovada_text;
         } else if (length >= 6) {
             level = 3;
             labelRes = R.string.auth_pw_good;
+            colorRes = R.color.volta_green_primary;
         } else if (length >= 4) {
             level = 2;
             labelRes = R.string.auth_pw_fair;
+            colorRes = R.color.priority_medium_text;
         } else {
             level = length == 0 ? 0 : 1;
             labelRes = R.string.auth_pw_weak;
+            colorRes = R.color.priority_high_text;
         }
         for (int i = 0; i < segments.length; i++) {
             segments[i].setBackgroundResource(i < level
                     ? R.drawable.bg_progress_filled : R.drawable.bg_progress_track);
         }
         tvStrength.setText(getString(labelRes));
+        tvStrength.setTextColor(requireContext().getColor(colorRes));
     }
 }

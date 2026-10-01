@@ -1,6 +1,7 @@
 package com.aula.volta.ui.auth;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -18,12 +19,18 @@ import androidx.navigation.Navigation;
 import com.aula.volta.R;
 
 /**
- * Confirmar e-mail — 4 caixas com avanço automático (Fase 13).
+ * Confirmar e-mail — Figma 790:1055 (Fase 22).
+ * 4 caixas com avanço automático + timer regressivo de reenvio de 48s.
  * Mock: aceita qualquer código de 4 números. Args: email, name.
  */
 public class ConfirmEmailFragment extends Fragment {
 
+    private static final long RESEND_MILLIS = 48000L;
+
     private EditText[] boxes;
+    private TextView tvResend;
+    private CountDownTimer timer;
+    private boolean canResend;
 
     public ConfirmEmailFragment() {
     }
@@ -41,8 +48,16 @@ public class ConfirmEmailFragment extends Fragment {
 
         String email = getArguments() != null ? getArguments().getString("email") : "";
         String name = getArguments() != null ? getArguments().getString("name") : "";
-        ((TextView) view.findViewById(R.id.tvConfirmSub)).setText(
-                getString(R.string.auth_confirm_sub, email == null ? "" : email));
+
+        TextView tvEmail = view.findViewById(R.id.tvConfirmEmail);
+        if (tvEmail != null) {
+            tvEmail.setText(email == null || email.isEmpty() ? "seu e-mail" : email);
+        }
+
+        View btnBack = view.findViewById(R.id.btnBackConfirm);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
+        }
 
         boxes = new EditText[]{
                 view.findViewById(R.id.etCode1),
@@ -84,6 +99,17 @@ public class ConfirmEmailFragment extends Fragment {
             }
         });
 
+        tvResend = view.findViewById(R.id.tvResendConfirm);
+        if (tvResend != null) {
+            tvResend.setOnClickListener(v -> {
+                if (canResend) {
+                    Toast.makeText(requireContext(), R.string.auth_code_sent, Toast.LENGTH_SHORT).show();
+                    startResendTimer();
+                }
+            });
+            startResendTimer();
+        }
+
         view.findViewById(R.id.btnConfirmCode).setOnClickListener(v -> {
             StringBuilder code = new StringBuilder();
             for (EditText box : boxes) {
@@ -99,5 +125,39 @@ public class ConfirmEmailFragment extends Fragment {
             args.putString("name", name);
             Navigation.findNavController(v).navigate(R.id.auth_success, args);
         });
+    }
+
+    private void startResendTimer() {
+        canResend = false;
+        if (timer != null) {
+            timer.cancel();
+        }
+        timer = new CountDownTimer(RESEND_MILLIS, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                if (!isAdded() || tvResend == null) {
+                    return;
+                }
+                int sec = (int) (millisUntilFinished / 1000);
+                tvResend.setText(getString(R.string.auth_resend_in, sec));
+            }
+
+            @Override
+            public void onFinish() {
+                if (!isAdded() || tvResend == null) {
+                    return;
+                }
+                canResend = true;
+                tvResend.setText(R.string.auth_resend);
+            }
+        }.start();
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (timer != null) {
+            timer.cancel();
+        }
+        super.onDestroyView();
     }
 }

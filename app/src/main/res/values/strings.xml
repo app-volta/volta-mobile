@@ -249,12 +249,12 @@
     <string name="auth_create_btn">Criar conta</string>
     <string name="auth_have_account">Já tem conta?</string>
     <string name="auth_enter">Entrar</string>
-    <string name="auth_confirm_title">Confirmar e-mail</string>
-    <string name="auth_confirm_sub">Enviamos um código de 4 números para %1$s</string>
+    <string name="auth_confirm_title">Confirme seu e-mail</string>
+    <string name="auth_confirm_sub">Enviamos um código de 4 dígitos para</string>
     <string name="auth_confirm_btn">Confirmar</string>
     <string name="auth_bad_code">Digite os 4 números</string>
     <string name="auth_success_title">Conta criada!</string>
-    <string name="auth_success_sub">Tudo pronto pra cuidar do descarte certo.</string>
+    <string name="auth_success_sub">Bem-vindo ao VOLTA.\nAgora cada resíduo fora do lugar vira informação pra sua unidade.</string>
     <string name="auth_start">Começar</string>
     <string name="auth_invalid">Verifique e-mail e senha</string>
     <string name="auth_forgot_title">Esqueceu a senha?</string>
