@@ -39,4 +39,28 @@
             app:argType="string" />
     </fragment>
 
+    <fragment
+        android:id="@+id/auth_forgot"
+        android:name="com.aula.volta.ui.auth.ForgotPasswordFragment"
+        tools:layout="@layout/fragment_forgot_password" />
+
+    <fragment
+        android:id="@+id/auth_passcode"
+        android:name="com.aula.volta.ui.auth.PasswordCodeFragment"
+        tools:layout="@layout/fragment_password_code">
+        <argument
+            android:name="email"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/auth_reset"
+        android:name="com.aula.volta.ui.auth.ResetPasswordFragment"
+        tools:layout="@layout/fragment_reset_password" />
+
+    <fragment
+        android:id="@+id/auth_passok"
+        android:name="com.aula.volta.ui.auth.PasswordSuccessFragment"
+        tools:layout="@layout/fragment_password_success" />
+
 </navigation>
