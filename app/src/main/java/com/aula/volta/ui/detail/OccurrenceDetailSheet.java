@@ -15,7 +15,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.aula.volta.R;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
+import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.report.PgrsReport;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.gson.JsonObject;
 
@@ -63,9 +65,17 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
         tvConfidence = view.findViewById(R.id.tvDetailConfidence);
 
         View btnReport = view.findViewById(R.id.btnFullReport);
-        btnReport.setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.detail_report_soon,
-                        Toast.LENGTH_SHORT).show());
+        btnReport.setOnClickListener(v -> {
+            java.io.File report = PgrsReport.generate(requireContext());
+            if (report == null) {
+                Toast.makeText(requireContext(), R.string.reports_nothing,
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+            AuditLog.append(requireContext(), "Breno Gomes", "GERAR",
+                    "relatorio", report.getName(), null, null);
+            PgrsReport.share(requireContext(), report);
+        });
 
         String occurrenceId = getArguments() != null
                 ? getArguments().getString("occurrenceId") : null;
