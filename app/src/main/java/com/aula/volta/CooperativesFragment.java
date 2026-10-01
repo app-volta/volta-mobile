@@ -68,6 +68,12 @@ public class CooperativesFragment extends Fragment {
             }
         });
 
+        View btnBack = view.findViewById(R.id.btnBackCoops);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigateUp());
+        }
+
         loadCooperatives();
     }
 
