@@ -34,7 +34,7 @@ import retrofit2.Response;
 
 /**
  * Análise da IA — Passo 2 de 2 (Fase 4, Figma 626:327).
- * IA copiloto: sugere via contrato AiAnalysisJSON; humano confirma ou edita.0
+ * IA copiloto: sugere via contrato AiAnalysisJSON; humano confirma ou edita.
  * Args: photoPath, descricao, setor, avisar.
  */
 public class AiAnalysisFragment extends Fragment {
