@@ -46,6 +46,10 @@ public class OccurrenceDetailFragment extends Fragment {
     private TextView tvStatus;
     private TextView tvCardTitle;
     private TextView tvCardSubtitle;
+    private TextView tvWeight;
+    private TextView tvAuthor;
+    private TextView tvDate;
+    private TextView tvConfidence;
     private String occurrenceId;
     private String currentStatus;
 
@@ -68,6 +72,10 @@ public class OccurrenceDetailFragment extends Fragment {
         tvStatus = view.findViewById(R.id.tvOccStatus);
         tvCardTitle = view.findViewById(R.id.tvOccCardTitle);
         tvCardSubtitle = view.findViewById(R.id.tvOccCardSubtitle);
+        tvWeight = view.findViewById(R.id.tvOccWeight);
+        tvAuthor = view.findViewById(R.id.tvOccAuthor);
+        tvDate = view.findViewById(R.id.tvOccDate);
+        tvConfidence = view.findViewById(R.id.tvOccConfidence);
 
         occurrenceId = getArguments() != null ? getArguments().getString("occurrenceId") : null;
         if (occurrenceId == null || occurrenceId.isEmpty()) {
@@ -171,6 +179,90 @@ public class OccurrenceDetailFragment extends Fragment {
         tvCardSubtitle.setText(setor);
         tvStatus.setText(prettyStatus(currentStatus));
         applyTracker(requireView(), doneSteps(currentStatus));
+
+        String peso = opt(detail, "peso_estimado");
+        String unidade = opt(detail, "unidade");
+        tvWeight.setText(peso.isEmpty() ? "-" : "≈" + peso + (unidade.isEmpty() ? "" : " " + unidade));
+        setText(tvAuthor, opt(detail, "registrado_por"));
+        setText(tvDate, opt(detail, "data"));
+        String confianca = opt(detail, "confianca_ia");
+        tvConfidence.setText(confianca.isEmpty() ? "-" : confianca + "%");
+
+        renderHistory(detail);
+    }
+
+    private void setText(TextView tv, String text) {
+        if (tv != null) {
+            tv.setText(text);
+        }
+    }
+
+    /** Linha do tempo simples a partir de "historico": [{acao, usuario, quando}]. */
+    private void renderHistory(JsonObject detail) {
+        if (!isAdded() || getView() == null) {
+            return;
+        }
+        android.widget.LinearLayout container = getView().findViewById(R.id.historyContainer);
+        android.view.View empty = getView().findViewById(R.id.tvHistoryEmpty);
+        if (container == null) {
+            return;
+        }
+        // Remove linhas anteriores (preserva o empty para reutilizar).
+        for (int i = container.getChildCount() - 1; i >= 0; i--) {
+            android.view.View child = container.getChildAt(i);
+            if (child.getId() != R.id.tvHistoryEmpty) {
+                container.removeViewAt(i);
+            }
+        }
+        boolean hasItems = false;
+        try {
+            if (detail.has("historico") && detail.get("historico").isJsonArray()) {
+                for (com.google.gson.JsonElement el : detail.getAsJsonArray("historico")) {
+                    if (!el.isJsonObject()) {
+                        continue;
+                    }
+                    JsonObject h = el.getAsJsonObject();
+                    String line = prettyAction(opt(h, "acao"));
+                    String usuario = opt(h, "usuario");
+                    String quando = opt(h, "quando");
+                    if (!usuario.isEmpty()) {
+                        line += " · " + usuario;
+                    }
+                    if (!quando.isEmpty()) {
+                        line += " · " + quando;
+                    }
+                    TextView row = new TextView(requireContext());
+                    row.setText(line);
+                    row.setTextColor(requireContext().getColor(R.color.volta_text_primary_light));
+                    row.setTextSize(14);
+                    int pad = (int) (4 * getResources().getDisplayMetrics().density);
+                    row.setPadding(0, pad, 0, pad);
+                    container.addView(row);
+                    hasItems = true;
+                }
+            }
+        } catch (Exception ignored) {
+            // mantém empty visível
+        }
+        if (empty != null) {
+            empty.setVisibility(hasItems ? android.view.View.GONE : android.view.View.VISIBLE);
+        }
+    }
+
+    private String prettyAction(String action) {
+        if ("CRIAR".equals(action)) {
+            return "Criada";
+        }
+        if ("IA_ANALISOU".equals(action)) {
+            return "IA analisou";
+        }
+        if ("FINALIZAR".equals(action)) {
+            return "Finalizada";
+        }
+        if ("SOLICITAR_DESTINACAO".equals(action)) {
+            return "Destinação solicitada";
+        }
+        return action;
     }
 
     /** Tracker: NOVO=1, EM_ANALISE=2, demais=4 (Figma 790:2725). */
