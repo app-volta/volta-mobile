@@ -62,26 +62,285 @@
                 android:background="@drawable/bg_progress_filled" />
         </LinearLayout>
 
-        <!-- Loading da análise -->
+        <!-- Loading: skeleton + laser (protótipo novo 851:3975) -->
         <LinearLayout
             android:id="@+id/aiLoadingGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="@dimen/spacing_xlarge">
+            android:orientation="vertical">
 
-            <ProgressBar
-                android:layout_width="48dp"
-                android:layout_height="48dp" />
+            <!-- Foto + laser + pill -->
+            <FrameLayout
+                android:id="@+id/scanPhotoFrame"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginBottom="@dimen/spacing_large"
+                android:background="@drawable/bg_card_ia_photo">
+
+                <ImageView
+                    android:id="@+id/imgAiPhotoScan"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop" />
+
+                <View
+                    android:id="@+id/viewScanBand"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_scan_band" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="@dimen/spacing_medium"
+                    android:background="@drawable/bg_pill_dark"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/spacing_medium"
+                    android:paddingTop="@dimen/spacing_small"
+                    android:paddingEnd="@dimen/spacing_medium"
+                    android:paddingBottom="@dimen/spacing_small">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_sparkle"
+                        app:tint="@color/sparkle_light" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_xs"
+                        android:text="@string/ai_scanning"
+                        android:textColor="@color/white"
+                        android:textSize="@dimen/text_size_body_small"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </FrameLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_medium"
-                android:text="@string/ai_analyzing"
-                android:textColor="@color/volta_text_secondary_light"
-                android:textSize="@dimen/text_size_body_small" />
+                android:layout_marginBottom="@dimen/spacing_medium"
+                android:text="@string/ai_found_title"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_section"
+                android:textStyle="bold" />
+
+            <!-- Skeleton: mesmos cards do resultado, com barras cinzas -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/spacing_xs"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_type_gold"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_medium">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ai_label_type"
+                        android:textColor="@color/occurrence_icon_tint"
+                        android:textSize="@dimen/text_size_body_small" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="@dimen/spacing_small"
+                        android:background="@drawable/bg_skeleton_bar" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing_xs"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_resolved"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_medium">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ai_label_contamination"
+                        android:textColor="@color/stat_resolved_icon"
+                        android:textSize="@dimen/text_size_body_small" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="@dimen/spacing_small"
+                        android:background="@drawable/bg_skeleton_bar" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_small"
+                android:layout_marginBottom="@dimen/spacing_medium"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/spacing_xs"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_recycled"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_medium">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ai_label_quantity"
+                        android:textColor="@color/stat_recycled_icon"
+                        android:textSize="@dimen/text_size_body_small" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="@dimen/spacing_small"
+                        android:background="@drawable/bg_skeleton_bar" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing_xs"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_purple"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_medium">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ai_label_recommendation"
+                        android:textColor="@color/occurrence_icon_tint_purple"
+                        android:textSize="@dimen/text_size_body_small" />
+
+                    <View
+                        android:layout_width="64dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="@dimen/spacing_small"
+                        android:background="@drawable/bg_skeleton_bar" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_medium"
+                android:background="@drawable/bg_confidence_row"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="@dimen/spacing_medium">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ai_label_confidence"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="@dimen/text_size_body_small" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="8dp"
+                    android:layout_marginStart="@dimen/spacing_medium"
+                    android:layout_marginEnd="@dimen/spacing_medium"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_progress_track"
+                    android:orientation="horizontal" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0%"
+                    android:textColor="@color/volta_green_deep"
+                    android:textSize="@dimen/text_size_body"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_large"
+                android:background="@drawable/bg_card_stat_resolved"
+                android:orientation="vertical"
+                android:padding="@dimen/spacing_medium">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/spacing_xs"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_sparkle"
+                        app:tint="@color/stat_resolved_icon" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_xs"
+                        android:text="@string/ai_label_recommendation"
+                        android:textColor="@color/stat_resolved_icon"
+                        android:textSize="@dimen/text_size_body"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ai_loading_recommendation"
+                    android:textColor="@color/recommendation_text"
+                    android:textSize="@dimen/text_size_body_small" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_large"
+                android:alpha="0.5"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="@dimen/spacing_small"
+                    android:layout_weight="2"
+                    android:background="@drawable/bg_button_gradient"
+                    android:clickable="false"
+                    android:text="@string/ai_confirm"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_size_body_small"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="@dimen/spacing_small"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_surface"
+                    android:clickable="false"
+                    android:text="@string/ai_edit"
+                    android:textColor="@color/nav_item_selected"
+                    android:textSize="@dimen/text_size_body"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Resultado -->
