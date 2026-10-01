@@ -97,6 +97,12 @@
             app:argType="string" />
     </fragment>
 
+    <!-- Assistente VOLTA — Figma 790:1911 (Fase 12, mock local) -->
+    <fragment
+        android:id="@+id/nav_assistant"
+        android:name="com.aula.volta.ui.assistant.AssistantFragment"
+        tools:layout="@layout/fragment_assistant" />
+
     <dialog
         android:id="@+id/nav_notifications"
         android:name="com.aula.volta.ui.notifications.NotificationsSheet" />

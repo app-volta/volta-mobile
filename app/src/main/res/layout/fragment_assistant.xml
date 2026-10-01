@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Assistente VOLTA — Figma 790:1911 (Fase 12, mock local) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/volta_background_light"
+    android:orientation="vertical">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_card_cta"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_normal">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:id="@+id/btnBackAssistant"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_button_cta_white"
+                android:clickable="true"
+                android:contentDescription="@string/occurrence_back"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="@color/volta_green_dark" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_small"
+                android:text="VOLTA"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_section"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xs"
+                android:background="@drawable/bg_button_cta_white"
+                android:paddingStart="8dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="2dp"
+                android:text="IA"
+                android:textColor="@color/volta_green_dark"
+                android:textSize="@dimen/text_size_caption"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/assistant_online"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body_small" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:text="@string/assistant_hello"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_headline"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/assistant_hello_sub"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body_small" />
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/scrollAssistant"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:id="@+id/assistantMessages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_normal" />
+    </ScrollView>
+
+    <!-- Atalhos fixos -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingStart="@dimen/spacing_normal"
+        android:paddingEnd="@dimen/spacing_normal"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/chipSuggestPapelao"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/spacing_small"
+                android:background="@drawable/bg_chip_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingStart="@dimen/spacing_medium"
+                android:paddingTop="8dp"
+                android:paddingEnd="@dimen/spacing_medium"
+                android:paddingBottom="8dp"
+                android:text="@string/assistant_chip_papelao"
+                android:textColor="@color/volta_green_primary"
+                android:textSize="@dimen/text_size_body_small"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chipSuggestMeta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_chip_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingStart="@dimen/spacing_medium"
+                android:paddingTop="8dp"
+                android:paddingEnd="@dimen/spacing_medium"
+                android:paddingBottom="8dp"
+                android:text="@string/assistant_chip_meta"
+                android:textColor="@color/volta_green_primary"
+                android:textSize="@dimen/text_size_body_small"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Entrada -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/spacing_normal">
+
+        <EditText
+            android:id="@+id/etAssistant"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:layout_weight="1"
+            android:background="@drawable/bg_card_surface"
+            android:hint="@string/assistant_hint"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:maxLines="3"
+            android:minHeight="@dimen/tap_target_min"
+            android:paddingStart="@dimen/spacing_medium"
+            android:paddingTop="@dimen/spacing_small"
+            android:paddingEnd="@dimen/spacing_medium"
+            android:paddingBottom="@dimen/spacing_small"
+            android:textColor="@color/volta_text_primary_light"
+            android:textColorHint="@color/volta_text_muted_light"
+            android:textSize="@dimen/text_size_body" />
+
+        <FrameLayout
+            android:id="@+id/btnSendAssistant"
+            android:layout_width="@dimen/tap_target_min"
+            android:layout_height="@dimen/tap_target_min"
+            android:background="@drawable/bg_fab_gradient"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_send" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>
