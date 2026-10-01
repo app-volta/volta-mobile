@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Backgrounds e Superfícies (Modo Escuro Industrial do VOLTA) -->
+    <color name="volta_background_light">#07110D</color>
+    <color name="volta_surface_light">#0E1B15</color>
+    <color name="volta_card_light">#13221B</color>
+    <color name="volta_card_border_light">#1F2E26</color>
+
+    <!-- Tipografia no Modo Escuro -->
+    <color name="volta_text_primary_light">#FFFFFF</color>
+    <color name="volta_text_secondary_light">#9CA3AF</color>
+    <color name="volta_text_muted_light">#6B7280</color>
+
+    <!-- Linha de confiança e cards secundários -->
+    <color name="confidence_row_bg">#13221B</color>
+    <color name="stat_card_open">#26190D</color>
+    <color name="stat_card_resolved">#0D2318</color>
+    <color name="stat_card_recycled">#101E30</color>
+
+    <!-- Ícones de ocorrência recente (fundos escuros sutis) -->
+    <color name="occurrence_icon_bg">#26190D</color>
+    <color name="occurrence_icon_bg_blue">#101E30</color>
+    <color name="occurrence_icon_bg_purple">#1C162E</color>
+
+    <!-- Círculo de notificação -->
+    <color name="notification_circle_border">#1F2E26</color>
+</resources>
