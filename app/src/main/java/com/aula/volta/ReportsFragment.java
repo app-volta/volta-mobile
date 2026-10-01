@@ -97,6 +97,21 @@ public class ReportsFragment extends Fragment {
             PgrsReport.share(requireContext(), report);
         });
 
+        View btnExportAll = view.findViewById(R.id.btnExportAllData);
+        if (btnExportAll != null) {
+            btnExportAll.setOnClickListener(v -> {
+                java.io.File report = PgrsReport.generate(requireContext());
+                if (report == null) {
+                    Toast.makeText(requireContext(), R.string.reports_nothing,
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                AuditLog.append(requireContext(), "Breno Gomes", "EXPORTAR_DADOS",
+                        "relatorio", report.getName(), null, null);
+                PgrsReport.share(requireContext(), report);
+            });
+        }
+
         loadSummary();
     }
 
@@ -221,9 +236,10 @@ public class ReportsFragment extends Fragment {
             name.setTypeface(name.getTypeface(), android.graphics.Typeface.BOLD);
 
             TextView count = new TextView(requireContext());
-            count.setText(getString(R.string.reports_material_count, item.getValue()));
+            count.setText(getString(R.string.reports_material_kg, item.getValue()));
             count.setTextColor(requireContext().getColor(R.color.volta_text_secondary_light));
             count.setTextSize(13);
+            count.setTypeface(count.getTypeface(), android.graphics.Typeface.BOLD);
 
             top.addView(name);
             top.addView(count);
