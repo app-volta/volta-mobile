@@ -69,6 +69,11 @@
     <string name="notifications_new">%1$d novas</string>
     <string name="notifications_mark_all">Marcar todas como lidas</string>
     <string name="notifications_badge_new">NOVA</string>
+    <!-- Nova ocorrência → notificação local (Fase 8b) -->
+    <string name="notif_occurrence_title">Ocorrência #%1$s registrada</string>
+    <string name="notif_occurrence_desc">%1$s · %2$s</string>
+    <string name="notif_occurrence_desc_fallback">Toque para acompanhar</string>
+    <string name="notif_now">agora</string>
 
     <!-- Filtrar ocorrências (Figma 554:24) -->
     <string name="filter_title">Filtrar ocorrências</string>

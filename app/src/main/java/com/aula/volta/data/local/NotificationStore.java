@@ -24,6 +24,7 @@ public final class NotificationStore {
 
     private static final String PREFS = "cache_notifications";
     private static final String KEY_LIST = "list";
+    private static final String KEY_LOCAL = "local_only";
 
     public interface LoadCallback {
         void onResult(List<Notification> notifications);
@@ -32,7 +33,7 @@ public final class NotificationStore {
     private NotificationStore() {
     }
 
-    /** Busca na API, salva cache e devolve; se falhar, devolve o cache (padrão Carrinho). */
+    /** Busca na API, mescla com locais (pushLocal) e devolve; se falhar, devolve o cache. */
     public static void refresh(Context context, LoadCallback callback) {
         Context app = context.getApplicationContext();
         NotificationAPI api = ApiClient.get(app).create(NotificationAPI.class);
@@ -45,6 +46,7 @@ public final class NotificationStore {
                     for (NotificationJSON json : response.body()) {
                         list.add(Notification.fromJson(json));
                     }
+                    list = mergedWithLocal(app, list);
                     PrefsHelper.putList(app, PREFS, KEY_LIST, list);
                     callback.onResult(list);
                 } else {
@@ -80,9 +82,43 @@ public final class NotificationStore {
     /** Ponto de entrada do FCM futuro (e do mock local agora). */
     public static void pushLocal(Context context, Notification notification) {
         Context app = context.getApplicationContext();
+        List<Notification> local = new ArrayList<>(localOnly(app));
+        local.add(0, notification);
+        PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
         List<Notification> list = new ArrayList<>(cached(app));
         list.add(0, notification);
         PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+    }
+
+    /** Locais ainda não vindos da API (sobrevivem ao refresh). */
+    static List<Notification> localOnly(Context app) {
+        return PrefsHelper.getList(app, PREFS, KEY_LOCAL,
+                PrefsHelper.listType(Notification.class));
+    }
+
+    /** API primeiro? Não — locais no topo, sem duplicar ids. */
+    static List<Notification> mergedWithLocal(Context app, List<Notification> api) {
+        List<Notification> merged = new ArrayList<>(localOnly(app));
+        if (api != null) {
+            for (Notification n : api) {
+                if (!containsId(merged, n.getId())) {
+                    merged.add(n);
+                }
+            }
+        }
+        return merged;
+    }
+
+    private static boolean containsId(List<Notification> list, String id) {
+        if (id == null) {
+            return false;
+        }
+        for (Notification n : list) {
+            if (id.equals(n.getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void markRead(Context context, String id) {
@@ -94,6 +130,13 @@ public final class NotificationStore {
             }
         }
         PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+        List<Notification> local = localOnly(app);
+        for (Notification n : local) {
+            if (n.getId().equals(id)) {
+                n.setLida(true);
+            }
+        }
+        PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
     }
 
     public static void markAllRead(Context context) {
@@ -103,5 +146,10 @@ public final class NotificationStore {
             n.setLida(true);
         }
         PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+        List<Notification> local = localOnly(app);
+        for (Notification n : local) {
+            n.setLida(true);
+        }
+        PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
     }
 }
