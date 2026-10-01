@@ -52,6 +52,16 @@ public class LoginFragment extends Fragment {
         });
 
         view.findViewById(R.id.btnLogin).setOnClickListener(v -> tryLogin(v));
+
+        View btnDemo = view.findViewById(R.id.btnDemoLogin);
+        if (btnDemo != null) {
+            btnDemo.setOnClickListener(v -> {
+                etEmail.setText("breno@volta.com");
+                etPassword.setText("1234");
+                tryLogin(v);
+            });
+        }
+
         view.findViewById(R.id.btnGoRegister).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.auth_register));
         view.findViewById(R.id.btnForgotPassword).setOnClickListener(v ->

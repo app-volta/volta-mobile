@@ -12,6 +12,8 @@
 /.idea/compiler.xml
 /.idea/deploymentTargetSelector.xml
 /.idea/vcs.xml
+/.idea/deviceManager.xml
+/.idea/migrations.xml
 .DS_Store
 /build
 /captures
