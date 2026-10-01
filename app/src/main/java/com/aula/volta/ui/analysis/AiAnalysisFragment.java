@@ -20,7 +20,9 @@ import com.aula.volta.data.api.AiAnalysisAPI;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
+import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.model.AiAnalysisJSON;
+import com.aula.volta.data.model.Notification;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
@@ -186,6 +188,7 @@ public class AiAnalysisFragment extends Fragment {
                         ? response.body().get("id").getAsString() : "novo";
                 AuditLog.append(requireContext(), "Breno Gomes", "CRIAR",
                         "ocorrencia", id, null, "NOVO");
+                pushOccurrenceNotification(id);
                 Toast.makeText(requireContext(), R.string.ai_registered,
                         Toast.LENGTH_LONG).show();
                 Navigation.findNavController(v).popBackStack(R.id.nav_home, false);
@@ -200,5 +203,33 @@ public class AiAnalysisFragment extends Fragment {
                         Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    /** Toda ocorrência lançada gera uma notificação local (topo, não lida). */
+    private void pushOccurrenceNotification(String occurrenceId) {
+        String material = analysis != null && analysis.getMaterial() != null
+                ? analysis.getMaterial() : "";
+        String desc;
+        if (!material.isEmpty() && setor != null && !setor.isEmpty()) {
+            desc = getString(R.string.notif_occurrence_desc, material, setor);
+        } else if (!material.isEmpty()) {
+            desc = material;
+        } else if (setor != null && !setor.isEmpty()) {
+            desc = setor;
+        } else {
+            desc = getString(R.string.notif_occurrence_desc_fallback);
+        }
+        Notification notification = new Notification(
+                "local_" + System.currentTimeMillis(),
+                "NOVA_OCORRENCIA",
+                getString(R.string.notif_occurrence_title, occurrenceId),
+                desc,
+                getString(R.string.notif_now),
+                "bell",
+                "#C68A10",
+                "#FDF3DE",
+                false,
+                occurrenceId);
+        NotificationStore.pushLocal(requireContext(), notification);
     }
 }
