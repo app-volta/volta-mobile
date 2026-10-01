@@ -22,7 +22,9 @@ import com.aula.volta.R;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
+import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.model.Notification;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
@@ -216,6 +218,17 @@ public class OccurrenceDetailFragment extends Fragment {
         dialogView.findViewById(R.id.btnFinalizeYes).setOnClickListener(b -> {
             AuditLog.append(requireContext(), "Breno Gomes", "FINALIZAR",
                     "ocorrencia", occurrenceId, currentStatus, "RESOLVIDO");
+            NotificationStore.pushLocal(requireContext(), new Notification(
+                    "local_" + System.currentTimeMillis(),
+                    "OCORRENCIA_FINALIZADA",
+                    getString(R.string.notif_finalize_title, occurrenceId),
+                    getString(R.string.notif_finalize_desc),
+                    getString(R.string.notif_now),
+                    "check",
+                    "#12A05E",
+                    "#E2F7EC",
+                    false,
+                    occurrenceId));
             Toast.makeText(requireContext(), R.string.occ_finalize_done,
                     Toast.LENGTH_LONG).show();
             dialog.dismiss();

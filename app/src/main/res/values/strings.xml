@@ -74,6 +74,10 @@
     <string name="notif_occurrence_desc">%1$s · %2$s</string>
     <string name="notif_occurrence_desc_fallback">Toque para acompanhar</string>
     <string name="notif_now">agora</string>
+    <string name="notif_finalize_title">Ocorrência #%1$s finalizada</string>
+    <string name="notif_finalize_desc">Entra no relatório PGRS do mês</string>
+    <string name="notif_pick_title">Coleta solicitada · %1$s</string>
+    <string name="notif_pick_desc">Ocorrência #%1$s</string>
 
     <!-- Filtrar ocorrências (Figma 554:24) -->
     <string name="filter_title">Filtrar ocorrências</string>
