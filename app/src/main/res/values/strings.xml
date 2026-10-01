@@ -160,6 +160,8 @@
     <string name="reports_goal_of">de %1$s</string>
     <string name="reports_by_material">Por tipo de material</string>
     <string name="reports_material_count">%1$d ocorrências</string>
+    <string name="reports_share">Compartilhar relatório</string>
+    <string name="reports_nothing">Nada para incluir no relatório ainda.</string>
 
     <!-- Perfil (Figma 790:3470) -->
     <string name="profile_name">Breno Gomes</string>

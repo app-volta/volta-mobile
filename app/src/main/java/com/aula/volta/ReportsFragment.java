@@ -14,7 +14,9 @@ import androidx.fragment.app.Fragment;
 
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.ReportAPI;
+import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.report.PgrsReport;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -83,9 +85,17 @@ public class ReportsFragment extends Fragment {
         chipQuarter.setOnClickListener(v -> selectPeriod(chipQuarter));
 
         View btnPgrs = view.findViewById(R.id.btnGeneratePgrs);
-        btnPgrs.setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.detail_report_soon,
-                        Toast.LENGTH_SHORT).show());
+        btnPgrs.setOnClickListener(v -> {
+            java.io.File report = PgrsReport.generate(requireContext());
+            if (report == null) {
+                Toast.makeText(requireContext(), R.string.reports_nothing,
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+            AuditLog.append(requireContext(), "Breno Gomes", "GERAR",
+                    "relatorio", report.getName(), null, null);
+            PgrsReport.share(requireContext(), report);
+        });
 
         loadSummary();
     }
