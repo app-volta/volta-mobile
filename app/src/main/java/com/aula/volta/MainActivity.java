@@ -112,11 +112,12 @@ public class MainActivity extends AppCompatActivity {
         navController.addOnDestinationChangedListener((ctrl, destination, args) -> {
             int destId = destination.getId();
 
-            // Ocultar Toolbar onde há header interno (Figma: Home, Registrar, Análise, Ocorrência, Destinação)
+            // Ocultar Toolbar onde há header interno (Figma: Home, Registrar, Análise, Ocorrência, Destinação, Relatórios, Perfil)
             if (destId == R.id.nav_home || destId == R.id.nav_register
                     || destId == R.id.nav_ai_analysis || destId == R.id.nav_occurrence_detail
                     || destId == R.id.nav_occurrence_full
-                    || destId == R.id.nav_cooperative_pick) {
+                    || destId == R.id.nav_cooperative_pick
+                    || destId == R.id.nav_reports || destId == R.id.nav_profile) {
                 toolbar.setVisibility(android.view.View.GONE);
             } else {
                 toolbar.setVisibility(android.view.View.VISIBLE);

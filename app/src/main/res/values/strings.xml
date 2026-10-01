@@ -140,4 +140,45 @@
 
     <!-- Home nova (Figma 790:1624) -->
     <string name="home_week_title">Últimos 7 dias</string>
+
+    <!-- Relatórios (Figma 790:3322) -->
+    <string name="reports_subtitle">Acompanhe o que sua unidade recuperou</string>
+    <string name="reports_period_week">Semana</string>
+    <string name="reports_period_month">Mês</string>
+    <string name="reports_period_quarter">Trimestre</string>
+    <string name="reports_pgrs_title">Relatório PGRS trimestral</string>
+    <string name="reports_pgrs_sub">Pronto pra baixar e enviar</string>
+    <string name="reports_pgrs_button">Gerar relatório</string>
+    <string name="reports_month_title">Neste mês</string>
+    <string name="reports_stat_occurrences">ocorrências</string>
+    <string name="reports_stat_kg">kg recuperados</string>
+    <string name="reports_stat_rate">taxa coleta</string>
+    <string name="reports_goal_title">Meta do mês</string>
+    <string name="reports_goal_of">de %1$s</string>
+    <string name="reports_by_material">Por tipo de material</string>
+    <string name="reports_material_count">%1$d ocorrências</string>
+
+    <!-- Perfil (Figma 790:3470) -->
+    <string name="profile_name">Breno Gomes</string>
+    <string name="profile_role">Responsável PGRS</string>
+    <string name="profile_unit">Frigorífico · Setor B2</string>
+    <string name="profile_about">Sobre você</string>
+    <string name="profile_edit">Editar</string>
+    <string name="profile_email">E-mail</string>
+    <string name="profile_email_value">breno@empresa.com</string>
+    <string name="profile_since">Cadastro</string>
+    <string name="profile_since_value">março 2024</string>
+    <string name="profile_occ">Ocorrências</string>
+    <string name="profile_occ_value">%1$d registradas</string>
+    <string name="profile_recovered">Recuperado</string>
+    <string name="profile_recovered_value">%1$s kg</string>
+    <string name="profile_settings">Configurações</string>
+    <string name="profile_notifications">Notificações</string>
+    <string name="profile_my_unit">Minha unidade</string>
+    <string name="profile_my_unit_value">Frigorífico B2</string>
+    <string name="profile_help">Ajuda com o VOLTA</string>
+    <string name="profile_help_hint">assistente IA</string>
+    <string name="profile_logout">Sair da conta</string>
+    <string name="profile_logout_title">Sair da conta?</string>
+    <string name="profile_logout_msg">Você vai precisar entrar de novo.</string>
 </resources>
