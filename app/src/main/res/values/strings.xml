@@ -101,6 +101,9 @@
     <string name="detail_confidence">Confiança IA</string>
     <string name="detail_full_report">Ver relatório completo</string>
     <string name="detail_report_soon">Relatório completo chega na Fase 9</string>
+    <string name="detail_request_pickup">Solicitar destinação</string>
+    <string name="pick_title">Cooperativas compatíveis</string>
+    <string name="pick_request_sent">Solicitação enviada</string>
 
     <!-- Home nova (Figma 790:1624) -->
     <string name="home_week_title">Últimos 7 dias</string>

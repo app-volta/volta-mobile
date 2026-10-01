@@ -177,11 +177,22 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/button_height_primary"
         android:layout_marginTop="@dimen/spacing_large"
-        android:layout_marginBottom="@dimen/spacing_medium"
         android:backgroundTint="@color/volta_green_primary"
         android:text="@string/detail_full_report"
         android:textColor="@color/white"
         android:textSize="@dimen/text_size_body"
         android:textStyle="bold"
         app:cornerRadius="@dimen/corner_radius_button" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRequestPickup"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height_primary"
+        android:layout_marginTop="@dimen/spacing_small"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:text="@string/detail_request_pickup"
+        android:textColor="@color/volta_green_dark"
+        app:cornerRadius="@dimen/corner_radius_button"
+        app:strokeColor="@color/volta_green_primary" />
 </LinearLayout>
