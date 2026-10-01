@@ -70,21 +70,42 @@
             android:textColor="@color/white"
             android:textSize="@dimen/text_size_body_small" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_small"
-            android:text="@string/assistant_hello"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_headline"
-            android:textStyle="bold" />
+            android:layout_marginTop="@dimen/spacing_small">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/assistant_hello_sub"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body_small" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/imgHeaderMascot"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/assistant_hello"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_size_headline"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/assistant_hello_sub"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_size_body_small" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/imgHeaderMascot"
+                android:layout_width="64dp"
+                android:layout_height="72dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/mascote_volta" />
+        </RelativeLayout>
     </LinearLayout>
 
     <ScrollView
@@ -102,7 +123,7 @@
             android:padding="@dimen/spacing_normal" />
     </ScrollView>
 
-    <!-- Atalhos fixos -->
+    <!-- Atalhos fixos (Figma 790:1950, 790:1952) -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -115,6 +136,23 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/chipSuggestIsopor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/spacing_small"
+                android:background="@drawable/bg_chip_unselected"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingStart="@dimen/spacing_medium"
+                android:paddingTop="8dp"
+                android:paddingEnd="@dimen/spacing_medium"
+                android:paddingBottom="8dp"
+                android:text="@string/assistant_chip_isopor"
+                android:textColor="@color/volta_green_primary"
+                android:textSize="@dimen/text_size_body_small"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/chipSuggestPapelao"
