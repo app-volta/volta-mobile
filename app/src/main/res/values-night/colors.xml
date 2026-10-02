@@ -28,4 +28,11 @@
     <!-- Inputs de Autenticação (fixos sobre background branco mesmo no Dark Mode) -->
     <color name="auth_input_text">#171A19</color>
     <color name="auth_input_hint">#7C8698</color>
+
+    <!-- Diálogo e Toast no Dark Mode -->
+    <color name="dialog_finalize_bg">#0E1B15</color>
+    <color name="dialog_finalize_title">#FFFFFF</color>
+    <color name="dialog_finalize_sub">#9CA3AF</color>
+    <color name="toast_finalized_bg">#13221B</color>
+    <color name="toast_finalized_subtitle">#9CA3AF</color>
 </resources>

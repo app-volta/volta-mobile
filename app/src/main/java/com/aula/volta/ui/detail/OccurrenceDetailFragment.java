@@ -53,6 +53,9 @@ public class OccurrenceDetailFragment extends Fragment {
     private TextView tvAuthor;
     private TextView tvDate;
     private TextView tvConfidence;
+    private View toastFinalized;
+    private TextView btnToastOpenPgrs;
+    private MaterialButton btnChooseCoop;
     private String occurrenceId;
     private String currentStatus;
 
@@ -82,6 +85,9 @@ public class OccurrenceDetailFragment extends Fragment {
         tvAuthor = view.findViewById(R.id.tvOccAuthor);
         tvDate = view.findViewById(R.id.tvOccDate);
         tvConfidence = view.findViewById(R.id.tvOccConfidence);
+        toastFinalized = view.findViewById(R.id.toastFinalized);
+        btnToastOpenPgrs = view.findViewById(R.id.btnToastOpenPgrs);
+        btnChooseCoop = view.findViewById(R.id.btnChooseCoop);
 
         occurrenceId = getArguments() != null ? getArguments().getString("occurrenceId") : null;
         if (occurrenceId == null || occurrenceId.isEmpty()) {
@@ -105,6 +111,33 @@ public class OccurrenceDetailFragment extends Fragment {
 
         MaterialButton btnFinalize = view.findViewById(R.id.btnFinalizeOcc);
         btnFinalize.setOnClickListener(v -> showFinalizeDialog(v));
+
+        if (btnChooseCoop != null) {
+            btnChooseCoop.setOnClickListener(v -> {
+                Bundle args = new Bundle();
+                args.putString("occurrenceId", occurrenceId);
+                Navigation.findNavController(v).navigate(R.id.nav_cooperative_pick, args);
+            });
+        }
+
+        View.OnClickListener openPgrsAction = v -> {
+            try {
+                java.io.File report = com.aula.volta.data.report.PgrsReport.generate(requireContext());
+                if (report != null) {
+                    com.aula.volta.data.report.PgrsReport.share(requireContext(), report);
+                } else {
+                    Toast.makeText(requireContext(), R.string.reports_nothing, Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), R.string.reports_nothing, Toast.LENGTH_SHORT).show();
+            }
+        };
+        if (btnToastOpenPgrs != null) {
+            btnToastOpenPgrs.setOnClickListener(openPgrsAction);
+        }
+        if (toastFinalized != null) {
+            toastFinalized.setOnClickListener(openPgrsAction);
+        }
 
         loadDetail();
     }
@@ -330,7 +363,7 @@ public class OccurrenceDetailFragment extends Fragment {
         return s.substring(0, 1).toUpperCase(new java.util.Locale("pt", "BR")) + s.substring(1);
     }
 
-    /** Estado finalizada (851:4403): só Observação resta, sem botão Finalizar. */
+    /** Estado finalizada (851:4403): só Observação resta, sem botões de ação, banner PGRS visível. */
     private void syncFinalizedUi() {
         boolean done = isFinalized(currentStatus);
         View root = getView();
@@ -340,6 +373,8 @@ public class OccurrenceDetailFragment extends Fragment {
         View rowEdit = root.findViewById(R.id.rowEditClass);
         View rowForward = root.findViewById(R.id.rowForward);
         View btnFinalize = root.findViewById(R.id.btnFinalizeOcc);
+        View btnCoop = root.findViewById(R.id.btnChooseCoop);
+        View toast = root.findViewById(R.id.toastFinalized);
         if (rowEdit != null) {
             rowEdit.setVisibility(done ? View.GONE : View.VISIBLE);
         }
@@ -348,6 +383,28 @@ public class OccurrenceDetailFragment extends Fragment {
         }
         if (btnFinalize != null) {
             btnFinalize.setVisibility(done ? View.GONE : View.VISIBLE);
+        }
+        if (btnCoop != null) {
+            btnCoop.setVisibility(done ? View.GONE : View.VISIBLE);
+        }
+        if (toast != null) {
+            toast.setVisibility(done ? View.VISIBLE : View.GONE);
+        }
+        if (tvStatus != null) {
+            if (done) {
+                tvStatus.setText(R.string.status_aprovada);
+                tvStatus.setBackgroundResource(R.drawable.bg_badge_aprovada);
+                tvStatus.setTextColor(requireContext().getColor(R.color.status_aprovada_text));
+            } else {
+                tvStatus.setText(prettyStatus(currentStatus));
+                if ("NOVO".equals(currentStatus)) {
+                    tvStatus.setBackgroundResource(R.drawable.bg_badge_alta);
+                    tvStatus.setTextColor(requireContext().getColor(R.color.priority_high_text));
+                } else {
+                    tvStatus.setBackgroundResource(R.drawable.bg_badge_media);
+                    tvStatus.setTextColor(requireContext().getColor(R.color.priority_medium_text));
+                }
+            }
         }
     }
 
@@ -400,13 +457,26 @@ public class OccurrenceDetailFragment extends Fragment {
                     "#E2F7EC",
                     false,
                     occurrenceId));
-            Toast.makeText(requireContext(), R.string.occ_finalize_done,
-                    Toast.LENGTH_LONG).show();
             dialog.dismiss();
             currentStatus = "APROVADA";
-            tvStatus.setText(prettyStatus(currentStatus));
-            applyTracker(requireView(), doneSteps(currentStatus));
+            try {
+                String cached = PrefsHelper.getJson(requireContext(), PREFS, occurrenceId);
+                if (cached != null) {
+                    JsonObject obj = com.google.gson.JsonParser.parseString(cached).getAsJsonObject();
+                    obj.addProperty("status", "APROVADA");
+                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, obj.toString());
+                }
+            } catch (Exception ignored) {
+            }
+            if (getView() != null) {
+                applyTracker(getView(), doneSteps(currentStatus));
+            }
             syncFinalizedUi();
+            if (toastFinalized != null) {
+                toastFinalized.setAlpha(0f);
+                toastFinalized.setVisibility(View.VISIBLE);
+                toastFinalized.animate().alpha(1f).setDuration(350).start();
+            }
         });
         dialogView.findViewById(R.id.btnFinalizeNo).setOnClickListener(b -> dialog.dismiss());
         dialog.show();
