@@ -132,6 +132,8 @@ public final class SyncManager {
                                 false,
                                 serverId);
                         NotificationStore.pushLocal(app, notification);
+                        com.aula.volta.data.notification.NotificationHelper.notifySyncComplete(
+                                app, serverId, item.getMaterial(), item.getSetor());
                         Log.d(TAG, "Ocorrência offline " + item.getLocalId() + " sincronizada com sucesso: " + serverId);
                     }
                 }

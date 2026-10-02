@@ -167,6 +167,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Canais de Notificação Android (Fase 26)
+        com.aula.volta.data.notification.NotificationHelper.createChannels(this);
+
         // Sincronização Offline Industrial (Fase 25)
         com.aula.volta.data.sync.SyncManager.registerNetworkCallback(this);
         com.aula.volta.data.sync.SyncManager.syncPending(this);
