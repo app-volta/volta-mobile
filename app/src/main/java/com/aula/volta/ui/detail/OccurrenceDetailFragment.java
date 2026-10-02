@@ -28,6 +28,8 @@ import com.aula.volta.data.model.Notification;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -269,7 +271,25 @@ public class OccurrenceDetailFragment extends Fragment {
                 container.removeViewAt(i);
             }
         }
-        boolean hasItems = false;
+
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        List<View> timelineViews = new java.util.ArrayList<>();
+
+        // 1. Eventos registrados localmente via AuditLog
+        List<com.aula.volta.data.model.OccurrenceHistory> localHistory =
+                AuditLog.list(requireContext(), occurrenceId);
+        if (localHistory != null) {
+            for (com.aula.volta.data.model.OccurrenceHistory item : localHistory) {
+                View itemView = buildTimelineRow(inflater, container,
+                        item.getAcao(), item.getUsuario(), item.getTimestamp(),
+                        item.getValorAnterior(), item.getValorNovo());
+                if (itemView != null) {
+                    timelineViews.add(itemView);
+                }
+            }
+        }
+
+        // 2. Eventos originais vindos do backend/mock
         try {
             if (detail.has("historico") && detail.get("historico").isJsonArray()) {
                 for (com.google.gson.JsonElement el : detail.getAsJsonArray("historico")) {
@@ -277,45 +297,92 @@ public class OccurrenceDetailFragment extends Fragment {
                         continue;
                     }
                     JsonObject h = el.getAsJsonObject();
-                    String line = prettyAction(opt(h, "acao"));
-                    String usuario = opt(h, "usuario");
-                    String quando = opt(h, "quando");
-                    if (!usuario.isEmpty()) {
-                        line += " · " + usuario;
+                    View itemView = buildTimelineRow(inflater, container,
+                            opt(h, "acao"), opt(h, "usuario"), opt(h, "quando"),
+                            opt(h, "de"), opt(h, "para"));
+                    if (itemView != null) {
+                        timelineViews.add(itemView);
                     }
-                    if (!quando.isEmpty()) {
-                        line += " · " + quando;
-                    }
-                    TextView row = new TextView(requireContext());
-                    row.setText(line);
-                    row.setTextColor(requireContext().getColor(R.color.volta_text_primary_light));
-                    row.setTextSize(14);
-                    int pad = (int) (4 * getResources().getDisplayMetrics().density);
-                    row.setPadding(0, pad, 0, pad);
-                    container.addView(row);
-                    hasItems = true;
                 }
             }
         } catch (Exception ignored) {
-            // mantém empty visível
         }
+
+        // Adiciona à UI e remove linha final do último item
+        for (int i = 0; i < timelineViews.size(); i++) {
+            View row = timelineViews.get(i);
+            if (i == timelineViews.size() - 1) {
+                View line = row.findViewById(R.id.timelineLine);
+                if (line != null) {
+                    line.setVisibility(View.GONE);
+                }
+            }
+            container.addView(row);
+        }
+
         if (empty != null) {
-            empty.setVisibility(hasItems ? android.view.View.GONE : android.view.View.VISIBLE);
+            empty.setVisibility(timelineViews.isEmpty() ? View.VISIBLE : View.GONE);
         }
+    }
+
+    private View buildTimelineRow(LayoutInflater inflater, ViewGroup parent,
+                                  String acao, String usuario, String quando,
+                                  String de, String para) {
+        if (acao == null || acao.isEmpty()) {
+            return null;
+        }
+        View view = inflater.inflate(R.layout.item_history_timeline, parent, false);
+        TextView tvTitle = view.findViewById(R.id.tvTimelineTitle);
+        TextView tvSub = view.findViewById(R.id.tvTimelineSub);
+        TextView tvTime = view.findViewById(R.id.tvTimelineTime);
+        View dot = view.findViewById(R.id.timelineDot);
+
+        tvTitle.setText(prettyAction(acao));
+        tvTime.setText(quando != null ? quando : "");
+
+        StringBuilder sub = new StringBuilder();
+        if (usuario != null && !usuario.isEmpty()) {
+            sub.append("Por ").append(usuario);
+        }
+        if (de != null && !de.isEmpty() && para != null && !para.isEmpty()) {
+            if (sub.length() > 0) {
+                sub.append(" · ");
+            }
+            sub.append(de).append(" → ").append(para);
+        }
+        tvSub.setText(sub.toString());
+        tvSub.setVisibility(sub.length() > 0 ? View.VISIBLE : View.GONE);
+
+        // Estilo e cor do ponto na timeline
+        if ("FINALIZAR".equals(acao) || "APROVADA".equals(acao) || "SYNC_ONLINE".equals(acao)) {
+            dot.setBackgroundResource(R.drawable.bg_dot_circle_green);
+        } else if ("IA_ANALISOU".equals(acao) || "SOLICITAR_DESTINACAO".equals(acao)) {
+            dot.setBackgroundResource(R.drawable.bg_dot_circle_blue);
+        } else {
+            dot.setBackgroundResource(R.drawable.bg_dot_circle_orange);
+        }
+
+        return view;
     }
 
     private String prettyAction(String action) {
         if ("CRIAR".equals(action)) {
-            return "Criada";
+            return "Ocorrência registrada";
+        }
+        if ("CRIAR_OFFLINE".equals(action)) {
+            return "Registrada offline (salvo local)";
+        }
+        if ("SYNC_ONLINE".equals(action)) {
+            return "Sincronizada com a nuvem";
         }
         if ("IA_ANALISOU".equals(action)) {
-            return "IA analisou";
+            return "Classificação assistida pela IA";
         }
         if ("FINALIZAR".equals(action)) {
-            return "Finalizada";
+            return "Aprovada e enviada ao PGRS";
         }
         if ("SOLICITAR_DESTINACAO".equals(action)) {
-            return "Destinação solicitada";
+            return "Destinação para cooperativa solicitada";
         }
         return action;
     }
