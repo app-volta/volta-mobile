@@ -63,4 +63,9 @@ public final class PrefsHelper {
     public static Type listType(Class<?> elementClass) {
         return TypeToken.getParameterized(List.class, elementClass).getType();
     }
+
+    public static void clear(Context context, String prefsName) {
+        SharedPreferences prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+        prefs.edit().clear().apply();
+    }
 }

@@ -288,4 +288,9 @@
     <string name="auth_passok_title">Tudo certo!</string>
     <string name="auth_passok_sub">Sua senha foi atualizada com sucesso. Já pode entrar e continuar cuidando do descarte na sua unidade.</string>
     <string name="auth_go_login">Ir para o login</string>
+
+    <!-- Sincronização Offline Industrial (Fase 25) -->
+    <string name="sync_success_title">Ocorrência #%1$s sincronizada!</string>
+    <string name="sync_success_desc">%1$s no setor %2$s foi enviado para a nuvem.</string>
+    <string name="sync_saved_offline">Ocorrência salva localmente. Sincronização automática quando houver rede.</string>
 </resources>

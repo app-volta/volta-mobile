@@ -47,6 +47,20 @@ public class AiAnalysisJSON {
         return observacoes;
     }
 
+    public static AiAnalysisJSON createOfflineFallback(String setor) {
+        AiAnalysisJSON json = new AiAnalysisJSON();
+        json.material = "Resíduo Reciclável";
+        json.quantidadeEstimada = 0.0;
+        json.unidade = "kg";
+        json.confianca = 0.50;
+        json.observacoes = "Registrado em modo offline (" + (setor != null ? setor : "Geral") + "). A IA reavaliará a foto quando houver rede.";
+        Contaminacao c = new Contaminacao();
+        c.presente = false;
+        c.nivel = "Baixa";
+        json.contaminacao = c;
+        return json;
+    }
+
     public static class Contaminacao {
         private boolean presente;
         private String nivel;
