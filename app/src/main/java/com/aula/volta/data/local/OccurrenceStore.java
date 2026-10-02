@@ -78,6 +78,41 @@ public final class OccurrenceStore {
         PrefsHelper.putList(app, PREFS, KEY_LIST, list);
     }
 
+    /**
+     * Atualiza uma ocorrência existente no cache mantendo a ordem e refletindo mutações operacionais.
+     */
+    public static void update(Context context, Occurrence updated) {
+        if (updated == null || updated.getId() == null) {
+            return;
+        }
+        Context app = context.getApplicationContext();
+
+        // 1. Atualiza na lista local (se existir lá)
+        List<Occurrence> local = new ArrayList<>(localOnly(app));
+        boolean foundLocal = false;
+        for (int i = 0; i < local.size(); i++) {
+            if (updated.getId().equals(local.get(i).getId())) {
+                local.set(i, updated);
+                foundLocal = true;
+                break;
+            }
+        }
+        if (!foundLocal) {
+            local.add(0, updated);
+        }
+        PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
+
+        // 2. Atualiza na lista geral do cache
+        List<Occurrence> list = new ArrayList<>(cached(app));
+        for (int i = 0; i < list.size(); i++) {
+            if (updated.getId().equals(list.get(i).getId())) {
+                list.set(i, updated);
+                break;
+            }
+        }
+        PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+    }
+
     /** Locais ainda não vindos da API (sobrevivem ao refresh). */
     static List<Occurrence> localOnly(Context app) {
         return PrefsHelper.getList(app, PREFS, KEY_LOCAL,
