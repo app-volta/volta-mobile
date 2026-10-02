@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nova ocorrência Passo 1 de 2 — Figma Registrar Teste A (568:24).
+     Foto obrigatória (SEM texto "OBRIGATÓRIO"); botão habilita só com foto. -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/volta_background_light"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_normal">
+
+        <!-- Voltar (círculo branco, header interno — toolbar oculta nesta tela) -->
+        <FrameLayout
+            android:id="@+id/btnBackRegister"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="@drawable/bg_notification_circle"
+            android:clickable="true"
+            android:contentDescription="@string/occurrence_back"
+            android:elevation="2dp"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_chevron_left" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/occurrence_new_title"
+            android:textColor="@color/volta_text_primary_light"
+            android:textSize="@dimen/text_size_headline"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:text="@string/occurrence_step_1"
+            android:textColor="@color/volta_text_secondary_light"
+            android:textSize="@dimen/text_size_body_small" />
+
+        <!-- Progresso 1 de 2 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_progress_filled" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_progress_track" />
+        </LinearLayout>
+
+        <!-- Card da foto (Figma 626:288: borda sólida verde) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_photo_card"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_large">
+
+            <!-- Estado vazio -->
+            <LinearLayout
+                android:id="@+id/photoEmptyGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:background="@drawable/bg_occurrence_icon_green">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_camera_official" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_medium"
+                    android:text="@string/occurrence_take_photo"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="@dimen/text_size_subtitle"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_xs"
+                    android:text="@string/occurrence_photo_hint"
+                    android:textAlignment="center"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="@dimen/text_size_body_small" />
+            </LinearLayout>
+
+            <!-- Preview da foto -->
+            <LinearLayout
+                android:id="@+id/photoPreviewGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/imgPhotoPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop" />
+
+                <TextView
+                    android:id="@+id/btnRetakePhoto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_small"
+                    android:padding="@dimen/spacing_small"
+                    android:text="@string/occurrence_retake"
+                    android:textColor="@color/volta_green_dark"
+                    android:textSize="@dimen/text_size_body_small"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Botões Câmera e Galeria -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_large"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCaptureCamera"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/tap_target_min"
+                    android:layout_marginEnd="@dimen/spacing_small"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/volta_green_primary"
+                    android:text="@string/occurrence_btn_camera"
+                    android:textColor="@color/white"
+                    app:cornerRadius="@dimen/corner_radius_button" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOpenGallery"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/tap_target_min"
+                    android:layout_marginStart="@dimen/spacing_small"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/stat_resolved_bg"
+                    android:text="@string/occurrence_btn_gallery"
+                    android:textColor="@color/stat_resolved_icon"
+                    app:cornerRadius="@dimen/corner_radius_button" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Descrição opcional -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_large"
+            android:text="@string/occurrence_desc_label"
+            android:textColor="@color/volta_text_primary_light"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:background="@drawable/bg_card_surface"
+            android:gravity="top"
+            android:hint="@string/occurrence_desc_hint"
+            android:inputType="textMultiLine|textCapSentences"
+            android:minLines="3"
+            android:padding="@dimen/spacing_medium"
+            android:textColor="@color/volta_text_primary_light"
+            android:textColorHint="@color/volta_text_muted_light"
+            android:textSize="@dimen/text_size_body_small" />
+
+        <!-- Onde está? -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_large"
+            android:text="@string/occurrence_location_label"
+            android:textColor="@color/volta_text_primary_light"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/btnSector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:background="@drawable/bg_card_surface"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_medium">
+
+            <FrameLayout
+                android:layout_width="@dimen/thumbnail_size_occurrence"
+                android:layout_height="@dimen/thumbnail_size_occurrence"
+                android:background="@drawable/bg_pin_circle">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_pin" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvSector"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_medium"
+                android:layout_weight="1"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:rotation="90"
+                android:src="@drawable/ic_chevron_left" />
+        </LinearLayout>
+
+        <!-- Avisar quem cuida do descarte (Figma 790:2308) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_medium"
+            android:background="@drawable/bg_notify_card"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="@dimen/spacing_medium">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/occurrence_notify_switch_title"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="@dimen/text_size_body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/occurrence_notify_switch_desc"
+                    android:textColor="@color/volta_text_secondary_light"
+                    android:textSize="@dimen/text_size_caption" />
+            </LinearLayout>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchNotify"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                app:thumbTint="@color/white"
+                app:trackTint="@color/volta_green_primary" />
+        </LinearLayout>
+
+        <!-- Botão Enviar para Análise (habilita só com foto) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSendAnalysis"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="@dimen/spacing_large"
+            android:background="@drawable/bg_button_disabled"
+            android:enabled="false"
+            android:text="@string/occurrence_btn_send_analysis"
+            android:textColor="@color/volta_text_muted_light"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvSendHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:text="@string/occurrence_send_disabled_hint"
+            android:textAlignment="center"
+            android:textColor="@color/priority_high_text"
+            android:textSize="@dimen/text_size_body_small" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

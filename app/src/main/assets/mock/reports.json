@@ -1,0 +1,8 @@
+{
+  "abertas": 9,
+  "resolvidas": 43,
+  "kg_reciclados": 1147,
+  "tempo_medio": "2h 40min",
+  "por_tipo": {"Papelão": 21, "Plástico": 15, "Metal": 7},
+  "por_setor": {"Frigorífico": 18, "Expedição": 12, "Manutenção": 9}
+}

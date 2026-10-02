@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Confirmar e-mail — Figma 790:1055 (Fase 22) -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/volta_background_light"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_normal">
+
+        <FrameLayout
+            android:id="@+id/btnBackConfirm"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="@drawable/bg_notification_circle"
+            android:clickable="true"
+            android:contentDescription="@string/occurrence_back"
+            android:elevation="2dp"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_chevron_left" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingEnd="@dimen/spacing_normal">
+
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginTop="@dimen/spacing_small"
+                android:layout_marginBottom="@dimen/spacing_medium"
+                android:background="@drawable/bg_dialog_check_circle">
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/auth_confirm_title"
+                    android:src="@drawable/ic_mail"
+                    app:tint="@color/status_aprovada_text" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_confirm_title"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvConfirmSub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="@string/auth_confirm_sub"
+                android:textColor="@color/volta_text_secondary_light"
+                android:textSize="@dimen/text_size_body_small" />
+
+            <TextView
+                android:id="@+id/tvConfirmEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="@dimen/spacing_large"
+                android:gravity="center"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body"
+                android:textStyle="bold" />
+
+            <!-- 4 caixas de código (Figma 790:1055) -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_large"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/etCode1"
+                    android:layout_width="60dp"
+                    android:layout_height="64dp"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/bg_code_box"
+                    android:gravity="center"
+                    android:importantForAutofill="no"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etCode2"
+                    android:layout_width="60dp"
+                    android:layout_height="64dp"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/bg_code_box"
+                    android:gravity="center"
+                    android:importantForAutofill="no"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etCode3"
+                    android:layout_width="60dp"
+                    android:layout_height="64dp"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/bg_code_box"
+                    android:gravity="center"
+                    android:importantForAutofill="no"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etCode4"
+                    android:layout_width="60dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_code_box"
+                    android:gravity="center"
+                    android:importantForAutofill="no"
+                    android:inputType="number"
+                    android:maxLength="1"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfirmCode"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="@dimen/spacing_large"
+                android:backgroundTint="@color/volta_green_primary"
+                android:text="@string/auth_confirm_btn"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_no_code"
+                android:textColor="@color/volta_text_secondary_light"
+                android:textSize="@dimen/text_size_body_small" />
+
+            <TextView
+                android:id="@+id/tvResendConfirm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="@dimen/spacing_small"
+                android:textColor="@color/volta_green_primary"
+                android:textSize="@dimen/text_size_body_small"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

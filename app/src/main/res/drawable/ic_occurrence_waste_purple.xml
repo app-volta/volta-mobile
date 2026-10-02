@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+    <!-- Sucata metálica - caixa/lock 20x20, ocupa 15px como lixeira Figma -->
+    <path
+        android:pathData="M4,9 H16 V18 H4 V9 Z"
+        android:strokeWidth="1.6"
+        android:strokeColor="@color/occurrence_icon_tint_purple"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M6,9 V6 C6,3.5 8,2 10,2 C12,2 14,3.5 14,6 V9"
+        android:strokeWidth="1.6"
+        android:strokeColor="@color/occurrence_icon_tint_purple"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M10,13.5 A1.2,1.2 0 1,0 10,15.9 A1.2,1.2 0 1,0 10,13.5 Z"
+        android:fillColor="@color/occurrence_icon_tint_purple" />
+</vector>

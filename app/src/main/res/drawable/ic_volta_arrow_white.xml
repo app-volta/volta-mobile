@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="80dp"
+    android:height="80dp"
+    android:viewportWidth="80"
+    android:viewportHeight="80">
+    <!-- Volta oficial - AssetsVolta/Volta.svg exato -->
+    <path
+        android:pathData="M65.0909,39.2727 C66.0155,44.6006 65.2194,50.0846 62.8179,54.9296 C60.4163,59.7746 56.5342,63.729 51.7343,66.2194 C46.9344,68.7099 41.4661,69.607 36.122,68.7808 C30.7779,67.9546 25.8359,65.4479 22.0121,61.6242 C18.1884,57.8005 15.6818,52.8584 14.8555,47.5143 C14.0293,42.1703 14.9265,36.7019 17.4169,31.902 C19.9074,27.1021 23.8617,23.22 28.7067,20.8185 C33.5518,18.4169 39.0357,17.6208 44.3636,18.5454"
+        android:strokeWidth="9.0"
+        android:strokeColor="#FFFFFF"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M34.5838,34.2432 L48.8211,4.0 L63.6846,31.0549 L34.5838,34.2432 Z"
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineJoin="round" />
+</vector>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Slide 1 do carrossel Home (Figma 790:1624): CTA com mascote -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_card_cta"
+    android:padding="@dimen/spacing_large">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="8dp"
+        android:layout_toStartOf="@+id/ctaMascot"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="1dp"
+            android:text="@string/home_cta_title"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_title"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:lineSpacingExtra="1dp"
+            android:text="@string/home_cta_subtitle"
+            android:textColor="#CCFFFFFF"
+            android:textSize="@dimen/text_size_body_small" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSlideRegister"
+            android:layout_width="wrap_content"
+            android:layout_height="42dp"
+            android:backgroundTint="@color/white"
+            android:text="@string/home_cta_button"
+            android:textColor="#0E7C48"
+            android:textSize="@dimen/text_size_body_small"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_camera_official"
+            app:iconGravity="textStart"
+            app:iconPadding="10dp"
+            app:iconSize="18dp"
+            app:iconTint="#0E7C48" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/ctaMascot"
+        android:layout_width="110dp"
+        android:layout_height="150dp"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/mascote_volta" />
+</RelativeLayout>

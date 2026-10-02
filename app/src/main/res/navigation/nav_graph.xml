@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.aula.volta.HomeFragment"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_occurrences"
+        android:name="com.aula.volta.OccurrencesFragment"
+        android:label="@string/nav_occurrences"
+        tools:layout="@layout/fragment_occurrences" />
+
+    <fragment
+        android:id="@+id/nav_register"
+        android:name="com.aula.volta.NewOccurrenceFragment"
+        android:label="@string/occurrence_new_title"
+        tools:layout="@layout/fragment_new_occurrence" />
+
+    <fragment
+        android:id="@+id/nav_cooperatives"
+        android:name="com.aula.volta.CooperativesFragment"
+        android:label="@string/nav_coops"
+        tools:layout="@layout/fragment_cooperatives" />
+
+    <fragment
+        android:id="@+id/nav_reports"
+        android:name="com.aula.volta.ReportsFragment"
+        android:label="@string/nav_reports"
+        tools:layout="@layout/fragment_reports" />
+
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.aula.volta.ProfileFragment"
+        android:label="@string/nav_profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/nav_ai_analysis"
+        android:name="com.aula.volta.ui.analysis.AiAnalysisFragment"
+        android:label="@string/occurrence_step_2">
+        <argument
+            android:name="photoPath"
+            app:argType="string" />
+        <argument
+            android:name="descricao"
+            app:argType="string" />
+        <argument
+            android:name="setor"
+            app:argType="string" />
+        <argument
+            android:name="avisar"
+            app:argType="boolean" />
+    </fragment>
+
+    <!-- Rotas internas (Fase 0): sem item na bottom bar, abertas via navigate() com args -->
+    <dialog
+        android:id="@+id/nav_occurrence_detail"
+        android:name="com.aula.volta.ui.detail.OccurrenceDetailSheet">
+        <argument
+            android:name="occurrenceId"
+            app:argType="string" />
+    </dialog>
+
+    <!-- Ocorrência cheia — Figma 790:2725 (Fase 8): tracker, ações, escolher cooperativa -->
+    <fragment
+        android:id="@+id/nav_occurrence_full"
+        android:name="com.aula.volta.ui.detail.OccurrenceDetailFragment"
+        tools:layout="@layout/fragment_occurrence_detail">
+        <argument
+            android:name="occurrenceId"
+            app:argType="string" />
+    </fragment>
+
+    <!-- Destinação contextual — Fase 8: cooperativas da ocorrência, backend ordena -->
+    <fragment
+        android:id="@+id/nav_cooperative_pick"
+        android:name="com.aula.volta.ui.cooperatives.CooperativePickFragment"
+        tools:layout="@layout/fragment_cooperative_pick">
+        <argument
+            android:name="occurrenceId"
+            app:argType="string" />
+    </fragment>
+
+    <!-- Chat com a cooperativa — Figma 790:3191 (Fase 11, mock local) -->
+    <fragment
+        android:id="@+id/nav_chat"
+        android:name="com.aula.volta.ui.chat.ChatFragment"
+        tools:layout="@layout/fragment_chat">
+        <argument
+            android:name="coopName"
+            app:argType="string" />
+    </fragment>
+
+    <!-- Assistente VOLTA — Figma 790:1911 (Fase 12, mock local) -->
+    <fragment
+        android:id="@+id/nav_assistant"
+        android:name="com.aula.volta.ui.assistant.AssistantFragment"
+        tools:layout="@layout/fragment_assistant" />
+
+    <dialog
+        android:id="@+id/nav_notifications"
+        android:name="com.aula.volta.ui.notifications.NotificationsSheet" />
+
+</navigation>

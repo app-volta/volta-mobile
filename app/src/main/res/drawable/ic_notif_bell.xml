@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icones Notificações/Frame-4.svg - sino dourado #C68A10 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp"
+    android:height="22dp"
+    android:viewportWidth="22"
+    android:viewportHeight="22">
+    <clip-path android:pathData="M0,0 H22 V22 H0 Z" />
+    <path
+        android:pathData="M4.40001,9.90005 C4.40001,8.14962 5.09537,6.47088 6.33311,5.23314 C7.57085,3.9954 9.24958,3.30005 11,3.30005 C12.7504,3.30005 14.4292,3.9954 15.6669,5.23314 C16.9047,6.47088 17.6,8.14962 17.6,9.90005 C17.6,15.4 19.8,16.5 19.8,16.5 H2.20001 C2.20001,16.5 4.40001,15.4 4.40001,9.90005 Z"
+        android:strokeWidth="1.76"
+        android:strokeColor="#C68A10"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M8.79999,19.8 C8.79999,20.3835 9.03177,20.9431 9.44435,21.3557 C9.85693,21.7683 10.4165,22 11,22 C11.5835,22 12.143,21.7683 12.5556,21.3557 C12.9682,20.9431 13.2,20.3835 13.2,19.8"
+        android:strokeWidth="1.76"
+        android:strokeColor="#C68A10"
+        android:fillColor="@android:color/transparent" />
+</vector>

@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Login — Figma 790:955 (Fase 13, mock: qualquer e-mail válido + senha ≥ 4) -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_auth_green"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_large">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xlarge"
+            android:text="VOLTA"
+            android:textColor="@color/white"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_large"
+            android:text="@string/auth_welcome"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_headline"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:text="@string/auth_welcome_sub"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body_small" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_xs"
+            android:text="@string/auth_email"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etLoginEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="@drawable/bg_button_cta_white"
+            android:hint="@string/auth_email_hint"
+            android:importantForAutofill="no"
+            android:inputType="textEmailAddress"
+            android:minHeight="@dimen/button_height_primary"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingEnd="@dimen/spacing_normal"
+            android:text="breno@volta.com"
+            android:textColor="@color/auth_input_text"
+            android:textColorHint="@color/auth_input_hint"
+            android:textSize="@dimen/text_size_body" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_xs"
+            android:text="@string/auth_password"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:background="@drawable/bg_button_cta_white">
+
+            <EditText
+                android:id="@+id/etLoginPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:hint="••••••••"
+                android:importantForAutofill="no"
+                android:inputType="textPassword"
+                android:minHeight="@dimen/button_height_primary"
+                android:paddingStart="@dimen/spacing_normal"
+                android:paddingEnd="52dp"
+                android:text="1234"
+                android:textColor="@color/auth_input_text"
+                android:textColorHint="@color/auth_input_hint"
+                android:textSize="@dimen/text_size_body" />
+
+            <ImageView
+                android:id="@+id/btnTogglePassword"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical|end"
+                android:layout_marginEnd="@dimen/spacing_medium"
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@drawable/ic_eye"
+                app:tint="@color/auth_input_hint" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/btnForgotPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingTop="@dimen/spacing_small"
+            android:paddingBottom="@dimen/spacing_small"
+            android:text="@string/auth_forgot"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body_small"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height_primary"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:background="@drawable/bg_button_cta_white"
+            android:text="@string/auth_login_btn"
+            android:textColor="@color/volta_green_dark"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDemoLogin"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height_primary"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:text="@string/auth_demo_btn"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold"
+            app:cornerRadius="@dimen/corner_radius_button"
+            app:icon="@drawable/ic_sparkle"
+            app:iconGravity="textStart"
+            app:iconTint="@color/white"
+            app:strokeColor="@color/white" />
+
+        <!-- Card informativo com as credenciais padrão de teste -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="@drawable/bg_pill_dark"
+            android:orientation="vertical"
+            android:padding="@dimen/spacing_medium">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_demo_title"
+                android:textColor="@color/sparkle_light"
+                android:textSize="@dimen/text_size_body_small"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/auth_demo_desc"
+                android:textColor="#E0FFFFFF"
+                android:textSize="@dimen/text_size_caption" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="#80FFFFFF" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_medium"
+                android:layout_marginEnd="@dimen/spacing_medium"
+                android:text="@string/auth_or"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_body_small" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="#80FFFFFF" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoogle"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height_primary"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:text="@string/auth_google"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body"
+            app:cornerRadius="@dimen/corner_radius_button"
+            app:strokeColor="@color/white" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_no_account"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_body_small" />
+
+            <TextView
+                android:id="@+id/btnGoRegister"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xs"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="@dimen/spacing_xs"
+                android:text="@string/auth_create"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_body_small"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

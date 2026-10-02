@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lista completa de ocorrências ("Ver todas" da Home) com Busca Instantânea e Filtros Compostos (Fase 32 / Figma 554:24). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/volta_background_light"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing_normal">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_small">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:text="@string/home_recent_occurrences"
+            android:textColor="@color/volta_text_primary_light"
+            android:textSize="@dimen/text_size_subtitle"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/btnFilterOccurrences"
+            android:layout_width="@dimen/tap_target_min"
+            android:layout_height="@dimen/tap_target_min"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_notification_circle"
+            android:clickable="true"
+            android:contentDescription="@string/filter_title"
+            android:elevation="2dp"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/ivFilterIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_filter" />
+
+            <TextView
+                android:id="@+id/tvFilterBadge"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/bg_badge_filter_count"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </FrameLayout>
+    </RelativeLayout>
+
+    <!-- Barra de busca instantânea (Fase 32 / Figma 554:24) -->
+    <LinearLayout
+        android:id="@+id/layoutSearchBar"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginBottom="@dimen/spacing_small"
+        android:background="@drawable/bg_search_input"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_search" />
+
+        <EditText
+            android:id="@+id/etSearchOccurrences"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="@string/search_occurrences_hint"
+            android:imeOptions="actionSearch"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textColor="@color/volta_text_primary_light"
+            android:textColorHint="@color/volta_text_muted_light"
+            android:textSize="@dimen/text_size_body" />
+
+        <ImageView
+            android:id="@+id/btnClearSearch"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/filter_clear"
+            android:padding="4dp"
+            android:src="@drawable/ic_close"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Barra de contagem e botão rápido de reset de filtros -->
+    <LinearLayout
+        android:id="@+id/layoutFilterInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_small"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvOccurrencesCount"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/volta_text_secondary_light"
+            android:textSize="@dimen/text_size_caption" />
+
+        <TextView
+            android:id="@+id/btnClearFiltersChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:paddingStart="8dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="2dp"
+            android:text="@string/occurrences_filter_clear_all"
+            android:textColor="@color/volta_green_dark"
+            android:textSize="@dimen/text_size_caption"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/loadingOccurrences"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/spacing_large" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvOccurrences"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false" />
+
+    <TextView
+        android:id="@+id/tvEmptyOccurrencesList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="@dimen/spacing_large"
+        android:text="@string/empty_list"
+        android:textColor="@color/volta_text_secondary_light"
+        android:textSize="@dimen/text_size_body_small"
+        android:visibility="gone" />
+</LinearLayout>

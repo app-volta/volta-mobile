@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pill "Análise concluída" (Figma 626:327: #0A3D25 r14) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/pill_dark_bg" />
+    <corners android:radius="14dp" />
+</shape>

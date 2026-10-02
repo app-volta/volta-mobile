@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pin do seletor de setor (Figma Registrar) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M12,21 C12,21 19,14.8 19,10 C19,9.08075 18.8189,8.1705 18.4672,7.32122 C18.1154,6.47194 17.5998,5.70026 16.9497,5.05025 C16.2997,4.40024 15.5281,3.88463 14.6788,3.53284 C13.8295,3.18106 12.9193,3 12,3 C11.0807,3 10.1705,3.18106 9.32122,3.53284 C8.47194,3.88463 7.70026,4.40024 7.05025,5.05025 C6.40024,5.70026 5.88463,6.47194 5.53284,7.32122 C5.18106,8.1705 5,9.08075 5,10 C5,14.8 12,21 12,21 Z"
+        android:strokeWidth="1.9"
+        android:strokeColor="#E8556C"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M12,12.6 C13.4359,12.6 14.6,11.436 14.6,10 C14.6,8.56408 13.4359,7.40002 12,7.40002 C10.5641,7.40002 9.39999,8.56408 9.39999,10 C9.39999,11.436 10.5641,12.6 12,12.6 Z"
+        android:strokeWidth="1.9"
+        android:strokeColor="#E8556C"
+        android:fillColor="@android:color/transparent"
+        android:strokeLineJoin="round" />
+</vector>

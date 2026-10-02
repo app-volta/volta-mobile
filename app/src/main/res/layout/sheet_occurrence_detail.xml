@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom sheet Detalhe da ocorrência — Figma (554:27) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/volta_surface_light"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing_large">
+
+    <View
+        android:layout_width="48dp"
+        android:layout_height="5dp"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:background="@drawable/bg_progress_track" />
+
+    <TextView
+        android:id="@+id/tvDetailTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/volta_text_primary_light"
+        android:textSize="@dimen/text_size_title"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvDetailSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:textColor="@color/volta_text_secondary_light"
+        android:textSize="@dimen/text_size_body_small" />
+
+    <TextView
+        android:id="@+id/tvDetailStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:background="@drawable/bg_badge_media"
+        android:paddingStart="12dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="6dp"
+        android:textColor="@color/priority_medium_text"
+        android:textSize="@dimen/text_size_body_small"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="@dimen/spacing_small"
+            android:paddingBottom="@dimen/spacing_small">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/detail_weight"
+                android:textColor="@color/volta_text_secondary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <TextView
+                android:id="@+id/tvDetailWeight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/notification_circle_border" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="@dimen/spacing_small"
+            android:paddingBottom="@dimen/spacing_small">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/detail_registered_by"
+                android:textColor="@color/volta_text_secondary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <TextView
+                android:id="@+id/tvDetailAuthor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/notification_circle_border" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="@dimen/spacing_small"
+            android:paddingBottom="@dimen/spacing_small">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/detail_date"
+                android:textColor="@color/volta_text_secondary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <TextView
+                android:id="@+id/tvDetailDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/notification_circle_border" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="@dimen/spacing_small"
+            android:paddingBottom="@dimen/spacing_small">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/detail_confidence"
+                android:textColor="@color/volta_text_secondary_light"
+                android:textSize="@dimen/text_size_body" />
+
+            <TextView
+                android:id="@+id/tvDetailConfidence"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="@dimen/text_size_body"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/notification_circle_border" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnFullReport"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height_primary"
+        android:layout_marginTop="@dimen/spacing_large"
+        android:backgroundTint="@color/volta_green_primary"
+        android:text="@string/detail_full_report"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_size_body"
+        android:textStyle="bold"
+        app:cornerRadius="@dimen/corner_radius_button" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRequestPickup"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/button_height_primary"
+        android:layout_marginTop="@dimen/spacing_small"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:text="@string/detail_request_pickup"
+        android:textColor="@color/volta_green_dark"
+        app:cornerRadius="@dimen/corner_radius_button"
+        app:strokeColor="@color/volta_green_primary" />
+</LinearLayout>

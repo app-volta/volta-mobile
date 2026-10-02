@@ -1,0 +1,112 @@
+[
+  {
+    "id": "48291",
+    "titulo": "Papelão molhado",
+    "setor": "Frigorífico",
+    "tempo_relativo": "12 min",
+    "prioridade": "ALTA",
+    "status": "EM_ANALISE",
+    "material": "Papelão",
+    "quantidade_estimada": 38.0,
+    "unidade": "kg"
+  },
+  {
+    "id": "48290",
+    "titulo": "Plástico de embalagem",
+    "setor": "Expedição",
+    "tempo_relativo": "há 1 h",
+    "prioridade": "MEDIA",
+    "status": "NOVO",
+    "material": "Plástico",
+    "quantidade_estimada": 12.5,
+    "unidade": "kg"
+  },
+  {
+    "id": "48288",
+    "titulo": "Sucata metálica",
+    "setor": "Manutenção",
+    "tempo_relativo": "ontem",
+    "prioridade": "BAIXA",
+    "status": "RESOLVIDO",
+    "material": "Metal",
+    "quantidade_estimada": 64.0,
+    "unidade": "kg"
+  },
+  {
+    "id": "48285",
+    "titulo": "Papelão seco empilhado",
+    "setor": "Armazenamento",
+    "tempo_relativo": "ontem",
+    "prioridade": "BAIXA",
+    "status": "RESOLVIDO",
+    "material": "Papelão",
+    "quantidade_estimada": 95.0,
+    "unidade": "kg"
+  },
+  {
+    "id": "48283",
+    "titulo": "Filme plástico PEBD",
+    "setor": "Embalagem",
+    "tempo_relativo": "há 2 dias",
+    "prioridade": "MEDIA",
+    "status": "EM_ANALISE",
+    "material": "Plástico",
+    "quantidade_estimada": 22.0,
+    "unidade": "kg"
+  },
+  {
+    "id": "48279",
+    "titulo": "Tambor metálico vazio",
+    "setor": "Manutenção",
+    "tempo_relativo": "há 3 dias",
+    "prioridade": "MEDIA",
+    "status": "NOVO",
+    "material": "Metal",
+    "quantidade_estimada": 40.0,
+    "unidade": "kg"
+  },
+  {
+    "id": "48276",
+    "titulo": "Caixas de papelão rasgadas",
+    "setor": "Expedição",
+    "tempo_relativo": "há 4 dias",
+    "prioridade": "BAIXA",
+    "status": "RESOLVIDO",
+    "material": "Papelão",
+    "quantidade_estimada": 31.0,
+    "unidade": "kg"
+  },
+  {
+    "id": "48271",
+    "titulo": "Óleo derramado no piso",
+    "setor": "Produção",
+    "tempo_relativo": "há 5 dias",
+    "prioridade": "ALTA",
+    "status": "EM_ANALISE",
+    "material": "Óleo",
+    "quantidade_estimada": 8.0,
+    "unidade": "L"
+  },
+  {
+    "id": "48268",
+    "titulo": "Garrafas PET acumuladas",
+    "setor": "Refeitório",
+    "tempo_relativo": "há 1 semana",
+    "prioridade": "BAIXA",
+    "status": "RESOLVIDO",
+    "material": "Plástico",
+    "quantidade_estimada": 15.0,
+    "unidade": "kg"
+  },
+  {
+    "id": "48264",
+    "titulo": "Palete de madeira quebrado",
+    "setor": "Armazenamento",
+    "tempo_relativo": "há 1 semana",
+    "prioridade": "MEDIA",
+    "status": "RESOLVIDO",
+    "material": "Madeira",
+    "quantidade_estimada": 50.0,
+    "unidade": "kg"
+  }
+]

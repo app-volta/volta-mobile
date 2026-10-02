@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cadastro — espelho do Login (Fase 13, mock) -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_auth_green"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_large">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xlarge"
+            android:text="VOLTA"
+            android:textColor="@color/white"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_large"
+            android:text="@string/auth_register_title"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_headline"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_xs"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:text="@string/auth_register_sub"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body_small" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_xs"
+            android:text="@string/auth_name"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etRegisterName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="@drawable/bg_button_cta_white"
+            android:hint="@string/auth_name_hint"
+            android:importantForAutofill="no"
+            android:inputType="textPersonName"
+            android:minHeight="@dimen/button_height_primary"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingEnd="@dimen/spacing_normal"
+            android:textColor="@color/auth_input_text"
+            android:textColorHint="@color/auth_input_hint"
+            android:textSize="@dimen/text_size_body" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_xs"
+            android:text="@string/auth_email"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etRegisterEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium"
+            android:background="@drawable/bg_button_cta_white"
+            android:hint="@string/auth_email_hint"
+            android:importantForAutofill="no"
+            android:inputType="textEmailAddress"
+            android:minHeight="@dimen/button_height_primary"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingEnd="@dimen/spacing_normal"
+            android:textColor="@color/auth_input_text"
+            android:textColorHint="@color/auth_input_hint"
+            android:textSize="@dimen/text_size_body" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_xs"
+            android:text="@string/auth_password"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etRegisterPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:background="@drawable/bg_button_cta_white"
+            android:hint="••••••••"
+            android:importantForAutofill="no"
+            android:inputType="textPassword"
+            android:minHeight="@dimen/button_height_primary"
+            android:paddingStart="@dimen/spacing_normal"
+            android:paddingEnd="@dimen/spacing_normal"
+            android:textColor="@color/auth_input_text"
+            android:textColorHint="@color/auth_input_hint"
+            android:textSize="@dimen/text_size_body" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCreateAccount"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height_primary"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:background="@drawable/bg_button_cta_white"
+            android:text="@string/auth_create_btn"
+            android:textColor="@color/volta_green_dark"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_large"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auth_have_account"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_body_small" />
+
+            <TextView
+                android:id="@+id/btnGoLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xs"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="@dimen/spacing_xs"
+                android:text="@string/auth_enter"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_body_small"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Card Avisar quem cuida do descarte (Figma 790:2308: solid #FFEFE2 r16) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/stat_card_open" />
+    <corners android:radius="16dp" />
+</shape>

@@ -1,0 +1,89 @@
+package com.aula.volta.data.model;
+
+import com.google.gson.annotations.SerializedName;
+
+/**
+ * Contrato da IA (Fase 0). O mock obedece; a API real só pluga.
+ * A tela depende deste contrato, nunca do mock.
+ */
+public class AiAnalysisJSON {
+
+    private String material;
+
+    @SerializedName("quantidade_estimada")
+    private double quantidadeEstimada;
+
+    private String unidade;
+    private Contaminacao contaminacao;
+    private Unidades unidades;
+    private double confianca;
+    private String observacoes;
+
+    public String getMaterial() {
+        return material;
+    }
+
+    public double getQuantidadeEstimada() {
+        return quantidadeEstimada;
+    }
+
+    public String getUnidade() {
+        return unidade;
+    }
+
+    public Contaminacao getContaminacao() {
+        return contaminacao;
+    }
+
+    public Unidades getUnidades() {
+        return unidades;
+    }
+
+    public double getConfianca() {
+        return confianca;
+    }
+
+    public String getObservacoes() {
+        return observacoes;
+    }
+
+    public static AiAnalysisJSON createOfflineFallback(String setor) {
+        AiAnalysisJSON json = new AiAnalysisJSON();
+        json.material = "Resíduo Reciclável";
+        json.quantidadeEstimada = 0.0;
+        json.unidade = "kg";
+        json.confianca = 0.50;
+        json.observacoes = "Registrado em modo offline (" + (setor != null ? setor : "Geral") + "). A IA reavaliará a foto quando houver rede.";
+        Contaminacao c = new Contaminacao();
+        c.presente = false;
+        c.nivel = "Baixa";
+        json.contaminacao = c;
+        return json;
+    }
+
+    public static class Contaminacao {
+        private boolean presente;
+        private String nivel;
+
+        public boolean isPresente() {
+            return presente;
+        }
+
+        public String getNivel() {
+            return nivel;
+        }
+    }
+
+    public static class Unidades {
+        private String tipo;
+        private int quantidade;
+
+        public String getTipo() {
+            return tipo;
+        }
+
+        public int getQuantidade() {
+            return quantidade;
+        }
+    }
+}
