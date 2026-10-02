@@ -61,6 +61,15 @@ public class ChatFragment extends Fragment {
         view.findViewById(R.id.btnBackChat).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
+        view.findViewById(R.id.cardPickup).setOnClickListener(v -> {
+            com.aula.volta.data.notification.NotificationHelper.notifyPickupScheduled(
+                    requireContext(),
+                    coopName.isEmpty() ? "JBS Ambiental" : coopName,
+                    "hoje, 15h30");
+            android.widget.Toast.makeText(requireContext(),
+                    R.string.notif_pickup_title, android.widget.Toast.LENGTH_SHORT).show();
+        });
+
         // Conversa inicial (mock, Figma 790:3191).
         addIncoming(getString(R.string.chat_msg_1), getString(R.string.chat_msg_1_time));
         addOutgoing(getString(R.string.chat_msg_2), getString(R.string.chat_msg_2_time));

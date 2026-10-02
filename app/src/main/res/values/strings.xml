@@ -288,4 +288,21 @@
     <string name="auth_passok_title">Tudo certo!</string>
     <string name="auth_passok_sub">Sua senha foi atualizada com sucesso. Já pode entrar e continuar cuidando do descarte na sua unidade.</string>
     <string name="auth_go_login">Ir para o login</string>
+
+    <!-- Sincronização Offline Industrial (Fase 25) -->
+    <string name="sync_success_title">Ocorrência #%1$s sincronizada!</string>
+    <string name="sync_success_desc">%1$s no setor %2$s foi enviado para a nuvem.</string>
+    <string name="sync_saved_offline">Ocorrência salva localmente. Sincronização automática quando houver rede.</string>
+
+    <!-- Canais de Notificação Android (Fase 26) -->
+    <string name="channel_occurrences_name">Ocorrências e Coletas</string>
+    <string name="channel_occurrences_desc">Alertas de novos registros de resíduos e coletas agendadas com cooperativas</string>
+    <string name="channel_goals_name">Metas e Relatórios PGRS</string>
+    <string name="channel_goals_desc">Acompanhamento do progresso das metas mensais e fechamentos de relatórios</string>
+    <string name="channel_sync_name">Sincronização Offline</string>
+    <string name="channel_sync_desc">Avisos de envio em segundo plano quando a conectividade é restaurada</string>
+    <string name="notif_pickup_title">Coleta Agendada!</string>
+    <string name="notif_pickup_body">A cooperativa %1$s confirmou a coleta para %2$s.</string>
+    <string name="notif_pgrs_finalized_title">Ocorrência #%1$s Finalizada</string>
+    <string name="notif_pgrs_finalized_body">Resíduo devidamente destinado e contabilizado no relatório PGRS.</string>
 </resources>

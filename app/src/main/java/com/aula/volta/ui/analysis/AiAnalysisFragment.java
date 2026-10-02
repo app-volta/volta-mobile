@@ -153,9 +153,7 @@ public class AiAnalysisFragment extends Fragment {
                     analysis = response.body();
                     applyAnalysis(requireView());
                 } else {
-                    Toast.makeText(requireContext(), R.string.error_load,
-                            Toast.LENGTH_LONG).show();
-                    Navigation.findNavController(requireView()).navigateUp();
+                    useOfflineAnalysisFallback();
                 }
             }
 
@@ -164,11 +162,15 @@ public class AiAnalysisFragment extends Fragment {
                 if (!isAdded()) {
                     return;
                 }
-                Toast.makeText(requireContext(), R.string.offline_cache,
-                        Toast.LENGTH_LONG).show();
-                Navigation.findNavController(requireView()).navigateUp();
+                useOfflineAnalysisFallback();
             }
         });
+    }
+
+    private void useOfflineAnalysisFallback() {
+        Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_SHORT).show();
+        analysis = com.aula.volta.data.model.AiAnalysisJSON.createOfflineFallback(setor);
+        applyAnalysis(requireView());
     }
 
     private void applyAnalysis(View view) {
@@ -221,15 +223,24 @@ public class AiAnalysisFragment extends Fragment {
         return String.format(Locale.forLanguageTag("pt-BR"), "%.1f", value);
     }
 
-    /** Confirmar: cria a ocorrência (mock), audita, avisa e volta à Home. */
+    /** Confirmar: cria a ocorrência (mock/API), audita, avisa e volta à Home com suporte offline. */
     private void confirmOccurrence(View v) {
+        String material = analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Resíduo Industrial";
+        double qtd = analysis != null ? analysis.getQuantidadeEstimada() : 0.0;
+        String unidade = analysis != null && analysis.getUnidade() != null ? analysis.getUnidade() : "kg";
+
+        // Se estiver explicitamente sem conexão, salva diretamente na fila offline
+        if (!com.aula.volta.data.sync.SyncManager.isOnline(requireContext())) {
+            saveOfflineAndFinish(v, material, qtd, unidade);
+            return;
+        }
+
         OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
         JsonObject body = new JsonObject();
         body.addProperty("setor", setor == null ? "" : setor);
-        if (analysis != null) {
-            body.addProperty("material", analysis.getMaterial());
-            body.addProperty("quantidade_estimada", analysis.getQuantidadeEstimada());
-        }
+        body.addProperty("material", material);
+        body.addProperty("quantidade_estimada", qtd);
+
         api.createOccurrence(body).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -252,10 +263,26 @@ public class AiAnalysisFragment extends Fragment {
                 if (!isAdded()) {
                     return;
                 }
-                Toast.makeText(requireContext(), R.string.offline_cache,
-                        Toast.LENGTH_LONG).show();
+                // Resiliência de fábrica: falha de rede nunca perde a ocorrência
+                saveOfflineAndFinish(v, material, qtd, unidade);
             }
         });
+    }
+
+    private void saveOfflineAndFinish(View v, String material, double qtd, String unidade) {
+        String localId = "off_" + System.currentTimeMillis();
+        com.aula.volta.data.sync.PendingOccurrence pending = new com.aula.volta.data.sync.PendingOccurrence(
+                localId, photoPath, descricao, setor, material, qtd, unidade, System.currentTimeMillis());
+        com.aula.volta.data.sync.SyncQueue.enqueue(requireContext(), pending);
+
+        AuditLog.append(requireContext(), "Breno Gomes", "CRIAR_OFFLINE",
+                "ocorrencia", localId, null, "PENDENTE_SYNC");
+        pushOccurrenceNotification(localId);
+        pushOccurrenceToList(localId);
+
+        Toast.makeText(requireContext(), R.string.sync_saved_offline,
+                Toast.LENGTH_LONG).show();
+        Navigation.findNavController(v).popBackStack(R.id.nav_home, false);
     }
 
     /** Toda ocorrência lançada gera uma notificação local (topo, não lida). */

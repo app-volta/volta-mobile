@@ -101,12 +101,15 @@
 
             <!-- Card de coleta agendada (mock) -->
             <LinearLayout
+                android:id="@+id/cardPickup"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="@dimen/spacing_small"
                 android:layout_marginBottom="@dimen/spacing_medium"
                 android:background="@drawable/bg_card_stat_resolved"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:padding="@dimen/spacing_medium">

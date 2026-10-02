@@ -166,6 +166,13 @@ public class MainActivity extends AppCompatActivity {
                 navController.navigate(R.id.nav_register, null, fabOptions);
             }
         });
+
+        // Canais de Notificação Android (Fase 26)
+        com.aula.volta.data.notification.NotificationHelper.createChannels(this);
+
+        // Sincronização Offline Industrial (Fase 25)
+        com.aula.volta.data.sync.SyncManager.registerNetworkCallback(this);
+        com.aula.volta.data.sync.SyncManager.syncPending(this);
     }
 
     // Pilha simples sem saveState/restoreState para as abas: evita corromper o estado

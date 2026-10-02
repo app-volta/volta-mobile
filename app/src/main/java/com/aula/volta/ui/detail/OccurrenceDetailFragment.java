@@ -457,6 +457,7 @@ public class OccurrenceDetailFragment extends Fragment {
                     "#E2F7EC",
                     false,
                     occurrenceId));
+            com.aula.volta.data.notification.NotificationHelper.notifyPgrsFinalized(requireContext(), occurrenceId);
             dialog.dismiss();
             currentStatus = "APROVADA";
             try {
