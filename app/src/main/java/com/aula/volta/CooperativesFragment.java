@@ -68,6 +68,15 @@ public class CooperativesFragment extends Fragment {
             }
         });
 
+        View imgMap = view.findViewById(R.id.imgCoopsMap);
+        if (imgMap != null) {
+            imgMap.setOnClickListener(v -> {
+                com.aula.volta.util.MapNavigator.openLocation(
+                        requireContext(), -23.5186, -46.7369,
+                        firstCoopName != null ? firstCoopName : "JBS Ambiental");
+            });
+        }
+
         View btnBack = view.findViewById(R.id.btnBackCoops);
         if (btnBack != null) {
             btnBack.setOnClickListener(v ->
