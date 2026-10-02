@@ -26,6 +26,7 @@ import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.CooperativeJSON;
 import com.aula.volta.data.model.Notification;
+import com.aula.volta.data.model.Occurrence;
 import com.google.gson.JsonObject;
 
 import java.util.List;
@@ -157,29 +158,78 @@ public class CooperativePickFragment extends Fragment {
     }
 
     private void confirmRequest(CooperativeJSON coop) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.pick_confirm_title)
-                .setMessage(getString(R.string.pick_confirm_msg, coop.getNome()))
-                .setPositiveButton(R.string.pick_confirm_yes, (dialog, which) -> {
-                    AuditLog.append(requireContext(), "Breno Gomes", "SOLICITAR_DESTINACAO",
-                            "ocorrencia", occurrenceId, null, coop.getNome());
-                    NotificationStore.pushLocal(requireContext(), new Notification(
-                            "local_" + System.currentTimeMillis(),
-                            "COLETA_SOLICITADA",
-                            getString(R.string.notif_pick_title, coop.getNome()),
-                            getString(R.string.notif_pick_desc, occurrenceId),
-                            getString(R.string.notif_now),
-                            "truck",
-                            "#3B82F6",
-                            "#E4EFFF",
-                            false,
-                            occurrenceId));
-                    Toast.makeText(requireContext(), R.string.pick_request_sent,
-                            Toast.LENGTH_LONG).show();
-                    Navigation.findNavController(requireView()).navigateUp();
-                })
-                .setNegativeButton(R.string.pick_confirm_no, null)
-                .show();
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_confirm_destination, null);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        TextView tvMsg = dialogView.findViewById(R.id.tvConfirmDestMessage);
+        TextView tvCoop = dialogView.findViewById(R.id.tvConfirmDestCoopName);
+        TextView tvDetails = dialogView.findViewById(R.id.tvConfirmDestDetails);
+
+        tvMsg.setText(getString(R.string.pick_confirm_msg, coop.getNome()));
+        tvCoop.setText(coop.getNome());
+        String info = (coop.getDistanciaKm() > 0 ? String.format(java.util.Locale.getDefault(), "%.1f km da fábrica", coop.getDistanciaKm()) : "Coleta prioritária")
+                + (coop.getColeta() != null && !coop.getColeta().isEmpty() ? " • " + coop.getColeta() : "");
+        tvDetails.setText(info);
+
+        dialogView.findViewById(R.id.btnConfirmDestNo).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnConfirmDestYes).setOnClickListener(v -> {
+            dialog.dismiss();
+
+            AuditLog.append(requireContext(), "Breno Gomes", "SOLICITAR_DESTINACAO",
+                    "ocorrencia", occurrenceId, null, coop.getNome());
+
+            NotificationStore.pushLocal(requireContext(), new Notification(
+                    "local_" + System.currentTimeMillis(),
+                    "COLETA_SOLICITADA",
+                    getString(R.string.notif_pick_title, coop.getNome()),
+                    getString(R.string.notif_pick_desc, occurrenceId),
+                    getString(R.string.notif_now),
+                    "truck",
+                    "#3B82F6",
+                    "#E4EFFF",
+                    false,
+                    occurrenceId));
+
+            // Disparo de notificação nativa Android
+            com.aula.volta.data.notification.NotificationHelper.notifyDestinationRequested(
+                    requireContext(), coop.getNome(), occurrenceId);
+
+            // Atualização de status da ocorrência para EM_TRATAMENTO / Destinada
+            try {
+                String cached = PrefsHelper.getJson(requireContext(), "cache_occurrence_detail", occurrenceId);
+                if (cached != null) {
+                    JsonObject obj = com.google.gson.JsonParser.parseString(cached).getAsJsonObject();
+                    obj.addProperty("status", "EM_TRATAMENTO");
+                    PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", occurrenceId, obj.toString());
+
+                    Occurrence occ = new Occurrence(
+                            occurrenceId,
+                            opt(obj, "titulo"),
+                            opt(obj, "setor"),
+                            opt(obj, "quando"),
+                            opt(obj, "prioridade"),
+                            "EM_TRATAMENTO",
+                            opt(obj, "material"));
+                    com.aula.volta.data.local.OccurrenceStore.update(requireContext(), occ);
+                }
+            } catch (Exception ignored) {
+            }
+
+            Toast.makeText(requireContext(), R.string.pick_request_sent,
+                    Toast.LENGTH_LONG).show();
+            Navigation.findNavController(requireView()).navigateUp();
+        });
+
+        dialog.show();
     }
 
     private void hideLoading() {

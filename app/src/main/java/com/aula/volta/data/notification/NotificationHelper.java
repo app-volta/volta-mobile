@@ -91,6 +91,16 @@ public final class NotificationHelper {
     }
 
     /**
+     * Emite notificação nativa de destinação solicitada para cooperativa.
+     */
+    public static void notifyDestinationRequested(Context context, String coopName, String occurrenceId) {
+        String title = context.getString(R.string.notif_pick_title, coopName);
+        String body = context.getString(R.string.notif_pick_desc, occurrenceId);
+        showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
+                title, body, occurrenceId);
+    }
+
+    /**
      * Emite notificação de ocorrência finalizada no PGRS.
      */
     public static void notifyPgrsFinalized(Context context, String occurrenceId) {
