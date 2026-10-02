@@ -88,6 +88,11 @@
     <string name="filter_status_open">Aberta</string>
     <string name="filter_status_analyzing">Em análise</string>
     <string name="filter_status_collected">Coletada</string>
+    <string name="search_occurrences_hint">Buscar por título, ID ou setor…</string>
+    <string name="occurrences_count_format">Exibindo %1$d de %2$d ocorrências</string>
+    <string name="occurrences_count_all">%1$d ocorrências registradas</string>
+    <string name="occurrences_filter_clear_all">Limpar filtros</string>
+    <string name="occurrences_no_results">Nenhuma ocorrência encontrada para esta busca.</string>
 
     <!-- Análise IA (Figma 626:327) -->
     <string name="ai_title">Análise da IA</string>
