@@ -7,8 +7,11 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,8 +26,10 @@ import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.NotificationStore;
+import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.Notification;
+import com.aula.volta.data.model.Occurrence;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
@@ -60,6 +65,7 @@ public class OccurrenceDetailFragment extends Fragment {
     private MaterialButton btnChooseCoop;
     private String occurrenceId;
     private String currentStatus;
+    private JsonObject currentDetailJson;
 
     public OccurrenceDetailFragment() {
     }
@@ -107,9 +113,9 @@ public class OccurrenceDetailFragment extends Fragment {
         tintChip(view, R.id.chipObserve, R.id.iconObserve,
                 R.color.occurrence_icon_bg_purple, R.color.occurrence_icon_tint_purple);
 
-        view.findViewById(R.id.rowEditClass).setOnClickListener(v -> soon(v));
-        view.findViewById(R.id.rowForward).setOnClickListener(v -> soon(v));
-        view.findViewById(R.id.rowObserve).setOnClickListener(v -> soon(v));
+        view.findViewById(R.id.rowEditClass).setOnClickListener(v -> showEditClassDialog(v));
+        view.findViewById(R.id.rowForward).setOnClickListener(v -> showForwardDialog(v));
+        view.findViewById(R.id.rowObserve).setOnClickListener(v -> showObservationDialog(v));
 
         MaterialButton btnFinalize = view.findViewById(R.id.btnFinalizeOcc);
         btnFinalize.setOnClickListener(v -> showFinalizeDialog(v));
@@ -203,6 +209,7 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void applyDetail(JsonObject detail) {
+        currentDetailJson = detail;
         String titulo = opt(detail, "titulo");
         String setor = opt(detail, "setor");
         currentStatus = opt(detail, "status");
@@ -340,24 +347,32 @@ public class OccurrenceDetailFragment extends Fragment {
         tvTitle.setText(prettyAction(acao));
         tvTime.setText(quando != null ? quando : "");
 
-        StringBuilder sub = new StringBuilder();
-        if (usuario != null && !usuario.isEmpty()) {
-            sub.append("Por ").append(usuario);
-        }
-        if (de != null && !de.isEmpty() && para != null && !para.isEmpty()) {
-            if (sub.length() > 0) {
-                sub.append(" · ");
+        if ("ADICIONAR_OBSERVACAO".equals(acao)) {
+            String obsText = (para != null && !para.isEmpty()) ? para : de;
+            tvSub.setText("Por " + (usuario != null ? usuario : "Colaborador") + " · \"" + obsText + "\"");
+            tvSub.setVisibility(View.VISIBLE);
+        } else {
+            StringBuilder sub = new StringBuilder();
+            if (usuario != null && !usuario.isEmpty()) {
+                sub.append("Por ").append(usuario);
             }
-            sub.append(de).append(" → ").append(para);
+            if (de != null && !de.isEmpty() && para != null && !para.isEmpty()) {
+                if (sub.length() > 0) {
+                    sub.append(" · ");
+                }
+                sub.append(de).append(" → ").append(para);
+            }
+            tvSub.setText(sub.toString());
+            tvSub.setVisibility(sub.length() > 0 ? View.VISIBLE : View.GONE);
         }
-        tvSub.setText(sub.toString());
-        tvSub.setVisibility(sub.length() > 0 ? View.VISIBLE : View.GONE);
 
         // Estilo e cor do ponto na timeline
         if ("FINALIZAR".equals(acao) || "APROVADA".equals(acao) || "SYNC_ONLINE".equals(acao)) {
             dot.setBackgroundResource(R.drawable.bg_dot_circle_green);
-        } else if ("IA_ANALISOU".equals(acao) || "SOLICITAR_DESTINACAO".equals(acao)) {
+        } else if ("IA_ANALISOU".equals(acao) || "SOLICITAR_DESTINACAO".equals(acao) || "ALTERAR_CLASSIFICACAO".equals(acao)) {
             dot.setBackgroundResource(R.drawable.bg_dot_circle_blue);
+        } else if ("ADICIONAR_OBSERVACAO".equals(acao)) {
+            dot.setBackgroundResource(R.drawable.bg_dot_circle_purple);
         } else {
             dot.setBackgroundResource(R.drawable.bg_dot_circle_orange);
         }
@@ -383,6 +398,15 @@ public class OccurrenceDetailFragment extends Fragment {
         }
         if ("SOLICITAR_DESTINACAO".equals(action)) {
             return "Destinação para cooperativa solicitada";
+        }
+        if ("ADICIONAR_OBSERVACAO".equals(action)) {
+            return "Observação adicionada";
+        }
+        if ("ENCAMINHAR_SETOR".equals(action)) {
+            return "Setor alterado";
+        }
+        if ("ALTERAR_CLASSIFICACAO".equals(action)) {
+            return "Classificação alterada";
         }
         return action;
     }
@@ -547,6 +571,188 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         });
         dialogView.findViewById(R.id.btnFinalizeNo).setOnClickListener(b -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void showObservationDialog(View v) {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_add_observation, null);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        EditText etInput = dialogView.findViewById(R.id.etObservationInput);
+        dialogView.findViewById(R.id.btnCancelObservation).setOnClickListener(b -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnSaveObservation).setOnClickListener(b -> {
+            String obs = etInput.getText() != null ? etInput.getText().toString().trim() : "";
+            if (obs.isEmpty()) {
+                Toast.makeText(requireContext(), "Digite o texto da observação", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            AuditLog.append(requireContext(), "Breno Gomes", "ADICIONAR_OBSERVACAO",
+                    "ocorrencia", occurrenceId, null, obs);
+            dialog.dismiss();
+            if (currentDetailJson != null) {
+                renderHistory(currentDetailJson);
+            }
+            Toast.makeText(requireContext(), "Observação registrada no histórico", Toast.LENGTH_SHORT).show();
+        });
+
+        dialog.show();
+    }
+
+    private void showForwardDialog(View v) {
+        if (!isAdded() || getContext() == null || currentDetailJson == null) {
+            return;
+        }
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_forward_sector, null);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        RadioGroup rgSectors = dialogView.findViewById(R.id.rgSectors);
+        String currentSector = opt(currentDetailJson, "setor");
+
+        if (currentSector.contains("Frigorífico")) {
+            rgSectors.check(R.id.rbSectorFrigorifico);
+        } else if (currentSector.contains("Expedição")) {
+            rgSectors.check(R.id.rbSectorExpedicao);
+        } else if (currentSector.contains("Desossa")) {
+            rgSectors.check(R.id.rbSectorDesossa);
+        } else if (currentSector.contains("Máquinas")) {
+            rgSectors.check(R.id.rbSectorMaquinas);
+        } else if (currentSector.contains("Manutenção")) {
+            rgSectors.check(R.id.rbSectorManutencao);
+        }
+
+        dialogView.findViewById(R.id.btnCancelForward).setOnClickListener(b -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnConfirmForward).setOnClickListener(b -> {
+            int checkedId = rgSectors.getCheckedRadioButtonId();
+            if (checkedId == -1) {
+                Toast.makeText(requireContext(), "Selecione um setor de destino", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            RadioButton rb = dialogView.findViewById(checkedId);
+            String newSector = rb.getText().toString();
+
+            if (!newSector.equals(currentSector)) {
+                currentDetailJson.addProperty("setor", newSector);
+                PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+
+                Occurrence occ = new Occurrence(
+                        occurrenceId,
+                        opt(currentDetailJson, "titulo"),
+                        newSector,
+                        opt(currentDetailJson, "quando"),
+                        opt(currentDetailJson, "prioridade"),
+                        currentStatus,
+                        opt(currentDetailJson, "material"));
+                OccurrenceStore.update(requireContext(), occ);
+
+                AuditLog.append(requireContext(), "Breno Gomes", "ENCAMINHAR_SETOR",
+                        "ocorrencia", occurrenceId, currentSector, newSector);
+
+                tvSubtitle.setText(newSector);
+                tvCardSubtitle.setText(newSector);
+                renderHistory(currentDetailJson);
+                Toast.makeText(requireContext(), "Ocorrência encaminhada para " + newSector, Toast.LENGTH_SHORT).show();
+            }
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void showEditClassDialog(View v) {
+        if (!isAdded() || getContext() == null || currentDetailJson == null) {
+            return;
+        }
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_edit_classification, null);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        RadioGroup rgMaterials = dialogView.findViewById(R.id.rgMaterials);
+        String currentMaterial = opt(currentDetailJson, "material");
+
+        if (currentMaterial.contains("Papelão")) {
+            rgMaterials.check(R.id.rbMatPapelao);
+        } else if (currentMaterial.contains("Plástico")) {
+            rgMaterials.check(R.id.rbMatPlastico);
+        } else if (currentMaterial.contains("Metal") || currentMaterial.contains("Aço")) {
+            rgMaterials.check(R.id.rbMatMetal);
+        } else if (currentMaterial.contains("Vidro")) {
+            rgMaterials.check(R.id.rbMatVidro);
+        } else if (currentMaterial.contains("Orgânico")) {
+            rgMaterials.check(R.id.rbMatOrganico);
+        }
+
+        dialogView.findViewById(R.id.btnCancelEditClass).setOnClickListener(b -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnConfirmEditClass).setOnClickListener(b -> {
+            int checkedId = rgMaterials.getCheckedRadioButtonId();
+            if (checkedId == -1) {
+                Toast.makeText(requireContext(), "Selecione uma tipologia", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String newMaterial;
+            String newClasse;
+            if (checkedId == R.id.rbMatPapelao) {
+                newMaterial = "Papelão Ondulado";
+                newClasse = "Classe II A";
+            } else if (checkedId == R.id.rbMatPlastico) {
+                newMaterial = "Plástico Filme";
+                newClasse = "Classe II B";
+            } else if (checkedId == R.id.rbMatMetal) {
+                newMaterial = "Metal / Sucata";
+                newClasse = "Classe II B";
+            } else if (checkedId == R.id.rbMatVidro) {
+                newMaterial = "Vidro Transparente";
+                newClasse = "Classe II B";
+            } else {
+                newMaterial = "Resíduo Orgânico";
+                newClasse = "Classe II A";
+            }
+
+            if (!newMaterial.equals(currentMaterial)) {
+                currentDetailJson.addProperty("material", newMaterial);
+                currentDetailJson.addProperty("classe", newClasse);
+                PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+
+                Occurrence occ = new Occurrence(
+                        occurrenceId,
+                        opt(currentDetailJson, "titulo"),
+                        opt(currentDetailJson, "setor"),
+                        opt(currentDetailJson, "quando"),
+                        opt(currentDetailJson, "prioridade"),
+                        currentStatus,
+                        newMaterial);
+                OccurrenceStore.update(requireContext(), occ);
+
+                AuditLog.append(requireContext(), "Breno Gomes", "ALTERAR_CLASSIFICACAO",
+                        "ocorrencia", occurrenceId, currentMaterial, newMaterial);
+
+                tvCardTitle.setText(newMaterial + " (" + newClasse + ")");
+                renderHistory(currentDetailJson);
+                Toast.makeText(requireContext(), "Classificação alterada para " + newMaterial, Toast.LENGTH_SHORT).show();
+            }
+            dialog.dismiss();
+        });
+
         dialog.show();
     }
 
