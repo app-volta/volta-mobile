@@ -1,5 +1,6 @@
 package com.aula.volta.ui.assistant;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -42,15 +43,20 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Assistente VOLTA — Integração com o Chatbot no ambiente QA (https://chat.qa.54.210.1.34.sslip.io).
+ * Assistente VOLTA — Integração com o Chatbot no ambiente QA por HTTPS.
  *
- * Fluxo:
- * 1. Autenticação na API do Chatbot (POST https://api.qa.54.210.1.34.sslip.io/auth/login) se não houver token
- * 2. POST /v1/sessions (cria e recupera session_id)
- * 3. POST /v1/chat (envia mensagem, exibe response.answer, citations, recommended_actions)
- * 4. GET /v1/sessions/{session_id}/history (recupera histórico)
- * 5. POST /v1/sessions/{session_id}/close (encerra sessão e indexa resumo)
- * 6. Fallback resiliente caso a rede do ambiente QA esteja temporariamente inalcançável
+ * Endereços:
+ * - API de login: https://api.qa.54.210.1.34.sslip.io (POST /auth/login)
+ * - Chatbot: https://chat.qa.54.210.1.34.sslip.io (POST /v1/sessions, POST /v1/chat, etc.)
+ *
+ * Funcionalidades:
+ * 1. Login com JWT (Bearer Token)
+ * 2. Criação de sessão e armazenamento de session_id
+ * 3. Envio de mensagens com exibição de response.answer, citations, recommended_actions e validação humana
+ * 4. Recuperação de histórico da sessão
+ * 5. Encerramento de sessão para indexação do resumo
+ * 6. Renovação automática de token após expiração (401)
+ * 7. Isolamento absoluto do restante do app
  */
 public class AssistantFragment extends Fragment {
 
@@ -118,12 +124,12 @@ public class AssistantFragment extends Fragment {
             }
         });
 
-        // Inicializa a sessão do chatbot
+        // Inicializa fluxo com o Chatbot
         initChatSession();
     }
 
     /**
-     * Inicializa a sessão com o Chatbot. Se não tiver token JWT do Chatbot, tenta obtê-lo.
+     * Inicializa a sessão com o Chatbot. Se não tiver token JWT, tenta autenticar.
      */
     private void initChatSession() {
         if (!SessionManager.hasToken(requireContext())) {
@@ -137,8 +143,9 @@ public class AssistantFragment extends Fragment {
         String email = SessionManager.email(requireContext());
         String password = SessionManager.password(requireContext());
 
-        if (email.isEmpty() || password.isEmpty()) {
-            proceedSessionInit();
+        if (email.isEmpty() || password.isEmpty() || email.contains("volta.mock") || "breno@volta.com".equals(email)) {
+            // Não há credenciais QA salvas ainda. Mostra mensagem inicial com opção de conectar
+            showQaLoginPrompt();
             return;
         }
 
@@ -149,16 +156,102 @@ public class AssistantFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
                     SessionManager.saveToken(requireContext(), response.body().getToken());
                     Log.i(TAG, "Chatbot autenticado com sucesso.");
+                    proceedSessionInit();
+                } else {
+                    showQaLoginPrompt();
                 }
-                proceedSessionInit();
             }
 
             @Override
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                 Log.w(TAG, "Chatbot auth offline: " + t.getMessage());
-                proceedSessionInit();
+                showQaLoginPrompt();
             }
         });
+    }
+
+    private void showQaLoginPrompt() {
+        if (!isAdded()) {
+            return;
+        }
+        messages.removeAllViews();
+        addBot("Olá! O Chatbot VOLTA está conectado ao ambiente QA.\n\nPara interagir com o modelo de inteligência artificial, você pode autenticar com as credenciais de teste QA.",
+                null, null, false);
+
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(dp(40), dp(4), 0, dp(8));
+
+        TextView btnLoginQa = chip("🔒 Conectar Chatbot QA");
+        btnLoginQa.setOnClickListener(v -> showQaLoginDialog());
+        row.addView(btnLoginQa);
+
+        messages.addView(row);
+        addActionChips();
+    }
+
+    private void showQaLoginDialog() {
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_chatbot_login, null);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        EditText etEmail = dialogView.findViewById(R.id.etChatbotQaEmail);
+        EditText etPassword = dialogView.findViewById(R.id.etChatbotQaPassword);
+        TextView btnConfirm = dialogView.findViewById(R.id.btnConfirmChatbotLogin);
+        TextView btnCancel = dialogView.findViewById(R.id.btnCancelChatbotLogin);
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnConfirm.setOnClickListener(v -> {
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString();
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(requireContext(), "Preencha e-mail e senha de QA", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            btnConfirm.setEnabled(false);
+            btnConfirm.setText("Autenticando...");
+
+            AuthAPI authApi = ChatbotAuthClient.get(requireContext()).create(AuthAPI.class);
+            authApi.login(new LoginRequest(email, password)).enqueue(new Callback<LoginResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
+                        String token = response.body().getToken();
+                        SessionManager.login(requireContext(), email, password, SessionManager.name(requireContext()), token);
+                        Toast.makeText(requireContext(), "Chatbot QA conectado!", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                        proceedSessionInit();
+                    } else {
+                        btnConfirm.setEnabled(true);
+                        btnConfirm.setText("Autenticar QA");
+                        Toast.makeText(requireContext(), "Credenciais QA inválidas (HTTP " + response.code() + ")", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    btnConfirm.setEnabled(true);
+                    btnConfirm.setText("Autenticar QA");
+                    Toast.makeText(requireContext(), "Falha ao conectar: " + t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+
+        dialog.show();
     }
 
     private void proceedSessionInit() {
@@ -192,6 +285,8 @@ public class AssistantFragment extends Fragment {
                     messages.removeAllViews();
                     addBot(getString(R.string.assistant_intro), null, null, false);
                     addActionChips();
+                } else if (response.code() == 401) {
+                    showQaLoginPrompt();
                 } else {
                     useFallbackInitialMessage();
                 }
@@ -232,6 +327,8 @@ public class AssistantFragment extends Fragment {
                     }
                 } else if (response.code() == 404 || response.code() == 400) {
                     createNewSession();
+                } else if (response.code() == 401) {
+                    showQaLoginPrompt();
                 } else {
                     useFallbackInitialMessage();
                 }
@@ -336,6 +433,9 @@ public class AssistantFragment extends Fragment {
                         currentSessionId = response.body().getSessionId();
                         SessionManager.saveChatSessionId(requireContext(), currentSessionId);
                         dispatchChatMessage(text);
+                    } else if (response.code() == 401) {
+                        hideTypingIndicator();
+                        showQaLoginPrompt();
                     } else {
                         fallbackResponse(text);
                     }
@@ -373,9 +473,7 @@ public class AssistantFragment extends Fragment {
 
                     addBot(answer, body.getRecommendedActions(), body.getCitations(), body.isRequiresHumanValidation());
                 } else if (response.code() == 401) {
-                    // Tenta resposta local para não deixar o usuário sem retorno
-                    addBot("Sessão da IA expirada no servidor QA. Respondendo via assistente local:\n\n" + fallbackAnswer(text),
-                            null, null, false);
+                    showQaLoginPrompt();
                 } else {
                     fallbackResponse(text);
                 }
