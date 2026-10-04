@@ -91,7 +91,7 @@ public final class ChatbotClient {
 
                             Log.i(TAG, "Token expirado (401). Tentando renovação de login via API...");
                             try {
-                                AuthAPI authApi = ApiClient.get(appContext).create(AuthAPI.class);
+                                AuthAPI authApi = ChatbotAuthClient.get(appContext).create(AuthAPI.class);
                                 retrofit2.Response<LoginResponse> loginCall =
                                         authApi.login(new LoginRequest(email, password)).execute();
 

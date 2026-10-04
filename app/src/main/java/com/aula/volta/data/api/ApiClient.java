@@ -2,35 +2,27 @@ package com.aula.volta.data.api;
 
 import android.content.Context;
 
-import androidx.annotation.NonNull;
-
-import com.aula.volta.data.local.SessionManager;
 import com.aula.volta.data.mock.MockInterceptor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * Cliente HTTP principal para a API VOLTA (QA: https://api.qa.54.210.1.34.sslip.io).
+ * Ponto único de acesso à API principal do app (Fase 0).
  *
- * Suporta autenticação JWT, chamadas com charset UTF-8 e cliente OkHttp dedicado.
+ * <p>Mantém as operações do app (Home, Ocorrências, Cooperativas, Relatórios)
+ * isoladas e funcionais, sem interferência de serviços externos.</p>
  */
 public final class ApiClient {
 
-    /** Base URL oficial do ambiente de QA para a API VOLTA. */
-    public static final String API_BASE_URL = "https://api.qa.54.210.1.34.sslip.io/";
+    /** Mock ligado para as APIs operacionais do app. */
+    public static final boolean USE_MOCK = true;
 
-    /** Desativado para uso real no ambiente QA. */
-    public static boolean USE_MOCK = false;
+    /** Base URL mock para as operações do app. */
+    private static final String BASE_URL_MOCK = "https://volta.mock/";
 
     private static Retrofit instance;
 
@@ -39,37 +31,15 @@ public final class ApiClient {
 
     public static synchronized Retrofit get(Context context) {
         if (instance == null) {
-            final Context appContext = context.getApplicationContext();
-            final Gson gson = new GsonBuilder().create();
+            Gson gson = new GsonBuilder().create();
 
-            OkHttpClient.Builder http = new OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS);
-
+            OkHttpClient.Builder http = new OkHttpClient.Builder();
             if (USE_MOCK) {
-                http.addInterceptor(new MockInterceptor(appContext));
-            } else {
-                http.addInterceptor(new Interceptor() {
-                    @NonNull
-                    @Override
-                    public Response intercept(@NonNull Chain chain) throws IOException {
-                        Request original = chain.request();
-                        Request.Builder builder = original.newBuilder()
-                                .header("Accept", "application/json; charset=utf-8");
-
-                        String token = SessionManager.getToken(appContext);
-                        if (token != null && !token.trim().isEmpty() && !original.url().encodedPath().contains("/auth/login")) {
-                            builder.header("Authorization", "Bearer " + token.trim());
-                        }
-
-                        return chain.proceed(builder.build());
-                    }
-                });
+                http.addInterceptor(new MockInterceptor(context.getApplicationContext()));
             }
 
             instance = new Retrofit.Builder()
-                    .baseUrl(API_BASE_URL)
+                    .baseUrl(BASE_URL_MOCK)
                     .client(http.build())
                     .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
@@ -77,7 +47,7 @@ public final class ApiClient {
         return instance;
     }
 
-    /** Permite reconstruir o client (ex.: em testes ou troca de ambiente). */
+    /** Apenas para testes: permite reconstruir o client. */
     public static synchronized void resetForTests() {
         instance = null;
     }

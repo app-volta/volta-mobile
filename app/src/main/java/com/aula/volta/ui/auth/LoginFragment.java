@@ -1,7 +1,9 @@
 package com.aula.volta.ui.auth;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,8 +17,8 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
-import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.AuthAPI;
+import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.local.SessionManager;
 import com.aula.volta.data.model.auth.LoginRequest;
 import com.aula.volta.data.model.auth.LoginResponse;
@@ -27,15 +29,18 @@ import retrofit2.Response;
 
 /**
  * Login — Figma 790:955.
- * Integração real com a API de Autenticação QA (POST /auth/login) via JWT.
+ *
+ * Realiza a autenticação no app e autentica em background com a API do Chatbot QA
+ * sem travar ou bloquear a navegação do usuário no aplicativo.
  */
 public class LoginFragment extends Fragment {
+
+    private static final String TAG = "LoginFragment";
 
     private EditText etEmail;
     private EditText etPassword;
     private TextView btnLogin;
     private boolean passwordVisible;
-    private boolean isLoading;
 
     public LoginFragment() {
     }
@@ -84,10 +89,6 @@ public class LoginFragment extends Fragment {
     }
 
     private void tryLogin() {
-        if (isLoading) {
-            return;
-        }
-
         final String email = etEmail.getText().toString().trim();
         final String password = etPassword.getText().toString();
 
@@ -97,73 +98,38 @@ public class LoginFragment extends Fragment {
             return;
         }
 
-        setLoading(true);
+        final Context appContext = requireContext().getApplicationContext();
+        final String name = displayName(email);
 
-        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
-        authApi.login(new LoginRequest(email, password)).enqueue(new Callback<LoginResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                setLoading(false);
+        // 1. Salva a sessão local do usuário e permite entrada imediata no app
+        SessionManager.login(appContext, email, password, name, "");
 
-                if (response.isSuccessful() && response.body() != null) {
-                    LoginResponse body = response.body();
-                    String token = body.getToken();
-                    String name = body.getName() != null && !body.getName().trim().isEmpty()
-                            ? body.getName()
-                            : displayName(email);
-
-                    // Salva credenciais e token JWT no SessionManager
-                    SessionManager.login(requireContext(), email, password, name, token);
-
-                    Toast.makeText(requireContext(), "Login realizado com sucesso!", Toast.LENGTH_SHORT).show();
-                    ((AuthActivity) requireActivity()).finishLogin();
-                } else if (response.code() == 401 || response.code() == 400 || response.code() == 403) {
-                    Toast.makeText(requireContext(), R.string.auth_error_credentials, Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(requireContext(),
-                            getString(R.string.auth_error_server, response.code()),
-                            Toast.LENGTH_LONG).show();
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                setLoading(false);
-
-                // Em ambiente de teste/demonstração, se a API externa de QA estiver offline ou bloqueada por firewall
-                if ("breno@volta.com".equalsIgnoreCase(email) && "1234".equals(password)) {
-                    SessionManager.login(requireContext(), email, password, displayName(email), "mock_demo_jwt_token");
-                    Toast.makeText(requireContext(), "API QA indisponível. Entrando em modo offline...", Toast.LENGTH_LONG).show();
-                    ((AuthActivity) requireActivity()).finishLogin();
-                    return;
+        // 2. Dispara autenticação em background com a API do Chatbot para obter o JWT
+        try {
+            AuthAPI authApi = ChatbotAuthClient.get(appContext).create(AuthAPI.class);
+            authApi.login(new LoginRequest(email, password)).enqueue(new Callback<LoginResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
+                        String token = response.body().getToken();
+                        SessionManager.saveToken(appContext, token);
+                        Log.i(TAG, "Token JWT do Chatbot obtido com sucesso no login.");
+                    } else {
+                        Log.w(TAG, "Chatbot login retornou status: " + response.code());
+                    }
                 }
 
-                Toast.makeText(requireContext(),
-                        getString(R.string.auth_error_network) + " (" + t.getLocalizedMessage() + ")",
-                        Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
-    private void setLoading(boolean loading) {
-        this.isLoading = loading;
-        if (btnLogin != null) {
-            btnLogin.setEnabled(!loading);
-            btnLogin.setText(loading ? R.string.auth_logging_in : R.string.auth_login_btn);
-            btnLogin.setAlpha(loading ? 0.7f : 1.0f);
+                @Override
+                public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
+                    Log.w(TAG, "Chatbot login offline ou inalcançável: " + t.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "Erro ao iniciar autenticação do chatbot", e);
         }
-        if (etEmail != null) {
-            etEmail.setEnabled(!loading);
-        }
-        if (etPassword != null) {
-            etPassword.setEnabled(!loading);
-        }
+
+        // Conclui login no app sem bloqueios
+        ((AuthActivity) requireActivity()).finishLogin();
     }
 
     private String displayName(String email) {
