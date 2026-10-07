@@ -11,18 +11,17 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * Ponto único de acesso à API (Fase 0).
+ * Ponto único de acesso à API principal do app (Fase 0).
  *
- * <p>Mock agora, backend depois — a troca é feita em 1 ponto:
- * {@code USE_MOCK = false} + base URL real. Os Fragments chamam Retrofit
- * do mesmo jeito nos dois mundos (padrão CarrinhoDeCompras).</p>
+ * <p>Mantém as operações do app (Home, Ocorrências, Cooperativas, Relatórios)
+ * isoladas e funcionais, sem interferência de serviços externos.</p>
  */
 public final class ApiClient {
 
-    /** Mock ligado: respostas vêm de data/mock (assets). Desligar na Fase 13. */
+    /** Mock ligado para as APIs operacionais do app. */
     public static final boolean USE_MOCK = true;
 
-    /** Base URL mock (nunca chamada de verdade com USE_MOCK=true). Trocar na Fase 13. */
+    /** Base URL mock para as operações do app. */
     private static final String BASE_URL_MOCK = "https://volta.mock/";
 
     private static Retrofit instance;
@@ -48,8 +47,8 @@ public final class ApiClient {
         return instance;
     }
 
-    /** Apenas para testes: permite reconstruir o client (ex.: após trocar USE_MOCK). */
-    static synchronized void resetForTests() {
+    /** Apenas para testes: permite reconstruir o client. */
+    public static synchronized void resetForTests() {
         instance = null;
     }
 }

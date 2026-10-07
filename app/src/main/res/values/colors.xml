@@ -97,6 +97,14 @@
     <color name="dialog_finalize_title">#0F172A</color>
     <color name="dialog_finalize_sub">#64748B</color>
 
+    <!-- Cores Oficiais Figma 790:955 (Login) -->
+    <color name="login_subtitle_white">#D9FFFFFF</color>
+    <color name="login_hint_white">#99FFFFFF</color>
+    <color name="login_border_translucent">#BFFFFFFF</color>
+    <color name="login_input_bg">#29FFFFFF</color>
+    <color name="login_btn_text_green">#1BA463</color>
+    <color name="login_google_btn_bg">#0FFFFFFF</color>
+
     <!-- Cores de Apoio -->
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
