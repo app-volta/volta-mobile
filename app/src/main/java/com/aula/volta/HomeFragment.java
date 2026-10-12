@@ -91,12 +91,11 @@ public class HomeFragment extends Fragment {
                     Navigation.findNavController(view).navigate(R.id.nav_register));
             vpCarousel.setAdapter(carouselAdapter);
             if (carouselDots != null) {
-                // Figma 790:1680 exibe 3 indicadores (1 pílula ativa 22x7dp + 2 pontos 7x7dp)
-                setupDots(carouselDots, 3, 0);
+                setupDots(carouselDots, carouselAdapter.getItemCount(), 0);
                 vpCarousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
                     @Override
                     public void onPageSelected(int position) {
-                        setupDots(carouselDots, 3, position);
+                        setupDots(carouselDots, carouselAdapter.getItemCount(), position);
                     }
                 });
             }

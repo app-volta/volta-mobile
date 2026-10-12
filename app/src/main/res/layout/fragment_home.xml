@@ -65,7 +65,7 @@
                         android:textStyle="bold" />
                 </FrameLayout>
 
-                <!-- Saudação e unidade/setor (Figma 790:1640..1642) -->
+                <!-- Saudação ("Bom dia,") e nome do usuário ("Breno Gomes") (Figma 790:1640 e 790:1641) -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -75,28 +75,27 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvGreeting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="@string/greeting_morning"
+                        android:textColor="@color/volta_text_secondary_light"
+                        android:textSize="13.5sp" />
+
+                    <TextView
                         android:id="@+id/tvUserName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
-                        android:text="Olá, Beatriz 👋"
+                        android:text="Breno Gomes"
                         android:textColor="@color/volta_text_primary_light"
-                        android:textSize="18sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvGreeting"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:fontFamily="@font/font_inter"
-                        android:text="Unidade Matriz · Setor B"
-                        android:textColor="@color/volta_text_secondary_light"
-                        android:textSize="12.5sp" />
                 </LinearLayout>
 
-                <!-- Botão de notificação: círculo branco 44x44dp + sino + dot vermelho (Figma 790:1643) -->
+                <!-- Botão de notificação: círculo branco 44x44dp + sino + badge contador (Figma 790:1642) -->
                 <FrameLayout
                     android:id="@+id/btnNotifications"
                     android:layout_width="@dimen/tap_target_min"
@@ -107,7 +106,7 @@
                     android:contentDescription="Notificações"
                     android:focusable="true">
 
-                    <!-- Círculo branco 44dp com borda #EEF0F5 -->
+                    <!-- Círculo branco 44dp com borda sutil -->
                     <View
                         android:layout_width="44dp"
                         android:layout_height="44dp"
@@ -115,25 +114,15 @@
                         android:background="@drawable/bg_notification_circle"
                         android:elevation="2dp" />
 
-                    <!-- Ícone do sino -->
+                    <!-- Ícone do sino (stroke) -->
                     <ImageView
                         android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_height="22dp"
                         android:layout_gravity="center"
                         android:elevation="3dp"
                         android:src="@drawable/ic_notification_bell" />
 
-                    <!-- Ponto vermelho de notificação (Figma 790:1647) -->
-                    <View
-                        android:layout_width="9dp"
-                        android:layout_height="9dp"
-                        android:layout_gravity="top|end"
-                        android:layout_marginTop="11dp"
-                        android:layout_marginEnd="12dp"
-                        android:background="@drawable/bg_badge_count"
-                        android:elevation="4dp" />
-
-                    <!-- Badge contador dinâmico -->
+                    <!-- Badge contador (Figma 790:1646: círculo vermelho com número) -->
                     <TextView
                         android:id="@+id/tvNotifCount"
                         android:layout_width="20dp"
@@ -181,7 +170,7 @@
                 android:layout_marginBottom="@dimen/spacing_medium" />
 
             <!-- =================================================================================== -->
-            <!--                            RESUMO DA UNIDADE — 3 Cards (Figma 790:1684..1702)      -->
+            <!--                            RESUMO DA UNIDADE — 3 Cards (Figma 790:1684..1703)      -->
             <!-- =================================================================================== -->
 
             <TextView
@@ -194,7 +183,7 @@
                 android:paddingEnd="24dp"
                 android:text="@string/home_summary_title"
                 android:textColor="@color/volta_text_primary_light"
-                android:textSize="16sp"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
             <LinearLayout
@@ -207,7 +196,7 @@
                 android:paddingEnd="24dp"
                 android:weightSum="3">
 
-                <!-- Card 1: Em aberto (laranja #FFEFE2 / #E8893A) (Figma 790:1685) -->
+                <!-- Card 1: Abertas (laranja #FFEFE2 / #E8893A) (Figma 790:1685) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="@dimen/card_stat_height"
@@ -215,11 +204,15 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_stat_open"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingStart="14dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="12dp">
 
                     <FrameLayout
                         android:layout_width="@dimen/icon_size_stat"
                         android:layout_height="@dimen/icon_size_stat"
+                        android:layout_marginBottom="8dp"
                         android:background="@drawable/bg_stat_icon_orange">
 
                         <ImageView
@@ -228,11 +221,6 @@
                             android:layout_gravity="center"
                             android:src="@drawable/ic_stat_open" />
                     </FrameLayout>
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
 
                     <TextView
                         android:id="@+id/tvStatOpenCount"
@@ -249,7 +237,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
                         android:ellipsize="end"
                         android:fontFamily="@font/font_inter"
                         android:maxLines="1"
@@ -267,11 +254,15 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_stat_resolved"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingStart="14dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="12dp">
 
                     <FrameLayout
                         android:layout_width="@dimen/icon_size_stat"
                         android:layout_height="@dimen/icon_size_stat"
+                        android:layout_marginBottom="8dp"
                         android:background="@drawable/bg_stat_icon_green">
 
                         <ImageView
@@ -281,11 +272,6 @@
                             android:src="@drawable/ic_stat_resolved"
                             app:tint="@color/stat_resolved_icon" />
                     </FrameLayout>
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
 
                     <TextView
                         android:id="@+id/tvStatResolvedCount"
@@ -302,7 +288,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
                         android:ellipsize="end"
                         android:fontFamily="@font/font_inter"
                         android:maxLines="1"
@@ -311,7 +296,7 @@
                         android:textSize="11.5sp" />
                 </LinearLayout>
 
-                <!-- Card 3: Reciclados kg (azul #E4EFFF / #3B82F6) (Figma 790:1697) -->
+                <!-- Card 3: kg Reciclados (azul #E4EFFF / #3B82F6) (Figma 790:1697) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="@dimen/card_stat_height"
@@ -319,11 +304,15 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_stat_recycled"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingStart="14dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="12dp">
 
                     <FrameLayout
                         android:layout_width="@dimen/icon_size_stat"
                         android:layout_height="@dimen/icon_size_stat"
+                        android:layout_marginBottom="8dp"
                         android:background="@drawable/bg_stat_icon_blue">
 
                         <ImageView
@@ -332,11 +321,6 @@
                             android:layout_gravity="center"
                             android:src="@drawable/ic_stat_recycled" />
                     </FrameLayout>
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
 
                     <TextView
                         android:id="@+id/tvStatRecycledCount"
@@ -357,7 +341,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
                         android:ellipsize="end"
                         android:fontFamily="@font/font_inter"
                         android:maxLines="1"
@@ -387,7 +370,7 @@
                     android:includeFontPadding="false"
                     android:text="@string/home_recent_occurrences"
                     android:textColor="@color/volta_text_primary_light"
-                    android:textSize="16sp"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -399,12 +382,12 @@
                     android:fontFamily="@font/font_inter"
                     android:text="@string/home_see_all"
                     android:textColor="#1BA463"
-                    android:textSize="13sp"
+                    android:textSize="13.5sp"
                     android:textStyle="bold" />
             </RelativeLayout>
 
             <!-- =================================================================================== -->
-            <!--              OCORRÊNCIAS RECENTES — lista dinâmica (Figma 790:1705)                 -->
+            <!--              OCORRÊNCIAS RECENTES — lista dinâmica (Figma 790:1706)                 -->
             <!-- =================================================================================== -->
 
             <androidx.recyclerview.widget.RecyclerView

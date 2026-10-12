@@ -6,8 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/volta_background_light"
-    android:clipChildren="false"
-    android:clipToPadding="false"
     tools:context=".MainActivity">
 
     <!-- Toolbar com suporte a título e botão voltar automático -->
@@ -29,8 +27,6 @@
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:clipChildren="false"
-        android:clipToPadding="false"
         app:defaultNavHost="true"
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent"
@@ -38,17 +34,25 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         app:navGraph="@navigation/nav_graph" />
 
-    <!-- Barra de Navegação Inferior (Figma 790:1736: fundo #FFFFFF + borda superior 1dp #EEF0F5) -->
+    <!-- Borda superior 1dp #EEF0F5 da Tab bar (Figma 790:1736) -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#EEF0F5"
+        android:elevation="5dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Barra de Navegação Inferior - 4 itens + FAB central sobreposto (Figma 790:1736) -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="0dp"
-        android:layout_height="84dp"
-        android:minHeight="84dp"
-        android:background="@drawable/bg_bottom_bar"
-        android:elevation="8dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="10dp"
-        app:itemIconSize="22dp"
+        android:layout_height="wrap_content"
+        android:minHeight="76dp"
+        android:background="@color/bottom_bar_bg"
+        android:elevation="4dp"
+        app:backgroundTint="@color/bottom_bar_bg"
         app:itemIconTint="@color/bottom_nav_selector"
         app:itemTextColor="@color/bottom_nav_selector"
         app:itemActiveIndicatorStyle="@style/TransparentActiveIndicator"
@@ -59,44 +63,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 
-    <!-- Halo verde difuso sob o botão central da câmera (Figma I790:1736;6:13 DROP_SHADOW #800E7C48) -->
-    <View
-        android:layout_width="116dp"
-        android:layout_height="116dp"
-        android:layout_marginTop="-42dp"
-        android:background="@drawable/bg_mascot_halo"
-        android:elevation="9dp"
-        android:importantForAccessibility="no"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/bottomNavigationView" />
-
-    <!-- FAB Central - Registrar (Figma tab-camera I790:1736;6:13:
-         68x68dp degradê #22C06F -> #0E7C48 + 6dp borda branca externa = 80x80dp total,
-         posicionado 26dp acima da borda superior da Tab bar = -32dp incluindo a borda de 6dp) -->
+    <!-- FAB Central - Registrar (Figma tab-camera 790:1736:
+         68x68dp degradê #22C06F -> #0E7C48 + 6dp borda branca externa = 80x80dp total) -->
     <FrameLayout
         android:id="@+id/fabRegister"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginTop="-32dp"
+        android:layout_marginBottom="28dp"
         android:background="@drawable/bg_fab_ring"
         android:clickable="true"
+        android:focusable="true"
         android:contentDescription="@string/nav_register"
         android:elevation="12dp"
-        android:focusable="true"
-        android:outlineAmbientShadowColor="#0E7C48"
         android:outlineProvider="background"
+        android:outlineAmbientShadowColor="#0E7C48"
         android:outlineSpotShadowColor="#0E7C48"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/bottomNavigationView">
+        app:layout_constraintStart_toStartOf="parent">
 
         <ImageView
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_gravity="center"
-            android:contentDescription="@null"
             android:src="@drawable/ic_camera_official"
+            android:contentDescription="@null"
             app:tint="@color/white" />
     </FrameLayout>
 
