@@ -71,6 +71,11 @@ public class OccurrencesFragment extends Fragment {
         etSearchOccurrences = view.findViewById(R.id.etSearchOccurrences);
         btnClearSearch = view.findViewById(R.id.btnClearSearch);
 
+        View btnBack = view.findViewById(R.id.btnBackOccurrences);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
+        }
+
         RecyclerView rvOccurrences = view.findViewById(R.id.rvOccurrences);
         adapter = new OccurrenceAdapter(occurrence -> {
             Bundle args = new Bundle();

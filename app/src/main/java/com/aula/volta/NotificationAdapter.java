@@ -63,7 +63,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.icon.setImageResource(iconFor(notification.getIcone()));
         applyTintAndBg(holder, notification);
 
-        holder.badge.setVisibility(notification.isLida() ? View.GONE : View.VISIBLE);
+        boolean unread = !notification.isLida();
+        holder.itemView.setBackgroundResource(
+                unread ? R.drawable.bg_notif_card_unread : R.drawable.bg_notif_card_read);
+        holder.badge.setVisibility(unread ? View.VISIBLE : View.GONE);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {

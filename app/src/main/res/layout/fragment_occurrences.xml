@@ -12,11 +12,31 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/spacing_small">
 
+        <FrameLayout
+            android:id="@+id/btnBackOccurrences"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_notification_circle"
+            android:clickable="true"
+            android:contentDescription="@string/occurrence_back"
+            android:elevation="2dp"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_chevron_left" />
+        </FrameLayout>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/btnBackOccurrences"
             android:text="@string/home_recent_occurrences"
             android:textColor="@color/volta_text_primary_light"
             android:textSize="@dimen/text_size_subtitle"

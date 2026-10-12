@@ -8,7 +8,7 @@
     android:background="@color/volta_background_light"
     tools:context=".MainActivity">
 
-    <!-- Toolbar com suporte a título e botão voltar automático -->
+    <!-- Toolbar oculta (nenhum fragmento no Figma usa ActionBar nativa) -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
@@ -16,6 +16,7 @@
         android:background="@color/volta_surface_light"
         android:elevation="2dp"
         android:minHeight="?attr/actionBarSize"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

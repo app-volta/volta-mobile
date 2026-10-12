@@ -1,16 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Bottom sheet Notificações — Figma (626:780): título + pill + X + marcar lidas + lista. -->
+<!-- Bottom sheet Notificações — Figma (790:1854): alça + título + pill + X circular + marcar lidas + divisor + lista. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/volta_surface_light"
+    android:background="@drawable/bg_panel_cooperatives"
     android:orientation="vertical"
-    android:padding="@dimen/spacing_normal">
+    android:paddingStart="24dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="20dp">
+
+    <!-- Alça superior (Figma 790:1855: 44x5dp #D0D5DD) -->
+    <View
+        android:layout_width="44dp"
+        android:layout_height="5dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_panel_handle" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing_small">
+        android:layout_marginBottom="6dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -23,46 +34,65 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/font_poppins"
+                android:includeFontPadding="false"
                 android:text="@string/notifications_title"
                 android:textColor="@color/volta_text_primary_light"
-                android:textSize="@dimen/text_size_title"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvNewCount"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_small"
+                android:layout_height="24dp"
+                android:layout_marginStart="10dp"
                 android:background="@drawable/bg_badge_baixa"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
                 android:paddingStart="10dp"
-                android:paddingTop="4dp"
                 android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
                 android:textColor="@color/priority_low_text"
-                android:textSize="@dimen/text_size_caption"
+                android:textSize="11.5sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <ImageView
+        <!-- Botão fechar circular 38x38dp #F2F4F8 (Figma 790:1859) -->
+        <FrameLayout
             android:id="@+id/btnCloseNotifications"
-            android:layout_width="@dimen/tap_target_min"
-            android:layout_height="@dimen/tap_target_min"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
+            android:background="@drawable/bg_notif_close_circle"
+            android:clickable="true"
             android:contentDescription="@string/notifications_title"
-            android:padding="@dimen/spacing_medium"
-            android:src="@drawable/ic_close" />
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_close" />
+        </FrameLayout>
     </RelativeLayout>
 
     <TextView
         android:id="@+id/tvMarkAllRead"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing_medium"
+        android:layout_marginBottom="12dp"
+        android:fontFamily="@font/font_inter"
         android:text="@string/notifications_mark_all"
-        android:textColor="@color/volta_green_dark"
-        android:textSize="@dimen/text_size_body_small"
+        android:textColor="@color/nav_item_selected"
+        android:textSize="13.5sp"
         android:textStyle="bold" />
+
+    <!-- Divisor 1dp #EEF0F5 (Figma 790:1863) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="14dp"
+        android:background="#EEF0F5" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvNotifications"
