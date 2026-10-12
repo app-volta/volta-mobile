@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -23,7 +22,6 @@ import com.aula.volta.data.api.ReportAPI;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.local.PrefsHelper;
-import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
 import com.google.gson.JsonObject;
 
@@ -58,7 +56,6 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Infla o layout do fragmento
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
@@ -75,19 +72,31 @@ public class HomeFragment extends Fragment {
         //            AÇÕES DA HOME (navegação interna, sem item na bottom bar)
         // _________________________________________________________________________________________
 
-        // Carrossel da Home (Figma 790:1624): slide CTA + slide Últimos 7 dias
+        // Carrossel da Home (Figma 790:1648): slide CTA + slide Últimos 7 dias (com peek lateral)
         ViewPager2 vpCarousel = view.findViewById(R.id.vpCarousel);
         LinearLayout carouselDots = view.findViewById(R.id.carouselDots);
         if (vpCarousel != null) {
+            vpCarousel.setClipToPadding(false);
+            vpCarousel.setClipChildren(false);
+            vpCarousel.setOffscreenPageLimit(1);
+            View innerChild = vpCarousel.getChildAt(0);
+            if (innerChild instanceof RecyclerView) {
+                RecyclerView rv = (RecyclerView) innerChild;
+                rv.setClipToPadding(false);
+                rv.setClipChildren(false);
+                rv.setOverScrollMode(View.OVER_SCROLL_NEVER);
+            }
+
             CarouselAdapter carouselAdapter = new CarouselAdapter(() ->
                     Navigation.findNavController(view).navigate(R.id.nav_register));
             vpCarousel.setAdapter(carouselAdapter);
             if (carouselDots != null) {
-                setupDots(carouselDots, carouselAdapter.getItemCount(), 0);
+                // Figma 790:1680 exibe 3 indicadores (1 pílula ativa 22x7dp + 2 pontos 7x7dp)
+                setupDots(carouselDots, 3, 0);
                 vpCarousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
                     @Override
                     public void onPageSelected(int position) {
-                        setupDots(carouselDots, carouselAdapter.getItemCount(), position);
+                        setupDots(carouselDots, 3, position);
                     }
                 });
             }
@@ -101,7 +110,7 @@ public class HomeFragment extends Fragment {
             });
         }
 
-        // Sino abre as notificações (bottom sheet da Fase 7; stub na Fase 0)
+        // Sino abre as notificações
         View btnNotifications = view.findViewById(R.id.btnNotifications);
         if (btnNotifications != null) {
             btnNotifications.setOnClickListener(v -> {
@@ -146,7 +155,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Atualiza o dot ao voltar do sheet de notificações (marcar como lidas)
         loadNotificationDot();
     }
 
@@ -212,7 +220,6 @@ public class HomeFragment extends Fragment {
             if (!isAdded()) {
                 return;
             }
-            // Home exibe só as 3 mais recentes (mock ordenado); "Ver todas" abre a lista
             applyOccurrences(recentOnly(occurrences));
             onLoadFinished();
         });
@@ -234,7 +241,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /** Badge do sino = contagem de não lidas (Figma Home nova: círculo com número). */
+    /** Badge do sino = contagem de não lidas. */
     private void loadNotificationDot() {
         NotificationStore.refresh(requireContext(), notifications -> {
             int unread = NotificationStore.unreadCount(notifications);
@@ -247,17 +254,23 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupDots(LinearLayout container, int count, int selected) {
+        if (!isAdded()) return;
         container.removeAllViews();
         float density = getResources().getDisplayMetrics().density;
+        int activeW = Math.round(22 * density);
+        int inactiveW = Math.round(7 * density);
+        int h = Math.round(7 * density);
+        int margin = Math.round(3 * density);
+
         for (int i = 0; i < count; i++) {
-            ImageView dot = new ImageView(requireContext());
+            View dot = new View(requireContext());
+            boolean isActive = (i == selected);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            int margin = (int) (4 * density);
+                    isActive ? activeW : inactiveW,
+                    h);
             params.setMargins(margin, 0, margin, 0);
             dot.setLayoutParams(params);
-            dot.setBackgroundResource(i == selected
+            dot.setBackgroundResource(isActive
                     ? R.drawable.bg_dot_active : R.drawable.bg_dot_inactive);
             container.addView(dot);
         }

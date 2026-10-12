@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Card de ocorrência — mesmo visual dos cards estáticos da Home (Figma).
-     Reutilizado na Home (recentes) e na Fase 5 (lista Ocorrências). -->
+<!-- Card de ocorrência recente (Figma 790:1706: 74dp, corner 20dp, borda 1dp #EEF0F5, chip 46x46dp r=14dp) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="@dimen/spacing_small"
+    android:minHeight="74dp"
+    android:layout_marginBottom="10dp"
     android:background="@drawable/bg_card_surface"
+    android:elevation="1dp"
+    android:outlineAmbientShadowColor="#1F0D261A"
+    android:outlineSpotShadowColor="#1F0D261A"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="@dimen/spacing_medium">
+    android:padding="14dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
     <FrameLayout
         android:id="@+id/cardIconContainer"
@@ -18,16 +25,18 @@
 
         <ImageView
             android:id="@+id/cardIcon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:layout_gravity="center"
+            android:importantForAccessibility="no"
             android:src="@drawable/ic_occurrence_waste" />
     </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/spacing_medium"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="8dp"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -35,28 +44,45 @@
             android:id="@+id/cardTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/font_inter"
+            android:maxLines="1"
             android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_body"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/cardSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/font_inter"
+            android:maxLines="1"
             android:textColor="@color/volta_text_secondary_light"
-            android:textSize="@dimen/text_size_caption" />
+            android:textSize="12.5sp" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/cardBadge"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="24dp"
         android:background="@drawable/bg_badge_media"
+        android:fontFamily="@font/font_inter"
+        android:gravity="center"
+        android:letterSpacing="0.04"
         android:paddingStart="10dp"
-        android:paddingTop="4dp"
         android:paddingEnd="10dp"
-        android:paddingBottom="4dp"
+        android:textAllCaps="true"
         android:textColor="@color/priority_medium_text"
-        android:textSize="@dimen/text_size_caption"
+        android:textSize="10.5sp"
         android:textStyle="bold" />
+
+    <ImageView
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginStart="8dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_chevron_right"
+        app:tint="#A7B0C0" />
 </LinearLayout>

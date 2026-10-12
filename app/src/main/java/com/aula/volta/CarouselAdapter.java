@@ -1,24 +1,26 @@
 package com.aula.volta;
 
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 /**
- * Carrossel da Home (Figma 790:1624): slide CTA + slide Últimos 7 dias.
- * Barras do slide 2 nas proporções do Figma (mock; API depois).
+ * Carrossel da Home (Figma 790:1648): slide CTA (790:1649) + slide Últimos 7 dias (790:1665).
+ * Barras do slide 2: 7 colunas com trilho translúcido de 90dp + barra preenchida nas proporções do Figma.
  */
 public class CarouselAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_CTA = 0;
     private static final int TYPE_WEEK = 1;
 
-    /** Alturas das 14 mini barras (proporção Figma, máx 90). */
-    private static final int[] WEEK_BARS = {90, 40, 90, 52, 90, 32, 90, 74, 90, 47, 90, 61, 90, 90};
+    /** Alturas em dp das 7 barras preenchidas no Figma (790:1671: máx 90dp). */
+    private static final int[] WEEK_FILL_HEIGHTS_DP = {40, 52, 32, 74, 47, 61, 90};
 
     public interface OnRegisterClickListener {
         void onRegisterClick();
@@ -54,24 +56,44 @@ public class CarouselAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof CtaHolder) {
             CtaHolder cta = (CtaHolder) holder;
-            cta.registerButton.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onRegisterClick();
-                }
-            });
+            if (cta.registerButton != null) {
+                cta.registerButton.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.onRegisterClick();
+                    }
+                });
+            }
         } else if (holder instanceof WeekHolder) {
             WeekHolder week = (WeekHolder) holder;
-            if (week.bars.getChildCount() == 0) {
+            if (week.bars != null && week.bars.getChildCount() == 0) {
                 float density = week.bars.getResources().getDisplayMetrics().density;
-                for (int height : WEEK_BARS) {
-                    View bar = new View(week.bars.getContext());
-                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                            0, (int) (height / 90f * 72 * density), 1f);
-                    params.setMargins((int) (2 * density), 0, (int) (2 * density), 0);
-                    params.gravity = android.view.Gravity.BOTTOM;
-                    bar.setLayoutParams(params);
-                    bar.setBackgroundResource(R.drawable.bg_bar_mini);
-                    week.bars.addView(bar);
+                int trackHeightPx = Math.round(90 * density);
+                int gapPx = Math.round(10 * density);
+
+                for (int i = 0; i < WEEK_FILL_HEIGHTS_DP.length; i++) {
+                    FrameLayout track = new FrameLayout(week.bars.getContext());
+                    LinearLayout.LayoutParams trackParams = new LinearLayout.LayoutParams(
+                            0, trackHeightPx, 1f);
+                    if (i < WEEK_FILL_HEIGHTS_DP.length - 1) {
+                        trackParams.setMarginEnd(gapPx);
+                    }
+                    track.setLayoutParams(trackParams);
+                    track.setBackgroundResource(R.drawable.bg_chart_bar_track);
+
+                    View fillBar = new View(week.bars.getContext());
+                    int fillHeightPx = Math.round(WEEK_FILL_HEIGHTS_DP[i] * density);
+                    FrameLayout.LayoutParams fillParams = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            fillHeightPx,
+                            Gravity.BOTTOM);
+                    fillBar.setLayoutParams(fillParams);
+                    boolean isLast = (i == WEEK_FILL_HEIGHTS_DP.length - 1);
+                    fillBar.setBackgroundResource(isLast
+                            ? R.drawable.bg_chart_bar_active
+                            : R.drawable.bg_chart_bar_fill);
+
+                    track.addView(fillBar);
+                    week.bars.addView(track);
                 }
             }
         }

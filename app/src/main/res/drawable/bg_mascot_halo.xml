@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Halo verde suave (DROP_SHADOW #8C0E7C48 r=30 off=(0,14)) para o botão do mascote e câmera (Figma 790:1734 / 790:1736) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="52dp"
+        android:startColor="#660E7C48"
+        android:centerColor="#260E7C48"
+        android:endColor="#000E7C48" />
+</shape>

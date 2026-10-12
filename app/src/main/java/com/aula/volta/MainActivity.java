@@ -66,24 +66,20 @@ public class MainActivity extends AppCompatActivity {
         //            TOOLBAR
         // _________________________________________________________________________________________
 
-        // Fazendo aparecer o nome do Projeto na Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Procuro qual é o fragmentContainerView que utilizará a toolbar
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragmentContainerView);
 
-        // Instanciando o NavController
-        // (sem setupWithNavController(toolbar) duplicado: só o setupActionBar abaixo sincroniza a Toolbar)
         NavController navController = navHostFragment.getNavController();
 
         // _________________________________________________________________________________________
-        //            BOTTOM NAVIGATION VIEW
+        //            BOTTOM NAVIGATION VIEW (Figma 790:1736: fundo #FFFFFF + borda superior #EEF0F5)
         // _________________________________________________________________________________________
 
         BottomNavigationView navView = findViewById(R.id.bottomNavigationView);
-        navView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.bottom_bar_bg));
+        navView.setBackgroundResource(R.drawable.bg_bottom_bar);
 
         // Habilitar menu button (dizendo quais os fragments de nível superior) - 4 tabs reais + FAB central
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
@@ -93,18 +89,11 @@ public class MainActivity extends AppCompatActivity {
         // Ativando a barra de ação sincronizada com o NavController
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        // Navegação custom das abas (SEM setupWithNavController nativo e SEM saveState/restoreState):
-        // o Register é destino avulso do FAB fora das abas; o multiple-back-stack do NavigationUI
-        // corrompia o estado ao alternar FAB <-> abas e travava a aba de origem.
-        // Pilha simples: toda troca de aba faz popUpTo(home). Trade-off consciente: trocar de aba
-        // recria a tela (não preserva scroll/form) — aceitável no MVP, reversível no futuro.
         navView.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
-            // Ignora a aba placeholder central (espaço do FAB)
             if (itemId == R.id.nav_placeholder) {
                 return false;
             }
-            // Se já estiver na aba clicada, ignora para não recriar
             if (navController.getCurrentDestination() != null
                     && navController.getCurrentDestination().getId() == itemId) {
                 return true;
@@ -113,14 +102,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
         navView.setOnItemReselectedListener(item -> {
-            // Caminho vivo quando o id interno está stale (ex.: volta do Register):
-            // navega explícito em vez de ignorar.
             if (item.getItemId() != R.id.nav_placeholder) {
                 navigateToTab(navController, item.getItemId());
             }
         });
-        // Listener único: Toolbar na Home + desmarca a BottomNav no Register.
-        // No Register nenhum item fica verde (processo diferente no futuro).
+
         navController.addOnDestinationChangedListener((ctrl, destination, args) -> {
             int destId = destination.getId();
 
@@ -136,9 +122,6 @@ public class MainActivity extends AppCompatActivity {
                 toolbar.setVisibility(android.view.View.VISIBLE);
             }
 
-            // Se estiver no Register (FAB), desmarca a seleção da BottomNav (nenhum verde).
-            // Alterna o GroupCheckable para desmarcar sem quebrar o listener visual interno.
-            // Nunca usa o placeholder (id fora do nav_graph corrompia o selectedItemId).
             if (destId == R.id.nav_register) {
                 navView.getMenu().setGroupCheckable(0, true, false);
                 for (int i = 0; i < navView.getMenu().size(); i++) {
@@ -146,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 navView.getMenu().setGroupCheckable(0, true, true);
             } else {
-                // Sincroniza o item selecionado na BottomNav com a tela atual
                 android.view.MenuItem menuItem = navView.getMenu().findItem(destId);
                 if (menuItem != null) {
                     menuItem.setChecked(true);
@@ -175,12 +157,10 @@ public class MainActivity extends AppCompatActivity {
         com.aula.volta.data.sync.SyncManager.syncPending(this);
     }
 
-    // Pilha simples sem saveState/restoreState para as abas: evita corromper o estado
-    // ao alternar entre o Register (destino avulso do FAB) e as abas.
     private void navigateToTab(NavController navController, int destId) {
         if (navController.getCurrentDestination() != null
                 && navController.getCurrentDestination().getId() == destId) {
-            return; // já está no destino
+            return;
         }
         NavOptions navOptions = new NavOptions.Builder()
                 .setLaunchSingleTop(true)
@@ -189,7 +169,6 @@ public class MainActivity extends AppCompatActivity {
         navController.navigate(destId, null, navOptions);
     }
 
-    // Suporte ao botão "Voltar" da Toolbar
     @Override
     public boolean onSupportNavigateUp() {
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()

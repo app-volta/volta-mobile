@@ -1,26 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Slide 2 do carrossel Home (Figma 790:1624): Últimos 7 dias + mini gráfico -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Slide 2 do carrossel Home (Figma 790:1665): Últimos 7 dias + 52 ocorrências + gráfico de 7 barras -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_card_cta"
-    android:gravity="center_vertical"
-    android:orientation="vertical"
-    android:padding="@dimen/spacing_large">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing_medium"
-        android:text="@string/home_week_title"
-        android:textColor="@color/white"
-        android:textSize="@dimen/text_size_subtitle"
-        android:textStyle="bold" />
+    android:layout_marginStart="4dp"
+    android:layout_marginTop="2dp"
+    android:layout_marginEnd="10dp"
+    android:layout_marginBottom="14dp"
+    android:outlineAmbientShadowColor="#0E7C48"
+    android:outlineSpotShadowColor="#0E7C48"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="8dp"
+    app:strokeWidth="0dp">
 
     <LinearLayout
-        android:id="@+id/weekBars"
         android:layout_width="match_parent"
-        android:layout_height="90dp"
-        android:gravity="bottom"
-        android:orientation="horizontal" />
-</LinearLayout>
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_card_cta"
+        android:orientation="vertical"
+        android:paddingStart="22dp"
+        android:paddingTop="18dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="18dp">
+
+        <!-- Header: ÚLTIMOS 7 DIAS + 52 ocorrências + pill ↑ +18% vs semana ant. (Figma 790:1666..1670) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/font_inter"
+                    android:letterSpacing="0.08"
+                    android:text="ÚLTIMOS 7 DIAS"
+                    android:textColor="#D9FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/font_poppins"
+                    android:includeFontPadding="false"
+                    android:text="52 ocorrências"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="26dp"
+                android:background="@drawable/bg_chart_bar_track"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:text="↑ +18% vs semana ant."
+                android:textColor="@color/white"
+                android:textSize="11.5sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/weekBars"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="12dp"
+            android:layout_weight="1"
+            android:gravity="bottom"
+            android:orientation="horizontal" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

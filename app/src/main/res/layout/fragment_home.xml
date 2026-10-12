@@ -1,407 +1,510 @@
+<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/volta_background_light">
+    android:background="@color/volta_background_light"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- Background oficial com fluidos e setas em marca d'água (Figma 790:1625) -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/bg_home_fluidos" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:orientation="vertical"
-            android:paddingStart="@dimen/spacing_normal"
             android:paddingTop="@dimen/spacing_medium"
-            android:paddingEnd="@dimen/spacing_normal"
-            android:paddingBottom="96dp">
+            android:paddingBottom="116dp">
 
+            <!-- =================================================================================== -->
+            <!--                            HEADER: Avatar + Saudação + Notificação                  -->
+            <!-- =================================================================================== -->
 
-        <!-- =================================================================================== -->
-        <!--                            HEADER: Avatar + Saudação + Notificação                  -->
-        <!-- =================================================================================== -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_medium"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp">
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium">
+                <!-- Avatar circular 48x48dp com degradê #22C06F -> #0E7C48 (Figma 790:1638) -->
+                <FrameLayout
+                    android:id="@+id/avatarContainer"
+                    android:layout_width="@dimen/avatar_size_home"
+                    android:layout_height="@dimen/avatar_size_home"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/bg_circle_avatar">
 
-            <!-- Avatar circular com iniciais -->
-            <FrameLayout
-                android:id="@+id/avatarContainer"
-                android:layout_width="@dimen/avatar_size_home"
-                android:layout_height="@dimen/avatar_size_home"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:background="@drawable/bg_circle_avatar">
+                    <TextView
+                        android:id="@+id/tvAvatarInitials"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:fontFamily="@font/font_poppins"
+                        android:includeFontPadding="false"
+                        android:text="BG"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </FrameLayout>
 
-                <TextView
-                    android:id="@+id/tvAvatarInitials"
+                <!-- Saudação e unidade/setor (Figma 790:1640..1642) -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="BG"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_subtitle"
-                    android:textStyle="bold" />
-            </FrameLayout>
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="12dp"
+                    android:layout_toEndOf="@id/avatarContainer"
+                    android:orientation="vertical">
 
-            <!-- Saudação e nome do usuário -->
+                    <TextView
+                        android:id="@+id/tvUserName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_poppins"
+                        android:includeFontPadding="false"
+                        android:text="Olá, Beatriz 👋"
+                        android:textColor="@color/volta_text_primary_light"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvGreeting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Unidade Matriz · Setor B"
+                        android:textColor="@color/volta_text_secondary_light"
+                        android:textSize="12.5sp" />
+                </LinearLayout>
+
+                <!-- Botão de notificação: círculo branco 44x44dp + sino + dot vermelho (Figma 790:1643) -->
+                <FrameLayout
+                    android:id="@+id/btnNotifications"
+                    android:layout_width="@dimen/tap_target_min"
+                    android:layout_height="@dimen/tap_target_min"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:clickable="true"
+                    android:contentDescription="Notificações"
+                    android:focusable="true">
+
+                    <!-- Círculo branco 44dp com borda #EEF0F5 -->
+                    <View
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_notification_circle"
+                        android:elevation="2dp" />
+
+                    <!-- Ícone do sino -->
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:elevation="3dp"
+                        android:src="@drawable/ic_notification_bell" />
+
+                    <!-- Ponto vermelho de notificação (Figma 790:1647) -->
+                    <View
+                        android:layout_width="9dp"
+                        android:layout_height="9dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="11dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/bg_badge_count"
+                        android:elevation="4dp" />
+
+                    <!-- Badge contador dinâmico -->
+                    <TextView
+                        android:id="@+id/tvNotifCount"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="top|end"
+                        android:background="@drawable/bg_badge_count"
+                        android:elevation="4dp"
+                        android:gravity="center"
+                        android:textColor="@color/white"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </RelativeLayout>
+
+            <!-- =================================================================================== -->
+            <!--                   CARROSSEL HOME (Figma 790:1648: CTA + Últimos 7 dias)            -->
+            <!-- =================================================================================== -->
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/vpCarousel"
+                android:layout_width="match_parent"
+                android:layout_height="216dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingStart="20dp"
+                android:paddingEnd="32dp" />
+
             <LinearLayout
+                android:id="@+id/carouselDots"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_toEndOf="@id/avatarContainer"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvGreeting"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/greeting_morning"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body_small" />
-
-                <TextView
-                    android:id="@+id/tvUserName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Breno Gomes"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Botão de notificação: círculo branco + sino + dot vermelho -->
-            <FrameLayout
-                android:id="@+id/btnNotifications"
-                android:layout_width="@dimen/tap_target_min"
-                android:layout_height="@dimen/tap_target_min"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:clickable="true"
-                android:contentDescription="Notificações"
-                android:focusable="true">
-
-                <!-- Círculo branco com borda sutil -->
-                <View
-                    android:layout_width="42dp"
-                    android:layout_height="42dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/bg_notification_circle"
-                    android:elevation="2dp" />
-
-                <!-- Ícone do sino (stroke) -->
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="22dp"
-                    android:layout_gravity="center"
-                    android:elevation="3dp"
-                    android:src="@drawable/ic_notification_bell" />
-
-                <!-- Badge contador (Figma Home nova: círculo vermelho com número) -->
-                <TextView
-                    android:id="@+id/tvNotifCount"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="top|end"
-                    android:background="@drawable/bg_badge_count"
-                    android:elevation="4dp"
-                    android:gravity="center"
-                    android:textColor="@color/white"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-            </FrameLayout>
-        </RelativeLayout>
-
-        <!-- =================================================================================== -->
-        <!--                   CARROSSEL HOME (Figma 790:1624: CTA + Últimos 7 dias)            -->
-        <!-- =================================================================================== -->
-
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/vpCarousel"
-            android:layout_width="match_parent"
-            android:layout_height="200dp" />
-
-        <LinearLayout
-            android:id="@+id/carouselDots"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/spacing_small"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:gravity="center"
-            android:orientation="horizontal" />
-
-        <!-- =================================================================================== -->
-        <!--                            RESUMO DA UNIDADE — Título                               -->
-        <!-- =================================================================================== -->
-
-        <!-- Loading da Home (Fase 2: some quando resumo + recentes + dot carregam) -->
-        <ProgressBar
-            android:id="@+id/loadingHome"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="@dimen/spacing_medium" />
-
-        <!-- =================================================================================== -->
-        <!--                            BIG NUMBERS — 3 Cards de Estatísticas                    -->
-        <!-- =================================================================================== -->
-
-        <TextView
-            android:layout_width="163dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:text="@string/home_summary_title"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_subtitle"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:orientation="horizontal"
-            android:weightSum="3">
-
-            <!-- Card 1: Abertas (laranja) - bg #FFEFE2 conforme Assets OcorrenciasAbertas/Rectangle.svg -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/spacing_xs"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_stat_open"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_medium">
-
-                <!-- Ícone + dentro de círculo laranja -->
-                <FrameLayout
-                    android:layout_width="@dimen/icon_size_stat"
-                    android:layout_height="@dimen/icon_size_stat"
-                    android:layout_marginBottom="@dimen/spacing_small"
-                    android:background="@drawable/bg_stat_icon_orange">
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_stat_open" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/tvStatOpenCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="9"
-                    android:textColor="@color/stat_open_icon"
-                    android:textSize="@dimen/text_size_headline"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_stat_open"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <!-- Card 2: Resolvidas (verde) - bg #E2F7EC conforme Assets OcorrenciasResolvidas/Rectangle.svg -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_xs"
-                android:layout_marginEnd="@dimen/spacing_xs"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_stat_resolved"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_medium">
-
-                <!-- Ícone check dentro de círculo verde -->
-                <FrameLayout
-                    android:layout_width="@dimen/icon_size_stat"
-                    android:layout_height="@dimen/icon_size_stat"
-                    android:layout_marginBottom="@dimen/spacing_small"
-                    android:background="@drawable/bg_stat_icon_green">
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_stat_resolved" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/tvStatResolvedCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="43"
-                    android:textColor="@color/stat_resolved_icon"
-                    android:textSize="@dimen/text_size_headline"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_stat_resolved"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <!-- Card 3: kg Reciclados (azul) - bg #E4EFFF conforme Assets KgReciclados/Rectangle.svg -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="@dimen/spacing_xs"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_stat_recycled"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_medium">
-
-                <!-- Ícone seta circular dentro de círculo azul -->
-                <FrameLayout
-                    android:layout_width="@dimen/icon_size_stat"
-                    android:layout_height="@dimen/icon_size_stat"
-                    android:layout_marginBottom="@dimen/spacing_small"
-                    android:background="@drawable/bg_stat_icon_blue">
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_stat_recycled" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/tvStatRecycledCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="1.147"
-                    android:textColor="@color/stat_recycled_icon"
-                    android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/home_stat_recycled"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- =================================================================================== -->
-        <!--                            OCORRÊNCIAS RECENTES — Título + Ver todas                -->
-        <!-- =================================================================================== -->
-
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small">
-
-            <TextView
-                android:layout_width="192dp"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_marginStart="0dp"
-                android:text="@string/home_recent_occurrences"
-                android:textColor="@color/volta_text_primary_light"
-                android:textSize="@dimen/text_size_subtitle"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvSeeAllOccurrences"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="2dp"
-                android:layout_marginEnd="6dp"
-                android:text="@string/home_see_all"
-                android:textColor="@color/volta_green_dark"
-                android:textSize="@dimen/text_size_body_small"
+                android:layout_marginBottom="16dp"
+                android:gravity="center"
+                android:orientation="horizontal" />
+
+            <!-- Loading da Home -->
+            <ProgressBar
+                android:id="@+id/loadingHome"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="@dimen/spacing_medium" />
+
+            <!-- =================================================================================== -->
+            <!--                            RESUMO DA UNIDADE — 3 Cards (Figma 790:1684..1702)      -->
+            <!-- =================================================================================== -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:fontFamily="@font/font_poppins"
+                android:includeFontPadding="false"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:text="@string/home_summary_title"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="16sp"
                 android:textStyle="bold" />
-        </RelativeLayout>
 
-        <!-- =================================================================================== -->
-        <!--              OCORRÊNCIAS RECENTES — lista dinâmica (Fase 2, mesmo visual Figma)     -->
-        <!-- =================================================================================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:weightSum="3">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvRecentOccurrences"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:nestedScrollingEnabled="false" />
+                <!-- Card 1: Em aberto (laranja #FFEFE2 / #E8893A) (Figma 790:1685) -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/card_stat_height"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_open"
+                    android:orientation="vertical"
+                    android:padding="14dp">
 
-        <TextView
-            android:id="@+id/tvEmptyOccurrences"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="@dimen/spacing_large"
-            android:text="@string/empty_list"
-            android:textColor="@color/volta_text_secondary_light"
-            android:textSize="@dimen/text_size_body_small"
-            android:visibility="gone" />
+                    <FrameLayout
+                        android:layout_width="@dimen/icon_size_stat"
+                        android:layout_height="@dimen/icon_size_stat"
+                        android:background="@drawable/bg_stat_icon_orange">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_stat_open" />
+                    </FrameLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tvStatOpenCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_poppins"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="9"
+                        android:textColor="@color/stat_open_icon"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/font_inter"
+                        android:maxLines="1"
+                        android:text="@string/home_stat_open"
+                        android:textColor="@color/volta_text_secondary_light"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+
+                <!-- Card 2: Resolvidas (verde #E2F7EC / #0E7C48) (Figma 790:1691) -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/card_stat_height"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_resolved"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <FrameLayout
+                        android:layout_width="@dimen/icon_size_stat"
+                        android:layout_height="@dimen/icon_size_stat"
+                        android:background="@drawable/bg_stat_icon_green">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_stat_resolved"
+                            app:tint="@color/stat_resolved_icon" />
+                    </FrameLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tvStatResolvedCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_poppins"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="43"
+                        android:textColor="@color/stat_resolved_icon"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/font_inter"
+                        android:maxLines="1"
+                        android:text="@string/home_stat_resolved"
+                        android:textColor="@color/volta_text_secondary_light"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+
+                <!-- Card 3: Reciclados kg (azul #E4EFFF / #3B82F6) (Figma 790:1697) -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/card_stat_height"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_recycled"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <FrameLayout
+                        android:layout_width="@dimen/icon_size_stat"
+                        android:layout_height="@dimen/icon_size_stat"
+                        android:background="@drawable/bg_stat_icon_blue">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_stat_recycled" />
+                    </FrameLayout>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tvStatRecycledCount"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_poppins"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:text="1.147"
+                        android:textColor="@color/stat_recycled_icon"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        app:autoSizeMaxTextSize="24sp"
+                        app:autoSizeMinTextSize="18sp"
+                        app:autoSizeStepGranularity="1sp"
+                        app:autoSizeTextType="uniform" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:ellipsize="end"
+                        android:fontFamily="@font/font_inter"
+                        android:maxLines="1"
+                        android:text="@string/home_stat_recycled"
+                        android:textColor="@color/volta_text_secondary_light"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- =================================================================================== -->
+            <!--                            OCORRÊNCIAS RECENTES — Título + Ver todas                -->
+            <!-- =================================================================================== -->
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:fontFamily="@font/font_poppins"
+                    android:includeFontPadding="false"
+                    android:text="@string/home_recent_occurrences"
+                    android:textColor="@color/volta_text_primary_light"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSeeAllOccurrences"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:fontFamily="@font/font_inter"
+                    android:text="@string/home_see_all"
+                    android:textColor="#1BA463"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <!-- =================================================================================== -->
+            <!--              OCORRÊNCIAS RECENTES — lista dinâmica (Figma 790:1705)                 -->
+            <!-- =================================================================================== -->
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvRecentOccurrences"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_small"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp" />
+
+            <TextView
+                android:id="@+id/tvEmptyOccurrences"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="@dimen/spacing_large"
+                android:text="@string/empty_list"
+                android:textColor="@color/volta_text_secondary_light"
+                android:textSize="@dimen/text_size_body_small"
+                android:visibility="gone" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Mascote VOLTA Flutuante + Balão de fala (Figma 790:1732 e 790:1734) -->
+    <!-- Mascote VOLTA Flutuante + Balão de fala (Figma 790:1732 e 790:1734 — 26dp acima da Tab bar, sem corte) -->
     <LinearLayout
         android:id="@+id/floatingMascotGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="18dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="26dp">
 
         <!-- Balão: "Dúvida no descarte? Me chama!" (Figma 790:1732) -->
         <FrameLayout
             android:id="@+id/balloonMascot"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
             android:background="@drawable/bg_mascot_balloon"
             android:clickable="true"
             android:elevation="6dp"
             android:focusable="true"
             android:paddingStart="14dp"
-            android:paddingTop="9dp"
-            android:paddingEnd="14dp"
-            android:paddingBottom="9dp">
+            android:paddingEnd="14dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/font_inter"
                 android:text="Dúvida no descarte? Me chama!"
                 android:textColor="@color/white"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </FrameLayout>
 
-        <!-- Botão circular do Mascote (Figma 790:1734: 66x66dp) -->
+        <!-- Container com halo verde difuso + botão circular 66x66dp branco #FFFFFF e borda #E2F7EC (Figma 790:1734) -->
         <FrameLayout
-            android:id="@+id/fabMascot"
             android:layout_width="66dp"
             android:layout_height="66dp"
-            android:background="@drawable/bg_mascot_circle"
-            android:clickable="true"
-            android:contentDescription="Assistente VOLTA"
-            android:elevation="8dp"
-            android:focusable="true">
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
-            <ImageView
-                android:layout_width="44dp"
-                android:layout_height="48dp"
+            <!-- Halo verde (DROP_SHADOW #8C0E7C48 r=30 off=(0,14)) -->
+            <View
+                android:layout_width="104dp"
+                android:layout_height="104dp"
                 android:layout_gravity="center"
-                android:src="@drawable/mascote_volta" />
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_mascot_halo" />
+
+            <!-- Botão circular do Mascote (Figma 790:1734: 66x66dp) -->
+            <FrameLayout
+                android:id="@+id/fabMascot"
+                android:layout_width="66dp"
+                android:layout_height="66dp"
+                android:background="@drawable/bg_mascot_circle"
+                android:clickable="true"
+                android:contentDescription="Assistente VOLTA"
+                android:elevation="6dp"
+                android:focusable="true"
+                android:outlineAmbientShadowColor="#0E7C48"
+                android:outlineProvider="background"
+                android:outlineSpotShadowColor="#0E7C48">
+
+                <ImageView
+                    android:layout_width="39dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/mascote_volta" />
+            </FrameLayout>
         </FrameLayout>
     </LinearLayout>
 

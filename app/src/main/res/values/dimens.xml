@@ -10,17 +10,17 @@
 
     <!-- Raios de Borda (Corner Radius) -->
     <dimen name="corner_radius_small">8dp</dimen>
-    <dimen name="corner_radius_card">16dp</dimen>
+    <dimen name="corner_radius_card">20dp</dimen>
     <dimen name="corner_radius_button">12dp</dimen>
     <dimen name="corner_radius_pill">24dp</dimen>
 
     <!-- Tamanhos de Elementos -->
     <dimen name="tap_target_min">48dp</dimen>
     <dimen name="button_height_primary">52dp</dimen>
-    <dimen name="avatar_size_home">46dp</dimen>
+    <dimen name="avatar_size_home">48dp</dimen>
     <dimen name="icon_size_stat">30dp</dimen>
-    <dimen name="card_stat_height">100dp</dimen>
-    <dimen name="thumbnail_size_occurrence">44dp</dimen>
+    <dimen name="card_stat_height">104dp</dimen>
+    <dimen name="thumbnail_size_occurrence">46dp</dimen>
 
     <!-- Tamanho de Tipografia -->
     <dimen name="text_size_caption">11sp</dimen>
