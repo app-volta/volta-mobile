@@ -146,6 +146,11 @@ public class HomeFragment extends Fragment {
         rvRecent.setNestedScrollingEnabled(false);
         rvRecent.setAdapter(adapter);
 
+        getParentFragmentManager().setFragmentResultListener(
+                com.aula.volta.ui.notifications.NotificationsSheet.REQUEST_KEY_UPDATED,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> loadNotificationDot());
+
         loadSummary();
         loadOccurrences();
         loadNotificationDot();

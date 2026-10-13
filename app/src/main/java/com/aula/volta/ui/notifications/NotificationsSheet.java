@@ -1,5 +1,6 @@
 package com.aula.volta.ui.notifications;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,10 +22,12 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import java.util.List;
 
 /**
- * Bottom sheet de notificações — Figma (626:780).
+ * Bottom sheet de notificações — Figma (790:1854).
  * Lê sempre do NotificationStore (mock agora, FCM depois sem mudar a tela).
  */
 public class NotificationsSheet extends BottomSheetDialogFragment {
+
+    public static final String REQUEST_KEY_UPDATED = "notifications_updated";
 
     private NotificationAdapter adapter;
     private TextView tvNewCount;
@@ -53,12 +56,14 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
         TextView tvMarkAll = view.findViewById(R.id.tvMarkAllRead);
         tvMarkAll.setOnClickListener(v -> {
             NotificationStore.markAllRead(requireContext());
-            reload();
+            applyNotifications(NotificationStore.cached(requireContext()));
+            notifyParentUpdated();
         });
 
         RecyclerView rvNotifications = view.findViewById(R.id.rvNotifications);
         adapter = new NotificationAdapter(notification -> {
             NotificationStore.markRead(requireContext(), notification.getId());
+            notifyParentUpdated();
             if (notification.getOccurrenceId() != null
                     && !notification.getOccurrenceId().isEmpty()) {
                 Bundle args = new Bundle();
@@ -67,13 +72,25 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
                 NavHostFragment.findNavController(this)
                         .navigate(R.id.nav_occurrence_full, args);
             } else {
-                reload();
+                applyNotifications(NotificationStore.cached(requireContext()));
             }
         });
         rvNotifications.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvNotifications.setAdapter(adapter);
 
         reload();
+    }
+
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        notifyParentUpdated();
+    }
+
+    private void notifyParentUpdated() {
+        if (isAdded()) {
+            getParentFragmentManager().setFragmentResult(REQUEST_KEY_UPDATED, new Bundle());
+        }
     }
 
     private void reload() {

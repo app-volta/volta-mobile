@@ -8,7 +8,9 @@ import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.NotificationJSON;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -25,6 +27,7 @@ public final class NotificationStore {
     private static final String PREFS = "cache_notifications";
     private static final String KEY_LIST = "list";
     private static final String KEY_LOCAL = "local_only";
+    private static final String KEY_READ_IDS = "read_ids";
 
     public interface LoadCallback {
         void onResult(List<Notification> notifications);
@@ -33,7 +36,7 @@ public final class NotificationStore {
     private NotificationStore() {
     }
 
-    /** Busca na API, mescla com locais (pushLocal) e devolve; se falhar, devolve o cache. */
+    /** Busca na API, mescla com locais (pushLocal) e preserva estado de lidas; se falhar, devolve o cache. */
     public static void refresh(Context context, LoadCallback callback) {
         Context app = context.getApplicationContext();
         NotificationAPI api = ApiClient.get(app).create(NotificationAPI.class);
@@ -63,8 +66,16 @@ public final class NotificationStore {
 
     /** Lista em memória vinda do cache (sem rede). */
     public static List<Notification> cached(Context context) {
-        return PrefsHelper.getList(context.getApplicationContext(), PREFS, KEY_LIST,
+        Context app = context.getApplicationContext();
+        List<Notification> list = PrefsHelper.getList(app, PREFS, KEY_LIST,
                 PrefsHelper.listType(Notification.class));
+        Set<String> readSet = readIds(app);
+        for (Notification n : list) {
+            if (n.getId() != null && readSet.contains(n.getId())) {
+                n.setLida(true);
+            }
+        }
+        return list;
     }
 
     public static int unreadCount(List<Notification> notifications) {
@@ -96,14 +107,37 @@ public final class NotificationStore {
                 PrefsHelper.listType(Notification.class));
     }
 
-    /** API primeiro? Não — locais no topo, sem duplicar ids. */
+    /** Conjunto de IDs já marcados como lidos pelo usuário (sobrevive ao refresh da API/mock). */
+    private static Set<String> readIds(Context app) {
+        List<String> stored = PrefsHelper.getList(app, PREFS, KEY_READ_IDS,
+                PrefsHelper.listType(String.class));
+        return new HashSet<>(stored);
+    }
+
+    private static void saveReadIds(Context app, Set<String> ids) {
+        PrefsHelper.putList(app, PREFS, KEY_READ_IDS, new ArrayList<>(ids));
+    }
+
+    /** Mescla locais no topo com itens da API sem duplicar IDs e preservando estado de leitura. */
     static List<Notification> mergedWithLocal(Context app, List<Notification> api) {
+        Set<String> readSet = readIds(app);
+        for (Notification c : cached(app)) {
+            if (c.isLida() && c.getId() != null) {
+                readSet.add(c.getId());
+            }
+        }
+
         List<Notification> merged = new ArrayList<>(localOnly(app));
         if (api != null) {
             for (Notification n : api) {
                 if (!containsId(merged, n.getId())) {
                     merged.add(n);
                 }
+            }
+        }
+        for (Notification n : merged) {
+            if (n.getId() != null && readSet.contains(n.getId())) {
+                n.setLida(true);
             }
         }
         return merged;
@@ -122,17 +156,25 @@ public final class NotificationStore {
     }
 
     public static void markRead(Context context, String id) {
+        if (id == null) {
+            return;
+        }
         Context app = context.getApplicationContext();
+        Set<String> readSet = readIds(app);
+        readSet.add(id);
+        saveReadIds(app, readSet);
+
         List<Notification> list = cached(app);
         for (Notification n : list) {
-            if (n.getId().equals(id)) {
+            if (id.equals(n.getId())) {
                 n.setLida(true);
             }
         }
         PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+
         List<Notification> local = localOnly(app);
         for (Notification n : local) {
-            if (n.getId().equals(id)) {
+            if (id.equals(n.getId())) {
                 n.setLida(true);
             }
         }
@@ -141,15 +183,26 @@ public final class NotificationStore {
 
     public static void markAllRead(Context context) {
         Context app = context.getApplicationContext();
+        Set<String> readSet = readIds(app);
+
         List<Notification> list = cached(app);
         for (Notification n : list) {
             n.setLida(true);
+            if (n.getId() != null) {
+                readSet.add(n.getId());
+            }
         }
         PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+
         List<Notification> local = localOnly(app);
         for (Notification n : local) {
             n.setLida(true);
+            if (n.getId() != null) {
+                readSet.add(n.getId());
+            }
         }
         PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
+
+        saveReadIds(app, readSet);
     }
 }
