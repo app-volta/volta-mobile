@@ -58,37 +58,38 @@
             android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            android:paddingStart="22dp"
-            android:paddingTop="18dp"
-            android:paddingEnd="118dp"
-            android:paddingBottom="18dp">
+            android:paddingStart="20dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="104dp"
+            android:paddingBottom="14dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/font_poppins"
                 android:includeFontPadding="false"
-                android:lineSpacingExtra="-4dp"
+                android:lineSpacingExtra="-5dp"
                 android:text="@string/home_cta_title"
                 android:textColor="@color/white"
-                android:textSize="21sp"
+                android:textSize="19.5sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="@font/font_inter"
-                android:lineSpacingExtra="2dp"
+                android:includeFontPadding="false"
+                android:lineSpacingExtra="1dp"
                 android:text="@string/home_cta_subtitle"
                 android:textColor="#EBFFFFFF"
-                android:textSize="13sp" />
+                android:textSize="12.5sp" />
 
             <LinearLayout
                 android:id="@+id/btnSlideRegister"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="10dp"
                 android:background="@drawable/bg_cta_button_white"
                 android:clickable="true"
                 android:focusable="true"
