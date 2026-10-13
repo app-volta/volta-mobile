@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Balão de mensagem do VOLTA (Figma 790:1933 / 790:1938: #FFFFFF, borda 1dp #DCEFE3, cantos [18, 18, 18, 6]) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FFFFFF" />
+    <stroke
+        android:width="1dp"
+        android:color="#DCEFE3" />
+    <corners
+        android:bottomLeftRadius="6dp"
+        android:bottomRightRadius="18dp"
+        android:topLeftRadius="18dp"
+        android:topRightRadius="18dp" />
+</shape>

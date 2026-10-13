@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botão voltar translúcido do Assistente (Figma 790:1922: 40x40dp #2EFFFFFF) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#2EFFFFFF" />
+</shape>

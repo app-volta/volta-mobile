@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Balão de mensagem do usuário no Assistente (Figma 790:1935: degradê #22C06F -> #0E7C48, cantos [18, 18, 6, 18]) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:endColor="#0E7C48"
+        android:startColor="#22C06F"
+        android:type="linear" />
+    <corners
+        android:bottomLeftRadius="18dp"
+        android:bottomRightRadius="6dp"
+        android:topLeftRadius="18dp"
+        android:topRightRadius="18dp" />
+</shape>

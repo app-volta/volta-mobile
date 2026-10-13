@@ -37,6 +37,7 @@
 
     <!-- Borda superior 1dp #EEF0F5 da Tab bar (Figma 790:1736) -->
     <View
+        android:id="@+id/tabBarBorder"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="#EEF0F5"

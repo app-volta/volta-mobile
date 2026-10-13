@@ -107,11 +107,25 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        android.view.View fabRegister = findViewById(R.id.fabRegister);
+        android.view.View tabBarBorder = findViewById(R.id.tabBarBorder);
+
         navController.addOnDestinationChangedListener((ctrl, destination, args) -> {
             int destId = destination.getId();
 
             // Todos os fragmentos possuem layout próprio no Figma sem Toolbar nativa
             toolbar.setVisibility(android.view.View.GONE);
+
+            // Assistente (790:1911) e Chat (790:3191) são telas de conversa em tela cheia (sem Tab bar inferior)
+            boolean hideBottomBar = (destId == R.id.nav_assistant || destId == R.id.nav_chat);
+            int barVis = hideBottomBar ? android.view.View.GONE : android.view.View.VISIBLE;
+            navView.setVisibility(barVis);
+            if (fabRegister != null) {
+                fabRegister.setVisibility(barVis);
+            }
+            if (tabBarBorder != null) {
+                tabBarBorder.setVisibility(barVis);
+            }
 
             if (destId == R.id.nav_register) {
                 navView.getMenu().setGroupCheckable(0, true, false);
@@ -128,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // FAB Central - navega para Registrar com pilha simples (singleTop + popUpTo home, sem saveState)
-        android.view.View fabRegister = findViewById(R.id.fabRegister);
         fabRegister.setOnClickListener(v -> {
             if (navController.getCurrentDestination() == null
                     || navController.getCurrentDestination().getId() != R.id.nav_register) {

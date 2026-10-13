@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Assistente VOLTA — Figma 790:1911 (Fase 12, mock local) -->
+<!-- 11 · Assistente VOLTA — Figma 790:1911 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -7,129 +7,219 @@
     android:background="@color/volta_background_light"
     android:orientation="vertical">
 
-    <!-- Header -->
-    <LinearLayout
+    <!-- ========================================================================= -->
+    <!-- CABEÇALHO DO ASSISTENTE (Figma 790:1912: degradê verde c/ cantos 34dp)    -->
+    <!-- ========================================================================= -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_card_cta"
-        android:orientation="vertical"
-        android:padding="@dimen/spacing_normal">
+        android:layout_height="220dp"
+        android:background="@drawable/bg_assistant_header"
+        android:clipChildren="true"
+        android:clipToPadding="true">
 
+        <!-- Seta decorativa superior direita (Figma 790:1913) -->
+        <ImageView
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="-32dp"
+            android:layout_marginEnd="-20dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_cta_arrow_loop" />
+
+        <!-- Seta decorativa inferior esquerda (Figma 790:1916) -->
+        <ImageView
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="-24dp"
+            android:layout_marginBottom="-20dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_cta_arrow_curve" />
+
+        <!-- Brilho suave atrás do mascote (Figma 790:1919) -->
+        <View
+            android:layout_width="170dp"
+            android:layout_height="170dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="-6dp"
+            android:layout_marginBottom="-16dp"
+            android:background="@drawable/bg_cta_glow" />
+
+        <!-- Mascote VOLTA à direita (Figma 790:1920: 98x162dp) -->
+        <ImageView
+            android:id="@+id/imgHeaderMascot"
+            android:layout_width="104dp"
+            android:layout_height="156dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="8dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/mascote_volta" />
+
+        <!-- Conteúdo do Cabeçalho -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="18dp">
 
-            <FrameLayout
-                android:id="@+id/btnBackAssistant"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@drawable/bg_button_cta_white"
-                android:clickable="true"
-                android:contentDescription="@string/occurrence_back"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_chevron_left"
-                    app:tint="@color/volta_green_dark" />
-            </FrameLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_small"
-                android:text="VOLTA"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_size_section"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_xs"
-                android:background="@drawable/bg_button_cta_white"
-                android:paddingStart="8dp"
-                android:paddingTop="2dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="2dp"
-                android:text="IA"
-                android:textColor="@color/volta_green_dark"
-                android:textSize="@dimen/text_size_caption"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/assistant_online"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body_small" />
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_small">
-
+            <!-- Linha superior: Botão voltar translúcido + VOLTA IA + status online (Figma 790:1922..1929) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toStartOf="@+id/imgHeaderMascot"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:id="@+id/btnBackAssistant"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_assistant_back_btn"
+                    android:clickable="true"
+                    android:contentDescription="@string/occurrence_back"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_chevron_left"
+                        app:tint="@color/white" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/font_poppins"
+                            android:includeFontPadding="false"
+                            android:text="VOLTA"
+                            android:textColor="@color/white"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="32dp"
+                            android:layout_height="22dp"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_button_cta_white"
+                            android:fontFamily="@font/font_inter"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="IA"
+                            android:textColor="#0E7C48"
+                            android:textSize="10.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="7dp"
+                            android:layout_height="7dp"
+                            android:background="@drawable/bg_assistant_online_dot" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:fontFamily="@font/font_inter"
+                            android:includeFontPadding="false"
+                            android:text="@string/assistant_online"
+                            android:textColor="#D9FFFFFF"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Saudação principal (Figma 790:1930 e 790:1931) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingEnd="108dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/font_poppins"
+                    android:includeFontPadding="false"
                     android:text="@string/assistant_hello"
                     android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_headline"
+                    android:textSize="24sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/font_inter"
+                    android:includeFontPadding="false"
+                    android:lineSpacingExtra="2dp"
                     android:text="@string/assistant_hello_sub"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_body_small" />
+                    android:textColor="#EBFFFFFF"
+                    android:textSize="13.5sp" />
             </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
 
-            <ImageView
-                android:id="@+id/imgHeaderMascot"
-                android:layout_width="64dp"
-                android:layout_height="72dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:src="@drawable/mascote_volta" />
-        </RelativeLayout>
-    </LinearLayout>
-
+    <!-- ========================================================================= -->
+    <!-- LISTA DE MENSAGENS (Figma 790:1932..1949)                                 -->
+    <!-- ========================================================================= -->
     <ScrollView
         android:id="@+id/scrollAssistant"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:clipToPadding="false">
+        android:clipToPadding="false"
+        android:overScrollMode="never">
 
         <LinearLayout
             android:id="@+id/assistantMessages"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="@dimen/spacing_normal" />
+            android:paddingStart="18dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="12dp" />
     </ScrollView>
 
-    <!-- Atalhos fixos (Figma 790:1950, 790:1952) -->
+    <!-- ========================================================================= -->
+    <!-- CHIPS DE SUGESTÃO (Figma 790:1950, 790:1952)                              -->
+    <!-- ========================================================================= -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
         android:clipToPadding="false"
-        android:paddingStart="@dimen/spacing_normal"
-        android:paddingEnd="@dimen/spacing_normal"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
         android:scrollbars="none">
 
         <LinearLayout
@@ -138,98 +228,119 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/chipSuggestIsopor"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/spacing_small"
-                android:background="@drawable/bg_chip_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingStart="@dimen/spacing_medium"
-                android:paddingTop="8dp"
-                android:paddingEnd="@dimen/spacing_medium"
-                android:paddingBottom="8dp"
-                android:text="@string/assistant_chip_isopor"
-                android:textColor="@color/volta_green_primary"
-                android:textSize="@dimen/text_size_body_small"
-                android:textStyle="bold" />
-
-            <TextView
                 android:id="@+id/chipSuggestPapelao"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/spacing_small"
-                android:background="@drawable/bg_chip_unselected"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_assistant_suggest_chip"
                 android:clickable="true"
                 android:focusable="true"
-                android:paddingStart="@dimen/spacing_medium"
-                android:paddingTop="8dp"
-                android:paddingEnd="@dimen/spacing_medium"
-                android:paddingBottom="8dp"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
                 android:text="@string/assistant_chip_papelao"
-                android:textColor="@color/volta_green_primary"
-                android:textSize="@dimen/text_size_body_small"
+                android:textColor="#0E7C48"
+                android:textSize="12.5sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/chipSuggestMeta"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_chip_unselected"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_assistant_suggest_chip"
                 android:clickable="true"
                 android:focusable="true"
-                android:paddingStart="@dimen/spacing_medium"
-                android:paddingTop="8dp"
-                android:paddingEnd="@dimen/spacing_medium"
-                android:paddingBottom="8dp"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
                 android:text="@string/assistant_chip_meta"
-                android:textColor="@color/volta_green_primary"
-                android:textSize="@dimen/text_size_body_small"
+                android:textColor="#0E7C48"
+                android:textSize="12.5sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chipSuggestIsopor"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_assistant_suggest_chip"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:text="@string/assistant_chip_isopor"
+                android:textColor="#0E7C48"
+                android:textSize="12.5sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </HorizontalScrollView>
 
-    <!-- Entrada -->
+    <!-- ========================================================================= -->
+    <!-- CAMPO DE ENTRADA + BOTÃO ENVIAR (Figma 790:1954 e 790:1959)               -->
+    <!-- ========================================================================= -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="@dimen/spacing_normal">
+        android:paddingStart="18dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="18dp">
 
-        <EditText
-            android:id="@+id/etAssistant"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/spacing_small"
+            android:layout_height="50dp"
+            android:layout_marginEnd="10dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_card_surface"
-            android:hint="@string/assistant_hint"
-            android:importantForAutofill="no"
-            android:inputType="text"
-            android:maxLines="3"
-            android:minHeight="@dimen/tap_target_min"
-            android:paddingStart="@dimen/spacing_medium"
-            android:paddingTop="@dimen/spacing_small"
-            android:paddingEnd="@dimen/spacing_medium"
-            android:paddingBottom="@dimen/spacing_small"
-            android:textColor="@color/volta_text_primary_light"
-            android:textColorHint="@color/volta_text_muted_light"
-            android:textSize="@dimen/text_size_body" />
+            android:background="@drawable/bg_assistant_input_pill"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="18dp"
+            android:paddingEnd="16dp">
 
-        <FrameLayout
-            android:id="@+id/btnSendAssistant"
-            android:layout_width="@dimen/tap_target_min"
-            android:layout_height="@dimen/tap_target_min"
-            android:background="@drawable/bg_fab_gradient"
-            android:clickable="true"
-            android:focusable="true">
+            <EditText
+                android:id="@+id/etAssistant"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center_vertical"
+                android:hint="@string/assistant_hint"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:maxLines="2"
+                android:textColor="@color/volta_text_primary_light"
+                android:textColorHint="#93AC9E"
+                android:textSize="14sp" />
 
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
+                android:layout_marginStart="8dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_mic_assistant" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/btnSendAssistant"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/bg_fab_gradient"
+            android:clickable="true"
+            android:contentDescription="Enviar"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="21dp"
+                android:layout_height="21dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_send" />
+                android:src="@drawable/ic_send_assistant" />
         </FrameLayout>
     </LinearLayout>
 </LinearLayout>
