@@ -190,7 +190,7 @@ public class AssistantFragment extends Fragment {
                     Navigation.findNavController(requireView()).navigate(R.id.nav_register));
 
             View btnCoop = actionPill(
-                    R.drawable.ic_nav_coops,
+                    R.drawable.ic_nav_coops_figma,
                     getString(R.string.assistant_chip_coops));
             btnCoop.setOnClickListener(v ->
                     Navigation.findNavController(requireView()).navigate(R.id.nav_cooperatives));
