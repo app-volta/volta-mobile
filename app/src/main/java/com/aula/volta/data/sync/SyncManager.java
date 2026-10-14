@@ -38,19 +38,27 @@ public final class SyncManager {
      * Verifica se o dispositivo possui conexão com a internet ativa.
      */
     public static boolean isOnline(Context context) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) {
+        if (context == null) {
             return false;
         }
-        Network activeNetwork = cm.getActiveNetwork();
-        if (activeNetwork == null) {
-            return false;
+        try {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) {
+                return false;
+            }
+            Network activeNetwork = cm.getActiveNetwork();
+            if (activeNetwork == null) {
+                return false;
+            }
+            NetworkCapabilities capabilities = cm.getNetworkCapabilities(activeNetwork);
+            return capabilities != null &&
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                            || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                            || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
+        } catch (Exception e) {
+            Log.w(TAG, "Falha ao verificar conectividade: " + e.getMessage());
+            return true; // Se não puder verificar, assume true para tentar requisição ou cair em onFailure
         }
-        NetworkCapabilities capabilities = cm.getNetworkCapabilities(activeNetwork);
-        return capabilities != null &&
-                (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
     }
 
     /**

@@ -499,6 +499,9 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void registerAndNavigate(View v, String id, String material, double qtd, String unidade) {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
         AuditLog.append(requireContext(), "Breno Gomes", "CRIAR",
                 "ocorrencia", id, null, "NOVO");
         pushOccurrenceNotification(id, material);
@@ -507,12 +510,24 @@ public class AiAnalysisFragment extends Fragment {
         Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
 
         // Navega para a tela 17 · Ocorrência (OccurrenceDetailFragment)
-        Bundle args = new Bundle();
-        args.putString("occurrenceId", id);
-        Navigation.findNavController(v).navigate(R.id.nav_occurrence_full, args);
+        try {
+            Bundle args = new Bundle();
+            args.putString("occurrenceId", id);
+            View target = getView() != null ? getView() : v;
+            if (target != null) {
+                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args);
+            }
+        } catch (Exception e) {
+            if (getView() != null) {
+                Navigation.findNavController(getView()).popBackStack(R.id.nav_home, false);
+            }
+        }
     }
 
     private void saveOfflineAndNavigateToDetail(View v, String material, double qtd, String unidade) {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
         String localId = "8514";
         PendingOccurrence pending = new PendingOccurrence(
                 localId, photoPath, descricao, setor, material, qtd, unidade, System.currentTimeMillis());
@@ -525,9 +540,18 @@ public class AiAnalysisFragment extends Fragment {
 
         Toast.makeText(requireContext(), R.string.sync_saved_offline, Toast.LENGTH_SHORT).show();
 
-        Bundle args = new Bundle();
-        args.putString("occurrenceId", localId);
-        Navigation.findNavController(v).navigate(R.id.nav_occurrence_full, args);
+        try {
+            Bundle args = new Bundle();
+            args.putString("occurrenceId", localId);
+            View target = getView() != null ? getView() : v;
+            if (target != null) {
+                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args);
+            }
+        } catch (Exception e) {
+            if (getView() != null) {
+                Navigation.findNavController(getView()).popBackStack(R.id.nav_home, false);
+            }
+        }
     }
 
     private void pushOccurrenceNotification(String occurrenceId, String material) {
