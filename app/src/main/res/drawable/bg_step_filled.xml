@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Barra de passo preenchida (Figma 851:3812: gradiente #22C06F→#0E7C48, r3) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="0"
+        android:endColor="#0E7C48"
+        android:startColor="#22C06F" />
+    <corners android:radius="3dp" />
+</shape>

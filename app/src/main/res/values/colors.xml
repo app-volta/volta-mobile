@@ -112,4 +112,32 @@
     <color name="nav_item_unselected">#A7B0C0</color>
     <color name="nav_item_selected">#1BA463</color>
     <color name="bottom_bar_bg">#FFFFFF</color>
+
+    <!-- Fluxo de registro (Figma 851:3792) -->
+    <color name="vf_bg">#F7F8FC</color>
+    <color name="vf_text_primary">#1B2430</color>
+    <color name="vf_text_secondary">#7C8698</color>
+    <color name="vf_text_body">#3F4957</color>
+    <color name="vf_hint">#93AC9E</color>
+    <color name="vf_border">#EEF0F5</color>
+    <color name="vf_green_deep">#0E7C48</color>
+    <color name="vf_green">#12A05E</color>
+    <color name="vf_green_mid">#1BA463</color>
+    <color name="vf_green_bg">#E2F7EC</color>
+    <color name="vf_gold">#C68A10</color>
+    <color name="vf_gold_bg">#FDF3DE</color>
+    <color name="vf_blue">#3B82F6</color>
+    <color name="vf_blue_bg">#E4EFFF</color>
+    <color name="vf_purple">#8B6FE0</color>
+    <color name="vf_purple_bg">#EFEAFB</color>
+    <color name="vf_pink">#E8556C</color>
+    <color name="vf_pink_bg">#FDEAEC</color>
+    <color name="vf_reco_text">#355443</color>
+    <color name="vf_toast_bg">#1B2430</color>
+    <color name="vf_toast_sub">#B4BCC9</color>
+    <color name="vf_disabled_bg">#E0E4E1</color>
+    <color name="vf_disabled_text">#99A19E</color>
+    <color name="vf_skeleton">#0F000000</color>
+    <color name="vf_confidence_bg">#F0F2F6</color>
+    <color name="vf_ai_pill">#E00E6B41</color>
 </resources>

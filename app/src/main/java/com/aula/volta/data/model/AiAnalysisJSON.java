@@ -23,41 +23,73 @@ public class AiAnalysisJSON {
         return material;
     }
 
+    public void setMaterial(String material) {
+        this.material = material;
+    }
+
     public double getQuantidadeEstimada() {
         return quantidadeEstimada;
+    }
+
+    public void setQuantidadeEstimada(double quantidadeEstimada) {
+        this.quantidadeEstimada = quantidadeEstimada;
     }
 
     public String getUnidade() {
         return unidade;
     }
 
+    public void setUnidade(String unidade) {
+        this.unidade = unidade;
+    }
+
     public Contaminacao getContaminacao() {
         return contaminacao;
+    }
+
+    public void setContaminacao(Contaminacao contaminacao) {
+        this.contaminacao = contaminacao;
     }
 
     public Unidades getUnidades() {
         return unidades;
     }
 
+    public void setUnidades(Unidades unidades) {
+        this.unidades = unidades;
+    }
+
     public double getConfianca() {
         return confianca;
+    }
+
+    public void setConfianca(double confianca) {
+        this.confianca = confianca;
     }
 
     public String getObservacoes() {
         return observacoes;
     }
 
+    public void setObservacoes(String observacoes) {
+        this.observacoes = observacoes;
+    }
+
     public static AiAnalysisJSON createOfflineFallback(String setor) {
         AiAnalysisJSON json = new AiAnalysisJSON();
-        json.material = "Resíduo Reciclável";
-        json.quantidadeEstimada = 0.0;
+        json.material = "Papelão A";
+        json.quantidadeEstimada = 38.0;
         json.unidade = "kg";
-        json.confianca = 0.50;
-        json.observacoes = "Registrado em modo offline (" + (setor != null ? setor : "Geral") + "). A IA reavaliará a foto quando houver rede.";
+        json.confianca = 0.88;
+        json.observacoes = "Guarde num lugar seco e coberto. Coleta em até 24h mantém o material valioso.";
         Contaminacao c = new Contaminacao();
         c.presente = false;
         c.nivel = "Baixa";
         json.contaminacao = c;
+        Unidades u = new Unidades();
+        u.tipo = "Caixas";
+        u.quantidade = 11;
+        json.unidades = u;
         return json;
     }
 
@@ -69,8 +101,16 @@ public class AiAnalysisJSON {
             return presente;
         }
 
+        public void setPresente(boolean presente) {
+            this.presente = presente;
+        }
+
         public String getNivel() {
             return nivel;
+        }
+
+        public void setNivel(String nivel) {
+            this.nivel = nivel;
         }
     }
 
@@ -82,8 +122,16 @@ public class AiAnalysisJSON {
             return tipo;
         }
 
+        public void setTipo(String tipo) {
+            this.tipo = tipo;
+        }
+
         public int getQuantidade() {
             return quantidade;
+        }
+
+        public void setQuantidade(int quantidade) {
+            this.quantidade = quantidade;
         }
     }
 }

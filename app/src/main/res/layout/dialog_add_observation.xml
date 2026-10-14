@@ -1,89 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Diálogo para Adicionar Observação à Ocorrência (Figma 790:2725 / Fase 33) -->
+<!-- Bottom Sheet Adicionar Observação — Figma 17c (908:6103) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_dialog_finalize"
-    android:elevation="12dp"
-    android:gravity="center_horizontal"
+    android:background="@drawable/bg_bottom_sheet_white"
     android:orientation="vertical"
-    android:paddingStart="24dp"
-    android:paddingTop="28dp"
-    android:paddingEnd="24dp"
+    android:paddingStart="20dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="20dp"
     android:paddingBottom="24dp">
 
-    <FrameLayout
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+    <!-- Handle do Bottom Sheet -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_action_chip">
+        android:background="@drawable/bg_step_track" />
 
-        <ImageView
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            android:layout_gravity="center"
-            android:contentDescription="@string/occ_action_observe"
-            android:src="@drawable/ic_stat_open"
-            app:tint="@color/occurrence_icon_tint_purple" />
-    </FrameLayout>
+    <!-- Cabeçalho com Fechar -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:text="Adicionar observação"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif"
+                android:text="Visível no relatório e histórico da ocorrência"
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/btnCloseObsSheet"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_camera_circle_btn"
+            android:backgroundTint="@color/vf_border"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_close_white"
+                app:tint="@color/vf_text_secondary" />
+        </FrameLayout>
+    </RelativeLayout>
+
+    <!-- Campo de Texto com contador de caracteres -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_obs_textarea"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <EditText
+            android:id="@+id/etObservationInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:fontFamily="sans-serif"
+            android:gravity="top"
+            android:hint="Descreva detalhes importantes sobre o resíduo, acesso ou manuseio..."
+            android:inputType="textMultiLine|textCapSentences"
+            android:maxLength="280"
+            android:minLines="4"
+            android:text="Caixas na doca 3 estão molhadas pela chuva. Recomendo mover antes das 11h."
+            android:textColor="@color/vf_text_primary"
+            android:textColorHint="@color/vf_hint"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvCharCounter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="6dp"
+            android:fontFamily="sans-serif"
+            android:text="76/280"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Atalhos rápidos -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:gravity="center"
-        android:text="@string/occ_action_observe"
-        android:textColor="@color/dialog_finalize_title"
-        android:textSize="18sp"
+        android:fontFamily="sans-serif"
+        android:text="Atalhos rápidos"
+        android:textColor="@color/vf_text_body"
+        android:textSize="13sp"
         android:textStyle="bold" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:lineSpacingExtra="2dp"
-        android:text="Registre anotações, condições de armazenagem ou observações de campo para o relatório PGRS."
-        android:textColor="@color/dialog_finalize_sub"
-        android:textSize="13sp" />
-
-    <EditText
-        android:id="@+id/etObservationInput"
+    <HorizontalScrollView
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_marginBottom="20dp"
-        android:background="@drawable/bg_search_input"
-        android:gravity="top|start"
-        android:hint="Ex: Material molhado pela chuva, aguardando troca de caçamba..."
-        android:importantForAutofill="no"
-        android:inputType="textMultiLine"
-        android:padding="12dp"
-        android:textColor="@color/volta_text_primary_light"
-        android:textColorHint="@color/volta_text_muted_light"
-        android:textSize="14sp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSaveObservation"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:backgroundTint="@color/volta_green_primary"
-        android:text="Salvar observação"
-        android:textColor="@color/white"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        app:cornerRadius="14dp" />
-
-    <TextView
-        android:id="@+id/btnCancelObservation"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="8dp"
-        android:text="@string/pick_confirm_no"
-        android:textColor="@color/dialog_finalize_sub"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="24dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/shortcutWet"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_shortcut_purple"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="+ Material molhado"
+                android:textColor="@color/vf_purple"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/shortcutBlocked"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_shortcut_unselected"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="+ Doca bloqueada"
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/shortcutEpi"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_shortcut_unselected"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="+ Requer EPI"
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Botões: Cancelar e Adicionar observação -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelObservation"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_btn_edit_outline"
+            android:backgroundTint="@color/vf_border"
+            android:fontFamily="sans-serif"
+            android:text="Cancelar"
+            android:textAllCaps="false"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            app:cornerRadius="14dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveObservation"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="2"
+            android:background="@drawable/bg_btn_primary_v"
+            android:fontFamily="sans-serif"
+            android:text="Adicionar observação"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
 </LinearLayout>

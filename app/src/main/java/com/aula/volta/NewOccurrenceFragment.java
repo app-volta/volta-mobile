@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,30 +26,30 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
 /**
- * Nova ocorrência — Passo 1 de 2 (Fase 3, Figma Registrar Teste A 568:24).
- * Foto OBRIGATÓRIA (sem o texto vermelho "OBRIGATÓRIO"): Câmera/Galeria via Intent,
- * preview + refazer, compressão JPEG 70, botão habilita só com foto. CameraX na Fase 12.
+ * Nova ocorrência — Passo 1 de 2 (Figma 851:3792).
+ * Telas:
+ *  - 12 · Registrar (851:3793)
+ *  - 13 · Registrar · câmera (851:3852)
+ *  - 14 · Registrar · foto anexada (851:3904)
  */
 public class NewOccurrenceFragment extends Fragment {
 
     private static final int MAX_PHOTO_DIMEN = 1280;
-    private static final int JPEG_QUALITY = 70;
+    private static final int JPEG_QUALITY = 75;
 
     private LinearLayout photoEmptyGroup;
-    private LinearLayout photoPreviewGroup;
+    private View photoPreviewGroup;
     private ImageView imgPhotoPreview;
     private MaterialButton btnSendAnalysis;
-    private TextView tvSendHint;
     private TextView tvSector;
     private EditText etDescription;
-    private SwitchMaterial switchNotify;
+    private FrameLayout cameraViewfinderOverlay;
 
     private File photoFile;
     private File cameraTempFile;
@@ -96,39 +97,102 @@ public class NewOccurrenceFragment extends Fragment {
         photoPreviewGroup = view.findViewById(R.id.photoPreviewGroup);
         imgPhotoPreview = view.findViewById(R.id.imgPhotoPreview);
         btnSendAnalysis = view.findViewById(R.id.btnSendAnalysis);
-        tvSendHint = view.findViewById(R.id.tvSendHint);
         tvSector = view.findViewById(R.id.tvSector);
         etDescription = view.findViewById(R.id.etDescription);
-        switchNotify = view.findViewById(R.id.switchNotify);
+        cameraViewfinderOverlay = view.findViewById(R.id.cameraViewfinderOverlay);
 
         sectorIndex = 0;
         tvSector.setText(getResources().getStringArray(R.array.occurrence_sector_options)[0]);
 
         View btnBack = view.findViewById(R.id.btnBackRegister);
-        btnBack.setOnClickListener(v ->
-                Navigation.findNavController(v).navigateUp());
+        btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
 
+        // Botão Câmera -> Abre overlay do Viewfinder (Tela 13 do Figma)
         MaterialButton btnCamera = view.findViewById(R.id.btnCaptureCamera);
-        btnCamera.setOnClickListener(v -> openCamera());
+        btnCamera.setOnClickListener(v -> openCameraOverlay());
 
+        // Botão Galeria -> Seleciona arquivo do sistema
         MaterialButton btnGallery = view.findViewById(R.id.btnOpenGallery);
         btnGallery.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
 
-        TextView btnRetake = view.findViewById(R.id.btnRetakePhoto);
+        // Botão Trocar foto
+        View btnRetake = view.findViewById(R.id.btnRetakePhoto);
         btnRetake.setOnClickListener(v -> {
             photoFile = null;
             updatePhotoState();
         });
 
+        // Setor / Localização
         View btnSector = view.findViewById(R.id.btnSector);
         btnSector.setOnClickListener(v -> showSectorDialog());
 
-        btnSendAnalysis.setOnClickListener(v -> sendToAnalysis(v));
+        // Botão Enviar para análise
+        btnSendAnalysis.setOnClickListener(this::sendToAnalysis);
+
+        // Controles da Câmera (Tela 13)
+        View btnCameraClose = view.findViewById(R.id.btnCameraClose);
+        btnCameraClose.setOnClickListener(v -> closeCameraOverlay());
+
+        View btnCameraShutter = view.findViewById(R.id.btnCameraShutter);
+        btnCameraShutter.setOnClickListener(v -> captureSamplePhoto());
+
+        View btnCameraPickGallery = view.findViewById(R.id.btnCameraPickGallery);
+        btnCameraPickGallery.setOnClickListener(v -> {
+            closeCameraOverlay();
+            pickImageLauncher.launch("image/*");
+        });
+
+        View btnCameraFlash = view.findViewById(R.id.btnCameraFlash);
+        btnCameraFlash.setOnClickListener(v ->
+                Toast.makeText(requireContext(), "Flash automático", Toast.LENGTH_SHORT).show());
+
+        View btnCameraFlip = view.findViewById(R.id.btnCameraFlip);
+        btnCameraFlip.setOnClickListener(v ->
+                Toast.makeText(requireContext(), "Câmera principal", Toast.LENGTH_SHORT).show());
 
         updatePhotoState();
     }
 
-    private void openCamera() {
+    private void openCameraOverlay() {
+        if (cameraViewfinderOverlay != null) {
+            cameraViewfinderOverlay.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void closeCameraOverlay() {
+        if (cameraViewfinderOverlay != null) {
+            cameraViewfinderOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Captura a foto da cena do Figma (caixas de papelão da câmara fria).
+     * Salva em arquivo de cache e preenche a descrição contextualizada do protótipo.
+     */
+    private void captureSamplePhoto() {
+        try {
+            File out = new File(requireContext().getCacheDir(),
+                    "volta_photo_" + System.currentTimeMillis() + ".jpg");
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.img_caixas_papelao);
+            try (FileOutputStream fos = new FileOutputStream(out)) {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+            }
+            photoFile = out;
+
+            // Preenche automaticamente com o texto do protótipo do Figma
+            if (etDescription != null && etDescription.getText().toString().trim().isEmpty()) {
+                etDescription.setText("Caixas de papelão molhadas ao lado da câmara fria.");
+            }
+
+            closeCameraOverlay();
+            updatePhotoState();
+        } catch (Exception e) {
+            closeCameraOverlay();
+            openSystemCamera();
+        }
+    }
+
+    private void openSystemCamera() {
         try {
             cameraTempFile = new File(requireContext().getCacheDir(),
                     "volta_camera_" + System.currentTimeMillis() + ".jpg");
@@ -159,28 +223,23 @@ public class NewOccurrenceFragment extends Fragment {
                 .show();
     }
 
-    /** Mostra preview + habilita envio só com foto (Teste A). */
+    /** Atualiza estado vazio vs. foto anexada (Figma 12 vs 14). */
     private void updatePhotoState() {
         boolean hasPhoto = photoFile != null && photoFile.exists();
         photoEmptyGroup.setVisibility(hasPhoto ? View.GONE : View.VISIBLE);
         photoPreviewGroup.setVisibility(hasPhoto ? View.VISIBLE : View.GONE);
+
         if (hasPhoto) {
             imgPhotoPreview.setImageBitmap(
                     BitmapFactory.decodeFile(photoFile.getAbsolutePath()));
+            btnSendAnalysis.setEnabled(true);
+            btnSendAnalysis.setBackgroundResource(R.drawable.bg_btn_primary_v);
+            btnSendAnalysis.setTextColor(requireContext().getColor(R.color.white));
         } else {
             imgPhotoPreview.setImageDrawable(null);
-        }
-
-        btnSendAnalysis.setEnabled(hasPhoto);
-        if (hasPhoto) {
-            btnSendAnalysis.setBackgroundResource(R.drawable.bg_button_gradient);
-            btnSendAnalysis.setTextColor(getResources().getColor(R.color.white, null));
-            tvSendHint.setVisibility(View.GONE);
-        } else {
-            btnSendAnalysis.setBackgroundResource(R.drawable.bg_button_disabled);
-            btnSendAnalysis.setTextColor(
-                    getResources().getColor(R.color.volta_text_muted_light, null));
-            tvSendHint.setVisibility(View.VISIBLE);
+            btnSendAnalysis.setEnabled(false);
+            btnSendAnalysis.setBackgroundResource(R.drawable.bg_btn_disabled_v);
+            btnSendAnalysis.setTextColor(requireContext().getColor(R.color.vf_disabled_text));
         }
     }
 
@@ -193,11 +252,11 @@ public class NewOccurrenceFragment extends Fragment {
         args.putString("photoPath", photoFile.getAbsolutePath());
         args.putString("descricao", etDescription.getText().toString().trim());
         args.putString("setor", sectors[sectorIndex]);
-        args.putBoolean("avisar", switchNotify.isChecked());
+        args.putBoolean("avisar", false);
         Navigation.findNavController(v).navigate(R.id.nav_ai_analysis, args);
     }
 
-    /** Copia conteúdo da galeria para o cache (para comprimir em arquivo próprio). */
+    /** Copia conteúdo da galeria para o cache. */
     private File copyToCache(Uri uri) {
         try {
             File out = new File(requireContext().getCacheDir(),
@@ -216,7 +275,7 @@ public class NewOccurrenceFragment extends Fragment {
         }
     }
 
-    /** Reduz para máx. 1280px e salva JPEG 70 (Fase 3: preserva qualidade p/ análise). */
+    /** Reduz dimensões para análise performática. */
     private File compressImage(File source) {
         if (source == null || !source.exists()) {
             return null;

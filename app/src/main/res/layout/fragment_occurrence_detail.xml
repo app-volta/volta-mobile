@@ -1,712 +1,576 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Detalhe da Ocorrência — Figma 851:3792 (17 · Ocorrência, 17d · ações aplicadas, 19 · finalizada) -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/volta_background_light">
+    android:background="@color/vf_bg">
+
+    <!-- Fundo de fluidos decorativo da marca -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:alpha="0.35"
+        android:scaleType="fitXY"
+        android:src="@drawable/bg_home_fluidos" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/spacing_normal">
-
-        <FrameLayout
-            android:id="@+id/btnBackOcc"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_notification_circle"
-            android:clickable="true"
-            android:contentDescription="@string/occurrence_back"
-            android:elevation="2dp"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_chevron_left" />
-        </FrameLayout>
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:layout_toStartOf="@+id/tvOccStatus"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvOccTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/occ_title"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvOccSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body_small" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvOccStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:background="@drawable/bg_badge_media"
-                android:paddingStart="12dp"
-                android:paddingTop="6dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="6dp"
-                android:textColor="@color/priority_medium_text"
-                android:textSize="@dimen/text_size_caption"
-                android:textStyle="bold" />
-        </RelativeLayout>
-
-        <!-- Tracker Registrada → Análise IA → Aprovação → Coleta -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
-
-                <FrameLayout
-                    android:id="@+id/stepCircle0"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/bg_notification_circle">
-
-                    <ImageView
-                        android:id="@+id/stepCheck0"
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_notif_check"
-                        android:visibility="gone"
-                        app:tint="@color/white" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/stepLabel0"
-                    android:layout_width="wrap_content"
-                    android:layout_height="16dp"
-                    android:layout_marginTop="4dp"
-                    android:singleLine="true"
-                    android:text="@string/occ_step_registered"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <View
-                android:id="@+id/stepLine0"
-                android:layout_width="0dp"
-                android:layout_height="2dp"
-                android:layout_marginBottom="20dp"
-                android:layout_weight="1"
-                android:background="@color/notification_circle_border" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
-
-                <FrameLayout
-                    android:id="@+id/stepCircle1"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/bg_notification_circle">
-
-                    <ImageView
-                        android:id="@+id/stepCheck1"
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_notif_check"
-                        android:visibility="gone"
-                        app:tint="@color/white" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/stepLabel1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="16dp"
-                    android:layout_marginTop="4dp"
-                    android:singleLine="true"
-                    android:text="@string/occ_step_analysis"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <View
-                android:id="@+id/stepLine1"
-                android:layout_width="0dp"
-                android:layout_height="2dp"
-                android:layout_marginBottom="20dp"
-                android:layout_weight="1"
-                android:background="@color/notification_circle_border" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
-
-                <FrameLayout
-                    android:id="@+id/stepCircle2"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/bg_notification_circle">
-
-                    <ImageView
-                        android:id="@+id/stepCheck2"
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_notif_check"
-                        android:visibility="gone"
-                        app:tint="@color/white" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/stepLabel2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="16dp"
-                    android:layout_marginTop="4dp"
-                    android:singleLine="true"
-                    android:text="@string/occ_step_approval"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <View
-                android:id="@+id/stepLine2"
-                android:layout_width="0dp"
-                android:layout_height="2dp"
-                android:layout_marginBottom="20dp"
-                android:layout_weight="1"
-                android:background="@color/notification_circle_border" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_horizontal"
-                android:orientation="vertical">
-
-                <FrameLayout
-                    android:id="@+id/stepCircle3"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/bg_notification_circle">
-
-                    <ImageView
-                        android:id="@+id/stepCheck3"
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_notif_check"
-                        android:visibility="gone"
-                        app:tint="@color/white" />
-                </FrameLayout>
-
-                <TextView
-                    android:id="@+id/stepLabel3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="16dp"
-                    android:layout_marginTop="4dp"
-                    android:singleLine="true"
-                    android:text="@string/occ_step_pickup"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Card foto + classificação (protótipo novo 851:4196) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_card_surface"
             android:orientation="vertical"
-            android:padding="@dimen/spacing_medium">
+            android:paddingStart="20dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
 
+            <!-- Botão Voltar -->
+            <FrameLayout
+                android:id="@+id/btnBackOcc"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_notification_circle"
+                android:clickable="true"
+                android:contentDescription="@string/occurrence_back"
+                android:elevation="2dp"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chevron_left" />
+            </FrameLayout>
+
+            <!-- Cabeçalho: Título + Subtítulo + Badge Status -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_toStartOf="@+id/tvOccStatus"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvOccTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/occ_title"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvOccSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="sans-serif"
+                        android:text="Registrada por Breno G. · hoje, 09:12"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvOccStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/bg_badge_media"
+                    android:fontFamily="sans-serif"
+                    android:paddingStart="12dp"
+                    android:paddingTop="5dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="5dp"
+                    android:text="EM ANÁLISE"
+                    android:textColor="@color/vf_gold"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+
+            <!-- Tracker (3 Passos): Registrada → Análise IA → Aprovação -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="22dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
+                <!-- Passo 1: Registrada -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:id="@+id/stepCircle0"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:background="@drawable/bg_step_done">
+
+                        <ImageView
+                            android:id="@+id/stepCheck0"
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_notif_check"
+                            app:tint="@color/white" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/stepLabel0"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/occ_step_registered"
+                        android:textColor="@color/vf_green_deep"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/stepLine0"
+                    android:layout_width="0dp"
+                    android:layout_height="2dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_weight="1"
+                    android:background="@color/vf_green" />
+
+                <!-- Passo 2: Análise IA -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:id="@+id/stepCircle1"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:background="@drawable/bg_step_done">
+
+                        <ImageView
+                            android:id="@+id/stepCheck1"
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_notif_check"
+                            app:tint="@color/white" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/stepLabel1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/occ_step_analysis"
+                        android:textColor="@color/vf_green_deep"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/stepLine1"
+                    android:layout_width="0dp"
+                    android:layout_height="2dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_weight="1"
+                    android:background="@color/vf_border" />
+
+                <!-- Passo 3: Aprovação -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:id="@+id/stepCircle2"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:background="@drawable/bg_notification_circle">
+
+                        <ImageView
+                            android:id="@+id/stepCheck2"
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_notif_check"
+                            android:visibility="gone"
+                            app:tint="@color/white" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/stepLabel2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/occ_step_approval"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Card Principal da Ocorrência (Figma 851:4236) -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/vf_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/white"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Linha Superior: Foto Miniatura + Dados -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="82dp"
+                            android:layout_height="82dp"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp">
+
+                            <ImageView
+                                android:id="@+id/imgOccThumbnail"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/img_caixas_papelao" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvOccCardTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:text="Papelão (Classe A)"
+                                android:textColor="@color/vf_text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvOccCardLine"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Contaminação baixa · ≈ 38 kg"
+                                android:textColor="@color/vf_text_secondary"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvOccCardSubtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="sans-serif"
+                                android:text="Frigorífico — Setor B2"
+                                android:textColor="@color/vf_text_secondary"
+                                android:textSize="12sp" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/tvOccPriority"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_badge_alta"
+                                    android:fontFamily="sans-serif"
+                                    android:paddingStart="8dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingEnd="8dp"
+                                    android:paddingBottom="3dp"
+                                    android:text="ALTA"
+                                    android:textColor="@color/priority_high_text"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/badgeForwarded"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:background="@drawable/bg_chip_r9"
+                                    android:fontFamily="sans-serif"
+                                    android:paddingStart="8dp"
+                                    android:paddingTop="3dp"
+                                    android:paddingEnd="8dp"
+                                    android:paddingBottom="3dp"
+                                    android:text="→ Com Expedição"
+                                    android:textColor="@color/vf_blue"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold"
+                                    android:visibility="gone" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginBottom="12dp"
+                        android:background="@color/vf_border" />
+
+                    <!-- Relatório Automático -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/occ_report_auto"
+                        android:textColor="@color/vf_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvOccAutoReport"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="sans-serif"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Ocorrência registrada no setor Frigorífico com 38 kg de papelão Classe A. Destinação recomendada: enfardamento para cooperativa parceira."
+                        android:textColor="@color/vf_text_body"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Seção: Ações do responsável (Figma 851:4267) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:fontFamily="sans-serif"
+                android:text="Ações do responsável"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <!-- Ação 1: Alterar classificação -->
+            <LinearLayout
+                android:id="@+id/rowEditClass"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/bg_action_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp">
+
                 <FrameLayout
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:background="@drawable/bg_occurrence_icon">
+                    android:id="@+id/chipEditClass"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_chip_pin">
 
                     <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
+                        android:id="@+id/iconEditClass"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/ic_occurrence_waste" />
+                        android:src="@drawable/ic_pencil"
+                        app:tint="@color/vf_green" />
                 </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_medium"
+                    android:layout_marginStart="14dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tvOccCardTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/volta_text_primary_light"
-                        android:textSize="@dimen/text_size_body"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/occ_action_edit_class"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
+                    <!-- Subtítulo dinâmico (Figma 17d: ✓ Qualidade A → B · prioridade alta) -->
                     <TextView
-                        android:id="@+id/tvOccCardLine"
+                        android:id="@+id/tvEditClassSub"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/volta_text_secondary_light"
-                        android:textSize="@dimen/text_size_caption" />
-
-                    <TextView
-                        android:id="@+id/tvOccCardSubtitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/volta_text_secondary_light"
-                        android:textSize="@dimen/text_size_caption" />
-
-                    <TextView
-                        android:id="@+id/tvOccPriority"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_xs"
-                        android:background="@drawable/bg_badge_media"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
-                        android:textColor="@color/priority_medium_text"
-                        android:textSize="@dimen/text_size_caption"
-                        android:textStyle="bold" />
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="sans-serif"
+                        android:text="✓ Qualidade A → B · prioridade alta"
+                        android:textColor="@color/vf_green_deep"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
                 </LinearLayout>
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="@dimen/spacing_medium"
-                android:layout_marginBottom="@dimen/spacing_medium"
-                android:background="@color/notification_circle_border" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_xs"
-                android:text="@string/occ_report_auto"
-                android:textColor="@color/volta_green_deep"
-                android:textSize="@dimen/text_size_body"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvOccAutoReport"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/volta_text_secondary_light"
-                android:textSize="@dimen/text_size_body_small" />
-        </LinearLayout>
-
-        <!-- Detalhes (Figma 790:2725): peso, autor, data, confiança IA -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:text="@string/occ_details_title"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_card_surface"
-            android:orientation="vertical"
-            android:padding="@dimen/spacing_medium">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="@dimen/spacing_small"
-                android:paddingBottom="@dimen/spacing_small">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/detail_weight"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body" />
-
-                <TextView
-                    android:id="@+id/tvOccWeight"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/notification_circle_border" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="@dimen/spacing_small"
-                android:paddingBottom="@dimen/spacing_small">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/detail_registered_by"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body" />
-
-                <TextView
-                    android:id="@+id/tvOccAuthor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/notification_circle_border" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="@dimen/spacing_small"
-                android:paddingBottom="@dimen/spacing_small">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/detail_date"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body" />
-
-                <TextView
-                    android:id="@+id/tvOccDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/notification_circle_border" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="@dimen/spacing_small"
-                android:paddingBottom="@dimen/spacing_small">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/detail_confidence"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body" />
-
-                <TextView
-                    android:id="@+id/tvOccConfidence"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Histórico da ocorrência -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:text="@string/occ_history_title"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:id="@+id/historyContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_card_surface"
-            android:orientation="vertical"
-            android:padding="@dimen/spacing_medium">
-
-            <TextView
-                android:id="@+id/tvHistoryEmpty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/occ_history_empty"
-                android:textColor="@color/volta_text_secondary_light"
-                android:textSize="@dimen/text_size_body_small" />
-        </LinearLayout>
-
-        <!-- Ações do responsável -->
-        <LinearLayout
-            android:id="@+id/rowEditClass"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
-
-            <FrameLayout
-                android:id="@+id/chipEditClass"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:background="@drawable/bg_action_chip">
 
                 <ImageView
-                    android:id="@+id/iconEditClass"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_pencil" />
-            </FrameLayout>
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:rotation="180"
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="@color/vf_hint" />
+            </LinearLayout>
 
-            <TextView
-                android:layout_width="0dp"
+            <!-- Ação 2: Adicionar observação -->
+            <LinearLayout
+                android:id="@+id/rowObserve"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:text="@string/occ_action_edit_class"
-                android:textColor="@color/volta_text_primary_light"
-                android:textSize="@dimen/text_size_body" />
+                android:layout_marginBottom="28dp"
+                android:background="@drawable/bg_action_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="14dp">
 
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:rotation="180"
-                android:src="@drawable/ic_chevron_left"
-                android:tint="@color/volta_text_muted_light" />
-        </LinearLayout>
+                <FrameLayout
+                    android:id="@+id/chipObserve"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_shortcut_purple">
 
-        <LinearLayout
-            android:id="@+id/rowForward"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
+                    <ImageView
+                        android:id="@+id/iconObserve"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_plus_purple"
+                        app:tint="@color/vf_purple" />
+                </FrameLayout>
 
-            <FrameLayout
-                android:id="@+id/chipForward"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:background="@drawable/bg_action_chip">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/occ_action_observe"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <!-- Subtítulo dinâmico (Figma 17d: ✓ 1 observação · agora) -->
+                    <TextView
+                        android:id="@+id/tvObserveSub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="sans-serif"
+                        android:text="✓ 1 observação · agora"
+                        android:textColor="@color/vf_green_deep"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </LinearLayout>
 
                 <ImageView
-                    android:id="@+id/iconForward"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_forward" />
-            </FrameLayout>
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:rotation="180"
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="@color/vf_hint" />
+            </LinearLayout>
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:text="@string/occ_action_forward"
-                android:textColor="@color/volta_text_primary_light"
-                android:textSize="@dimen/text_size_body" />
-
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:rotation="180"
-                android:src="@drawable/ic_chevron_left"
-                android:tint="@color/volta_text_muted_light" />
+            <!-- Botão Finalizar Ocorrência -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFinalizeOcc"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_btn_primary_v"
+                android:fontFamily="sans-serif"
+                android:text="@string/occ_action_finalize"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="16dp" />
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/rowObserve"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_card_surface"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="@dimen/spacing_medium">
-
-            <FrameLayout
-                android:id="@+id/chipObserve"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:background="@drawable/bg_action_chip">
-
-                <ImageView
-                    android:id="@+id/iconObserve"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_stat_open" />
-            </FrameLayout>
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_weight="1"
-                android:text="@string/occ_action_observe"
-                android:textColor="@color/volta_text_primary_light"
-                android:textSize="@dimen/text_size_body" />
-
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:rotation="180"
-                android:src="@drawable/ic_chevron_left"
-                android:tint="@color/volta_text_muted_light" />
-        </LinearLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFinalizeOcc"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height_primary"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:backgroundTint="@color/volta_green_primary"
-            android:text="@string/occ_action_finalize"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold"
-            app:cornerRadius="@dimen/corner_radius_button" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnChooseCoop"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:backgroundTint="@color/volta_green_primary"
-            android:text="@string/occ_pick_coop"
-            android:textColor="@color/white"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            app:cornerRadius="16dp" />
-    </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Toast / Banner Flutuante de Ocorrência Finalizada (Figma 851:4508) -->
+    <!-- Top Toast de Ocorrência Finalizada (Figma 19 · 851:4403) -->
     <LinearLayout
         android:id="@+id/toastFinalized"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
+        android:layout_gravity="top"
         android:layout_marginStart="16dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="16dp"
         android:background="@drawable/bg_toast_finalized"
         android:clickable="true"
-        android:elevation="8dp"
+        android:elevation="10dp"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:minHeight="68dp"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
+        android:paddingStart="14dp"
         android:paddingTop="12dp"
-        android:paddingEnd="16dp"
+        android:paddingEnd="14dp"
         android:paddingBottom="12dp"
         android:visibility="gone">
 
         <FrameLayout
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/bg_toast_check_circle">
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_toast_icon_square">
 
             <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:layout_gravity="center"
-                android:contentDescription="@string/toast_finalized_title"
-                android:src="@drawable/ic_notif_check"
-                app:tint="@color/white" />
+                android:src="@drawable/ic_check_circle_green" />
         </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -714,9 +578,10 @@
                 android:id="@+id/tvToastFinalizedTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/toast_finalized_title"
+                android:fontFamily="sans-serif"
+                android:text="Ocorrência finalizada"
                 android:textColor="@color/white"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -724,26 +589,27 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="@string/toast_finalized_sub"
-                android:textColor="@color/toast_finalized_subtitle"
-                android:textSize="12sp" />
+                android:fontFamily="sans-serif"
+                android:text="Dados incluídos no inventário PGRS"
+                android:textColor="@color/vf_toast_sub"
+                android:textSize="11sp" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/btnToastOpenPgrs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/bg_badge_cta_green"
+            android:background="@drawable/bg_chip_pin"
             android:clickable="true"
             android:focusable="true"
+            android:fontFamily="sans-serif"
             android:paddingStart="10dp"
-            android:paddingTop="6dp"
+            android:paddingTop="5dp"
             android:paddingEnd="10dp"
-            android:paddingBottom="6dp"
-            android:text="@string/toast_finalized_action"
-            android:textColor="@color/white"
-            android:textSize="12sp"
+            android:paddingBottom="5dp"
+            android:text="Ver no PGRS →"
+            android:textColor="@color/vf_green"
+            android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
 </FrameLayout>

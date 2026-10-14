@@ -116,8 +116,12 @@ public class MainActivity extends AppCompatActivity {
             // Todos os fragmentos possuem layout próprio no Figma sem Toolbar nativa
             toolbar.setVisibility(android.view.View.GONE);
 
-            // Assistente (790:1911) e Chat (790:3191) são telas de conversa em tela cheia (sem Tab bar inferior)
-            boolean hideBottomBar = (destId == R.id.nav_assistant || destId == R.id.nav_chat);
+            // Fluxo de registro (851:3792), Assistente (790:1911) e Chat (790:3191) não exibem a Tab bar inferior
+            boolean hideBottomBar = (destId == R.id.nav_assistant
+                    || destId == R.id.nav_chat
+                    || destId == R.id.nav_register
+                    || destId == R.id.nav_ai_analysis
+                    || destId == R.id.nav_occurrence_full);
             int barVis = hideBottomBar ? android.view.View.GONE : android.view.View.VISIBLE;
             navView.setVisibility(barVis);
             if (fabRegister != null) {

@@ -1,692 +1,1403 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Análise IA Passo 2 de 2 — Figma (626:327). IA copiloto: sugere, humano confirma. -->
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Análise IA — Figma 851:3792 (15 · escaneando, 16 · análise, 16a · editar, 16b · revisada) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/volta_background_light"
-    android:fillViewport="true">
+    android:background="@color/vf_bg">
 
-    <LinearLayout
+    <!-- Fundo de fluidos decorativo -->
+    <ImageView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/spacing_normal">
+        android:layout_height="280dp"
+        android:alpha="0.35"
+        android:scaleType="fitXY"
+        android:src="@drawable/bg_home_fluidos" />
 
-        <!-- Voltar (header interno — toolbar oculta nesta tela) -->
-        <FrameLayout
-            android:id="@+id/btnBackAnalysis"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_notification_circle"
-            android:clickable="true"
-            android:contentDescription="@string/occurrence_back"
-            android:elevation="2dp"
-            android:focusable="true">
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollAiAnalysis"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_chevron_left" />
-        </FrameLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/ai_title"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_headline"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:text="@string/occurrence_step_2"
-            android:textColor="@color/volta_text_secondary_light"
-            android:textSize="@dimen/text_size_body_small" />
-
-        <!-- Progresso 2 de 2 -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="8dp"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:orientation="horizontal">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_progress_filled" />
-        </LinearLayout>
-
-        <!-- Loading: skeleton + laser (protótipo novo 851:3975) -->
-        <LinearLayout
-            android:id="@+id/aiLoadingGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- Foto + laser + pill -->
-            <FrameLayout
-                android:id="@+id/scanPhotoFrame"
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:layout_marginBottom="@dimen/spacing_large"
-                android:background="@drawable/bg_card_ia_photo">
-
-                <ImageView
-                    android:id="@+id/imgAiPhotoScan"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop" />
-
-                <View
-                    android:id="@+id/viewScanBand"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:background="@drawable/bg_scan_band" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top|start"
-                    android:layout_margin="@dimen/spacing_medium"
-                    android:background="@drawable/bg_pill_dark"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="@dimen/spacing_medium"
-                    android:paddingTop="@dimen/spacing_small"
-                    android:paddingEnd="@dimen/spacing_medium"
-                    android:paddingBottom="@dimen/spacing_small">
-
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@drawable/ic_sparkle"
-                        app:tint="@color/sparkle_light" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_xs"
-                        android:text="@string/ai_scanning"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/text_size_body_small"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </FrameLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_medium"
-                android:text="@string/ai_found_title"
-                android:textColor="@color/volta_text_primary_light"
-                android:textSize="@dimen/text_size_section"
-                android:textStyle="bold" />
-
-            <!-- Skeleton: mesmos cards do resultado, com barras cinzas -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:weightSum="2">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/spacing_xs"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_type_gold"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_label_type"
-                        android:textColor="@color/occurrence_icon_tint"
-                        android:textSize="@dimen/text_size_body_small" />
-
-                    <View
-                        android:layout_width="64dp"
-                        android:layout_height="12dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:background="@drawable/bg_skeleton_bar" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_xs"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_stat_resolved"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_label_contamination"
-                        android:textColor="@color/stat_resolved_icon"
-                        android:textSize="@dimen/text_size_body_small" />
-
-                    <View
-                        android:layout_width="64dp"
-                        android:layout_height="12dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:background="@drawable/bg_skeleton_bar" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_small"
-                android:layout_marginBottom="@dimen/spacing_medium"
-                android:orientation="horizontal"
-                android:weightSum="2">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/spacing_xs"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_stat_recycled"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_label_quantity"
-                        android:textColor="@color/stat_recycled_icon"
-                        android:textSize="@dimen/text_size_body_small" />
-
-                    <View
-                        android:layout_width="64dp"
-                        android:layout_height="12dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:background="@drawable/bg_skeleton_bar" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_xs"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_stat_purple"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_label_recommendation"
-                        android:textColor="@color/occurrence_icon_tint_purple"
-                        android:textSize="@dimen/text_size_body_small" />
-
-                    <View
-                        android:layout_width="64dp"
-                        android:layout_height="12dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:background="@drawable/bg_skeleton_bar" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_medium"
-                android:background="@drawable/bg_confidence_row"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="@dimen/spacing_medium">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/ai_label_confidence"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body_small" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="8dp"
-                    android:layout_marginStart="@dimen/spacing_medium"
-                    android:layout_marginEnd="@dimen/spacing_medium"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_progress_track"
-                    android:orientation="horizontal" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0%"
-                    android:textColor="@color/volta_green_deep"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_large"
-                android:background="@drawable/bg_card_stat_resolved"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_medium">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/spacing_xs"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:src="@drawable/ic_sparkle"
-                        app:tint="@color/stat_resolved_icon" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_xs"
-                        android:text="@string/ai_label_recommendation"
-                        android:textColor="@color/stat_resolved_icon"
-                        android:textSize="@dimen/text_size_body"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/ai_loading_recommendation"
-                    android:textColor="@color/recommendation_text"
-                    android:textSize="@dimen/text_size_body_small" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_large"
-                android:alpha="0.5"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="@dimen/spacing_small"
-                    android:layout_weight="2"
-                    android:background="@drawable/bg_button_gradient"
-                    android:clickable="false"
-                    android:text="@string/ai_confirm"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_body_small"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_marginStart="@dimen/spacing_small"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_surface"
-                    android:clickable="false"
-                    android:text="@string/ai_edit"
-                    android:textColor="@color/nav_item_selected"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Resultado -->
-        <LinearLayout
-            android:id="@+id/aiResultGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:paddingStart="20dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
 
-            <!-- Foto + pill -->
+            <!-- Botão Voltar -->
             <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:layout_marginBottom="@dimen/spacing_large"
-                android:background="@drawable/bg_card_ia_photo">
+                android:id="@+id/btnBackAnalysis"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_notification_circle"
+                android:clickable="true"
+                android:contentDescription="@string/occurrence_back"
+                android:elevation="2dp"
+                android:focusable="true">
 
                 <ImageView
-                    android:id="@+id/imgAiPhoto"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="top|start"
-                    android:layout_margin="@dimen/spacing_medium"
-                    android:background="@drawable/bg_pill_dark"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="@dimen/spacing_medium"
-                    android:paddingTop="@dimen/spacing_small"
-                    android:paddingEnd="@dimen/spacing_medium"
-                    android:paddingBottom="@dimen/spacing_small">
-
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:src="@drawable/ic_sparkle"
-                        app:tint="@color/sparkle_light" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_xs"
-                        android:text="@string/ai_done"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/text_size_body_small"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chevron_left" />
             </FrameLayout>
 
-            <!-- Título + badge prioridade -->
-            <RelativeLayout
-                android:layout_width="match_parent"
+            <!-- Título e Subtítulo -->
+            <TextView
+                android:id="@+id/tvAiHeaderTitle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_medium">
+                android:fontFamily="sans-serif"
+                android:text="@string/ai_title"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:text="@string/ai_found_title"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_section"
-                    android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvAiHeaderSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="14dp"
+                android:fontFamily="sans-serif"
+                android:text="@string/occurrence_step_2"
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="12sp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_badge_alta"
-                    android:paddingStart="10dp"
-                    android:paddingTop="4dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="4dp"
-                    android:text="@string/priority_alta"
-                    android:textColor="@color/priority_high_text"
-                    android:textSize="@dimen/text_size_caption"
-                    android:textStyle="bold" />
-            </RelativeLayout>
-
-            <!-- 4 cards: Tipo / Contaminação / Quantidade / Unidades -->
+            <!-- Progresso 2 de 2: duas barras cheias -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="6dp"
+                android:layout_marginBottom="20dp"
                 android:orientation="horizontal"
                 android:weightSum="2">
 
-                <LinearLayout
+                <View
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/spacing_xs"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="4dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_card_type_gold"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
+                    android:background="@drawable/bg_step_filled" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_label_type"
-                        android:textColor="@color/occurrence_icon_tint"
-                        android:textSize="@dimen/text_size_body_small" />
-
-                    <TextView
-                        android:id="@+id/tvAiMaterial"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/occurrence_icon_tint"
-                        android:textSize="@dimen/text_size_title"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
+                <View
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_xs"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_card_stat_resolved"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_label_contamination"
-                        android:textColor="@color/stat_resolved_icon"
-                        android:textSize="@dimen/text_size_body_small" />
-
-                    <TextView
-                        android:id="@+id/tvAiContamination"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/stat_resolved_icon"
-                        android:textSize="@dimen/text_size_title"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    android:background="@drawable/bg_step_filled" />
             </LinearLayout>
 
+            <!-- ======================================================== -->
+            <!-- ESTADO 1: CARREGANDO / ESCANEANDO (Figma 15 · 851:3975) -->
+            <!-- ======================================================== -->
             <LinearLayout
+                android:id="@+id/aiLoadingGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_small"
-                android:layout_marginBottom="@dimen/spacing_medium"
-                android:orientation="horizontal"
-                android:weightSum="2">
+                android:orientation="vertical"
+                android:visibility="visible">
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/spacing_xs"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_stat_recycled"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
+                <!-- Foto com laser verde varrendo -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="170dp"
+                    android:layout_marginBottom="20dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/vf_border"
+                    app:strokeWidth="1dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_label_quantity"
-                        android:textColor="@color/stat_recycled_icon"
-                        android:textSize="@dimen/text_size_body_small" />
-
-                    <TextView
-                        android:id="@+id/tvAiQuantity"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/stat_recycled_icon"
-                        android:textSize="@dimen/text_size_title"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_xs"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_stat_purple"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
-
-                    <TextView
-                        android:id="@+id/tvAiUnitsLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/occurrence_icon_tint_purple"
-                        android:textSize="@dimen/text_size_body_small" />
-
-                    <TextView
-                        android:id="@+id/tvAiUnits"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/occurrence_icon_tint_purple"
-                        android:textSize="@dimen/text_size_title"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Confiança -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_medium"
-                android:background="@drawable/bg_confidence_row"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="@dimen/spacing_medium">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/ai_label_confidence"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body_small" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="8dp"
-                    android:layout_marginStart="@dimen/spacing_medium"
-                    android:layout_marginEnd="@dimen/spacing_medium"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_progress_track"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:id="@+id/viewAiConfidence"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="88"
-                        android:background="@drawable/bg_progress_filled" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvAiConfidence"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/volta_green_deep"
-                    android:textSize="@dimen/text_size_body"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- VOLTA recomenda (Figma 790:2609: Mascote + Recomendação + Link) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_large"
-                android:background="@drawable/bg_card_stat_resolved"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="@dimen/spacing_medium">
-
-                <!-- Mascote VOLTA -->
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="56dp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/mascote_volta" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_medium"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="@dimen/spacing_xs"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                    <FrameLayout
+                        android:id="@+id/scanPhotoFrame"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
                         <ImageView
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:src="@drawable/ic_sparkle"
-                            app:tint="@color/stat_resolved_icon" />
+                            android:id="@+id/imgAiPhotoScan"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/img_caixas_papelao" />
+
+                        <!-- Linha/faixa laser animada -->
+                        <View
+                            android:id="@+id/viewScanBand"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/bg_scan_band" />
+
+                        <!-- Pill superior esquerdo: "Analisando..." -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|start"
+                            android:layout_margin="12dp"
+                            android:background="@drawable/bg_pill_dark"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp">
+
+                            <ImageView
+                                android:layout_width="13dp"
+                                android:layout_height="13dp"
+                                android:src="@drawable/ic_sparkle"
+                                app:tint="@color/vf_green" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:fontFamily="sans-serif"
+                                android:text="@string/ai_scanning"
+                                android:textColor="@color/white"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/ai_found_title"
+                    android:textColor="@color/vf_text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- Skeleton dos 4 cards -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_type_gold"
+                        android:orientation="vertical"
+                        android:padding="14dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/spacing_xs"
-                            android:text="@string/ai_label_recommendation"
-                            android:textColor="@color/stat_resolved_icon"
-                            android:textSize="@dimen/text_size_body"
-                            android:textStyle="bold" />
+                            android:text="@string/ai_label_type"
+                            android:textColor="@color/vf_gold"
+                            android:textSize="12sp" />
+
+                        <View
+                            android:layout_width="72dp"
+                            android:layout_height="14dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_skeleton_bar" />
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tvAiRecommendation"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/recommendation_text"
-                        android:textSize="@dimen/text_size_body_small" />
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_stat_resolved"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ai_label_contamination"
+                            android:textColor="@color/vf_green"
+                            android:textSize="12sp" />
+
+                        <View
+                            android:layout_width="54dp"
+                            android:layout_height="14dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_skeleton_bar" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="16dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_stat_recycled"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ai_label_quantity"
+                            android:textColor="@color/vf_blue"
+                            android:textSize="12sp" />
+
+                        <View
+                            android:layout_width="60dp"
+                            android:layout_height="14dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_skeleton_bar" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_stat_purple"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Caixas"
+                            android:textColor="@color/vf_purple"
+                            android:textSize="12sp" />
+
+                        <View
+                            android:layout_width="50dp"
+                            android:layout_height="14dp"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_skeleton_bar" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Confiança Bar Skeleton -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_confidence_row"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
 
                     <TextView
-                        android:id="@+id/btnAskVolta"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:paddingTop="2dp"
-                        android:paddingBottom="2dp"
-                        android:text="Perguntar ao VOLTA →"
-                        android:textColor="@color/stat_resolved_icon"
-                        android:textSize="@dimen/text_size_caption"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/ai_label_confidence"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="6dp"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="14dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_step_track"
+                        android:orientation="horizontal" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="0%"
+                        android:textColor="@color/vf_green_deep"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Skeleton VOLTA recomenda -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:background="@drawable/bg_card_stat_resolved"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/ai_label_recommendation"
+                        android:textColor="@color/vf_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/ai_loading_recommendation"
+                        android:textColor="@color/vf_reco_text"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Botões desabilitados durante loading -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.4"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="2"
+                        android:background="@drawable/bg_btn_primary_v"
+                        android:enabled="false"
+                        android:text="@string/ai_confirm"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"
+                        app:cornerRadius="16dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_btn_edit_outline"
+                        android:enabled="false"
+                        android:text="@string/ai_edit"
+                        android:textAllCaps="false"
+                        android:textColor="@color/vf_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"
+                        app:cornerRadius="16dp" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Ações: Editar (esquerda) / Confirmar e gerar relatório (direita) (Figma 790:2616 e 790:2618) -->
+            <!-- ======================================================== -->
+            <!-- ESTADO 2: ANÁLISE CONCLUÍDA / REVISADA (Figma 16 e 16b)  -->
+            <!-- ======================================================== -->
             <LinearLayout
+                android:id="@+id/aiResultGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_large"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnEditAnalysis"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="@dimen/spacing_small"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_card_surface"
-                    android:text="@string/ai_edit"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
+                <!-- Foto com Bounding Boxes e Badge de Status -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="170dp"
+                    android:layout_marginBottom="20dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/vf_border"
+                    app:strokeWidth="1dp">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <ImageView
+                            android:id="@+id/imgAiPhoto"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/img_caixas_papelao" />
+
+                        <!-- Detecções da IA (Bounding Boxes) -->
+                        <FrameLayout
+                            android:id="@+id/aiDetectionsGroup"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <!-- Box 1: papelão 94% -->
+                            <FrameLayout
+                                android:layout_width="140dp"
+                                android:layout_height="90dp"
+                                android:layout_marginStart="24dp"
+                                android:layout_marginTop="32dp"
+                                android:background="@drawable/bg_detection_box">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_detection_label"
+                                    android:paddingStart="6dp"
+                                    android:paddingTop="2dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingBottom="2dp"
+                                    android:text="papelão · 94%"
+                                    android:textColor="@color/white"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+
+                            <!-- Box 2: papelão 91% -->
+                            <FrameLayout
+                                android:layout_width="130dp"
+                                android:layout_height="80dp"
+                                android:layout_gravity="end|bottom"
+                                android:layout_marginEnd="20dp"
+                                android:layout_marginBottom="24dp"
+                                android:background="@drawable/bg_detection_box">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_detection_label"
+                                    android:paddingStart="6dp"
+                                    android:paddingTop="2dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingBottom="2dp"
+                                    android:text="papelão · 91%"
+                                    android:textColor="@color/white"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+
+                            <!-- Box 3: umidade detectada -->
+                            <FrameLayout
+                                android:layout_width="80dp"
+                                android:layout_height="45dp"
+                                android:layout_gravity="bottom|start"
+                                android:layout_marginStart="40dp"
+                                android:layout_marginBottom="16dp"
+                                android:background="@drawable/bg_detection_box">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_detection_label"
+                                    android:paddingStart="6dp"
+                                    android:paddingTop="2dp"
+                                    android:paddingEnd="6dp"
+                                    android:paddingBottom="2dp"
+                                    android:text="umidade"
+                                    android:textColor="@color/white"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+                        </FrameLayout>
+
+                        <!-- Pill Status Superior: "Análise concluída" ou "Revisado por você" -->
+                        <LinearLayout
+                            android:id="@+id/pillAiStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|start"
+                            android:layout_margin="12dp"
+                            android:background="@drawable/bg_pill_dark"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp">
+
+                            <ImageView
+                                android:id="@+id/icAiStatusPill"
+                                android:layout_width="13dp"
+                                android:layout_height="13dp"
+                                android:src="@drawable/ic_sparkle"
+                                app:tint="@color/vf_green" />
+
+                            <TextView
+                                android:id="@+id/tvAiStatusPill"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:fontFamily="sans-serif"
+                                android:text="@string/ai_done"
+                                android:textColor="@color/white"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Cabeçalho da seção: Título + Badge de Prioridade -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/ai_found_title"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/badgeAiPriority"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/bg_badge_alta"
+                        android:fontFamily="sans-serif"
+                        android:paddingStart="10dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="4dp"
+                        android:text="@string/priority_alta"
+                        android:textColor="@color/priority_high_text"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <!-- Grade com os 4 Cards: Tipo / Contaminação / Quantidade / Caixas -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <!-- Card 1: Tipo (Gold) -->
+                    <LinearLayout
+                        android:id="@+id/cardAiType"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_type_gold"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="@string/ai_label_type"
+                            android:textColor="@color/vf_gold"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvAiMaterial"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif"
+                            android:text="Papelão"
+                            android:textColor="@color/vf_gold"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Card 2: Contaminação (Verde) -->
+                    <LinearLayout
+                        android:id="@+id/cardAiContamination"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_stat_resolved"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="@string/ai_label_contamination"
+                            android:textColor="@color/vf_green"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvAiContamination"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif"
+                            android:text="Baixa"
+                            android:textColor="@color/vf_green"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="16dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <!-- Card 3: Quantidade (Azul) - Se editado ganha borda e badge "editado" -->
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1">
+
+                        <LinearLayout
+                            android:id="@+id/cardAiQuantity"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_card_stat_recycled"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:text="@string/ai_label_quantity"
+                                android:textColor="@color/vf_blue"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvAiQuantity"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="sans-serif"
+                                android:text="≈ 38 kg"
+                                android:textColor="@color/vf_blue"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Badge "editado" superior direito do card quando revisado -->
+                        <TextView
+                            android:id="@+id/badgeQuantityEdited"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="8dp"
+                            android:background="@drawable/bg_badge_editado_blue"
+                            android:fontFamily="sans-serif"
+                            android:paddingStart="6dp"
+                            android:paddingTop="2dp"
+                            android:paddingEnd="6dp"
+                            android:paddingBottom="2dp"
+                            android:text="editado"
+                            android:textColor="@color/vf_blue"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <!-- Card 4: Caixas / Unidades (Roxo) -->
+                    <LinearLayout
+                        android:id="@+id/cardAiUnits"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_card_stat_purple"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:id="@+id/tvAiUnitsLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="Caixas"
+                            android:textColor="@color/vf_purple"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvAiUnits"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif"
+                            android:text="11 un."
+                            android:textColor="@color/vf_purple"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Confiança da IA -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_confidence_row"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/ai_label_confidence"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="13sp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="6dp"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="14dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_step_track"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/viewAiConfidence"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="88"
+                            android:background="@drawable/bg_step_filled" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvAiConfidence"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="88%"
+                        android:textColor="@color/vf_green_deep"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Linha de Status / Instrução intermediária -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/icMiddleStatus"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_check_circle_green"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/tvMiddleStatusHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:fontFamily="sans-serif"
+                        android:text="Confira os resultados antes de gerar o relatório"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- VOLTA recomenda (Mascote + Recomendação + Link) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:background="@drawable/bg_card_stat_resolved"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="56dp"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/mascote_volta" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="3dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_sparkle"
+                                app:tint="@color/vf_green" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:fontFamily="sans-serif"
+                                android:text="@string/ai_label_recommendation"
+                                android:textColor="@color/vf_green"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvAiRecommendation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:lineSpacingExtra="2dp"
+                            android:text="Material limpo e seco. Compatível com enfardamento direto para cooperativa parceira."
+                            android:textColor="@color/vf_reco_text"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/btnAskVolta"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:fontFamily="sans-serif"
+                            android:paddingTop="2dp"
+                            android:paddingBottom="2dp"
+                            android:text="Perguntar ao VOLTA →"
+                            android:textColor="@color/vf_green"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Botões Inferiores: Confirmar e gerar relatório (Esquerda) / Editar (Direita) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnConfirmAnalysis"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="2"
+                        android:background="@drawable/bg_btn_primary_v"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/ai_confirm"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"
+                        app:cornerRadius="16dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEditAnalysis"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_btn_edit_outline"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/ai_edit"
+                        android:textAllCaps="false"
+                        android:textColor="@color/vf_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"
+                        app:cornerRadius="16dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ======================================================== -->
+            <!-- ESTADO 3: EDITAR ANÁLISE 1 (Figma 16a · 907:5210)       -->
+            <!-- ======================================================== -->
+            <LinearLayout
+                android:id="@+id/aiEditGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- 1. Tipo de material -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Tipo de material"
+                    android:textColor="@color/vf_text_body"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
+                <!-- Chips de materiais -->
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/layoutMaterialChips"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/chipMatPapelao"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/bg_chip_mat_selected"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="Papelão"
+                            android:textColor="@color/white"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chipMatPlasticoFilme"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/bg_chip_mat_unselected"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="Plástico filme"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chipMatPlasticoRigido"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/bg_chip_mat_unselected"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="Plástico rígido"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chipMatOrganico"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/bg_chip_mat_unselected"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="Orgânico"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chipMatOutro"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_chip_mat_unselected"
+                            android:gravity="center"
+                            android:paddingStart="14dp"
+                            android:paddingEnd="14dp"
+                            android:text="Outro"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <!-- 2. Classe -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Classe"
+                    android:textColor="@color/vf_text_body"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/pillClassA"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_class_pill_selected"
+                        android:gravity="center"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="Classe A"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/pillClassB"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_class_pill_unselected"
+                        android:gravity="center"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="Classe B"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/pillClassC"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_class_pill_unselected"
+                        android:gravity="center"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="Classe C"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- 3. Grau de contaminação -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Grau de contaminação"
+                    android:textColor="@color/vf_text_body"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <!-- Segmented Control de Contaminação -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_segment_container"
+                    android:orientation="horizontal"
+                    android:padding="4dp">
+
+                    <TextView
+                        android:id="@+id/segContamBaixa"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_segment_green_selected"
+                        android:gravity="center"
+                        android:text="Baixa"
+                        android:textColor="@color/vf_green"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/segContamMedia"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="Média"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/segContamAlta"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="Alta"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- 4. Estimativa de peso (kg) com Stepper -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Estimativa de peso (kg)"
+                    android:textColor="@color/vf_text_body"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_stepper_card_edited"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+
+                    <FrameLayout
+                        android:id="@+id/btnWeightMinus"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_stepper_btn_minus"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="−"
+                            android:textColor="@color/vf_text_primary"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvEditWeightValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="42 kg"
+                            android:textColor="@color/vf_text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/bg_badge_editado_blue"
+                            android:paddingStart="6dp"
+                            android:paddingTop="2dp"
+                            android:paddingEnd="6dp"
+                            android:paddingBottom="2dp"
+                            android:text="editado"
+                            android:textColor="@color/vf_blue"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <FrameLayout
+                        android:id="@+id/btnWeightPlus"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_stepper_btn_plus"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="+"
+                            android:textColor="@color/white"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- 5. Unidades detectadas com Stepper -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Unidades detectadas"
+                    android:textColor="@color/vf_text_body"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="20dp"
+                    android:background="@drawable/bg_stepper_card_normal"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
+
+                    <FrameLayout
+                        android:id="@+id/btnUnitsMinus"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_stepper_btn_minus"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="−"
+                            android:textColor="@color/vf_text_primary"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvEditUnitsValue"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif"
+                        android:gravity="center"
+                        android:text="11 un."
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <FrameLayout
+                        android:id="@+id/btnUnitsPlus"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/bg_stepper_btn_plus"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="+"
+                            android:textColor="@color/white"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- Card Educativo: Sua correção ensina a IA -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:background="@drawable/bg_card_stat_resolved"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="Sua correção ensina a IA"
+                        android:textColor="@color/vf_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="sans-serif"
+                        android:lineSpacingExtra="2dp"
+                        android:text="O modelo aprende com os ajustes de chão de fábrica para análises futuras."
+                        android:textColor="@color/vf_text_body"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Botão Salvar Correção -->
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnConfirmAnalysis"
-                    android:layout_width="0dp"
+                    android:id="@+id/btnSaveCorrection"
+                    android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:layout_marginStart="@dimen/spacing_small"
-                    android:layout_weight="2"
-                    android:background="@drawable/bg_button_gradient"
-                    android:text="@string/ai_confirm"
+                    android:background="@drawable/bg_btn_primary_v"
+                    android:fontFamily="sans-serif"
+                    android:text="Salvar correção"
+                    android:textAllCaps="false"
                     android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_body_small"
-                    android:textStyle="bold" />
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@null"
+                    app:cornerRadius="16dp" />
             </LinearLayout>
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Top Toast de Correção Salva (Figma 16b · 907:5084) -->
+    <LinearLayout
+        android:id="@+id/toastCorrectionSaved"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_toast_finalized"
+        android:clickable="true"
+        android:elevation="10dp"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="12dp"
+        android:visibility="gone">
+
+        <FrameLayout
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_toast_icon_square">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_check_circle_green" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:text="Correção salva!"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif"
+                android:text="A análise foi atualizada com as suas alterações."
+                android:textColor="@color/vf_toast_sub"
+                android:textSize="11sp" />
+        </LinearLayout>
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+</FrameLayout>

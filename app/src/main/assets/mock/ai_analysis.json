@@ -6,6 +6,10 @@
     "presente": false,
     "nivel": "Baixa"
   },
+  "unidades": {
+    "tipo": "Caixas",
+    "quantidade": 11
+  },
   "confianca": 0.88,
   "observacoes": "Guarde num lugar seco e coberto. Coleta em até 24h mantém o material valioso."
 }

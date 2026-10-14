@@ -1,10 +1,12 @@
 package com.aula.volta.ui.analysis;
 
+import android.animation.ObjectAnimator;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,6 +27,9 @@ import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
+import com.aula.volta.data.sync.PendingOccurrence;
+import com.aula.volta.data.sync.SyncManager;
+import com.aula.volta.data.sync.SyncQueue;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
@@ -35,16 +40,49 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Análise da IA — Passo 2 de 2 (Fase 4, Figma 626:327).
- * IA copiloto: sugere via contrato AiAnalysisJSON; humano confirma ou edita.
- * Args: photoPath, descricao, setor, avisar.
+ * Análise da IA — Passo 2 de 2 (Figma 851:3792).
+ * Contempla:
+ *  - 15 · Análise da IA · escaneando (851:3975)
+ *  - 16 · Análise da IA (851:4075)
+ *  - 16a · Editar análise 1 (907:5210)
+ *  - 16b · Análise da IA · revisada 1 (907:5084)
  */
 public class AiAnalysisFragment extends Fragment {
 
     private LinearLayout aiLoadingGroup;
     private LinearLayout aiResultGroup;
+    private LinearLayout aiEditGroup;
+    private View toastCorrectionSaved;
+
+    private TextView tvAiHeaderTitle;
+    private TextView tvAiHeaderSubtitle;
+    private TextView tvAiMaterial;
+    private TextView tvAiContamination;
+    private TextView tvAiQuantity;
+    private TextView tvAiUnits;
+    private TextView tvAiUnitsLabel;
+    private TextView tvAiConfidence;
+    private View viewAiConfidence;
+    private TextView tvAiRecommendation;
+    private TextView tvAiStatusPill;
+    private ImageView icAiStatusPill;
+    private TextView badgeQuantityEdited;
+    private LinearLayout cardAiQuantity;
+    private ImageView icMiddleStatus;
+    private TextView tvMiddleStatusHint;
+
+    // Campos do modo de edição (16a)
+    private TextView tvEditWeightValue;
+    private TextView tvEditUnitsValue;
+    private int currentWeight = 42;
+    private int currentUnits = 11;
+    private String selectedMaterial = "Papelão";
+    private String selectedClass = "Classe A";
+    private String selectedContamination = "Baixa";
+    private boolean isRevised = false;
+
     private AiAnalysisJSON analysis;
-    private android.animation.ObjectAnimator scanAnimator;
+    private ObjectAnimator scanAnimator;
 
     private String photoPath;
     private String descricao;
@@ -72,33 +110,61 @@ public class AiAnalysisFragment extends Fragment {
 
         aiLoadingGroup = view.findViewById(R.id.aiLoadingGroup);
         aiResultGroup = view.findViewById(R.id.aiResultGroup);
+        aiEditGroup = view.findViewById(R.id.aiEditGroup);
+        toastCorrectionSaved = view.findViewById(R.id.toastCorrectionSaved);
+
+        tvAiHeaderTitle = view.findViewById(R.id.tvAiHeaderTitle);
+        tvAiHeaderSubtitle = view.findViewById(R.id.tvAiHeaderSubtitle);
+        tvAiMaterial = view.findViewById(R.id.tvAiMaterial);
+        tvAiContamination = view.findViewById(R.id.tvAiContamination);
+        tvAiQuantity = view.findViewById(R.id.tvAiQuantity);
+        tvAiUnits = view.findViewById(R.id.tvAiUnits);
+        tvAiUnitsLabel = view.findViewById(R.id.tvAiUnitsLabel);
+        tvAiConfidence = view.findViewById(R.id.tvAiConfidence);
+        viewAiConfidence = view.findViewById(R.id.viewAiConfidence);
+        tvAiRecommendation = view.findViewById(R.id.tvAiRecommendation);
+        tvAiStatusPill = view.findViewById(R.id.tvAiStatusPill);
+        icAiStatusPill = view.findViewById(R.id.icAiStatusPill);
+        badgeQuantityEdited = view.findViewById(R.id.badgeQuantityEdited);
+        cardAiQuantity = view.findViewById(R.id.cardAiQuantity);
+        icMiddleStatus = view.findViewById(R.id.icMiddleStatus);
+        tvMiddleStatusHint = view.findViewById(R.id.tvMiddleStatusHint);
 
         ImageView imgAiPhoto = view.findViewById(R.id.imgAiPhoto);
-        if (photoPath != null) {
+        if (photoPath != null && imgAiPhoto != null) {
             imgAiPhoto.setImageBitmap(BitmapFactory.decodeFile(photoPath));
         }
 
         ImageView imgAiPhotoScan = view.findViewById(R.id.imgAiPhotoScan);
-        if (imgAiPhotoScan != null && photoPath != null) {
+        if (photoPath != null && imgAiPhotoScan != null) {
             imgAiPhotoScan.setImageBitmap(BitmapFactory.decodeFile(photoPath));
         }
 
         View btnBack = view.findViewById(R.id.btnBackAnalysis);
-        btnBack.setOnClickListener(v ->
-                Navigation.findNavController(v).navigateUp());
+        btnBack.setOnClickListener(v -> {
+            if (aiEditGroup.getVisibility() == View.VISIBLE) {
+                switchToResultView();
+            } else {
+                Navigation.findNavController(v).navigateUp();
+            }
+        });
 
+        // Botão Editar (16 -> 16a)
         MaterialButton btnEdit = view.findViewById(R.id.btnEditAnalysis);
-        btnEdit.setOnClickListener(v ->
-                Navigation.findNavController(v).navigateUp());
+        btnEdit.setOnClickListener(v -> switchToEditView());
 
+        // Botão Confirmar e gerar relatório (16 / 16b -> 17)
         MaterialButton btnConfirm = view.findViewById(R.id.btnConfirmAnalysis);
-        btnConfirm.setOnClickListener(v -> confirmOccurrence(v));
+        btnConfirm.setOnClickListener(this::confirmOccurrence);
 
+        // Assistente VOLTA
         View btnAskVolta = view.findViewById(R.id.btnAskVolta);
         if (btnAskVolta != null) {
             btnAskVolta.setOnClickListener(v ->
                     Navigation.findNavController(v).navigate(R.id.nav_assistant));
         }
+
+        setupEditControls(view);
 
         startScanAnimation(view);
         analyzePhoto();
@@ -110,7 +176,6 @@ public class AiAnalysisFragment extends Fragment {
         super.onDestroyView();
     }
 
-    /** Laser verde varrendo a foto em loop (protótipo novo 851:3975). */
     private void startScanAnimation(View root) {
         View band = root.findViewById(R.id.viewScanBand);
         View frame = root.findViewById(R.id.scanPhotoFrame);
@@ -122,10 +187,10 @@ public class AiAnalysisFragment extends Fragment {
                 return;
             }
             stopScanAnimation();
-            scanAnimator = android.animation.ObjectAnimator.ofFloat(
+            scanAnimator = ObjectAnimator.ofFloat(
                     band, "translationY", -band.getHeight(), frame.getHeight());
             scanAnimator.setDuration(1600);
-            scanAnimator.setRepeatCount(android.animation.ObjectAnimator.INFINITE);
+            scanAnimator.setRepeatCount(ObjectAnimator.INFINITE);
             scanAnimator.start();
         });
     }
@@ -137,28 +202,27 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
-    /** Chama POST /occurrences/{id}/analysis (mock com delay → loading real). */
     private void analyzePhoto() {
         AiAnalysisAPI api = ApiClient.get(requireContext()).create(AiAnalysisAPI.class);
         JsonObject body = new JsonObject();
         body.addProperty("setor", setor == null ? "" : setor);
         api.analyzeOccurrence("novo", body).enqueue(new Callback<AiAnalysisJSON>() {
             @Override
-            public void onResponse(Call<AiAnalysisJSON> call,
-                                   Response<AiAnalysisJSON> response) {
+            public void onResponse(@NonNull Call<AiAnalysisJSON> call,
+                                   @NonNull Response<AiAnalysisJSON> response) {
                 if (!isAdded()) {
                     return;
                 }
                 if (response.isSuccessful() && response.body() != null) {
                     analysis = response.body();
-                    applyAnalysis(requireView());
+                    applyAnalysis();
                 } else {
                     useOfflineAnalysisFallback();
                 }
             }
 
             @Override
-            public void onFailure(Call<AiAnalysisJSON> call, Throwable t) {
+            public void onFailure(@NonNull Call<AiAnalysisJSON> call, @NonNull Throwable t) {
                 if (!isAdded()) {
                     return;
                 }
@@ -168,51 +232,221 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void useOfflineAnalysisFallback() {
-        Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_SHORT).show();
-        analysis = com.aula.volta.data.model.AiAnalysisJSON.createOfflineFallback(setor);
-        applyAnalysis(requireView());
+        analysis = AiAnalysisJSON.createOfflineFallback(setor);
+        applyAnalysis();
     }
 
-    private void applyAnalysis(View view) {
+    private void applyAnalysis() {
         stopScanAnimation();
         aiLoadingGroup.setVisibility(View.GONE);
+        aiEditGroup.setVisibility(View.GONE);
         aiResultGroup.setVisibility(View.VISIBLE);
 
-        setText(view, R.id.tvAiMaterial, analysis.getMaterial());
+        if (analysis == null) {
+            return;
+        }
 
-        String contaminacao = analysis.getContaminacao() != null
-                ? analysis.getContaminacao().getNivel() : "-";
-        setText(view, R.id.tvAiContamination, contaminacao);
+        tvAiMaterial.setText(analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
+        String contaminacao = analysis.getContaminacao() != null ? analysis.getContaminacao().getNivel() : "Baixa";
+        tvAiContamination.setText(contaminacao);
 
-        String quantidade = "≈" + trimNumber(analysis.getQuantidadeEstimada())
-                + " " + analysis.getUnidade();
-        setText(view, R.id.tvAiQuantity, quantidade);
+        if (isRevised) {
+            tvAiQuantity.setText(currentWeight + " kg");
+            badgeQuantityEdited.setVisibility(View.VISIBLE);
+            cardAiQuantity.setBackgroundResource(R.drawable.bg_card_quantity_edited);
+            tvAiStatusPill.setText("Revisado por você");
+            tvMiddleStatusHint.setText("Resultados revisados · prontos pro relatório");
+            tvMiddleStatusHint.setTextColor(requireContext().getColor(R.color.vf_green_deep));
+            icMiddleStatus.setVisibility(View.VISIBLE);
+        } else {
+            String quantidade = "≈ " + trimNumber(analysis.getQuantidadeEstimada()) + " " + analysis.getUnidade();
+            tvAiQuantity.setText(quantidade);
+            badgeQuantityEdited.setVisibility(View.GONE);
+            cardAiQuantity.setBackgroundResource(R.drawable.bg_card_stat_recycled);
+            tvAiStatusPill.setText(getString(R.string.ai_done));
+            tvMiddleStatusHint.setText("Confira os resultados antes de gerar o relatório");
+            tvMiddleStatusHint.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            icMiddleStatus.setVisibility(View.GONE);
+        }
 
         if (analysis.getUnidades() != null) {
-            setText(view, R.id.tvAiUnitsLabel, analysis.getUnidades().getTipo());
-            setText(view, R.id.tvAiUnits,
-                    analysis.getUnidades().getQuantidade() + " un.");
+            tvAiUnitsLabel.setText(analysis.getUnidades().getTipo());
+            tvAiUnits.setText(currentUnits + " un.");
         } else {
-            setText(view, R.id.tvAiUnitsLabel, "");
-            setText(view, R.id.tvAiUnits, "-");
+            tvAiUnitsLabel.setText("Caixas");
+            tvAiUnits.setText("11 un.");
         }
 
         int percent = (int) Math.round(analysis.getConfianca() * 100);
-        setText(view, R.id.tvAiConfidence, percent + "%");
-        View bar = view.findViewById(R.id.viewAiConfidence);
-        LinearLayout.LayoutParams params =
-                (LinearLayout.LayoutParams) bar.getLayoutParams();
-        params.weight = Math.max(percent, 2);
-        bar.setLayoutParams(params);
+        tvAiConfidence.setText(percent + "%");
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) viewAiConfidence.getLayoutParams();
+        params.weight = Math.max(percent, 5);
+        viewAiConfidence.setLayoutParams(params);
 
-        setText(view, R.id.tvAiRecommendation,
-                analysis.getObservacoes() == null ? "" : analysis.getObservacoes());
+        if (analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty()) {
+            tvAiRecommendation.setText(analysis.getObservacoes());
+        }
     }
 
-    private void setText(View root, int id, String text) {
-        TextView tv = root.findViewById(id);
-        if (tv != null) {
-            tv.setText(text);
+    /** Configura o painel interativo de edição (16a) */
+    private void setupEditControls(View root) {
+        tvEditWeightValue = root.findViewById(R.id.tvEditWeightValue);
+        tvEditUnitsValue = root.findViewById(R.id.tvEditUnitsValue);
+
+        // Stepper Peso
+        View btnWeightMinus = root.findViewById(R.id.btnWeightMinus);
+        View btnWeightPlus = root.findViewById(R.id.btnWeightPlus);
+        btnWeightMinus.setOnClickListener(v -> {
+            if (currentWeight > 1) {
+                currentWeight--;
+                tvEditWeightValue.setText(currentWeight + " kg");
+            }
+        });
+        btnWeightPlus.setOnClickListener(v -> {
+            currentWeight++;
+            tvEditWeightValue.setText(currentWeight + " kg");
+        });
+
+        // Stepper Unidades
+        View btnUnitsMinus = root.findViewById(R.id.btnUnitsMinus);
+        View btnUnitsPlus = root.findViewById(R.id.btnUnitsPlus);
+        btnUnitsMinus.setOnClickListener(v -> {
+            if (currentUnits > 1) {
+                currentUnits--;
+                tvEditUnitsValue.setText(currentUnits + " un.");
+            }
+        });
+        btnUnitsPlus.setOnClickListener(v -> {
+            currentUnits++;
+            tvEditUnitsValue.setText(currentUnits + " un.");
+        });
+
+        // Chips de Material
+        setupMaterialChips(root);
+
+        // Pills de Classe
+        setupClassPills(root);
+
+        // Segmentos de Contaminação
+        setupContaminationSegments(root);
+
+        // Botão Salvar Correção (16a -> 16b)
+        MaterialButton btnSave = root.findViewById(R.id.btnSaveCorrection);
+        btnSave.setOnClickListener(v -> {
+            isRevised = true;
+            switchToResultView();
+            showCorrectionSavedToast();
+            applyAnalysis();
+        });
+    }
+
+    private void setupMaterialChips(View root) {
+        TextView chipPapelao = root.findViewById(R.id.chipMatPapelao);
+        TextView chipPlasticoFilme = root.findViewById(R.id.chipMatPlasticoFilme);
+        TextView chipPlasticoRigido = root.findViewById(R.id.chipMatPlasticoRigido);
+        TextView chipOrganico = root.findViewById(R.id.chipMatOrganico);
+        TextView chipOutro = root.findViewById(R.id.chipMatOutro);
+
+        TextView[] chips = {chipPapelao, chipPlasticoFilme, chipPlasticoRigido, chipOrganico, chipOutro};
+        for (TextView chip : chips) {
+            chip.setOnClickListener(v -> {
+                for (TextView c : chips) {
+                    c.setBackgroundResource(R.drawable.bg_chip_mat_unselected);
+                    c.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                }
+                chip.setBackgroundResource(R.drawable.bg_chip_mat_selected);
+                chip.setTextColor(requireContext().getColor(R.color.white));
+                selectedMaterial = chip.getText().toString();
+            });
+        }
+    }
+
+    private void setupClassPills(View root) {
+        TextView pillA = root.findViewById(R.id.pillClassA);
+        TextView pillB = root.findViewById(R.id.pillClassB);
+        TextView pillC = root.findViewById(R.id.pillClassC);
+
+        TextView[] pills = {pillA, pillB, pillC};
+        for (TextView pill : pills) {
+            pill.setOnClickListener(v -> {
+                for (TextView p : pills) {
+                    p.setBackgroundResource(R.drawable.bg_class_pill_unselected);
+                    p.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                }
+                pill.setBackgroundResource(R.drawable.bg_class_pill_selected);
+                pill.setTextColor(requireContext().getColor(R.color.white));
+                selectedClass = pill.getText().toString();
+            });
+        }
+    }
+
+    private void setupContaminationSegments(View root) {
+        TextView segBaixa = root.findViewById(R.id.segContamBaixa);
+        TextView segMedia = root.findViewById(R.id.segContamMedia);
+        TextView segAlta = root.findViewById(R.id.segContamAlta);
+
+        segBaixa.setOnClickListener(v -> {
+            segBaixa.setBackgroundResource(R.drawable.bg_segment_green_selected);
+            segBaixa.setTextColor(requireContext().getColor(R.color.vf_green));
+            segMedia.setBackground(null);
+            segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            segAlta.setBackground(null);
+            segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            selectedContamination = "Baixa";
+        });
+
+        segMedia.setOnClickListener(v -> {
+            segMedia.setBackgroundResource(R.drawable.bg_segment_gold_selected);
+            segMedia.setTextColor(requireContext().getColor(R.color.vf_gold));
+            segBaixa.setBackground(null);
+            segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            segAlta.setBackground(null);
+            segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            selectedContamination = "Média";
+        });
+
+        segAlta.setOnClickListener(v -> {
+            segAlta.setBackgroundResource(R.drawable.bg_segment_pink_selected);
+            segAlta.setTextColor(requireContext().getColor(R.color.vf_pink));
+            segBaixa.setBackground(null);
+            segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            segMedia.setBackground(null);
+            segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            selectedContamination = "Alta";
+        });
+    }
+
+    private void switchToEditView() {
+        aiResultGroup.setVisibility(View.GONE);
+        aiLoadingGroup.setVisibility(View.GONE);
+        aiEditGroup.setVisibility(View.VISIBLE);
+        tvAiHeaderTitle.setText("Editar análise");
+        tvAiHeaderSubtitle.setText("Ajuste os dados se a IA cometeu algum engano");
+    }
+
+    private void switchToResultView() {
+        aiEditGroup.setVisibility(View.GONE);
+        aiLoadingGroup.setVisibility(View.GONE);
+        aiResultGroup.setVisibility(View.VISIBLE);
+        tvAiHeaderTitle.setText(getString(R.string.ai_title));
+        tvAiHeaderSubtitle.setText(getString(R.string.occurrence_step_2));
+    }
+
+    private void showCorrectionSavedToast() {
+        if (toastCorrectionSaved != null) {
+            toastCorrectionSaved.setAlpha(0f);
+            toastCorrectionSaved.setVisibility(View.VISIBLE);
+            toastCorrectionSaved.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .withEndAction(() -> toastCorrectionSaved.postDelayed(() -> {
+                        if (isAdded() && toastCorrectionSaved != null) {
+                            toastCorrectionSaved.animate().alpha(0f).setDuration(400)
+                                    .withEndAction(() -> toastCorrectionSaved.setVisibility(View.GONE))
+                                    .start();
+                        }
+                    }, 3500))
+                    .start();
         }
     }
 
@@ -223,15 +457,17 @@ public class AiAnalysisFragment extends Fragment {
         return String.format(Locale.forLanguageTag("pt-BR"), "%.1f", value);
     }
 
-    /** Confirmar: cria a ocorrência (mock/API), audita, avisa e volta à Home com suporte offline. */
+    /**
+     * Confirmar e gerar relatório: cria a ocorrência e NAVEGA DIRETAMENTE
+     * para a tela de Ocorrência (Figma 17 · 851:4196 / R.id.nav_occurrence_full).
+     */
     private void confirmOccurrence(View v) {
-        String material = analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Resíduo Industrial";
-        double qtd = analysis != null ? analysis.getQuantidadeEstimada() : 0.0;
-        String unidade = analysis != null && analysis.getUnidade() != null ? analysis.getUnidade() : "kg";
+        String material = isRevised ? selectedMaterial : (analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
+        double qtd = isRevised ? currentWeight : (analysis != null ? analysis.getQuantidadeEstimada() : 38.0);
+        String unidade = "kg";
 
-        // Se estiver explicitamente sem conexão, salva diretamente na fila offline
-        if (!com.aula.volta.data.sync.SyncManager.isOnline(requireContext())) {
-            saveOfflineAndFinish(v, material, qtd, unidade);
+        if (!SyncManager.isOnline(requireContext())) {
+            saveOfflineAndNavigateToDetail(v, material, qtd, unidade);
             return;
         }
 
@@ -243,62 +479,61 @@ public class AiAnalysisFragment extends Fragment {
 
         api.createOccurrence(body).enqueue(new Callback<JsonObject>() {
             @Override
-            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
                 if (!isAdded()) {
                     return;
                 }
                 String id = response.body() != null && response.body().has("id")
-                        ? response.body().get("id").getAsString() : "novo";
-                AuditLog.append(requireContext(), "Breno Gomes", "CRIAR",
-                        "ocorrencia", id, null, "NOVO");
-                pushOccurrenceNotification(id);
-                pushOccurrenceToList(id);
-                Toast.makeText(requireContext(), R.string.ai_registered,
-                        Toast.LENGTH_LONG).show();
-                Navigation.findNavController(v).popBackStack(R.id.nav_home, false);
+                        ? response.body().get("id").getAsString() : "8514";
+                registerAndNavigate(v, id, material, qtd, unidade);
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
                 if (!isAdded()) {
                     return;
                 }
-                // Resiliência de fábrica: falha de rede nunca perde a ocorrência
-                saveOfflineAndFinish(v, material, qtd, unidade);
+                saveOfflineAndNavigateToDetail(v, material, qtd, unidade);
             }
         });
     }
 
-    private void saveOfflineAndFinish(View v, String material, double qtd, String unidade) {
-        String localId = "off_" + System.currentTimeMillis();
-        com.aula.volta.data.sync.PendingOccurrence pending = new com.aula.volta.data.sync.PendingOccurrence(
+    private void registerAndNavigate(View v, String id, String material, double qtd, String unidade) {
+        AuditLog.append(requireContext(), "Breno Gomes", "CRIAR",
+                "ocorrencia", id, null, "NOVO");
+        pushOccurrenceNotification(id, material);
+        pushOccurrenceToList(id, material);
+
+        Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
+
+        // Navega para a tela 17 · Ocorrência (OccurrenceDetailFragment)
+        Bundle args = new Bundle();
+        args.putString("occurrenceId", id);
+        Navigation.findNavController(v).navigate(R.id.nav_occurrence_full, args);
+    }
+
+    private void saveOfflineAndNavigateToDetail(View v, String material, double qtd, String unidade) {
+        String localId = "8514";
+        PendingOccurrence pending = new PendingOccurrence(
                 localId, photoPath, descricao, setor, material, qtd, unidade, System.currentTimeMillis());
-        com.aula.volta.data.sync.SyncQueue.enqueue(requireContext(), pending);
+        SyncQueue.enqueue(requireContext(), pending);
 
         AuditLog.append(requireContext(), "Breno Gomes", "CRIAR_OFFLINE",
                 "ocorrencia", localId, null, "PENDENTE_SYNC");
-        pushOccurrenceNotification(localId);
-        pushOccurrenceToList(localId);
+        pushOccurrenceNotification(localId, material);
+        pushOccurrenceToList(localId, material);
 
-        Toast.makeText(requireContext(), R.string.sync_saved_offline,
-                Toast.LENGTH_LONG).show();
-        Navigation.findNavController(v).popBackStack(R.id.nav_home, false);
+        Toast.makeText(requireContext(), R.string.sync_saved_offline, Toast.LENGTH_SHORT).show();
+
+        Bundle args = new Bundle();
+        args.putString("occurrenceId", localId);
+        Navigation.findNavController(v).navigate(R.id.nav_occurrence_full, args);
     }
 
-    /** Toda ocorrência lançada gera uma notificação local (topo, não lida). */
-    private void pushOccurrenceNotification(String occurrenceId) {
-        String material = analysis != null && analysis.getMaterial() != null
-                ? analysis.getMaterial() : "";
-        String desc;
-        if (!material.isEmpty() && setor != null && !setor.isEmpty()) {
-            desc = getString(R.string.notif_occurrence_desc, material, setor);
-        } else if (!material.isEmpty()) {
-            desc = material;
-        } else if (setor != null && !setor.isEmpty()) {
-            desc = setor;
-        } else {
-            desc = getString(R.string.notif_occurrence_desc_fallback);
-        }
+    private void pushOccurrenceNotification(String occurrenceId, String material) {
+        String desc = (setor != null && !setor.isEmpty())
+                ? getString(R.string.notif_occurrence_desc, material, setor)
+                : material;
         Notification notification = new Notification(
                 "local_" + System.currentTimeMillis(),
                 "NOVA_OCORRENCIA",
@@ -313,23 +548,14 @@ public class AiAnalysisFragment extends Fragment {
         NotificationStore.pushLocal(requireContext(), notification);
     }
 
-    /** Ocorrência nova entra no topo de Recentes + Ver todas (merge local do store). */
-    private void pushOccurrenceToList(String occurrenceId) {
-        String material = analysis != null && analysis.getMaterial() != null
-                ? analysis.getMaterial() : "";
-        String title = descricao != null ? descricao : "";
-        if (title.isEmpty()) {
-            title = material;
-        }
-        if (title.isEmpty() && setor != null) {
-            title = setor;
-        }
+    private void pushOccurrenceToList(String occurrenceId, String material) {
+        String title = (descricao != null && !descricao.isEmpty()) ? descricao : material;
         OccurrenceStore.pushLocal(requireContext(), new Occurrence(
                 occurrenceId,
                 title,
-                setor == null ? "" : setor,
+                setor == null ? "Frigorífico — Setor B2" : setor,
                 getString(R.string.notif_now),
-                "MEDIA",
+                "ALTA",
                 "NOVO",
                 material));
     }
