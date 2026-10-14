@@ -500,12 +500,18 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
+                    <androidx.camera.view.PreviewView
+                        android:id="@+id/cameraPreviewView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
                     <ImageView
                         android:id="@+id/cameraPreviewImage"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/img_caixas_papelao" />
+                        android:src="@drawable/img_caixas_papelao"
+                        android:visibility="gone" />
 
                     <!-- Corner Brackets (Miras) -->
                     <ImageView

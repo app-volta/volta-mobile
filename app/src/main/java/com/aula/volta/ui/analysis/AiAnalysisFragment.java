@@ -513,6 +513,7 @@ public class AiAnalysisFragment extends Fragment {
         try {
             Bundle args = new Bundle();
             args.putString("occurrenceId", id);
+            args.putString("photoPath", photoPath);
             View target = getView() != null ? getView() : v;
             if (target != null) {
                 Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args);
@@ -543,6 +544,7 @@ public class AiAnalysisFragment extends Fragment {
         try {
             Bundle args = new Bundle();
             args.putString("occurrenceId", localId);
+            args.putString("photoPath", photoPath);
             View target = getView() != null ? getView() : v;
             if (target != null) {
                 Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args);

@@ -142,6 +142,14 @@ public class OccurrenceDetailFragment extends Fragment {
             occurrenceId = "8514";
         }
 
+        String photoPath = getArguments() != null ? getArguments().getString("photoPath") : null;
+        if (photoPath != null && imgOccThumbnail != null) {
+            File f = new File(photoPath);
+            if (f.exists()) {
+                imgOccThumbnail.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            }
+        }
+
         view.findViewById(R.id.btnBackOcc).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
