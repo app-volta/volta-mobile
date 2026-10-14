@@ -6,14 +6,6 @@
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
-    <!-- Fundo de fluidos decorativo -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="280dp"
-        android:alpha="0.35"
-        android:scaleType="fitXY"
-        android:src="@drawable/bg_home_fluidos" />
-
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollAiAnalysis"
         android:layout_width="match_parent"
@@ -29,16 +21,16 @@
             android:paddingEnd="20dp"
             android:paddingBottom="24dp">
 
-            <!-- Botão Voltar -->
+            <!-- Botão Voltar (Sombra blur sem borda - Figma 851:3989) -->
             <FrameLayout
                 android:id="@+id/btnBackAnalysis"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_notification_circle"
+                android:background="@drawable/bg_circle_white_shadow"
                 android:clickable="true"
                 android:contentDescription="@string/occurrence_back"
-                android:elevation="2dp"
+                android:elevation="3dp"
                 android:focusable="true">
 
                 <ImageView
@@ -48,7 +40,7 @@
                     android:src="@drawable/ic_chevron_left" />
             </FrameLayout>
 
-            <!-- Título e Subtítulo -->
+            <!-- Título e Subtítulo (Figma 851:3992 / 851:3993) -->
             <TextView
                 android:id="@+id/tvAiHeaderTitle"
                 android:layout_width="wrap_content"
@@ -56,7 +48,7 @@
                 android:fontFamily="sans-serif"
                 android:text="@string/ai_title"
                 android:textColor="@color/vf_text_primary"
-                android:textSize="22sp"
+                android:textSize="27sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -64,17 +56,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:layout_marginBottom="14dp"
+                android:layout_marginBottom="16dp"
                 android:fontFamily="sans-serif"
                 android:text="@string/occurrence_step_2"
                 android:textColor="@color/vf_text_secondary"
-                android:textSize="12sp" />
+                android:textSize="13sp" />
 
-            <!-- Progresso 2 de 2: duas barras cheias -->
+            <!-- Progresso 2 de 2: duas barras cheias verdes (Figma 851:3994 / 851:3995) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="6dp"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="22dp"
                 android:orientation="horizontal"
                 android:weightSum="2">
 
@@ -103,7 +95,7 @@
                 android:orientation="vertical"
                 android:visibility="visible">
 
-                <!-- Foto com laser verde varrendo -->
+                <!-- Foto com laser verde varrendo (Figma 851:3996) -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="170dp"
@@ -125,57 +117,123 @@
                             android:scaleType="centerCrop"
                             android:src="@drawable/img_caixas_papelao" />
 
-                        <!-- Linha/faixa laser animada -->
+                        <!-- Linha/faixa laser animada (Figma 851:4017) -->
                         <View
                             android:id="@+id/viewScanBand"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
                             android:background="@drawable/bg_scan_band" />
 
-                        <!-- Pill superior esquerdo: "Analisando..." -->
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="top|start"
-                            android:layout_margin="12dp"
-                            android:background="@drawable/bg_pill_dark"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:paddingStart="10dp"
-                            android:paddingTop="5dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="5dp">
-
-                            <ImageView
-                                android:layout_width="13dp"
-                                android:layout_height="13dp"
-                                android:src="@drawable/ic_sparkle"
-                                app:tint="@color/vf_green" />
+                        <!-- Detecções visuais com borda branca e etiqueta (Figma 851:4018 / 851:4021) -->
+                        <FrameLayout
+                            android:layout_width="120dp"
+                            android:layout_height="80dp"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginTop="36dp"
+                            android:background="@drawable/bg_detection_box">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="5dp"
+                                android:background="@drawable/bg_white_r6"
+                                android:paddingStart="6dp"
+                                android:paddingTop="2dp"
+                                android:paddingEnd="6dp"
+                                android:paddingBottom="2dp"
+                                android:text="papelão · 94%"
+                                android:textColor="#0E7C48"
+                                android:textSize="9.5sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:layout_width="120dp"
+                            android:layout_height="90dp"
+                            android:layout_gravity="end|bottom"
+                            android:layout_marginEnd="16dp"
+                            android:layout_marginBottom="20dp"
+                            android:background="@drawable/bg_detection_box">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_white_r6"
+                                android:paddingStart="6dp"
+                                android:paddingTop="2dp"
+                                android:paddingEnd="6dp"
+                                android:paddingBottom="2dp"
+                                android:text="papelão · 91%"
+                                android:textColor="#0E7C48"
+                                android:textSize="9.5sp"
+                                android:textStyle="bold" />
+                        </FrameLayout>
+
+                        <!-- Pill superior esquerdo: "Analisando..." (Figma 851:4027) -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="30dp"
+                            android:layout_gravity="top|start"
+                            android:layout_margin="12dp"
+                            android:background="@drawable/bg_pill_analyzing"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_sparkle"
+                                app:tint="@color/white" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
                                 android:fontFamily="sans-serif"
-                                android:text="@string/ai_scanning"
+                                android:text="Analisando…"
                                 android:textColor="@color/white"
-                                android:textSize="11sp"
+                                android:textSize="12sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </FrameLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Cabeçalho: O que a IA encontrou + Badge ALTA -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:fontFamily="sans-serif"
-                    android:text="@string/ai_found_title"
-                    android:textColor="@color/vf_text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:layout_marginBottom="12dp">
 
-                <!-- Skeleton dos 4 cards -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:fontFamily="sans-serif"
+                        android:text="@string/ai_found_title"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/bg_badge_alta"
+                        android:fontFamily="sans-serif"
+                        android:paddingStart="10dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="4dp"
+                        android:text="ALTA"
+                        android:textColor="@color/priority_high_text"
+                        android:textSize="10.5sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+
+                <!-- Skeleton dos 4 cards (Figma 851:4034 - 851:4045) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -184,47 +242,47 @@
 
                     <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="64dp"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_type_gold"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/ai_label_type"
                             android:textColor="@color/vf_gold"
-                            android:textSize="12sp" />
+                            android:textSize="12.5sp" />
 
                         <View
-                            android:layout_width="72dp"
-                            android:layout_height="14dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_width="80dp"
+                            android:layout_height="16dp"
+                            android:layout_marginTop="6dp"
                             android:background="@drawable/bg_skeleton_bar" />
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="64dp"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_stat_resolved"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/ai_label_contamination"
                             android:textColor="@color/vf_green"
-                            android:textSize="12sp" />
+                            android:textSize="12.5sp" />
 
                         <View
-                            android:layout_width="54dp"
-                            android:layout_height="14dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_width="80dp"
+                            android:layout_height="16dp"
+                            android:layout_marginTop="6dp"
                             android:background="@drawable/bg_skeleton_bar" />
                     </LinearLayout>
                 </LinearLayout>
@@ -239,52 +297,52 @@
 
                     <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="64dp"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_stat_recycled"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/ai_label_quantity"
                             android:textColor="@color/vf_blue"
-                            android:textSize="12sp" />
+                            android:textSize="12.5sp" />
 
                         <View
-                            android:layout_width="60dp"
-                            android:layout_height="14dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_width="80dp"
+                            android:layout_height="16dp"
+                            android:layout_marginTop="6dp"
                             android:background="@drawable/bg_skeleton_bar" />
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="64dp"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_stat_purple"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:padding="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Caixas"
                             android:textColor="@color/vf_purple"
-                            android:textSize="12sp" />
+                            android:textSize="12.5sp" />
 
                         <View
-                            android:layout_width="50dp"
-                            android:layout_height="14dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_width="80dp"
+                            android:layout_height="16dp"
+                            android:layout_marginTop="6dp"
                             android:background="@drawable/bg_skeleton_bar" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Confiança Bar Skeleton -->
+                <!-- Confiança Bar Skeleton (0%) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -327,24 +385,40 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="24dp"
                     android:background="@drawable/bg_card_stat_resolved"
-                    android:orientation="vertical"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/ai_label_recommendation"
-                        android:textColor="@color/vf_green"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="50dp"
+                        android:src="@drawable/mascote_volta" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/ai_loading_recommendation"
-                        android:textColor="@color/vf_reco_text"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="@string/ai_label_recommendation"
+                            android:textColor="@color/vf_green"
+                            android:textSize="13.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="sans-serif"
+                            android:text="@string/ai_loading_recommendation"
+                            android:textColor="@color/vf_reco_text"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <!-- Botões desabilitados durante loading -->
@@ -364,7 +438,7 @@
                         android:text="@string/ai_confirm"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="13sp"
+                        android:textSize="14sp"
                         android:textStyle="bold"
                         app:backgroundTint="@null"
                         app:cornerRadius="16dp" />
@@ -379,7 +453,7 @@
                         android:text="@string/ai_edit"
                         android:textAllCaps="false"
                         android:textColor="@color/vf_green"
-                        android:textSize="13sp"
+                        android:textSize="14.5sp"
                         android:textStyle="bold"
                         app:backgroundTint="@null"
                         app:cornerRadius="16dp" />
@@ -396,7 +470,7 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- Foto com Bounding Boxes e Badge de Status -->
+                <!-- Foto com Badge de Status (Limpa, sem as caixas mockadas - Figma 851:4096) -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="170dp"
@@ -417,118 +491,41 @@
                             android:scaleType="centerCrop"
                             android:src="@drawable/img_caixas_papelao" />
 
-                        <!-- Detecções da IA (Bounding Boxes) -->
-                        <FrameLayout
-                            android:id="@+id/aiDetectionsGroup"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent">
-
-                            <!-- Box 1: papelão 94% -->
-                            <FrameLayout
-                                android:layout_width="140dp"
-                                android:layout_height="90dp"
-                                android:layout_marginStart="24dp"
-                                android:layout_marginTop="32dp"
-                                android:background="@drawable/bg_detection_box">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:background="@drawable/bg_detection_label"
-                                    android:paddingStart="6dp"
-                                    android:paddingTop="2dp"
-                                    android:paddingEnd="6dp"
-                                    android:paddingBottom="2dp"
-                                    android:text="papelão · 94%"
-                                    android:textColor="@color/white"
-                                    android:textSize="9sp"
-                                    android:textStyle="bold" />
-                            </FrameLayout>
-
-                            <!-- Box 2: papelão 91% -->
-                            <FrameLayout
-                                android:layout_width="130dp"
-                                android:layout_height="80dp"
-                                android:layout_gravity="end|bottom"
-                                android:layout_marginEnd="20dp"
-                                android:layout_marginBottom="24dp"
-                                android:background="@drawable/bg_detection_box">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:background="@drawable/bg_detection_label"
-                                    android:paddingStart="6dp"
-                                    android:paddingTop="2dp"
-                                    android:paddingEnd="6dp"
-                                    android:paddingBottom="2dp"
-                                    android:text="papelão · 91%"
-                                    android:textColor="@color/white"
-                                    android:textSize="9sp"
-                                    android:textStyle="bold" />
-                            </FrameLayout>
-
-                            <!-- Box 3: umidade detectada -->
-                            <FrameLayout
-                                android:layout_width="80dp"
-                                android:layout_height="45dp"
-                                android:layout_gravity="bottom|start"
-                                android:layout_marginStart="40dp"
-                                android:layout_marginBottom="16dp"
-                                android:background="@drawable/bg_detection_box">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:background="@drawable/bg_detection_label"
-                                    android:paddingStart="6dp"
-                                    android:paddingTop="2dp"
-                                    android:paddingEnd="6dp"
-                                    android:paddingBottom="2dp"
-                                    android:text="umidade"
-                                    android:textColor="@color/white"
-                                    android:textSize="9sp"
-                                    android:textStyle="bold" />
-                            </FrameLayout>
-                        </FrameLayout>
-
-                        <!-- Pill Status Superior: "Análise concluída" ou "Revisado por você" -->
+                        <!-- Pill Status Superior: "Análise concluída" ou "Revisado por você" (Figma 851:4127) -->
                         <LinearLayout
                             android:id="@+id/pillAiStatus"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="30dp"
                             android:layout_gravity="top|start"
                             android:layout_margin="12dp"
-                            android:background="@drawable/bg_pill_dark"
+                            android:background="@drawable/bg_pill_analyzing"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
-                            android:paddingStart="10dp"
-                            android:paddingTop="5dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="5dp">
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp">
 
                             <ImageView
                                 android:id="@+id/icAiStatusPill"
-                                android:layout_width="13dp"
-                                android:layout_height="13dp"
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
                                 android:src="@drawable/ic_sparkle"
-                                app:tint="@color/vf_green" />
+                                app:tint="@color/white" />
 
                             <TextView
                                 android:id="@+id/tvAiStatusPill"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="5dp"
+                                android:layout_marginStart="6dp"
                                 android:fontFamily="sans-serif"
                                 android:text="@string/ai_done"
                                 android:textColor="@color/white"
-                                android:textSize="11sp"
+                                android:textSize="12sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </FrameLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Cabeçalho da seção: Título + Badge de Prioridade -->
+                <!-- Cabeçalho da seção: Título + Badge de Prioridade (Figma 851:4131 / 851:4132) -->
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -542,7 +539,7 @@
                         android:fontFamily="sans-serif"
                         android:text="@string/ai_found_title"
                         android:textColor="@color/vf_text_primary"
-                        android:textSize="16sp"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -559,11 +556,11 @@
                         android:paddingBottom="4dp"
                         android:text="@string/priority_alta"
                         android:textColor="@color/priority_high_text"
-                        android:textSize="11sp"
+                        android:textSize="10.5sp"
                         android:textStyle="bold" />
                 </RelativeLayout>
 
-                <!-- Grade com os 4 Cards: Tipo / Contaminação / Quantidade / Caixas -->
+                <!-- Grade com os 4 Cards: Textos BOLD conforme Figma 851:4140 - 851:4169 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -574,12 +571,15 @@
                     <LinearLayout
                         android:id="@+id/cardAiType"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="68dp"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_type_gold"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:paddingStart="14dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -587,7 +587,7 @@
                             android:fontFamily="sans-serif"
                             android:text="@string/ai_label_type"
                             android:textColor="@color/vf_gold"
-                            android:textSize="12sp" />
+                            android:textSize="12.5sp" />
 
                         <TextView
                             android:id="@+id/tvAiMaterial"
@@ -595,9 +595,9 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:fontFamily="sans-serif"
-                            android:text="Papelão"
+                            android:text="Papelão A"
                             android:textColor="@color/vf_gold"
-                            android:textSize="15sp"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -605,12 +605,15 @@
                     <LinearLayout
                         android:id="@+id/cardAiContamination"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="68dp"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_stat_resolved"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:paddingStart="14dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -618,7 +621,7 @@
                             android:fontFamily="sans-serif"
                             android:text="@string/ai_label_contamination"
                             android:textColor="@color/vf_green"
-                            android:textSize="12sp" />
+                            android:textSize="12.5sp" />
 
                         <TextView
                             android:id="@+id/tvAiContamination"
@@ -628,7 +631,7 @@
                             android:fontFamily="sans-serif"
                             android:text="Baixa"
                             android:textColor="@color/vf_green"
-                            android:textSize="15sp"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
@@ -641,7 +644,7 @@
                     android:orientation="horizontal"
                     android:weightSum="2">
 
-                    <!-- Card 3: Quantidade (Azul) - Se editado ganha borda e badge "editado" -->
+                    <!-- Card 3: Quantidade (Azul) -->
                     <FrameLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -651,10 +654,13 @@
                         <LinearLayout
                             android:id="@+id/cardAiQuantity"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="68dp"
                             android:background="@drawable/bg_card_stat_recycled"
                             android:orientation="vertical"
-                            android:padding="14dp">
+                            android:paddingStart="14dp"
+                            android:paddingTop="10dp"
+                            android:paddingEnd="14dp"
+                            android:paddingBottom="10dp">
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -662,7 +668,7 @@
                                 android:fontFamily="sans-serif"
                                 android:text="@string/ai_label_quantity"
                                 android:textColor="@color/vf_blue"
-                                android:textSize="12sp" />
+                                android:textSize="12.5sp" />
 
                             <TextView
                                 android:id="@+id/tvAiQuantity"
@@ -672,11 +678,11 @@
                                 android:fontFamily="sans-serif"
                                 android:text="≈ 38 kg"
                                 android:textColor="@color/vf_blue"
-                                android:textSize="15sp"
+                                android:textSize="18sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
-                        <!-- Badge "editado" superior direito do card quando revisado -->
+                        <!-- Badge "editado" -->
                         <TextView
                             android:id="@+id/badgeQuantityEdited"
                             android:layout_width="wrap_content"
@@ -700,12 +706,15 @@
                     <LinearLayout
                         android:id="@+id/cardAiUnits"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="68dp"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_stat_purple"
                         android:orientation="vertical"
-                        android:padding="14dp">
+                        android:paddingStart="14dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="10dp">
 
                         <TextView
                             android:id="@+id/tvAiUnitsLabel"
@@ -714,7 +723,7 @@
                             android:fontFamily="sans-serif"
                             android:text="Caixas"
                             android:textColor="@color/vf_purple"
-                            android:textSize="12sp" />
+                            android:textSize="12.5sp" />
 
                         <TextView
                             android:id="@+id/tvAiUnits"
@@ -724,84 +733,44 @@
                             android:fontFamily="sans-serif"
                             android:text="11 un."
                             android:textColor="@color/vf_purple"
-                            android:textSize="15sp"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Confiança da IA -->
+                <!-- Box de Orientação: "Confira os resultados antes de gerar o relatório" (Figma 851:4170) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:background="@drawable/bg_confidence_row"
-                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_chip_r16_gray"
+                    android:gravity="center"
                     android:orientation="horizontal"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
-                        android:text="@string/ai_label_confidence"
-                        android:textColor="@color/vf_text_secondary"
-                        android:textSize="13sp" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="6dp"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginEnd="14dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_step_track"
-                        android:orientation="horizontal">
-
-                        <View
-                            android:id="@+id/viewAiConfidence"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="88"
-                            android:background="@drawable/bg_step_filled" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tvAiConfidence"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
-                        android:text="88%"
-                        android:textColor="@color/vf_green_deep"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <!-- Linha de Status / Instrução intermediária -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="14dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:paddingStart="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="14dp">
 
                     <ImageView
                         android:id="@+id/icMiddleStatus"
                         android:layout_width="14dp"
                         android:layout_height="14dp"
-                        android:src="@drawable/ic_check_circle_green"
+                        android:layout_marginEnd="6dp"
+                        android:src="@drawable/ic_check_simple_green"
                         android:visibility="gone" />
 
                     <TextView
                         android:id="@+id/tvMiddleStatusHint"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
                         android:fontFamily="sans-serif"
+                        android:gravity="center"
                         android:text="Confira os resultados antes de gerar o relatório"
                         android:textColor="@color/vf_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="12.5sp" />
                 </LinearLayout>
 
-                <!-- VOLTA recomenda (Mascote + Recomendação + Link) -->
+                <!-- VOLTA recomenda (Mascote + Recomendação - Figma 851:4178) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -812,15 +781,14 @@
                     android:padding="14dp">
 
                     <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="56dp"
-                        android:layout_gravity="center_vertical"
+                        android:layout_width="38dp"
+                        android:layout_height="52dp"
                         android:src="@drawable/mascote_volta" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:orientation="vertical">
 
@@ -842,9 +810,9 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:fontFamily="sans-serif"
-                                android:text="@string/ai_label_recommendation"
+                                android:text="VOLTA recomenda"
                                 android:textColor="@color/vf_green"
-                                android:textSize="13sp"
+                                android:textSize="13.5sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
@@ -854,28 +822,13 @@
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif"
                             android:lineSpacingExtra="2dp"
-                            android:text="Material limpo e seco. Compatível com enfardamento direto para cooperativa parceira."
-                            android:textColor="@color/vf_reco_text"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:id="@+id/btnAskVolta"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:fontFamily="sans-serif"
-                            android:paddingTop="2dp"
-                            android:paddingBottom="2dp"
-                            android:text="Perguntar ao VOLTA →"
-                            android:textColor="@color/vf_green"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:text="Guarde num lugar seco e coberto. Coleta em até 24h mantém o material valioso."
+                            android:textColor="#355443"
+                            android:textSize="12.5sp" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Botões Inferiores: Confirmar e gerar relatório (Esquerda) / Editar (Direita) -->
+                <!-- Botões Inferiores: Confirmar e gerar relatório / Editar (Figma 851:4185 / 851:4187) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -889,10 +842,10 @@
                         android:layout_weight="2"
                         android:background="@drawable/bg_btn_primary_v"
                         android:fontFamily="sans-serif"
-                        android:text="@string/ai_confirm"
+                        android:text="Confirmar e gerar relatório"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="13sp"
+                        android:textSize="14sp"
                         android:textStyle="bold"
                         app:backgroundTint="@null"
                         app:cornerRadius="16dp" />
@@ -905,10 +858,10 @@
                         android:layout_weight="1"
                         android:background="@drawable/bg_btn_edit_outline"
                         android:fontFamily="sans-serif"
-                        android:text="@string/ai_edit"
+                        android:text="Editar"
                         android:textAllCaps="false"
-                        android:textColor="@color/vf_green"
-                        android:textSize="13sp"
+                        android:textColor="#1BA463"
+                        android:textSize="14.5sp"
                         android:textStyle="bold"
                         app:backgroundTint="@null"
                         app:cornerRadius="16dp" />
@@ -925,167 +878,242 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- 1. Tipo de material -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
-                    android:text="Tipo de material"
-                    android:textColor="@color/vf_text_body"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <!-- Chips de materiais -->
-                <HorizontalScrollView
+                <!-- Card de Instrução com Thumbnail da Foto (Figma 907:5210) -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="16dp"
-                    android:scrollbars="none">
+                    android:layout_marginBottom="18dp"
+                    app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/vf_border"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:id="@+id/layoutMaterialChips"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/white"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp">
+
+                            <ImageView
+                                android:id="@+id/imgEditPhotoThumb"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/img_caixas_papelao" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif"
+                                android:text="Corrija o que a IA errou"
+                                android:textColor="@color/vf_text_primary"
+                                android:textSize="15sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:fontFamily="sans-serif"
+                                android:lineSpacingExtra="2dp"
+                                android:text="Toque num campo pra trocar o valor. O resto continua como a IA sugeriu."
+                                android:textColor="@color/vf_text_secondary"
+                                android:textSize="12.5sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 1. Linha Superior: Tipo de material (Esquerda) + Classe A B C (Direita) -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:fontFamily="sans-serif"
+                        android:text="Tipo de material"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="center_vertical"
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/chipMatPapelao"
                             android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:layout_marginEnd="8dp"
-                            android:background="@drawable/bg_chip_mat_selected"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:fontFamily="sans-serif"
+                            android:text="Classe"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/pillClassA"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_marginEnd="4dp"
+                            android:background="@drawable/bg_class_circle_selected"
                             android:gravity="center"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:text="Papelão"
+                            android:text="A"
                             android:textColor="@color/white"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chipMatPlasticoFilme"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:layout_marginEnd="8dp"
-                            android:background="@drawable/bg_chip_mat_unselected"
+                            android:id="@+id/pillClassB"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_marginEnd="4dp"
+                            android:background="@drawable/bg_class_circle_unselected"
                             android:gravity="center"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:text="Plástico filme"
+                            android:text="B"
                             android:textColor="@color/vf_text_secondary"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/chipMatPlasticoRigido"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:layout_marginEnd="8dp"
-                            android:background="@drawable/bg_chip_mat_unselected"
+                            android:id="@+id/pillClassC"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:background="@drawable/bg_class_circle_unselected"
                             android:gravity="center"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:text="Plástico rígido"
+                            android:text="C"
                             android:textColor="@color/vf_text_secondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/chipMatOrganico"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:layout_marginEnd="8dp"
-                            android:background="@drawable/bg_chip_mat_unselected"
-                            android:gravity="center"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:text="Orgânico"
-                            android:textColor="@color/vf_text_secondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/chipMatOutro"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:background="@drawable/bg_chip_mat_unselected"
-                            android:gravity="center"
-                            android:paddingStart="14dp"
-                            android:paddingEnd="14dp"
-                            android:text="Outro"
-                            android:textColor="@color/vf_text_secondary"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
                     </LinearLayout>
-                </HorizontalScrollView>
+                </RelativeLayout>
 
-                <!-- 2. Classe -->
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Chips de materiais (Figma 907:5210) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
-                    android:text="Classe"
-                    android:textColor="@color/vf_text_body"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:layout_marginBottom="6dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/chipMatPapelao"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_gold_selected"
+                        android:gravity="center"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="✓ Papelão"
+                        android:textColor="#C68A10"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/chipMatPlastico"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_white_stroke"
+                        android:gravity="center"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="Plástico"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/chipMatMetal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_chip_white_stroke"
+                        android:gravity="center"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="Metal"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginBottom="18dp"
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/pillClassA"
+                        android:id="@+id/chipMatVidro"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/bg_class_pill_selected"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_white_stroke"
                         android:gravity="center"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:text="Classe A"
-                        android:textColor="@color/white"
-                        android:textSize="12sp"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="Vidro"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12.5sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/pillClassB"
+                        android:id="@+id/chipMatOrganico"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="@drawable/bg_class_pill_unselected"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_white_stroke"
                         android:gravity="center"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:text="Classe B"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="Orgânico"
                         android:textColor="@color/vf_text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="12.5sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/pillClassC"
+                        android:id="@+id/chipMatOutro"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
-                        android:background="@drawable/bg_class_pill_unselected"
+                        android:background="@drawable/bg_chip_white_stroke"
                         android:gravity="center"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp"
-                        android:text="Classe C"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="Outro"
                         android:textColor="@color/vf_text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="12.5sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- 3. Grau de contaminação -->
+                <!-- 2. Grau de contaminação -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif"
-                    android:text="Grau de contaminação"
-                    android:textColor="@color/vf_text_body"
+                    android:text="Contaminação"
+                    android:textColor="@color/vf_text_primary"
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
@@ -1094,7 +1122,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginBottom="18dp"
                     android:background="@drawable/bg_segment_container"
                     android:orientation="horizontal"
                     android:padding="4dp">
@@ -1106,9 +1134,9 @@
                         android:layout_weight="1"
                         android:background="@drawable/bg_segment_green_selected"
                         android:gravity="center"
-                        android:text="Baixa"
-                        android:textColor="@color/vf_green"
-                        android:textSize="12sp"
+                        android:text="✓ Baixa"
+                        android:textColor="#0E7C48"
+                        android:textSize="12.5sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -1119,7 +1147,7 @@
                         android:gravity="center"
                         android:text="Média"
                         android:textColor="@color/vf_text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="12.5sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -1130,213 +1158,323 @@
                         android:gravity="center"
                         android:text="Alta"
                         android:textColor="@color/vf_text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="12.5sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- 4. Estimativa de peso (kg) com Stepper -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
-                    android:text="Estimativa de peso (kg)"
-                    android:textColor="@color/vf_text_body"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
+                <!-- 3. Quantidade e Caixas lado a lado (Figma 907:5210) -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="@drawable/bg_stepper_card_edited"
-                    android:gravity="center_vertical"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp">
+                    android:weightSum="2">
 
-                    <FrameLayout
-                        android:id="@+id/btnWeightMinus"
-                        android:layout_width="38dp"
-                        android:layout_height="38dp"
-                        android:background="@drawable/bg_stepper_btn_minus"
-                        android:clickable="true"
-                        android:focusable="true">
+                    <!-- Coluna Quantidade (com borda azul e badge editado) -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif"
+                                android:text="Quantidade"
+                                android:textColor="@color/vf_text_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_badge_editado_blue"
+                                android:paddingStart="6dp"
+                                android:paddingTop="2dp"
+                                android:paddingEnd="6dp"
+                                android:paddingBottom="2dp"
+                                android:text="editado"
+                                android:textColor="#3B82F6"
+                                android:textSize="9sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Stepper Box Quantidade -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_stepper_blue"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp">
+
+                            <FrameLayout
+                                android:id="@+id/btnWeightMinus"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="@drawable/bg_stepper_circle_minus"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:text="−"
+                                    android:textColor="@color/vf_text_secondary"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvEditWeightValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif"
+                                    android:text="42"
+                                    android:textColor="#3B82F6"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif"
+                                    android:text="kg"
+                                    android:textColor="#3B82F6"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+
+                            <FrameLayout
+                                android:id="@+id/btnWeightPlus"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="@drawable/bg_stepper_circle_plus"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:text="+"
+                                    android:textColor="#12A05E"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="−"
+                            android:layout_marginTop="4dp"
+                            android:fontFamily="sans-serif"
+                            android:text="IA estimou ≈ 38 kg"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <!-- Coluna Caixas -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif"
+                            android:text="Caixas"
                             android:textColor="@color/vf_text_primary"
-                            android:textSize="18sp"
+                            android:textSize="13sp"
                             android:textStyle="bold" />
-                    </FrameLayout>
+
+                        <!-- Stepper Box Caixas -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_stepper_card_normal"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp">
+
+                            <FrameLayout
+                                android:id="@+id/btnUnitsMinus"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="@drawable/bg_stepper_circle_minus"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:text="−"
+                                    android:textColor="@color/vf_text_secondary"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvEditUnitsValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif"
+                                    android:text="11"
+                                    android:textColor="@color/vf_text_primary"
+                                    android:textSize="20sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif"
+                                    android:text="unidades"
+                                    android:textColor="@color/vf_text_secondary"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+
+                            <FrameLayout
+                                android:id="@+id/btnUnitsPlus"
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="@drawable/bg_stepper_circle_plus"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:text="+"
+                                    android:textColor="#12A05E"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+                            </FrameLayout>
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:fontFamily="sans-serif"
+                            android:text="IA contou 11"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Card Educativo Mascote Voltinha: "✦ Sua correção ensina a IA" (Figma 907:5210) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:layout_marginBottom="24dp"
+                    android:background="@drawable/bg_card_stat_resolved"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="38dp"
+                        android:layout_height="52dp"
+                        android:src="@drawable/mascote_volta" />
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:gravity="center"
-                        android:orientation="horizontal">
+                        android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/tvEditWeightValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="sans-serif"
-                            android:text="42 kg"
-                            android:textColor="@color/vf_text_primary"
-                            android:textSize="16sp"
+                            android:text="✦ Sua correção ensina a IA"
+                            android:textColor="#0E7C48"
+                            android:textSize="13.5sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:background="@drawable/bg_badge_editado_blue"
-                            android:paddingStart="6dp"
-                            android:paddingTop="2dp"
-                            android:paddingEnd="6dp"
-                            android:paddingBottom="2dp"
-                            android:text="editado"
-                            android:textColor="@color/vf_blue"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
+                            android:layout_marginTop="3dp"
+                            android:fontFamily="sans-serif"
+                            android:lineSpacingExtra="2dp"
+                            android:text="Da próxima vez, ela acerta o peso desse tipo de caixa na sua unidade."
+                            android:textColor="#355443"
+                            android:textSize="12.5sp" />
                     </LinearLayout>
-
-                    <FrameLayout
-                        android:id="@+id/btnWeightPlus"
-                        android:layout_width="38dp"
-                        android:layout_height="38dp"
-                        android:background="@drawable/bg_stepper_btn_plus"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="+"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </FrameLayout>
                 </LinearLayout>
 
-                <!-- 5. Unidades detectadas com Stepper -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
-                    android:text="Unidades detectadas"
-                    android:textColor="@color/vf_text_body"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
+                <!-- Botões Salvar Correção e Cancelar (Figma 907:5210) -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="20dp"
-                    android:background="@drawable/bg_stepper_card_normal"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp">
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
 
-                    <FrameLayout
-                        android:id="@+id/btnUnitsMinus"
-                        android:layout_width="38dp"
-                        android:layout_height="38dp"
-                        android:background="@drawable/bg_stepper_btn_minus"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="−"
-                            android:textColor="@color/vf_text_primary"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/tvEditUnitsValue"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSaveCorrection"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1.6"
+                        android:background="@drawable/bg_btn_primary_v"
+                        android:fontFamily="sans-serif"
+                        android:text="Salvar correção"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="14.5sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"
+                        app:cornerRadius="16dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCancelCorrection"
+                        android:layout_width="0dp"
+                        android:layout_height="56dp"
+                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
+                        android:background="@drawable/bg_btn_edit_outline"
                         android:fontFamily="sans-serif"
-                        android:gravity="center"
-                        android:text="11 un."
-                        android:textColor="@color/vf_text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <FrameLayout
-                        android:id="@+id/btnUnitsPlus"
-                        android:layout_width="38dp"
-                        android:layout_height="38dp"
-                        android:background="@drawable/bg_stepper_btn_plus"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="+"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </FrameLayout>
+                        android:text="Cancelar"
+                        android:textAllCaps="false"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null"
+                        app:cornerRadius="16dp" />
                 </LinearLayout>
-
-                <!-- Card Educativo: Sua correção ensina a IA -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
-                    android:background="@drawable/bg_card_stat_resolved"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
-                        android:text="Sua correção ensina a IA"
-                        android:textColor="@color/vf_green"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:fontFamily="sans-serif"
-                        android:lineSpacingExtra="2dp"
-                        android:text="O modelo aprende com os ajustes de chão de fábrica para análises futuras."
-                        android:textColor="@color/vf_text_body"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <!-- Botão Salvar Correção -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSaveCorrection"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:background="@drawable/bg_btn_primary_v"
-                    android:fontFamily="sans-serif"
-                    android:text="Salvar correção"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@null"
-                    app:cornerRadius="16dp" />
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -1371,7 +1509,7 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_check_circle_green" />
+                android:src="@drawable/ic_check_simple_green" />
         </FrameLayout>
 
         <LinearLayout

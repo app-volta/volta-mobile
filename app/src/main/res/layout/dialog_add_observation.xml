@@ -19,7 +19,7 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_step_track" />
 
-    <!-- Cabeçalho com Fechar -->
+    <!-- Cabeçalho: Título + Subtítulo + Fechar -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -30,15 +30,16 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
+            android:layout_toStartOf="@+id/btnCloseObsSheet"
             android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
+                android:fontFamily="@font/poppins_bold"
                 android:text="Adicionar observação"
                 android:textColor="@color/vf_text_primary"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -46,9 +47,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:fontFamily="sans-serif"
-                android:text="Visível no relatório e histórico da ocorrência"
+                android:text="Fica registrada no histórico da ocorrência."
                 android:textColor="@color/vf_text_secondary"
-                android:textSize="12sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
         <FrameLayout
@@ -58,7 +59,7 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:background="@drawable/bg_camera_circle_btn"
-            android:backgroundTint="@color/vf_border"
+            android:backgroundTint="#F1F5F9"
             android:clickable="true"
             android:focusable="true">
 
@@ -71,14 +72,14 @@
         </FrameLayout>
     </RelativeLayout>
 
-    <!-- Campo de Texto com contador de caracteres -->
+    <!-- Campo de Texto com Borda Verde e Contador (Figma 908:6103) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_obs_textarea"
+        android:background="@drawable/bg_input_green_border"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="14dp">
 
         <EditText
             android:id="@+id/etObservationInput"
@@ -90,11 +91,11 @@
             android:hint="Descreva detalhes importantes sobre o resíduo, acesso ou manuseio..."
             android:inputType="textMultiLine|textCapSentences"
             android:maxLength="280"
-            android:minLines="4"
-            android:text="Caixas na doca 3 estão molhadas pela chuva. Recomendo mover antes das 11h."
+            android:minLines="3"
+            android:text="Material já separado em 2 pallets na área coberta. Aguardando a coleta da JBS."
             android:textColor="@color/vf_text_primary"
             android:textColorHint="@color/vf_hint"
-            android:textSize="13sp" />
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/tvCharCounter"
@@ -104,25 +105,25 @@
             android:layout_marginTop="6dp"
             android:fontFamily="sans-serif"
             android:text="76/280"
-            android:textColor="@color/vf_text_secondary"
-            android:textSize="11sp" />
+            android:textColor="@color/vf_hint"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <!-- Atalhos rápidos -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif"
-        android:text="Atalhos rápidos"
-        android:textColor="@color/vf_text_body"
-        android:textSize="13sp"
+        android:fontFamily="@font/poppins_semibold"
+        android:text="Atalhos"
+        android:textColor="@color/vf_text_primary"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="16dp"
         android:scrollbars="none">
 
         <LinearLayout
@@ -139,7 +140,7 @@
                 android:gravity="center"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
-                android:text="+ Material molhado"
+                android:text="Material separado"
                 android:textColor="@color/vf_purple"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -153,7 +154,7 @@
                 android:gravity="center"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
-                android:text="+ Doca bloqueada"
+                android:text="Área isolada"
                 android:textColor="@color/vf_text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -166,50 +167,139 @@
                 android:gravity="center"
                 android:paddingStart="14dp"
                 android:paddingEnd="14dp"
-                android:text="+ Requer EPI"
+                android:text="Pede pallet"
                 android:textColor="@color/vf_text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </HorizontalScrollView>
 
-    <!-- Botões: Cancelar e Adicionar observação -->
+    <!-- Card Anexar foto (Figma 908:6103) -->
+    <LinearLayout
+        android:id="@+id/cardAttachPhotoObs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/bg_action_row"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_circle_green_light">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_camera"
+                app:tint="@color/vf_green" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_semibold"
+                android:text="Anexar foto"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:fontFamily="sans-serif"
+                android:text="opcional · ajuda na auditoria"
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_plus_purple"
+            app:tint="@color/vf_hint" />
+    </LinearLayout>
+
+    <!-- Linha de Visibilidade (Ícone de olho) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancelObservation"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="6dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_btn_edit_outline"
-            android:backgroundTint="@color/vf_border"
-            android:fontFamily="sans-serif"
-            android:text="Cancelar"
-            android:textAllCaps="false"
-            android:textColor="@color/vf_text_secondary"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            app:backgroundTint="@null"
-            app:cornerRadius="14dp" />
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_eye"
+            app:tint="@color/vf_text_secondary" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSaveObservation"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="6dp"
-            android:layout_weight="2"
-            android:background="@drawable/bg_btn_primary_v"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:fontFamily="sans-serif"
-            android:text="Adicionar observação"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            app:backgroundTint="@null"
-            app:cornerRadius="14dp" />
+            android:text="Visível para o responsável PGRS e a gestão da unidade"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12sp" />
     </LinearLayout>
+
+    <!-- Linha do Mascote Voltinha -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/mascote_volta" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:fontFamily="@font/poppins_semibold"
+            android:text="Observações entram no histórico e no relatório PGRS."
+            android:textColor="@color/vf_green_deep"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Botão Cancelar mantido invisível para compatibilidade com código existente -->
+    <View
+        android:id="@+id/btnCancelObservation"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+    <!-- Botão Principal: Salvar observação (Figma 908:6103) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSaveObservation"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:background="@drawable/bg_btn_primary_v"
+        android:fontFamily="@font/poppins_semibold"
+        android:text="Salvar observação"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="@null"
+        app:cornerRadius="16dp" />
 </LinearLayout>

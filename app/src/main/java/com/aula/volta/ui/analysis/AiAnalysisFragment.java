@@ -61,8 +61,6 @@ public class AiAnalysisFragment extends Fragment {
     private TextView tvAiQuantity;
     private TextView tvAiUnits;
     private TextView tvAiUnitsLabel;
-    private TextView tvAiConfidence;
-    private View viewAiConfidence;
     private TextView tvAiRecommendation;
     private TextView tvAiStatusPill;
     private ImageView icAiStatusPill;
@@ -120,8 +118,6 @@ public class AiAnalysisFragment extends Fragment {
         tvAiQuantity = view.findViewById(R.id.tvAiQuantity);
         tvAiUnits = view.findViewById(R.id.tvAiUnits);
         tvAiUnitsLabel = view.findViewById(R.id.tvAiUnitsLabel);
-        tvAiConfidence = view.findViewById(R.id.tvAiConfidence);
-        viewAiConfidence = view.findViewById(R.id.viewAiConfidence);
         tvAiRecommendation = view.findViewById(R.id.tvAiRecommendation);
         tvAiStatusPill = view.findViewById(R.id.tvAiStatusPill);
         icAiStatusPill = view.findViewById(R.id.icAiStatusPill);
@@ -156,13 +152,6 @@ public class AiAnalysisFragment extends Fragment {
         // Botão Confirmar e gerar relatório (16 / 16b -> 17)
         MaterialButton btnConfirm = view.findViewById(R.id.btnConfirmAnalysis);
         btnConfirm.setOnClickListener(this::confirmOccurrence);
-
-        // Assistente VOLTA
-        View btnAskVolta = view.findViewById(R.id.btnAskVolta);
-        if (btnAskVolta != null) {
-            btnAskVolta.setOnClickListener(v ->
-                    Navigation.findNavController(v).navigate(R.id.nav_assistant));
-        }
 
         setupEditControls(view);
 
@@ -277,12 +266,6 @@ public class AiAnalysisFragment extends Fragment {
             tvAiUnits.setText("11 un.");
         }
 
-        int percent = (int) Math.round(analysis.getConfianca() * 100);
-        tvAiConfidence.setText(percent + "%");
-        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) viewAiConfidence.getLayoutParams();
-        params.weight = Math.max(percent, 5);
-        viewAiConfidence.setLayoutParams(params);
-
         if (analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty()) {
             tvAiRecommendation.setText(analysis.getObservacoes());
         }
@@ -293,33 +276,46 @@ public class AiAnalysisFragment extends Fragment {
         tvEditWeightValue = root.findViewById(R.id.tvEditWeightValue);
         tvEditUnitsValue = root.findViewById(R.id.tvEditUnitsValue);
 
+        ImageView imgEditPhotoThumb = root.findViewById(R.id.imgEditPhotoThumb);
+        if (photoPath != null && imgEditPhotoThumb != null) {
+            imgEditPhotoThumb.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+        }
+
         // Stepper Peso
         View btnWeightMinus = root.findViewById(R.id.btnWeightMinus);
         View btnWeightPlus = root.findViewById(R.id.btnWeightPlus);
-        btnWeightMinus.setOnClickListener(v -> {
-            if (currentWeight > 1) {
-                currentWeight--;
-                tvEditWeightValue.setText(currentWeight + " kg");
-            }
-        });
-        btnWeightPlus.setOnClickListener(v -> {
-            currentWeight++;
-            tvEditWeightValue.setText(currentWeight + " kg");
-        });
+        if (btnWeightMinus != null) {
+            btnWeightMinus.setOnClickListener(v -> {
+                if (currentWeight > 1) {
+                    currentWeight--;
+                    tvEditWeightValue.setText(String.valueOf(currentWeight));
+                }
+            });
+        }
+        if (btnWeightPlus != null) {
+            btnWeightPlus.setOnClickListener(v -> {
+                currentWeight++;
+                tvEditWeightValue.setText(String.valueOf(currentWeight));
+            });
+        }
 
         // Stepper Unidades
         View btnUnitsMinus = root.findViewById(R.id.btnUnitsMinus);
         View btnUnitsPlus = root.findViewById(R.id.btnUnitsPlus);
-        btnUnitsMinus.setOnClickListener(v -> {
-            if (currentUnits > 1) {
-                currentUnits--;
-                tvEditUnitsValue.setText(currentUnits + " un.");
-            }
-        });
-        btnUnitsPlus.setOnClickListener(v -> {
-            currentUnits++;
-            tvEditUnitsValue.setText(currentUnits + " un.");
-        });
+        if (btnUnitsMinus != null) {
+            btnUnitsMinus.setOnClickListener(v -> {
+                if (currentUnits > 1) {
+                    currentUnits--;
+                    tvEditUnitsValue.setText(String.valueOf(currentUnits));
+                }
+            });
+        }
+        if (btnUnitsPlus != null) {
+            btnUnitsPlus.setOnClickListener(v -> {
+                currentUnits++;
+                tvEditUnitsValue.setText(String.valueOf(currentUnits));
+            });
+        }
 
         // Chips de Material
         setupMaterialChips(root);
@@ -332,31 +328,46 @@ public class AiAnalysisFragment extends Fragment {
 
         // Botão Salvar Correção (16a -> 16b)
         MaterialButton btnSave = root.findViewById(R.id.btnSaveCorrection);
-        btnSave.setOnClickListener(v -> {
-            isRevised = true;
-            switchToResultView();
-            showCorrectionSavedToast();
-            applyAnalysis();
-        });
+        if (btnSave != null) {
+            btnSave.setOnClickListener(v -> {
+                isRevised = true;
+                switchToResultView();
+                showCorrectionSavedToast();
+                applyAnalysis();
+            });
+        }
+
+        // Botão Cancelar (16a -> volta para 16)
+        MaterialButton btnCancel = root.findViewById(R.id.btnCancelCorrection);
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> switchToResultView());
+        }
     }
 
     private void setupMaterialChips(View root) {
         TextView chipPapelao = root.findViewById(R.id.chipMatPapelao);
-        TextView chipPlasticoFilme = root.findViewById(R.id.chipMatPlasticoFilme);
-        TextView chipPlasticoRigido = root.findViewById(R.id.chipMatPlasticoRigido);
+        TextView chipPlastico = root.findViewById(R.id.chipMatPlastico);
+        TextView chipMetal = root.findViewById(R.id.chipMatMetal);
+        TextView chipVidro = root.findViewById(R.id.chipMatVidro);
         TextView chipOrganico = root.findViewById(R.id.chipMatOrganico);
         TextView chipOutro = root.findViewById(R.id.chipMatOutro);
 
-        TextView[] chips = {chipPapelao, chipPlasticoFilme, chipPlasticoRigido, chipOrganico, chipOutro};
+        TextView[] chips = {chipPapelao, chipPlastico, chipMetal, chipVidro, chipOrganico, chipOutro};
         for (TextView chip : chips) {
+            if (chip == null) continue;
             chip.setOnClickListener(v -> {
                 for (TextView c : chips) {
-                    c.setBackgroundResource(R.drawable.bg_chip_mat_unselected);
+                    if (c == null) continue;
+                    c.setBackgroundResource(R.drawable.bg_chip_white_stroke);
                     c.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                    String text = c.getText().toString().replace("✓ ", "");
+                    c.setText(text);
                 }
-                chip.setBackgroundResource(R.drawable.bg_chip_mat_selected);
-                chip.setTextColor(requireContext().getColor(R.color.white));
-                selectedMaterial = chip.getText().toString();
+                chip.setBackgroundResource(R.drawable.bg_chip_gold_selected);
+                chip.setTextColor(android.graphics.Color.parseColor("#C68A10"));
+                String clean = chip.getText().toString().replace("✓ ", "");
+                chip.setText("✓ " + clean);
+                selectedMaterial = clean;
             });
         }
     }
@@ -368,14 +379,16 @@ public class AiAnalysisFragment extends Fragment {
 
         TextView[] pills = {pillA, pillB, pillC};
         for (TextView pill : pills) {
+            if (pill == null) continue;
             pill.setOnClickListener(v -> {
                 for (TextView p : pills) {
-                    p.setBackgroundResource(R.drawable.bg_class_pill_unselected);
+                    if (p == null) continue;
+                    p.setBackgroundResource(R.drawable.bg_class_circle_unselected);
                     p.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
                 }
-                pill.setBackgroundResource(R.drawable.bg_class_pill_selected);
-                pill.setTextColor(requireContext().getColor(R.color.white));
-                selectedClass = pill.getText().toString();
+                pill.setBackgroundResource(R.drawable.bg_class_circle_selected);
+                pill.setTextColor(android.graphics.Color.WHITE);
+                selectedClass = "Classe " + pill.getText().toString();
             });
         }
     }
@@ -385,35 +398,62 @@ public class AiAnalysisFragment extends Fragment {
         TextView segMedia = root.findViewById(R.id.segContamMedia);
         TextView segAlta = root.findViewById(R.id.segContamAlta);
 
-        segBaixa.setOnClickListener(v -> {
-            segBaixa.setBackgroundResource(R.drawable.bg_segment_green_selected);
-            segBaixa.setTextColor(requireContext().getColor(R.color.vf_green));
-            segMedia.setBackground(null);
-            segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-            segAlta.setBackground(null);
-            segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-            selectedContamination = "Baixa";
-        });
+        if (segBaixa != null) {
+            segBaixa.setOnClickListener(v -> {
+                segBaixa.setBackgroundResource(R.drawable.bg_segment_green_selected);
+                segBaixa.setTextColor(android.graphics.Color.parseColor("#0E7C48"));
+                segBaixa.setText("✓ Baixa");
+                if (segMedia != null) {
+                    segMedia.setBackground(null);
+                    segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                    segMedia.setText("Média");
+                }
+                if (segAlta != null) {
+                    segAlta.setBackground(null);
+                    segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                    segAlta.setText("Alta");
+                }
+                selectedContamination = "Baixa";
+            });
+        }
 
-        segMedia.setOnClickListener(v -> {
-            segMedia.setBackgroundResource(R.drawable.bg_segment_gold_selected);
-            segMedia.setTextColor(requireContext().getColor(R.color.vf_gold));
-            segBaixa.setBackground(null);
-            segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-            segAlta.setBackground(null);
-            segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-            selectedContamination = "Média";
-        });
+        if (segMedia != null) {
+            segMedia.setOnClickListener(v -> {
+                segMedia.setBackgroundResource(R.drawable.bg_segment_gold_selected);
+                segMedia.setTextColor(requireContext().getColor(R.color.vf_gold));
+                segMedia.setText("✓ Média");
+                if (segBaixa != null) {
+                    segBaixa.setBackground(null);
+                    segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                    segBaixa.setText("Baixa");
+                }
+                if (segAlta != null) {
+                    segAlta.setBackground(null);
+                    segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                    segAlta.setText("Alta");
+                }
+                selectedContamination = "Média";
+            });
+        }
 
-        segAlta.setOnClickListener(v -> {
-            segAlta.setBackgroundResource(R.drawable.bg_segment_pink_selected);
-            segAlta.setTextColor(requireContext().getColor(R.color.vf_pink));
-            segBaixa.setBackground(null);
-            segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-            segMedia.setBackground(null);
-            segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-            selectedContamination = "Alta";
-        });
+        if (segAlta != null) {
+            segAlta.setOnClickListener(v -> {
+                segAlta.setBackgroundResource(R.drawable.bg_segment_pink_selected);
+                segAlta.setTextColor(requireContext().getColor(R.color.vf_pink));
+                segAlta.setText("✓ Alta");
+                if (segBaixa != null) {
+                    segBaixa.setBackground(null);
+                    segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                    segBaixa.setText("Baixa");
+                }
+                if (segMedia != null) {
+                    segMedia.setBackground(null);
+                    segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+                    segMedia.setText("Média");
+                }
+                selectedContamination = "Alta";
+            });
+        }
     }
 
     private void switchToEditView() {
@@ -421,7 +461,7 @@ public class AiAnalysisFragment extends Fragment {
         aiLoadingGroup.setVisibility(View.GONE);
         aiEditGroup.setVisibility(View.VISIBLE);
         tvAiHeaderTitle.setText("Editar análise");
-        tvAiHeaderSubtitle.setText("Ajuste os dados se a IA cometeu algum engano");
+        tvAiHeaderSubtitle.setText("Passo 2 de 2 · Revisão");
     }
 
     private void switchToResultView() {

@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Detalhe da Ocorrência — Figma 851:3792 (17 · Ocorrência, 17d · ações aplicadas, 19 · finalizada) -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/vf_bg">
+    android:background="#F7F8FC">
 
-    <!-- Fundo de fluidos decorativo da marca -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="280dp"
-        android:alpha="0.35"
-        android:scaleType="fitXY"
-        android:src="@drawable/bg_home_fluidos" />
-
+    <!-- Conteúdo Rolável -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollOccContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@+id/layoutBottomBarOcc"
+        android:clipToPadding="false"
         android:fillViewport="true">
 
         <LinearLayout
@@ -24,20 +20,20 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingStart="20dp"
-            android:paddingTop="16dp"
+            android:paddingTop="20dp"
             android:paddingEnd="20dp"
-            android:paddingBottom="24dp">
+            android:paddingBottom="20dp">
 
-            <!-- Botão Voltar -->
+            <!-- Botão Voltar Circular com Sombra Suave (sem borda cinza) -->
             <FrameLayout
                 android:id="@+id/btnBackOcc"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_notification_circle"
+                android:background="@drawable/bg_circle_white_shadow"
                 android:clickable="true"
                 android:contentDescription="@string/occurrence_back"
-                android:elevation="2dp"
+                android:elevation="3dp"
                 android:focusable="true">
 
                 <ImageView
@@ -65,10 +61,10 @@
                         android:id="@+id/tvOccTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="@font/poppins_bold"
                         android:text="@string/occ_title"
                         android:textColor="@color/vf_text_primary"
-                        android:textSize="22sp"
+                        android:textSize="27sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -76,10 +72,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="@font/font_inter"
                         android:text="Registrada por Breno G. · hoje, 09:12"
                         android:textColor="@color/vf_text_secondary"
-                        android:textSize="12sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <TextView
@@ -89,7 +85,7 @@
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
                     android:background="@drawable/bg_badge_media"
-                    android:fontFamily="sans-serif"
+                    android:fontFamily="sans-serif-medium"
                     android:paddingStart="12dp"
                     android:paddingTop="5dp"
                     android:paddingEnd="12dp"
@@ -135,10 +131,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="sans-serif-medium"
                         android:text="@string/occ_step_registered"
                         android:textColor="@color/vf_green_deep"
-                        android:textSize="10sp"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
@@ -177,10 +173,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="sans-serif-medium"
                         android:text="@string/occ_step_analysis"
                         android:textColor="@color/vf_green_deep"
-                        android:textSize="10sp"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
@@ -220,10 +216,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="sans-serif-medium"
                         android:text="@string/occ_step_approval"
                         android:textColor="@color/vf_text_secondary"
-                        android:textSize="10sp"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
@@ -277,10 +273,10 @@
                                 android:id="@+id/tvOccCardTitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="sans-serif"
+                                android:fontFamily="@font/poppins_semibold"
                                 android:text="Papelão (Classe A)"
                                 android:textColor="@color/vf_text_primary"
-                                android:textSize="15sp"
+                                android:textSize="16sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -291,7 +287,7 @@
                                 android:fontFamily="sans-serif"
                                 android:text="Contaminação baixa · ≈ 38 kg"
                                 android:textColor="@color/vf_text_secondary"
-                                android:textSize="12sp" />
+                                android:textSize="13sp" />
 
                             <TextView
                                 android:id="@+id/tvOccCardSubtitle"
@@ -301,7 +297,7 @@
                                 android:fontFamily="sans-serif"
                                 android:text="Frigorífico — Setor B2"
                                 android:textColor="@color/vf_text_secondary"
-                                android:textSize="12sp" />
+                                android:textSize="13sp" />
 
                             <LinearLayout
                                 android:layout_width="wrap_content"
@@ -314,14 +310,14 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:background="@drawable/bg_badge_alta"
-                                    android:fontFamily="sans-serif"
+                                    android:fontFamily="sans-serif-medium"
                                     android:paddingStart="8dp"
                                     android:paddingTop="3dp"
                                     android:paddingEnd="8dp"
                                     android:paddingBottom="3dp"
                                     android:text="ALTA"
                                     android:textColor="@color/priority_high_text"
-                                    android:textSize="10sp"
+                                    android:textSize="11sp"
                                     android:textStyle="bold" />
 
                                 <TextView
@@ -330,14 +326,14 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="6dp"
                                     android:background="@drawable/bg_chip_r9"
-                                    android:fontFamily="sans-serif"
+                                    android:fontFamily="sans-serif-medium"
                                     android:paddingStart="8dp"
                                     android:paddingTop="3dp"
                                     android:paddingEnd="8dp"
                                     android:paddingBottom="3dp"
                                     android:text="→ Com Expedição"
                                     android:textColor="@color/vf_blue"
-                                    android:textSize="10sp"
+                                    android:textSize="11sp"
                                     android:textStyle="bold"
                                     android:visibility="gone" />
                             </LinearLayout>
@@ -355,9 +351,9 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="@font/poppins_semibold"
                         android:text="@string/occ_report_auto"
-                        android:textColor="@color/vf_green"
+                        android:textColor="@color/vf_green_deep"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -368,9 +364,9 @@
                         android:layout_marginTop="4dp"
                         android:fontFamily="sans-serif"
                         android:lineSpacingExtra="2dp"
-                        android:text="Ocorrência registrada no setor Frigorífico com 38 kg de papelão Classe A. Destinação recomendada: enfardamento para cooperativa parceira."
+                        android:text="Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta."
                         android:textColor="@color/vf_text_body"
-                        android:textSize="12sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -379,18 +375,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:fontFamily="sans-serif"
+                android:fontFamily="@font/poppins_semibold"
                 android:text="Ações do responsável"
                 android:textColor="@color/vf_text_primary"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <!-- Ação 1: Alterar classificação -->
+            <!-- Ação 1: Alterar classificação (Figma 851:4263) -->
             <LinearLayout
                 android:id="@+id/rowEditClass"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="12dp"
                 android:background="@drawable/bg_action_row"
                 android:clickable="true"
                 android:focusable="true"
@@ -400,17 +396,17 @@
 
                 <FrameLayout
                     android:id="@+id/chipEditClass"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_chip_pin">
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_chip_pencil">
 
                     <ImageView
                         android:id="@+id/iconEditClass"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_pencil"
-                        app:tint="@color/vf_green" />
+                        app:tint="#C68A10" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -423,10 +419,10 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="@font/poppins_semibold"
                         android:text="@string/occ_action_edit_class"
                         android:textColor="@color/vf_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <!-- Subtítulo dinâmico (Figma 17d: ✓ Qualidade A → B · prioridade alta) -->
@@ -435,10 +431,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="sans-serif-medium"
                         android:text="✓ Qualidade A → B · prioridade alta"
                         android:textColor="@color/vf_green_deep"
-                        android:textSize="11sp"
+                        android:textSize="12sp"
                         android:textStyle="bold"
                         android:visibility="gone" />
                 </LinearLayout>
@@ -451,12 +447,12 @@
                     app:tint="@color/vf_hint" />
             </LinearLayout>
 
-            <!-- Ação 2: Adicionar observação -->
+            <!-- Ação 2: Adicionar observação (Figma 851:4263) -->
             <LinearLayout
                 android:id="@+id/rowObserve"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="28dp"
+                android:layout_marginBottom="24dp"
                 android:background="@drawable/bg_action_row"
                 android:clickable="true"
                 android:focusable="true"
@@ -466,17 +462,17 @@
 
                 <FrameLayout
                     android:id="@+id/chipObserve"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_shortcut_purple">
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_chip_plus">
 
                     <ImageView
                         android:id="@+id/iconObserve"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_plus_purple"
-                        app:tint="@color/vf_purple" />
+                        app:tint="#8B6FE0" />
                 </FrameLayout>
 
                 <LinearLayout
@@ -489,10 +485,10 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="@font/poppins_semibold"
                         android:text="@string/occ_action_observe"
                         android:textColor="@color/vf_text_primary"
-                        android:textSize="14sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <!-- Subtítulo dinâmico (Figma 17d: ✓ 1 observação · agora) -->
@@ -501,10 +497,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="sans-serif-medium"
                         android:text="✓ 1 observação · agora"
                         android:textColor="@color/vf_green_deep"
-                        android:textSize="11sp"
+                        android:textSize="12sp"
                         android:textStyle="bold"
                         android:visibility="gone" />
                 </LinearLayout>
@@ -516,32 +512,45 @@
                     android:src="@drawable/ic_chevron_left"
                     app:tint="@color/vf_hint" />
             </LinearLayout>
-
-            <!-- Botão Finalizar Ocorrência -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFinalizeOcc"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="@drawable/bg_btn_primary_v"
-                android:fontFamily="sans-serif"
-                android:text="@string/occ_action_finalize"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:backgroundTint="@null"
-                app:cornerRadius="16dp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Barra Inferior Fixa com Botão Finalizar Ocorrência (Figma 851:4291) -->
+    <LinearLayout
+        android:id="@+id/layoutBottomBarOcc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="#F7F8FC"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="20dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFinalizeOcc"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_btn_primary_v"
+            android:fontFamily="@font/poppins_semibold"
+            android:text="@string/occ_action_finalize"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@null"
+            app:cornerRadius="16dp" />
+    </LinearLayout>
 
     <!-- Top Toast de Ocorrência Finalizada (Figma 19 · 851:4403) -->
     <LinearLayout
         android:id="@+id/toastFinalized"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
+        android:layout_alignParentTop="true"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:background="@drawable/bg_toast_finalized"
         android:clickable="true"
@@ -578,7 +587,7 @@
                 android:id="@+id/tvToastFinalizedTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
+                android:fontFamily="@font/poppins_semibold"
                 android:text="Ocorrência finalizada"
                 android:textColor="@color/white"
                 android:textSize="13sp"
@@ -590,7 +599,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:fontFamily="sans-serif"
-                android:text="Dados incluídos no inventário PGRS"
+                android:text="Já entrou no relatório PGRS do mês"
                 android:textColor="@color/vf_toast_sub"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -612,4 +621,4 @@
             android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
-</FrameLayout>
+</RelativeLayout>

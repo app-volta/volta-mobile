@@ -363,14 +363,53 @@ public class NewOccurrenceFragment extends Fragment {
 
     private void showSectorDialog() {
         String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.occurrence_location_label)
-                .setSingleChoiceItems(sectors, sectorIndex, (dialog, which) -> {
-                    sectorIndex = which;
-                    tvSector.setText(sectors[which]);
-                    dialog.dismiss();
-                })
-                .show();
+        com.google.android.material.bottomsheet.BottomSheetDialog sheet =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext(), R.style.Theme_Volta_BottomSheetDialog);
+        View sheetView = getLayoutInflater().inflate(R.layout.dialog_select_sector, null);
+        sheet.setContentView(sheetView);
+
+        android.widget.RadioGroup rgSectors = sheetView.findViewById(R.id.rgSectors);
+        View btnClose = sheetView.findViewById(R.id.btnSectorClose);
+        View btnConfirm = sheetView.findViewById(R.id.btnConfirmSector);
+
+        final int[] tempIndex = {sectorIndex};
+
+        for (int i = 0; i < sectors.length; i++) {
+            final int index = i;
+            View itemView = getLayoutInflater().inflate(R.layout.item_sector_option, rgSectors, false);
+            TextView tvName = itemView.findViewById(R.id.tvSectorOptionName);
+            android.widget.RadioButton rb = itemView.findViewById(R.id.rbSectorOption);
+
+            tvName.setText(sectors[i]);
+            rb.setChecked(i == sectorIndex);
+
+            itemView.setOnClickListener(v -> {
+                tempIndex[0] = index;
+                for (int j = 0; j < rgSectors.getChildCount(); j++) {
+                    View child = rgSectors.getChildAt(j);
+                    android.widget.RadioButton childRb = child.findViewById(R.id.rbSectorOption);
+                    if (childRb != null) {
+                        childRb.setChecked(j == index);
+                    }
+                }
+            });
+
+            rgSectors.addView(itemView);
+        }
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> sheet.dismiss());
+        }
+
+        if (btnConfirm != null) {
+            btnConfirm.setOnClickListener(v -> {
+                sectorIndex = tempIndex[0];
+                tvSector.setText(sectors[sectorIndex]);
+                sheet.dismiss();
+            });
+        }
+
+        sheet.show();
     }
 
     /** Atualiza estado vazio vs. foto anexada (Figma 12 vs 14). */

@@ -6,375 +6,378 @@
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
-    <!-- Fundo de fluidos decorativo da marca -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="280dp"
-        android:alpha="0.35"
-        android:scaleType="fitXY"
-        android:src="@drawable/bg_home_fluidos" />
-
     <!-- Conteúdo principal do formulário (12 e 14) -->
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:orientation="vertical">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="20dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="20dp"
-            android:paddingBottom="24dp">
-
-            <!-- Botão Voltar -->
-            <FrameLayout
-                android:id="@+id/btnBackRegister"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_notification_circle"
-                android:clickable="true"
-                android:contentDescription="@string/occurrence_back"
-                android:elevation="2dp"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_chevron_left" />
-            </FrameLayout>
-
-            <!-- Título e Subtítulo -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="@string/occurrence_new_title"
-                android:textColor="@color/vf_text_primary"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:layout_marginBottom="14dp"
-                android:fontFamily="sans-serif"
-                android:text="@string/occurrence_step_1"
-                android:textColor="@color/vf_text_secondary"
-                android:textSize="12sp" />
-
-            <!-- Progresso 1 de 2: duas barras arredondadas discretas -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="6dp"
-                android:layout_marginBottom="20dp"
-                android:orientation="horizontal"
-                android:weightSum="2">
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_step_filled" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_step_track" />
-            </LinearLayout>
-
-            <!-- Card da Foto: Vazio (12) ou Anexado (14) -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp">
-
-                <!-- Estado Vazio: Borda tracejada verde (Figma 851:3799) -->
-                <LinearLayout
-                    android:id="@+id/photoEmptyGroup"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_photo_card"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:paddingStart="20dp"
-                    android:paddingTop="26dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="24dp">
-
-                    <FrameLayout
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:background="@drawable/bg_occurrence_icon_green">
-
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/ic_camera_official"
-                            app:tint="@color/vf_green" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        android:fontFamily="sans-serif"
-                        android:text="@string/occurrence_take_photo"
-                        android:textColor="@color/vf_text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="6dp"
-                        android:layout_marginEnd="16dp"
-                        android:fontFamily="sans-serif"
-                        android:gravity="center"
-                        android:lineSpacingExtra="2dp"
-                        android:text="@string/occurrence_photo_hint"
-                        android:textColor="@color/vf_text_secondary"
-                        android:textSize="12sp" />
-
-                    <!-- Botões Câmera e Galeria -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:orientation="horizontal">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnCaptureCamera"
-                            android:layout_width="0dp"
-                            android:layout_height="44dp"
-                            android:layout_marginEnd="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_btn_camera_pill"
-                            android:text="@string/occurrence_btn_camera"
-                            android:textAllCaps="false"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            app:backgroundTint="@null"
-                            app:cornerRadius="22dp"
-                            app:icon="@drawable/ic_camera_official"
-                            app:iconGravity="textStart"
-                            app:iconPadding="6dp"
-                            app:iconSize="18dp"
-                            app:iconTint="@color/white" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnOpenGallery"
-                            android:layout_width="0dp"
-                            android:layout_height="44dp"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_btn_gallery_pill"
-                            android:text="@string/occurrence_btn_gallery"
-                            android:textAllCaps="false"
-                            android:textColor="@color/vf_green"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            app:backgroundTint="@null"
-                            app:cornerRadius="22dp"
-                            app:icon="@drawable/ic_gallery_green"
-                            app:iconGravity="textStart"
-                            app:iconPadding="6dp"
-                            app:iconSize="18dp"
-                            app:iconTint="@color/vf_green" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- Estado Foto Anexada (Figma 851:3904) -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/photoPreviewGroup"
-                    android:layout_width="match_parent"
-                    android:layout_height="224dp"
-                    android:visibility="gone"
-                    app:cardCornerRadius="22dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/vf_border"
-                    app:strokeWidth="1dp">
-
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <ImageView
-                            android:id="@+id/imgPhotoPreview"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/img_caixas_papelao" />
-
-                        <!-- Badge superior esquerdo: "Foto anexada" -->
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="top|start"
-                            android:layout_margin="12dp"
-                            android:background="@drawable/bg_pill_white_14"
-                            android:elevation="2dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:paddingStart="10dp"
-                            android:paddingTop="5dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="5dp">
-
-                            <ImageView
-                                android:layout_width="14dp"
-                                android:layout_height="14dp"
-                                android:src="@drawable/ic_check_circle_green" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="5dp"
-                                android:fontFamily="sans-serif"
-                                android:text="Foto anexada"
-                                android:textColor="@color/vf_green_deep"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <!-- Botão inferior direito: "Trocar" -->
-                        <LinearLayout
-                            android:id="@+id/btnRetakePhoto"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|end"
-                            android:layout_margin="12dp"
-                            android:background="@drawable/bg_pill_dark_trocar"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp">
-
-                            <ImageView
-                                android:layout_width="13dp"
-                                android:layout_height="13dp"
-                                android:src="@drawable/ic_refresh_white" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="5dp"
-                                android:fontFamily="sans-serif"
-                                android:text="@string/occurrence_retake"
-                                android:textColor="@color/white"
-                                android:textSize="11sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </FrameLayout>
-                </com.google.android.material.card.MaterialCardView>
-            </FrameLayout>
-
-            <!-- Campo Descrição (opcional) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="@string/occurrence_desc_label"
-                android:textColor="@color/vf_text_body"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/etDescription"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_input_register"
-                android:fontFamily="sans-serif"
-                android:gravity="top"
-                android:hint="@string/occurrence_desc_hint"
-                android:inputType="textMultiLine|textCapSentences"
-                android:minLines="3"
-                android:padding="14dp"
-                android:textColor="@color/vf_text_primary"
-                android:textColorHint="@color/vf_hint"
-                android:textSize="13sp" />
-
-            <!-- Campo Localização -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="@string/occurrence_location_label"
-                android:textColor="@color/vf_text_body"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
 
             <LinearLayout
-                android:id="@+id/btnSector"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:layout_marginBottom="28dp"
-                android:background="@drawable/bg_input_register"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="12dp">
+                android:orientation="vertical"
+                android:paddingStart="20dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="16dp">
 
+                <!-- Botão Voltar (Sombra blur sem borda - Figma 851:3807) -->
                 <FrameLayout
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_chip_pin">
+                    android:id="@+id/btnBackRegister"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_circle_white_shadow"
+                    android:clickable="true"
+                    android:contentDescription="@string/occurrence_back"
+                    android:elevation="3dp"
+                    android:focusable="true">
 
                     <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/ic_pin"
-                        app:tint="@color/vf_green" />
+                        android:src="@drawable/ic_chevron_left" />
                 </FrameLayout>
 
-                <TextView
-                    android:id="@+id/tvSector"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:fontFamily="sans-serif"
-                    android:textColor="@color/vf_text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <!-- Tag Alterar cinza sutil -->
+                <!-- Título e Subtítulo (Figma 851:3810 / 851:3811) -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_chip_r9"
                     android:fontFamily="sans-serif"
-                    android:paddingStart="8dp"
-                    android:paddingTop="4dp"
-                    android:paddingEnd="8dp"
-                    android:paddingBottom="4dp"
-                    android:text="Alterar"
-                    android:textColor="@color/vf_text_secondary"
-                    android:textSize="11sp"
+                    android:text="@string/occurrence_new_title"
+                    android:textColor="@color/vf_text_primary"
+                    android:textSize="27sp"
                     android:textStyle="bold" />
-            </LinearLayout>
 
-            <!-- Botão Enviar para análise -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="16dp"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/occurrence_step_1"
+                    android:textColor="@color/vf_text_secondary"
+                    android:textSize="13sp" />
+
+                <!-- Progresso 1 de 2: duas barras arredondadas discretas (Figma 851:3812 / 851:3813) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginBottom="22dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_step_filled" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_step_track" />
+                </LinearLayout>
+
+                <!-- Card da Foto: Vazio (12) ou Anexado (14) -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="22dp">
+
+                    <!-- Estado Vazio: Borda tracejada verde (Figma 851:3814) -->
+                    <LinearLayout
+                        android:id="@+id/photoEmptyGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_photo_card"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingStart="20dp"
+                        android:paddingTop="26dp"
+                        android:paddingEnd="20dp"
+                        android:paddingBottom="24dp">
+
+                        <!-- Círculo da Câmera 64x64 verde claro (Figma 851:3815) -->
+                        <FrameLayout
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:background="@drawable/bg_circle_green_light">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_camera_official"
+                                app:tint="#12A05E" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:fontFamily="sans-serif"
+                            android:text="@string/occurrence_take_photo"
+                            android:textColor="@color/vf_text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginTop="6dp"
+                            android:layout_marginEnd="16dp"
+                            android:fontFamily="sans-serif"
+                            android:gravity="center"
+                            android:lineSpacingExtra="2dp"
+                            android:text="@string/occurrence_photo_hint"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="12.5sp" />
+
+                        <!-- Botões Câmera e Galeria (Figma 851:3821 / 851:3826) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnCaptureCamera"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginEnd="6dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_btn_camera_pill"
+                                android:text="@string/occurrence_btn_camera"
+                                android:textAllCaps="false"
+                                android:textColor="@color/white"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                app:backgroundTint="@null"
+                                app:cornerRadius="11dp"
+                                app:icon="@drawable/ic_camera_official"
+                                app:iconGravity="textStart"
+                                app:iconPadding="6dp"
+                                app:iconSize="16dp"
+                                app:iconTint="@color/white" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnOpenGallery"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_btn_gallery_pill"
+                                android:text="@string/occurrence_btn_gallery"
+                                android:textAllCaps="false"
+                                android:textColor="#12A05E"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                app:backgroundTint="@null"
+                                app:cornerRadius="11dp"
+                                app:icon="@drawable/ic_gallery_green"
+                                app:iconGravity="textStart"
+                                app:iconPadding="6dp"
+                                app:iconSize="16dp"
+                                app:iconTint="#12A05E" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Estado Foto Anexada (Figma 14 · 851:3904) -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/photoPreviewGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="224dp"
+                        android:visibility="gone"
+                        app:cardCornerRadius="22dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@color/vf_border"
+                        app:strokeWidth="1dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <ImageView
+                                android:id="@+id/imgPhotoPreview"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/img_caixas_papelao" />
+
+                            <!-- Badge superior esquerdo: "Foto anexada" com checkmark simples (Figma 851:3947) -->
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="top|start"
+                                android:layout_margin="12dp"
+                                android:background="@drawable/bg_pill_white_14"
+                                android:elevation="2dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingStart="10dp"
+                                android:paddingTop="5dp"
+                                android:paddingEnd="10dp"
+                                android:paddingBottom="5dp">
+
+                                <ImageView
+                                    android:layout_width="14dp"
+                                    android:layout_height="14dp"
+                                    android:src="@drawable/ic_check_simple_green" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="5dp"
+                                    android:fontFamily="sans-serif"
+                                    android:text="Foto anexada"
+                                    android:textColor="@color/vf_green_deep"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <!-- Botão inferior direito: "Trocar" -->
+                            <LinearLayout
+                                android:id="@+id/btnRetakePhoto"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="bottom|end"
+                                android:layout_margin="12dp"
+                                android:background="@drawable/bg_pill_dark_trocar"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingStart="12dp"
+                                android:paddingTop="6dp"
+                                android:paddingEnd="12dp"
+                                android:paddingBottom="6dp">
+
+                                <ImageView
+                                    android:layout_width="13dp"
+                                    android:layout_height="13dp"
+                                    android:src="@drawable/ic_refresh_white" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="5dp"
+                                    android:fontFamily="sans-serif"
+                                    android:text="@string/occurrence_retake"
+                                    android:textColor="@color/white"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </FrameLayout>
+
+                <!-- Campo Descrição (opcional) (Figma 851:3832 / 851:3833) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/occurrence_desc_label"
+                    android:textColor="@color/vf_text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/etDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="18dp"
+                    android:background="@drawable/bg_input_register"
+                    android:fontFamily="sans-serif"
+                    android:gravity="top"
+                    android:hint="@string/occurrence_desc_hint"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:minHeight="92dp"
+                    android:padding="14dp"
+                    android:textColor="@color/vf_text_primary"
+                    android:textColorHint="#93AC9E"
+                    android:textSize="13.5sp" />
+
+                <!-- Campo Localização (Figma 851:3835 / 851:3836) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/occurrence_location_label"
+                    android:textColor="@color/vf_text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/btnSector"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="24dp"
+                    android:background="@drawable/bg_input_register"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="16dp">
+
+                    <FrameLayout
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/bg_chip_pin">
+
+                        <ImageView
+                            android:layout_width="17dp"
+                            android:layout_height="17dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_pin"
+                            app:tint="#E53E3E" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvSector"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14.5sp"
+                        android:textStyle="bold" />
+
+                    <!-- Seta para baixo discreta (Figma 851:3842) -->
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_down"
+                        app:tint="@color/vf_text_secondary" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- Barra Inferior Fixa: Botão Enviar para análise (Figma 851:3849 / 851:3972) -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/vf_bg"
+            android:paddingStart="20dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSendAnalysis"
                 android:layout_width="match_parent"
@@ -385,12 +388,12 @@
                 android:text="@string/occurrence_btn_send_analysis"
                 android:textAllCaps="false"
                 android:textColor="@color/vf_disabled_text"
-                android:textSize="15sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 app:backgroundTint="@null"
                 app:cornerRadius="16dp" />
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+        </FrameLayout>
+    </LinearLayout>
 
     <!-- Overlay Câmera / Viewfinder (Figma 851:3852 — 13 · Registrar · câmera) -->
     <FrameLayout
