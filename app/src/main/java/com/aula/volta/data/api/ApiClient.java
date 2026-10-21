@@ -34,10 +34,12 @@ public final class ApiClient {
     /** Base URL do backend real (quando ligado, ex: servidor cloud ou http://10.0.2.2:8080/api/v1/) */
     public static String BASE_URL_REAL = "http://10.0.2.2:8080/api/v1/";
 
-    // Credenciais oficiais e Tenant ID fornecidos pelo ambiente
+    // Credenciais oficiais e Tenant ID fornecidos pelo ambiente QA
     public static final String ADMIN_COMPANY_ID = "24032a1d-3e08-4f2f-ad50-590446459df3";
     public static final String ADMIN_EMAIL = "volta.brasil.2026@gmail.com";
     public static final String ADMIN_PASSWORD = "Volta@2026";
+    public static final String EMPLOYEE_EMAIL = "breno@volta.com";
+    public static final String EMPLOYEE_PASSWORD = "Volta@2026";
     public static final String SWAGGER_USERNAME = "volta-dev";
     public static final String SWAGGER_PASSWORD = "Volta@2026";
 

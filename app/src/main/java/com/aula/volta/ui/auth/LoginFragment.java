@@ -101,8 +101,9 @@ public class LoginFragment extends Fragment {
         SessionManager.login(appContext, email, password, name, "");
 
         // 2. Dispara autenticação em background com a API QA (POST /auth/login) para obter o JWT
-        final String qaEmail = "breno@volta.com".equalsIgnoreCase(email) ? ApiClient.ADMIN_EMAIL : email;
-        final String qaPass = "breno@volta.com".equalsIgnoreCase(email) ? ApiClient.ADMIN_PASSWORD : password;
+        final String qaEmail = "breno@volta.com".equalsIgnoreCase(email) ? ApiClient.EMPLOYEE_EMAIL : email;
+        final String qaPass = ("breno@volta.com".equalsIgnoreCase(email) || "1234".equals(password))
+                ? ApiClient.EMPLOYEE_PASSWORD : password;
 
         try {
             AuthAPI authApi = ChatbotAuthClient.get(appContext).create(AuthAPI.class);

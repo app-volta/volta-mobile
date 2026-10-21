@@ -63,6 +63,12 @@ public final class ChatbotAuthClient {
 
                             if (!original.url().encodedPath().contains("/auth/login")) {
                                 String token = resolveToken(appContext);
+                                if (token.isEmpty()) {
+                                    String refreshed = refreshQaTokenBlocking(appContext);
+                                    if (refreshed != null) {
+                                        token = refreshed;
+                                    }
+                                }
                                 if (!token.isEmpty()) {
                                     builder.header("Authorization", "Bearer " + token);
                                 }
@@ -115,18 +121,18 @@ public final class ChatbotAuthClient {
 
     /**
      * Renova o token JWT de forma síncrona usando as credenciais salvas no SessionManager
-     * ou as credenciais de QA padrão do ambiente (ADMIN_EMAIL / ADMIN_PASSWORD).
+     * ou as credenciais de QA padrão do ambiente (EMPLOYEE_EMAIL com fallback para ADMIN_EMAIL).
      */
     @Nullable
     public static String refreshQaTokenBlocking(Context appContext) {
         String email = SessionManager.email(appContext);
         String password = SessionManager.password(appContext);
 
-        if (email.isEmpty() || password.isEmpty()
-                || "breno@volta.com".equalsIgnoreCase(email)
-                || email.contains("volta.mock")) {
-            email = ApiClient.ADMIN_EMAIL;
-            password = ApiClient.ADMIN_PASSWORD;
+        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email) || email.contains("volta.mock")) {
+            email = ApiClient.EMPLOYEE_EMAIL;
+            password = ApiClient.EMPLOYEE_PASSWORD;
+        } else if (password.isEmpty() || "1234".equals(password)) {
+            password = ApiClient.EMPLOYEE_PASSWORD;
         }
 
         try {
@@ -143,6 +149,10 @@ public final class ChatbotAuthClient {
 
             retrofit2.Response<LoginResponse> loginCall =
                     authApi.login(new LoginRequest(email, password)).execute();
+
+            if (!loginCall.isSuccessful() || loginCall.body() == null || !loginCall.body().hasToken()) {
+                loginCall = authApi.login(new LoginRequest(ApiClient.ADMIN_EMAIL, ApiClient.ADMIN_PASSWORD)).execute();
+            }
 
             if (loginCall.isSuccessful() && loginCall.body() != null && loginCall.body().hasToken()) {
                 String newToken = loginCall.body().getToken().trim();

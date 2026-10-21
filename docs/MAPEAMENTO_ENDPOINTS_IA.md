@@ -18,7 +18,7 @@ Este documento mapeia todos os endpoints utilizados para conectar o **Chatbot de
 
 | Método | Endpoint | Headers | Request Body | Response Body | Descrição |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `{api}/auth/login` | `Content-Type: application/json; charset=utf-8` | `{"email": "EMAIL_QA", "password": "SENHA_QA"}` | `{"token": "eyJhbG...", "expiresIn": 86400000}` | Autentica o operador e retorna o token JWT enviado no header `Authorization: Bearer <TOKEN>` de todas as chamadas subsequentes. Renovação automática em caso de HTTP `401`. |
+| `POST` | `{api}/auth/login` | `Content-Type: application/json; charset=utf-8` | `{"email": "breno@volta.com", "password": "Volta@2026"}` *(EMPLOYEE)* ou `{"email": "volta.brasil.2026@gmail.com", "password": "Volta@2026"}` *(ADMIN)* | `{"token": "eyJhbG...", "expiresIn": 86400000}` | Autentica o operador e retorna o token JWT enviado no header `Authorization: Bearer <TOKEN>` de todas as chamadas subsequentes. Aquisição preguiçosa no 1º request e renovação automática em caso de HTTP `401`. |
 
 ---
 

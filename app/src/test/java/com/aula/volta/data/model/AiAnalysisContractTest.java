@@ -67,4 +67,55 @@ public class AiAnalysisContractTest {
         assertEquals("Baixa", fallback.getContaminacao().getNivel());
         assertFalse(fallback.getContaminacao().isPresente());
     }
+
+    @Test
+    public void resolveAreaAndWasteType_matchesAccentsAndCategoriesCorrectly() {
+        com.google.gson.JsonArray areas = com.google.gson.JsonParser.parseString("["
+                + "{\"id\":\"area-b2\",\"sectorName\":\"Frigorifico - Setor B2\"},"
+                + "{\"id\":\"area-exp\",\"sectorName\":\"Expedicao\"},"
+                + "{\"id\":\"area-man\",\"sectorName\":\"Manutencao\"}"
+                + "]").getAsJsonArray();
+
+        assertEquals("area-exp", AiAnalysisJSON.resolveAreaId(areas, "Expedição"));
+        assertEquals("area-man", AiAnalysisJSON.resolveAreaId(areas, "Manutenção"));
+        assertEquals("area-b2", AiAnalysisJSON.resolveAreaId(areas, "Frigorífico — Setor B2"));
+
+        com.google.gson.JsonArray wasteTypes = com.google.gson.JsonParser.parseString("["
+                + "{\"id\":\"wt-plastic\",\"category\":\"PLASTIC\"},"
+                + "{\"id\":\"wt-paper\",\"category\":\"PAPER\"},"
+                + "{\"id\":\"wt-metal\",\"category\":\"METAL\"}"
+                + "]").getAsJsonArray();
+
+        // Default description (or empty) selects PAPER instead of index 0 (PLASTIC)
+        assertEquals("wt-paper", AiAnalysisJSON.resolveWasteTypeId(wasteTypes, ""));
+        assertEquals("wt-paper", AiAnalysisJSON.resolveWasteTypeId(wasteTypes, "Caixas de papelão molhadas"));
+        assertEquals("wt-plastic", AiAnalysisJSON.resolveWasteTypeId(wasteTypes, "Bandejas de isopor EPS"));
+        assertEquals("wt-metal", AiAnalysisJSON.resolveWasteTypeId(wasteTypes, "Latas de alumínio"));
+    }
+
+    @Test
+    public void fromScoringContext_parsesAiReportWhenPresentAndReturnsNullWhenAbsent() {
+        com.google.gson.JsonObject ctxNoReport = com.google.gson.JsonParser.parseString("{"
+                + "\"incidentId\":\"inc-123\","
+                + "\"priority\":\"MEDIUM\","
+                + "\"aiReport\":null"
+                + "}").getAsJsonObject();
+        assertNull(AiAnalysisJSON.fromScoringContext(ctxNoReport, 38.0));
+
+        com.google.gson.JsonObject ctxWithReport = com.google.gson.JsonParser.parseString("{"
+                + "\"incidentId\":\"inc-456\","
+                + "\"priority\":\"HIGH\","
+                + "\"aiReport\":{"
+                + "  \"detectedWasteType\":\"Plástico Filme\","
+                + "  \"aiContaminationLevel\":\"LOW\","
+                + "  \"recommendations\":\"Prensar em fardo limpo\""
+                + "}"
+                + "}").getAsJsonObject();
+        AiAnalysisJSON parsed = AiAnalysisJSON.fromScoringContext(ctxWithReport, 30.0);
+        assertNotNull(parsed);
+        assertEquals("inc-456", parsed.getIncidentId());
+        assertEquals("Plástico Filme", parsed.getMaterial());
+        assertEquals("Baixa", parsed.getContaminacao().getNivel());
+        assertEquals("Prensar em fardo limpo", parsed.getObservacoes());
+    }
 }

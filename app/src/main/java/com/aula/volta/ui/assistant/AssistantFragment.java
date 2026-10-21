@@ -150,11 +150,11 @@ public class AssistantFragment extends Fragment {
         String email = SessionManager.email(requireContext());
         String password = SessionManager.password(requireContext());
 
-        if (email.isEmpty() || password.isEmpty()
-                || "breno@volta.com".equalsIgnoreCase(email)
-                || email.contains("volta.mock")) {
-            email = ApiClient.ADMIN_EMAIL;
-            password = ApiClient.ADMIN_PASSWORD;
+        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email) || email.contains("volta.mock")) {
+            email = ApiClient.EMPLOYEE_EMAIL;
+            password = ApiClient.EMPLOYEE_PASSWORD;
+        } else if (password.isEmpty() || "1234".equals(password)) {
+            password = ApiClient.EMPLOYEE_PASSWORD;
         }
 
         AuthAPI authApi = ChatbotAuthClient.get(requireContext()).create(AuthAPI.class);

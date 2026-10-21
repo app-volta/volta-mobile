@@ -1,7 +1,13 @@
 package com.aula.volta.data.model;
 
 import com.aula.volta.data.model.incident.AiReportResponseDTO;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
+
+import java.text.Normalizer;
+import java.util.Locale;
 
 /**
  * Contrato da Análise de IA do VOLTA.
@@ -196,6 +202,124 @@ public class AiAnalysisJSON {
         u.quantidade = 11;
         json.unidades = u;
         return json;
+    }
+
+    /**
+     * Converte o retorno de GET /incidents/{id}/scoring-context em AiAnalysisJSON quando aiReport está presente.
+     */
+    public static AiAnalysisJSON fromScoringContext(JsonObject ctx, double estimatedKg) {
+        if (ctx == null) {
+            return null;
+        }
+        String incId = ctx.has("incidentId") && !ctx.get("incidentId").isJsonNull()
+                ? ctx.get("incidentId").getAsString() : null;
+        if (ctx.has("aiReport") && ctx.get("aiReport").isJsonObject()) {
+            JsonObject repObj = ctx.getAsJsonObject("aiReport");
+            AiReportResponseDTO dto = new AiReportResponseDTO();
+            dto.setIncidentId(incId);
+            if (repObj.has("detectedWasteType") && !repObj.get("detectedWasteType").isJsonNull()) {
+                dto.setDetectedWasteType(repObj.get("detectedWasteType").getAsString());
+            }
+            if (repObj.has("aiContaminationLevel") && !repObj.get("aiContaminationLevel").isJsonNull()) {
+                dto.setAiContaminationLevel(repObj.get("aiContaminationLevel").getAsString());
+            }
+            if (repObj.has("recommendations") && !repObj.get("recommendations").isJsonNull()) {
+                dto.setRecommendations(repObj.get("recommendations").getAsString());
+            }
+            if (repObj.has("reportText") && !repObj.get("reportText").isJsonNull()) {
+                dto.setReportText(repObj.get("reportText").getAsString());
+            }
+            return fromAiReport(dto, estimatedKg);
+        }
+        return null;
+    }
+
+    /**
+     * Resolve o UUID da área em GET /areas/mine ignorando acentos e diferenças de pontuação.
+     */
+    public static String resolveAreaId(JsonArray array, String preferredSector) {
+        if (array == null || array.size() == 0) {
+            return null;
+        }
+        String firstId = null;
+        String normPref = normalize(preferredSector);
+        for (JsonElement el : array) {
+            if (el.isJsonObject()) {
+                JsonObject obj = el.getAsJsonObject();
+                if (obj.has("id") && !obj.get("id").isJsonNull()) {
+                    String id = obj.get("id").getAsString();
+                    if (firstId == null) {
+                        firstId = id;
+                    }
+                    if (!normPref.isEmpty() && obj.has("sectorName") && !obj.get("sectorName").isJsonNull()) {
+                        String normSec = normalize(obj.get("sectorName").getAsString());
+                        if (!normSec.isEmpty() && (normPref.contains(normSec) || normSec.contains(normPref))) {
+                            return id;
+                        }
+                    }
+                }
+            }
+        }
+        return firstId;
+    }
+
+    /**
+     * Resolve o UUID do tipo de resíduo em GET /waste-types com base na descrição (default: PAPER/PAPEL).
+     */
+    public static String resolveWasteTypeId(JsonArray array, String description) {
+        if (array == null || array.size() == 0) {
+            return null;
+        }
+        String normDesc = normalize(description);
+        String targetCategory = "PAPER";
+        if (normDesc.contains("plast") || normDesc.contains("isopor") || normDesc.contains("eps") || normDesc.contains("pet")) {
+            targetCategory = "PLASTIC";
+        } else if (normDesc.contains("metal") || normDesc.contains("lata") || normDesc.contains("alumin")) {
+            targetCategory = "METAL";
+        } else if (normDesc.contains("vidro") || normDesc.contains("garrafa")) {
+            targetCategory = "GLASS";
+        } else if (normDesc.contains("organ") || normDesc.contains("aliment")) {
+            targetCategory = "ORGANIC";
+        } else if (normDesc.contains("madeira") || normDesc.contains("pallet") || normDesc.contains("palete")) {
+            targetCategory = "WOOD";
+        } else if (normDesc.contains("eletron") || normDesc.contains("bateria") || normDesc.contains("pilha")) {
+            targetCategory = "ELECTRONIC";
+        } else if (normDesc.contains("oleo") || normDesc.contains("quimic") || normDesc.contains("perigos")) {
+            targetCategory = "CHEMICAL";
+        }
+
+        String firstId = null;
+        String paperFallbackId = null;
+        for (JsonElement el : array) {
+            if (el.isJsonObject()) {
+                JsonObject obj = el.getAsJsonObject();
+                if (obj.has("id") && !obj.get("id").isJsonNull()) {
+                    String id = obj.get("id").getAsString();
+                    if (firstId == null) {
+                        firstId = id;
+                    }
+                    String cat = obj.has("category") && !obj.get("category").isJsonNull()
+                            ? normalize(obj.get("category").getAsString()) : "";
+                    if (cat.contains("paper") || cat.contains("papel")) {
+                        paperFallbackId = id;
+                    }
+                    if (cat.contains(targetCategory.toLowerCase(Locale.ROOT))) {
+                        return id;
+                    }
+                }
+            }
+        }
+        return paperFallbackId != null ? paperFallbackId : firstId;
+    }
+
+    private static String normalize(String text) {
+        if (text == null) {
+            return "";
+        }
+        return Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT)
+                .trim();
     }
 
     public static class Contaminacao {

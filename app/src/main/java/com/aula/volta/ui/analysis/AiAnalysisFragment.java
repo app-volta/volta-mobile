@@ -98,6 +98,7 @@ public class AiAnalysisFragment extends Fragment {
 
     private String photoPath;
     private String remoteImageUrl;
+    private String createdIncidentId;
     private String descricao;
     private String setor;
 
@@ -117,6 +118,9 @@ public class AiAnalysisFragment extends Fragment {
 
         Bundle args = getArguments();
         photoPath = args != null ? args.getString("photoPath") : null;
+        if (args != null) {
+            remoteImageUrl = args.getString("imageUrl", args.getString("photoUrl", null));
+        }
         descricao = args != null && args.getString("descricao") != null
                 ? args.getString("descricao").trim() : "";
         setor = args != null ? args.getString("setor") : null;
@@ -238,6 +242,10 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void analyzePhoto() {
+        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+            executeAiAnalysisRequest(remoteImageUrl);
+            return;
+        }
         if (photoPath != null && !photoPath.isEmpty()) {
             String cachedUrl = CloudinaryUploader.getCachedUrl(photoPath);
             if (cachedUrl != null && !cachedUrl.isEmpty()) {
@@ -280,34 +288,10 @@ public class AiAnalysisFragment extends Fragment {
             body.addProperty("foto_url", imageUrl);
         }
 
-        // Se temos link HTTPS gerado pelo Cloudinary e internet ativa, consulta a API de IA QA primeiro
+        // Se temos link HTTPS gerado pelo Cloudinary e internet ativa, executa o fluxo OpenAPI v3 QA
         if (imageUrl != null && imageUrl.startsWith("http") && SyncManager.isOnline(requireContext())) {
             final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
-            qaApi.analyzeOccurrence("novo", body).enqueue(new Callback<AiAnalysisJSON>() {
-                @Override
-                public void onResponse(@NonNull Call<AiAnalysisJSON> call,
-                                       @NonNull Response<AiAnalysisJSON> response) {
-                    if (!isAdded()) {
-                        return;
-                    }
-                    if (response.isSuccessful() && response.body() != null
-                            && response.body().getMaterial() != null) {
-                        analysis = response.body();
-                        applyAnalysis();
-                    } else {
-                        // Tenta fluxo OpenAPI QA: POST /incidents (photoUrl) -> GET /incidents/{id}/ai-report
-                        tryQaIncidentAiReportFlow(qaApi, imageUrl, body);
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<AiAnalysisJSON> call, @NonNull Throwable t) {
-                    if (!isAdded()) {
-                        return;
-                    }
-                    executeLocalContractAnalysis(body);
-                }
-            });
+            tryQaIncidentAiReportFlow(qaApi, imageUrl, body);
         } else {
             executeLocalContractAnalysis(body);
         }
@@ -316,7 +300,7 @@ public class AiAnalysisFragment extends Fragment {
     /**
      * Fluxo OpenAPI v3 QA: resolve areaId (/areas/mine) e wasteTypeId (/waste-types),
      * registra incidente com photoUrl do Cloudinary (POST /incidents) e consulta
-     * o relatório da IA (GET /incidents/{id}/ai-report).
+     * o relatório da IA (GET /incidents/{id}/ai-report e GET /incidents/{id}/scoring-context).
      */
     private void tryQaIncidentAiReportFlow(final AiAnalysisAPI qaApi,
                                            final String cloudinaryUrl,
@@ -327,7 +311,7 @@ public class AiAnalysisFragment extends Fragment {
                 if (!isAdded()) {
                     return;
                 }
-                final String areaId = extractFirstId(areaResp.body(), setor, "sectorName");
+                final String areaId = AiAnalysisJSON.resolveAreaId(areaResp.body(), setor);
                 if (areaId == null) {
                     executeLocalContractAnalysis(fallbackBody);
                     return;
@@ -338,7 +322,7 @@ public class AiAnalysisFragment extends Fragment {
                         if (!isAdded()) {
                             return;
                         }
-                        final String wasteTypeId = extractFirstId(wasteResp.body(), null, null);
+                        final String wasteTypeId = AiAnalysisJSON.resolveWasteTypeId(wasteResp.body(), descricao);
                         if (wasteTypeId == null) {
                             executeLocalContractAnalysis(fallbackBody);
                             return;
@@ -364,6 +348,7 @@ public class AiAnalysisFragment extends Fragment {
                                 }
                                 if (incResp.isSuccessful() && incResp.body() != null && incResp.body().getId() != null) {
                                     final String incidentId = incResp.body().getId();
+                                    createdIncidentId = incidentId;
                                     final double estQty = incResp.body().getEstimatedQuantity() != null
                                             ? incResp.body().getEstimatedQuantity() : 38.0;
                                     qaApi.getIncidentAiReport(incidentId).enqueue(new Callback<AiReportResponseDTO>() {
@@ -375,16 +360,17 @@ public class AiAnalysisFragment extends Fragment {
                                             }
                                             if (reportResp.isSuccessful() && reportResp.body() != null) {
                                                 analysis = AiAnalysisJSON.fromAiReport(reportResp.body(), estQty);
+                                                analysis.setIncidentId(incidentId);
                                                 applyAnalysis();
                                             } else {
-                                                executeLocalContractAnalysis(fallbackBody);
+                                                fetchScoringContextOrFallback(qaApi, incidentId, estQty, fallbackBody);
                                             }
                                         }
 
                                         @Override
                                         public void onFailure(@NonNull Call<AiReportResponseDTO> call, @NonNull Throwable t) {
                                             if (isAdded()) {
-                                                executeLocalContractAnalysis(fallbackBody);
+                                                fetchScoringContextOrFallback(qaApi, incidentId, estQty, fallbackBody);
                                             }
                                         }
                                     });
@@ -420,32 +406,35 @@ public class AiAnalysisFragment extends Fragment {
         });
     }
 
-    @Nullable
-    private String extractFirstId(@Nullable JsonArray array, @Nullable String preferredMatch, @Nullable String fieldName) {
-        if (array == null || array.size() == 0) {
-            return null;
-        }
-        String firstId = null;
-        for (JsonElement el : array) {
-            if (el.isJsonObject()) {
-                JsonObject obj = el.getAsJsonObject();
-                if (obj.has("id") && !obj.get("id").isJsonNull()) {
-                    String id = obj.get("id").getAsString();
-                    if (firstId == null) {
-                        firstId = id;
-                    }
-                    if (preferredMatch != null && fieldName != null
-                            && obj.has(fieldName) && !obj.get(fieldName).isJsonNull()) {
-                        String val = obj.get(fieldName).getAsString();
-                        if (preferredMatch.toLowerCase(Locale.ROOT).contains(val.toLowerCase(Locale.ROOT))
-                                || val.toLowerCase(Locale.ROOT).contains(preferredMatch.toLowerCase(Locale.ROOT))) {
-                            return id;
-                        }
+    private void fetchScoringContextOrFallback(final AiAnalysisAPI qaApi,
+                                               final String incidentId,
+                                               final double estQty,
+                                               final JsonObject fallbackBody) {
+        qaApi.getIncidentScoringContext(incidentId).enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    AiAnalysisJSON fromCtx = AiAnalysisJSON.fromScoringContext(response.body(), estQty);
+                    if (fromCtx != null) {
+                        fromCtx.setIncidentId(incidentId);
+                        analysis = fromCtx;
+                        applyAnalysis();
+                        return;
                     }
                 }
+                executeLocalContractAnalysis(fallbackBody);
             }
-        }
-        return firstId;
+
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    executeLocalContractAnalysis(fallbackBody);
+                }
+            }
+        });
     }
 
     private void executeLocalContractAnalysis(JsonObject body) {
@@ -462,6 +451,9 @@ public class AiAnalysisFragment extends Fragment {
                 }
                 if (response.isSuccessful() && response.body() != null) {
                     analysis = response.body();
+                    if (createdIncidentId != null && !createdIncidentId.isEmpty()) {
+                        analysis.setIncidentId(createdIncidentId);
+                    }
                     applyAnalysis();
                 } else {
                     useOfflineAnalysisFallback();
@@ -480,6 +472,9 @@ public class AiAnalysisFragment extends Fragment {
 
     private void useOfflineAnalysisFallback() {
         analysis = AiAnalysisJSON.createOfflineFallback(setor);
+        if (createdIncidentId != null && !createdIncidentId.isEmpty()) {
+            analysis.setIncidentId(createdIncidentId);
+        }
         applyAnalysis();
     }
 

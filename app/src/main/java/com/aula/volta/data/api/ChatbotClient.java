@@ -60,6 +60,12 @@ public final class ChatbotClient {
                                     .header("Accept", "application/json; charset=utf-8");
 
                             String token = ChatbotAuthClient.resolveToken(appContext);
+                            if (token.isEmpty()) {
+                                String refreshed = ChatbotAuthClient.refreshQaTokenBlocking(appContext);
+                                if (refreshed != null) {
+                                    token = refreshed;
+                                }
+                            }
                             if (!token.isEmpty()) {
                                 builder.header("Authorization", "Bearer " + token);
                             }
