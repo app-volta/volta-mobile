@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import androidx.navigation.Navigation;
 import com.aula.volta.R;
 import com.aula.volta.data.api.AiAnalysisAPI;
 import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.NotificationStore;
@@ -30,11 +32,16 @@ import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
+import com.aula.volta.data.model.incident.AiReportResponseDTO;
+import com.aula.volta.data.model.incident.IncidentRequestDTO;
+import com.aula.volta.data.model.incident.IncidentResponseDTO;
 import com.aula.volta.data.sync.PendingOccurrence;
 import com.aula.volta.data.sync.SyncManager;
 import com.aula.volta.data.sync.SyncQueue;
 import com.aula.volta.data.upload.CloudinaryUploader;
 import com.google.android.material.button.MaterialButton;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.File;
@@ -232,17 +239,25 @@ public class AiAnalysisFragment extends Fragment {
 
     private void analyzePhoto() {
         if (photoPath != null && !photoPath.isEmpty()) {
+            String cachedUrl = CloudinaryUploader.getCachedUrl(photoPath);
+            if (cachedUrl != null && !cachedUrl.isEmpty()) {
+                remoteImageUrl = cachedUrl;
+                executeAiAnalysisRequest(cachedUrl);
+                return;
+            }
             File imageFile = new File(photoPath);
             if (imageFile.exists()) {
                 CloudinaryUploader.uploadImage(requireContext(), imageFile, new CloudinaryUploader.UploadCallback() {
                     @Override
                     public void onSuccess(String remoteUrl, String publicId) {
                         remoteImageUrl = remoteUrl;
+                        Log.i("AiAnalysisFragment", "Cloudinary secure_url gerada: " + remoteUrl);
                         executeAiAnalysisRequest(remoteUrl);
                     }
 
                     @Override
                     public void onError(Exception exception, String fallbackLocalPath) {
+                        Log.w("AiAnalysisFragment", "Upload Cloudinary falhou, seguindo com caminho local: " + exception.getMessage());
                         executeAiAnalysisRequest(fallbackLocalPath);
                     }
                 });
@@ -256,14 +271,188 @@ public class AiAnalysisFragment extends Fragment {
         if (!isAdded()) {
             return;
         }
-        AiAnalysisAPI api = ApiClient.get(requireContext()).create(AiAnalysisAPI.class);
-        JsonObject body = new JsonObject();
+        final JsonObject body = new JsonObject();
         body.addProperty("setor", setor == null ? "" : setor);
         body.addProperty("descricao", descricao == null ? "" : descricao);
         if (imageUrl != null && !imageUrl.isEmpty()) {
+            body.addProperty("photoUrl", imageUrl);
             body.addProperty("imageUrl", imageUrl);
             body.addProperty("foto_url", imageUrl);
         }
+
+        // Se temos link HTTPS gerado pelo Cloudinary e internet ativa, consulta a API de IA QA primeiro
+        if (imageUrl != null && imageUrl.startsWith("http") && SyncManager.isOnline(requireContext())) {
+            final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
+            qaApi.analyzeOccurrence("novo", body).enqueue(new Callback<AiAnalysisJSON>() {
+                @Override
+                public void onResponse(@NonNull Call<AiAnalysisJSON> call,
+                                       @NonNull Response<AiAnalysisJSON> response) {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    if (response.isSuccessful() && response.body() != null
+                            && response.body().getMaterial() != null) {
+                        analysis = response.body();
+                        applyAnalysis();
+                    } else {
+                        // Tenta fluxo OpenAPI QA: POST /incidents (photoUrl) -> GET /incidents/{id}/ai-report
+                        tryQaIncidentAiReportFlow(qaApi, imageUrl, body);
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<AiAnalysisJSON> call, @NonNull Throwable t) {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    executeLocalContractAnalysis(body);
+                }
+            });
+        } else {
+            executeLocalContractAnalysis(body);
+        }
+    }
+
+    /**
+     * Fluxo OpenAPI v3 QA: resolve areaId (/areas/mine) e wasteTypeId (/waste-types),
+     * registra incidente com photoUrl do Cloudinary (POST /incidents) e consulta
+     * o relatório da IA (GET /incidents/{id}/ai-report).
+     */
+    private void tryQaIncidentAiReportFlow(final AiAnalysisAPI qaApi,
+                                           final String cloudinaryUrl,
+                                           final JsonObject fallbackBody) {
+        qaApi.getMyAreas().enqueue(new Callback<JsonArray>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> areaResp) {
+                if (!isAdded()) {
+                    return;
+                }
+                final String areaId = extractFirstId(areaResp.body(), setor, "sectorName");
+                if (areaId == null) {
+                    executeLocalContractAnalysis(fallbackBody);
+                    return;
+                }
+                qaApi.getWasteTypes().enqueue(new Callback<JsonArray>() {
+                    @Override
+                    public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> wasteResp) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        final String wasteTypeId = extractFirstId(wasteResp.body(), null, null);
+                        if (wasteTypeId == null) {
+                            executeLocalContractAnalysis(fallbackBody);
+                            return;
+                        }
+                        String empDesc = (descricao != null && !descricao.isEmpty())
+                                ? descricao
+                                : "Resíduo registrado via app mobile no setor " + (setor != null ? setor : "Operacional");
+                        IncidentRequestDTO req = new IncidentRequestDTO(
+                                areaId,
+                                wasteTypeId,
+                                cloudinaryUrl,
+                                empDesc,
+                                "LOW",
+                                38.0,
+                                "MEDIUM"
+                        );
+                        qaApi.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
+                            @Override
+                            public void onResponse(@NonNull Call<IncidentResponseDTO> call,
+                                                   @NonNull Response<IncidentResponseDTO> incResp) {
+                                if (!isAdded()) {
+                                    return;
+                                }
+                                if (incResp.isSuccessful() && incResp.body() != null && incResp.body().getId() != null) {
+                                    final String incidentId = incResp.body().getId();
+                                    final double estQty = incResp.body().getEstimatedQuantity() != null
+                                            ? incResp.body().getEstimatedQuantity() : 38.0;
+                                    qaApi.getIncidentAiReport(incidentId).enqueue(new Callback<AiReportResponseDTO>() {
+                                        @Override
+                                        public void onResponse(@NonNull Call<AiReportResponseDTO> call,
+                                                               @NonNull Response<AiReportResponseDTO> reportResp) {
+                                            if (!isAdded()) {
+                                                return;
+                                            }
+                                            if (reportResp.isSuccessful() && reportResp.body() != null) {
+                                                analysis = AiAnalysisJSON.fromAiReport(reportResp.body(), estQty);
+                                                applyAnalysis();
+                                            } else {
+                                                executeLocalContractAnalysis(fallbackBody);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onFailure(@NonNull Call<AiReportResponseDTO> call, @NonNull Throwable t) {
+                                            if (isAdded()) {
+                                                executeLocalContractAnalysis(fallbackBody);
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    executeLocalContractAnalysis(fallbackBody);
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                                if (isAdded()) {
+                                    executeLocalContractAnalysis(fallbackBody);
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
+                        if (isAdded()) {
+                            executeLocalContractAnalysis(fallbackBody);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    executeLocalContractAnalysis(fallbackBody);
+                }
+            }
+        });
+    }
+
+    @Nullable
+    private String extractFirstId(@Nullable JsonArray array, @Nullable String preferredMatch, @Nullable String fieldName) {
+        if (array == null || array.size() == 0) {
+            return null;
+        }
+        String firstId = null;
+        for (JsonElement el : array) {
+            if (el.isJsonObject()) {
+                JsonObject obj = el.getAsJsonObject();
+                if (obj.has("id") && !obj.get("id").isJsonNull()) {
+                    String id = obj.get("id").getAsString();
+                    if (firstId == null) {
+                        firstId = id;
+                    }
+                    if (preferredMatch != null && fieldName != null
+                            && obj.has(fieldName) && !obj.get(fieldName).isJsonNull()) {
+                        String val = obj.get(fieldName).getAsString();
+                        if (preferredMatch.toLowerCase(Locale.ROOT).contains(val.toLowerCase(Locale.ROOT))
+                                || val.toLowerCase(Locale.ROOT).contains(preferredMatch.toLowerCase(Locale.ROOT))) {
+                            return id;
+                        }
+                    }
+                }
+            }
+        }
+        return firstId;
+    }
+
+    private void executeLocalContractAnalysis(JsonObject body) {
+        if (!isAdded()) {
+            return;
+        }
+        AiAnalysisAPI api = ApiClient.get(requireContext()).create(AiAnalysisAPI.class);
         api.analyzeOccurrence("novo", body).enqueue(new Callback<AiAnalysisJSON>() {
             @Override
             public void onResponse(@NonNull Call<AiAnalysisJSON> call,
@@ -672,6 +861,7 @@ public class AiAnalysisFragment extends Fragment {
         body.addProperty("material", material);
         body.addProperty("quantidade_estimada", qtd);
         if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+            body.addProperty("photoUrl", remoteImageUrl);
             body.addProperty("imageUrl", remoteImageUrl);
             body.addProperty("foto_url", remoteImageUrl);
         }
@@ -682,8 +872,10 @@ public class AiAnalysisFragment extends Fragment {
                 if (!isAdded()) {
                     return;
                 }
-                String id = response.body() != null && response.body().has("id")
-                        ? response.body().get("id").getAsString() : "8514";
+                String id = (analysis != null && analysis.getIncidentId() != null && !analysis.getIncidentId().isEmpty())
+                        ? analysis.getIncidentId()
+                        : (response.body() != null && response.body().has("id")
+                        ? response.body().get("id").getAsString() : "8514");
                 registerAndNavigate(v, id, material, qtd, unidade);
             }
 
@@ -713,12 +905,15 @@ public class AiAnalysisFragment extends Fragment {
             detail.addProperty("photoPath", photoPath);
         }
         if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+            detail.addProperty("photoUrl", remoteImageUrl);
             detail.addProperty("imageUrl", remoteImageUrl);
             detail.addProperty("foto_url", remoteImageUrl);
         }
-        String relatorio = (analysis != null && analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty())
+        String relatorio = (analysis != null && analysis.getReportText() != null && !analysis.getReportText().isEmpty())
+                ? analysis.getReportText()
+                : ((analysis != null && analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty())
                 ? analysis.getObservacoes()
-                : "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta.";
+                : "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta.");
         detail.addProperty("relatorio_auto", relatorio);
 
         PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", id, detail.toString());

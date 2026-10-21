@@ -269,6 +269,17 @@
     <string name="auth_success_sub">Bem-vindo ao VOLTA.\nAgora cada resíduo fora do lugar vira informação pra sua unidade.</string>
     <string name="auth_start">Começar</string>
     <string name="auth_invalid">Verifique e-mail e senha</string>
+    <string name="auth_logging_in">Entrando...</string>
+    <string name="auth_error_credentials">E-mail ou senha incorretos no ambiente QA.</string>
+    <string name="auth_error_network">Falha ao conectar com a API QA. Verifique sua conexão.</string>
+    <string name="auth_error_server">Erro no servidor (%1$d). Tente novamente.</string>
+    <string name="chatbot_thinking">Pensando...</string>
+    <string name="chatbot_session_created">Sessão iniciada com o Chatbot VOLTA.</string>
+    <string name="chatbot_session_closed">Sessão encerrada. Resumo indexado.</string>
+    <string name="chatbot_error_network">Não foi possível conectar ao Chatbot VOLTA. Tente novamente.</string>
+    <string name="chatbot_human_validation_badge">⚠️ Requer validação humana</string>
+    <string name="chatbot_close_session">Encerrar sessão</string>
+    <string name="chatbot_new_session">Nova conversa</string>
     <string name="auth_forgot_title">Esqueceu a senha?</string>
     <string name="auth_forgot_sub">Sem problema. Digite o e-mail da sua unidade e enviamos um código pra você criar uma nova senha.</string>
     <string name="auth_send_code">Enviar código</string>

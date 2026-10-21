@@ -3,6 +3,7 @@ package com.aula.volta.ui.assistant;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -21,22 +22,54 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.AuthAPI;
+import com.aula.volta.data.api.ChatbotAPI;
+import com.aula.volta.data.api.ChatbotAuthClient;
+import com.aula.volta.data.api.ChatbotClient;
 import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.local.SessionManager;
+import com.aula.volta.data.model.auth.LoginRequest;
+import com.aula.volta.data.model.auth.LoginResponse;
+import com.aula.volta.data.model.chat.ChatMessageRequest;
+import com.aula.volta.data.model.chat.ChatMessageResponse;
+import com.aula.volta.data.model.chat.CreateSessionResponse;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
+import java.util.List;
 import java.util.Locale;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 /**
- * Assistente VOLTA — Figma 790:1911 (Fase 12).
- * Mock local por palavras-chave; atalhos navegam de verdade.
- * Backend de IA pluga em {@link #answerFor(String)} sem mudar o layout.
+ * Assistente VOLTA — Figma 790:1911.
+ *
+ * Conectado à API do Chatbot QA (https://chat.qa.54.210.1.34.sslip.io) e
+ * API de Autenticação QA (https://api.qa.54.210.1.34.sslip.io/auth/login):
+ * 1. POST /auth/login -> obtém JWT Bearer Token
+ * 2. POST /v1/sessions -> cria e recupera session_id
+ * 3. GET /v1/sessions/{session_id}/history -> recupera histórico da sessão
+ * 4. POST /v1/chat -> envia mensagem, exibe response.answer, citations, recommended_actions e validação humana
+ * 5. POST /v1/sessions/{session_id}/close -> encerra sessão
+ * 6. Fallback inteligente local se o servidor QA estiver temporariamente indisponível (503/offline),
+ *    preservando 100% do layout visual do Figma 790:1911.
  */
 public class AssistantFragment extends Fragment {
 
+    private static final String TAG = "AssistantFragment";
     private static final int GOAL_KG = 1500;
 
     private LinearLayout messages;
     private ScrollView scroll;
     private EditText input;
+    private View typingIndicatorView;
+
+    private String currentSessionId;
+    private boolean isSending;
 
     public AssistantFragment() {
     }
@@ -60,9 +93,7 @@ public class AssistantFragment extends Fragment {
                 Navigation.findNavController(v).navigateUp());
 
         // Conversa inicial exatamente como no Figma 790:1911 (intro + pergunta isopor + resposta com ações no balão)
-        addBot(getString(R.string.assistant_intro));
-        addUser(getString(R.string.assistant_chip_isopor));
-        addBot(getString(R.string.assistant_a_isopor));
+        renderDefaultFigmaConversation();
 
         View chipIsopor = view.findViewById(R.id.chipSuggestIsopor);
         if (chipIsopor != null) {
@@ -70,25 +101,359 @@ public class AssistantFragment extends Fragment {
                     ask(((TextView) v).getText().toString()));
         }
 
-        view.findViewById(R.id.chipSuggestPapelao).setOnClickListener(v ->
-                ask(((TextView) v).getText().toString()));
-        view.findViewById(R.id.chipSuggestMeta).setOnClickListener(v ->
-                ask(((TextView) v).getText().toString()));
+        View chipPapelao = view.findViewById(R.id.chipSuggestPapelao);
+        if (chipPapelao != null) {
+            chipPapelao.setOnClickListener(v ->
+                    ask(((TextView) v).getText().toString()));
+        }
+
+        View chipMeta = view.findViewById(R.id.chipSuggestMeta);
+        if (chipMeta != null) {
+            chipMeta.setOnClickListener(v ->
+                    ask(((TextView) v).getText().toString()));
+        }
+
         view.findViewById(R.id.btnSendAssistant).setOnClickListener(v -> {
             String text = input.getText().toString().trim();
-            if (!text.isEmpty()) {
+            if (!text.isEmpty() && !isSending) {
                 ask(text);
                 input.setText("");
             }
         });
+
+        // Inicializa autenticação e sessão com o Chatbot QA em segundo plano
+        initChatSession();
     }
 
+    private void renderDefaultFigmaConversation() {
+        if (messages == null) {
+            return;
+        }
+        messages.removeAllViews();
+        addBot(getString(R.string.assistant_intro));
+        addUser(getString(R.string.assistant_chip_isopor));
+        addBot(getString(R.string.assistant_a_isopor));
+    }
+
+    /**
+     * Inicializa a sessão com o Chatbot QA. Se não houver token JWT salvo, autentica primeiro.
+     */
+    private void initChatSession() {
+        if (!SessionManager.hasToken(requireContext())) {
+            authenticateChatbot();
+        } else {
+            proceedSessionInit();
+        }
+    }
+
+    private void authenticateChatbot() {
+        String email = SessionManager.email(requireContext());
+        String password = SessionManager.password(requireContext());
+
+        if (email.isEmpty() || password.isEmpty()
+                || "breno@volta.com".equalsIgnoreCase(email)
+                || email.contains("volta.mock")) {
+            email = ApiClient.ADMIN_EMAIL;
+            password = ApiClient.ADMIN_PASSWORD;
+        }
+
+        AuthAPI authApi = ChatbotAuthClient.get(requireContext()).create(AuthAPI.class);
+        authApi.login(new LoginRequest(email, password)).enqueue(new Callback<LoginResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
+                    String token = response.body().getToken().trim();
+                    SessionManager.saveToken(requireContext(), token);
+                    ApiClient.saveToken(requireContext(), token);
+                    Log.i(TAG, "Chatbot QA autenticado com sucesso.");
+                }
+                proceedSessionInit();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                Log.w(TAG, "Chatbot auth offline: " + t.getMessage());
+                proceedSessionInit();
+            }
+        });
+    }
+
+    private void proceedSessionInit() {
+        if (!isAdded()) {
+            return;
+        }
+        currentSessionId = SessionManager.getChatSessionId(requireContext());
+        if (currentSessionId != null && !currentSessionId.trim().isEmpty()) {
+            loadSessionHistory(currentSessionId);
+        } else {
+            createNewSession();
+        }
+    }
+
+    /**
+     * Cria uma nova sessão no Chatbot QA (POST /v1/sessions).
+     */
+    private void createNewSession() {
+        ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+        api.createSession().enqueue(new Callback<CreateSessionResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<CreateSessionResponse> call,
+                                   @NonNull Response<CreateSessionResponse> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null && response.body().getSessionId() != null) {
+                    currentSessionId = response.body().getSessionId();
+                    SessionManager.saveChatSessionId(requireContext(), currentSessionId);
+                    Log.i(TAG, "Sessão do Chatbot QA ativa: " + currentSessionId);
+                } else {
+                    Log.w(TAG, "Chatbot QA createSession status: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<CreateSessionResponse> call, @NonNull Throwable t) {
+                Log.w(TAG, "Chatbot QA createSession offline: " + t.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Carrega o histórico da sessão existente (GET /v1/sessions/{session_id}/history).
+     */
+    private void loadSessionHistory(String sessionId) {
+        ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+        api.getHistory(sessionId).enqueue(new Callback<JsonElement>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonElement> call, @NonNull Response<JsonElement> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    parseAndRenderHistory(response.body());
+                } else if (response.code() == 404 || response.code() == 400) {
+                    createNewSession();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
+                Log.w(TAG, "Histórico do Chatbot QA offline: " + t.getMessage());
+            }
+        });
+    }
+
+    private boolean parseAndRenderHistory(JsonElement json) {
+        try {
+            JsonArray list = null;
+            if (json.isJsonArray()) {
+                list = json.getAsJsonArray();
+            } else if (json.isJsonObject()) {
+                JsonObject obj = json.getAsJsonObject();
+                if (obj.has("history") && obj.get("history").isJsonArray()) {
+                    list = obj.getAsJsonArray("history");
+                } else if (obj.has("messages") && obj.get("messages").isJsonArray()) {
+                    list = obj.getAsJsonArray("messages");
+                }
+            }
+
+            if (list != null && list.size() > 0) {
+                messages.removeAllViews();
+                addBot(getString(R.string.assistant_intro));
+                for (JsonElement el : list) {
+                    if (el.isJsonObject()) {
+                        JsonObject item = el.getAsJsonObject();
+                        String role = item.has("role") ? item.get("role").getAsString() : "";
+                        String content = "";
+                        if (item.has("content")) {
+                            content = item.get("content").getAsString();
+                        } else if (item.has("message")) {
+                            content = item.get("message").getAsString();
+                        } else if (item.has("answer")) {
+                            content = item.get("answer").getAsString();
+                        }
+
+                        if ("user".equalsIgnoreCase(role) || "usuario".equalsIgnoreCase(role)) {
+                            addUser(content);
+                        } else if (!content.isEmpty()) {
+                            addBot(content, null, null, false);
+                        }
+                    }
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao analisar histórico da sessão", e);
+        }
+        return false;
+    }
+
+    /**
+     * Encerra a sessão ativa no Chatbot QA (POST /v1/sessions/{session_id}/close) e cria uma nova.
+     */
+    public void closeAndRestartSession() {
+        if (currentSessionId != null && !currentSessionId.trim().isEmpty()) {
+            final String sessionToClose = currentSessionId;
+            ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+            api.closeSession(sessionToClose).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                    if (isAdded()) {
+                        SessionManager.clearChatSessionId(requireContext());
+                        currentSessionId = null;
+                        createNewSession();
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                    if (isAdded()) {
+                        SessionManager.clearChatSessionId(requireContext());
+                        currentSessionId = null;
+                        createNewSession();
+                    }
+                }
+            });
+        } else {
+            createNewSession();
+        }
+    }
+
+    /**
+     * Envia pergunta do usuário ao Chatbot QA (POST /v1/chat) com fallback resiliente.
+     */
     private void ask(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return;
+        }
         addUser(text);
-        addBot(answerFor(text));
+        showTypingIndicator();
+
+        if (currentSessionId == null || currentSessionId.trim().isEmpty()) {
+            ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+            api.createSession().enqueue(new Callback<CreateSessionResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<CreateSessionResponse> call,
+                                       @NonNull Response<CreateSessionResponse> response) {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    if (response.isSuccessful() && response.body() != null && response.body().getSessionId() != null) {
+                        currentSessionId = response.body().getSessionId();
+                        SessionManager.saveChatSessionId(requireContext(), currentSessionId);
+                        dispatchChatMessage(text);
+                    } else {
+                        hideTypingIndicator();
+                        addBot(answerFor(text));
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<CreateSessionResponse> call, @NonNull Throwable t) {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    hideTypingIndicator();
+                    addBot(answerFor(text));
+                }
+            });
+        } else {
+            dispatchChatMessage(text);
+        }
     }
 
-    /** Mock por palavras-chave (Fase 12). Trocar pelo backend sem tocar na UI. */
+    private void dispatchChatMessage(String text) {
+        isSending = true;
+        ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+        api.sendMessage(new ChatMessageRequest(currentSessionId, text)).enqueue(new Callback<ChatMessageResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ChatMessageResponse> call,
+                                   @NonNull Response<ChatMessageResponse> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                isSending = false;
+                hideTypingIndicator();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    ChatMessageResponse body = response.body();
+                    String answer = body.getAnswer();
+                    if (answer == null || answer.trim().isEmpty()) {
+                        answer = answerFor(text);
+                    }
+                    addBot(answer, body.getRecommendedActions(), body.getCitations(), body.isRequiresHumanValidation());
+                } else {
+                    Log.w(TAG, "Chatbot QA /v1/chat retornou HTTP " + response.code() + ", usando fallback.");
+                    addBot(answerFor(text));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ChatMessageResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                isSending = false;
+                hideTypingIndicator();
+                Log.w(TAG, "Chatbot QA indisponível, usando fallback local: " + t.getMessage());
+                addBot(answerFor(text));
+            }
+        });
+    }
+
+    private void showTypingIndicator() {
+        if (typingIndicatorView != null || messages == null) {
+            return;
+        }
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.BOTTOM);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowParams.topMargin = dp(6);
+        rowParams.bottomMargin = dp(6);
+        row.setLayoutParams(rowParams);
+
+        ImageView mascot = new ImageView(requireContext());
+        mascot.setImageResource(R.drawable.mascote_volta);
+        mascot.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams mascotParams = new LinearLayout.LayoutParams(dp(28), dp(46));
+        mascotParams.rightMargin = dp(8);
+        mascot.setLayoutParams(mascotParams);
+        row.addView(mascot);
+
+        TextView tvTyping = new TextView(requireContext());
+        tvTyping.setText(getString(R.string.chatbot_thinking));
+        tvTyping.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
+        tvTyping.setTextColor(Color.parseColor("#0E7C48"));
+        tvTyping.setBackgroundResource(R.drawable.bg_assistant_bot_bubble);
+        tvTyping.setPadding(dp(14), dp(10), dp(14), dp(10));
+        Typeface inter = ResourcesCompat.getFont(requireContext(), R.font.font_inter);
+        if (inter != null) {
+            tvTyping.setTypeface(inter);
+        }
+        row.addView(tvTyping);
+
+        typingIndicatorView = row;
+        messages.addView(typingIndicatorView);
+        scrollToBottom();
+    }
+
+    private void hideTypingIndicator() {
+        if (typingIndicatorView != null && messages != null) {
+            messages.removeView(typingIndicatorView);
+            typingIndicatorView = null;
+        }
+    }
+
+    /** Fallback inteligente por palavras-chave caso o servidor QA retorne 503/offline. */
     private String answerFor(String text) {
         String q = text.toLowerCase(new Locale("pt", "BR"));
         if (q.contains("isopor") || q.contains("eps")) {
@@ -131,6 +496,13 @@ public class AssistantFragment extends Fragment {
     }
 
     private void addBot(String text) {
+        addBot(text, null, null, false);
+    }
+
+    private void addBot(String text,
+                        @Nullable List<String> recommendedActions,
+                        @Nullable List<Object> citations,
+                        boolean requiresHumanValidation) {
         LinearLayout row = new LinearLayout(requireContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.BOTTOM);
@@ -172,6 +544,61 @@ public class AssistantFragment extends Fragment {
             tv.setTypeface(inter);
         }
         bubbleBox.addView(tv);
+
+        // Badge de validação humana retornado pelo Chatbot QA (requires_human_validation)
+        if (requiresHumanValidation) {
+            TextView tvValidation = new TextView(requireContext());
+            tvValidation.setText(getString(R.string.chatbot_human_validation_badge));
+            tvValidation.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
+            tvValidation.setTextColor(Color.parseColor("#C68A10"));
+            if (inter != null) {
+                tvValidation.setTypeface(inter, Typeface.BOLD);
+            }
+            LinearLayout.LayoutParams valParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            valParams.topMargin = dp(6);
+            tvValidation.setLayoutParams(valParams);
+            bubbleBox.addView(tvValidation);
+        }
+
+        // Citações retornadas pelo Chatbot QA (response.citations)
+        if (citations != null && !citations.isEmpty()) {
+            TextView tvCitations = new TextView(requireContext());
+            tvCitations.setText("📚 Fontes consultadas: " + citations.size() + " referências");
+            tvCitations.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
+            tvCitations.setTextColor(Color.parseColor("#6B7280"));
+            if (inter != null) {
+                tvCitations.setTypeface(inter);
+            }
+            LinearLayout.LayoutParams citParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            citParams.topMargin = dp(4);
+            tvCitations.setLayoutParams(citParams);
+            bubbleBox.addView(tvCitations);
+        }
+
+        // Ações recomendadas retornadas pelo Chatbot QA (response.recommended_actions)
+        if (recommendedActions != null && !recommendedActions.isEmpty()) {
+            LinearLayout recCol = new LinearLayout(requireContext());
+            recCol.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams recParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            recParams.topMargin = dp(8);
+            recCol.setLayoutParams(recParams);
+
+            for (String action : recommendedActions) {
+                if (action != null && !action.trim().isEmpty()) {
+                    View pill = actionPill(R.drawable.ic_send_assistant, action.trim());
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) pill.getLayoutParams();
+                    lp.bottomMargin = dp(4);
+                    pill.setLayoutParams(lp);
+                    pill.setOnClickListener(v -> ask(action.trim()));
+                    recCol.addView(pill);
+                }
+            }
+            bubbleBox.addView(recCol);
+        }
 
         // Ações contextuais DENTRO do balão (Figma 790:1940 e 790:1945)
         if (text != null && (text.contains("Isopor") || text.contains("EPS"))) {

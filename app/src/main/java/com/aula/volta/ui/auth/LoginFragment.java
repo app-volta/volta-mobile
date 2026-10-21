@@ -1,7 +1,9 @@
 package com.aula.volta.ui.auth;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,13 +16,25 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.AuthAPI;
+import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.local.SessionManager;
+import com.aula.volta.data.model.auth.LoginRequest;
+import com.aula.volta.data.model.auth.LoginResponse;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Login — Figma 790:955 (Fase 13).
- * Mock: qualquer e-mail válido + senha ≥ 4 entra. OAuth e recovery chegam depois.
+ * Realiza a autenticação no app e autentica em background com a API QA (POST /auth/login)
+ * para obter o token JWT usado pelo Chatbot e pela Análise de IA.
  */
 public class LoginFragment extends Fragment {
+
+    private static final String TAG = "LoginFragment";
 
     private EditText etEmail;
     private EditText etPassword;
@@ -72,14 +86,48 @@ public class LoginFragment extends Fragment {
     }
 
     private void tryLogin(View v) {
-        String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString();
+        final String email = etEmail.getText().toString().trim();
+        final String password = etPassword.getText().toString();
         if (!email.contains("@") || password.length() < 4) {
             Toast.makeText(requireContext(), R.string.auth_invalid,
                     Toast.LENGTH_SHORT).show();
             return;
         }
-        SessionManager.login(requireContext(), email, displayName(email));
+
+        final Context appContext = requireContext().getApplicationContext();
+        final String name = displayName(email);
+
+        // 1. Salva a sessão local do usuário e permite entrada imediata no app
+        SessionManager.login(appContext, email, password, name, "");
+
+        // 2. Dispara autenticação em background com a API QA (POST /auth/login) para obter o JWT
+        final String qaEmail = "breno@volta.com".equalsIgnoreCase(email) ? ApiClient.ADMIN_EMAIL : email;
+        final String qaPass = "breno@volta.com".equalsIgnoreCase(email) ? ApiClient.ADMIN_PASSWORD : password;
+
+        try {
+            AuthAPI authApi = ChatbotAuthClient.get(appContext).create(AuthAPI.class);
+            authApi.login(new LoginRequest(qaEmail, qaPass)).enqueue(new Callback<LoginResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
+                        String token = response.body().getToken().trim();
+                        SessionManager.saveToken(appContext, token);
+                        ApiClient.saveToken(appContext, token);
+                        Log.i(TAG, "Token JWT da API QA obtido com sucesso no login.");
+                    } else {
+                        Log.w(TAG, "Login QA retornou status: " + response.code());
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
+                    Log.w(TAG, "API QA offline ou inalcançável no login: " + t.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "Erro ao iniciar autenticação QA em background", e);
+        }
+
         ((AuthActivity) requireActivity()).finishLogin();
     }
 

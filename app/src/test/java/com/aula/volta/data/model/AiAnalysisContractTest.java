@@ -1,12 +1,13 @@
 package com.aula.volta.data.model;
 
+import com.aula.volta.data.model.incident.AiReportResponseDTO;
 import com.google.gson.Gson;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 /**
- * Validação do contrato da IA (Fase 15).
+ * Validação do contrato da IA (Fase 15 + Integração QA AiReportResponseDTO).
  * O mock e o backend obedecem a esta estrutura.
  */
 public class AiAnalysisContractTest {
@@ -36,5 +37,34 @@ public class AiAnalysisContractTest {
         assertEquals(12, ai.getUnidades().getQuantidade());
         assertEquals(0.94, ai.getConfianca(), 0.001);
         assertEquals("Material acumulado próximo à área úmida", ai.getObservacoes());
+    }
+
+    @Test
+    public void fromAiReport_mapsQaDtoAndEdgeCasesCorrectly() {
+        AiReportResponseDTO dto = new AiReportResponseDTO();
+        dto.setId("rep-1");
+        dto.setIncidentId("inc-1");
+        dto.setDetectedWasteType("Óleo lubrificante");
+        dto.setAiContaminationLevel("HIGH");
+        dto.setRecommendations("Isolar a área e acionar coleta especializada");
+        dto.setReportText("Foi identificado vazamento de óleo próximo à máquina 3.");
+
+        AiAnalysisJSON mapped = AiAnalysisJSON.fromAiReport(dto, 25.5);
+        assertEquals("inc-1", mapped.getIncidentId());
+        assertEquals("Óleo lubrificante", mapped.getMaterial());
+        assertEquals(25.5, mapped.getQuantidadeEstimada(), 0.001);
+        assertEquals("kg", mapped.getUnidade());
+        assertNotNull(mapped.getContaminacao());
+        assertTrue(mapped.getContaminacao().isPresente());
+        assertEquals("Alta", mapped.getContaminacao().getNivel());
+        assertEquals("Isolar a área e acionar coleta especializada", mapped.getObservacoes());
+        assertEquals("Foi identificado vazamento de óleo próximo à máquina 3.", mapped.getReportText());
+
+        // Edge case: null report returns valid offline fallback
+        AiAnalysisJSON fallback = AiAnalysisJSON.fromAiReport(null, 0);
+        assertNotNull(fallback);
+        assertEquals("Papelão A", fallback.getMaterial());
+        assertEquals("Baixa", fallback.getContaminacao().getNivel());
+        assertFalse(fallback.getContaminacao().isPresente());
     }
 }
