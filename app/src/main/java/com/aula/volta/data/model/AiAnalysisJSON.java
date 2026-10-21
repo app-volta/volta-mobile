@@ -312,6 +312,46 @@ public class AiAnalysisJSON {
         return paperFallbackId != null ? paperFallbackId : firstId;
     }
 
+    public static String extractMaterialName(String rawMaterial) {
+        if (rawMaterial == null) {
+            return "Papelão";
+        }
+        String clean = rawMaterial
+                .replaceAll("(?i)\\s*\\(Classe\\s+[ABC]\\)", "")
+                .replaceAll("(?i)\\s+Classe\\s+[ABC]$", "")
+                .replaceAll("\\s+[ABC]$", "")
+                .trim();
+        return clean.isEmpty() ? "Papelão" : clean;
+    }
+
+    public static String extractQualityClassLetter(String rawMaterial, String explicitClass) {
+        String source = (explicitClass != null && !explicitClass.trim().isEmpty())
+                ? explicitClass.trim()
+                : (rawMaterial != null ? rawMaterial.trim() : "");
+        if (source.matches("(?i).*(\\bClasse\\s+B\\b|\\s+B$|^B$).*")) {
+            return "B";
+        }
+        if (source.matches("(?i).*(\\bClasse\\s+C\\b|\\s+C$|^C$).*")) {
+            return "C";
+        }
+        if (rawMaterial != null) {
+            String rm = rawMaterial.trim();
+            if (rm.matches("(?i).*(\\bClasse\\s+B\\b|\\s+B$).*")) {
+                return "B";
+            }
+            if (rm.matches("(?i).*(\\bClasse\\s+C\\b|\\s+C$).*")) {
+                return "C";
+            }
+        }
+        return "A";
+    }
+
+    public static String formatMaterialWithClass(String rawMaterial, String classSpec) {
+        String baseMat = extractMaterialName(rawMaterial);
+        String letter = extractQualityClassLetter(rawMaterial, classSpec);
+        return baseMat + " (Classe " + letter + ")";
+    }
+
     private static String normalize(String text) {
         if (text == null) {
             return "";

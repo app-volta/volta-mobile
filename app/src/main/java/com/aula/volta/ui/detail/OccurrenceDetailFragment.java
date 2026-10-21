@@ -102,6 +102,19 @@ public class OccurrenceDetailFragment extends Fragment {
     private String currentContamination = "baixa";
     private String currentSector = "Frigorífico — Setor B2";
     private String currentWeight = "38 kg";
+    private final Runnable hideBannerToastRunnable = () -> {
+        if (isAdded() && toastFinalized != null) {
+            toastFinalized.animate()
+                    .alpha(0f)
+                    .setDuration(400)
+                    .withEndAction(() -> {
+                        if (toastFinalized != null) {
+                            toastFinalized.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+        }
+    };
 
     public OccurrenceDetailFragment() {
     }
@@ -205,10 +218,27 @@ public class OccurrenceDetailFragment extends Fragment {
             btnToastOpenPgrs.setOnClickListener(openPgrsAction);
         }
         if (toastFinalized != null) {
-            toastFinalized.setOnClickListener(openPgrsAction);
+            toastFinalized.setOnClickListener(v -> {
+                if (btnToastOpenPgrs != null && btnToastOpenPgrs.getVisibility() == View.VISIBLE) {
+                    openPgrsAction.onClick(v);
+                } else {
+                    toastFinalized.removeCallbacks(hideBannerToastRunnable);
+                    toastFinalized.animate().cancel();
+                    toastFinalized.setVisibility(View.GONE);
+                }
+            });
         }
 
         loadDetail();
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (toastFinalized != null) {
+            toastFinalized.removeCallbacks(hideBannerToastRunnable);
+            toastFinalized.animate().cancel();
+        }
+        super.onDestroyView();
     }
 
     private void loadDetail() {
@@ -290,19 +320,11 @@ public class OccurrenceDetailFragment extends Fragment {
             return;
         }
 
-        currentMaterial = opt(json, "material", "Papelão (Classe A)");
-        if (currentMaterial.matches("(?i).*(\\bClasse\\s+B\\b|\\s+B$).*")) {
-            currentQualityClass = "B";
-        } else if (currentMaterial.matches("(?i).*(\\bClasse\\s+C\\b|\\s+C$).*")) {
-            currentQualityClass = "C";
-        } else {
-            currentQualityClass = "A";
-        }
-        String parsedMatName = currentMaterial
-                .replaceAll("(?i)\\s*\\(Classe\\s+[ABC]\\)", "")
-                .replaceAll("\\s+[ABC]$", "")
-                .trim();
-        currentMaterialName = parsedMatName.isEmpty() ? "Papelão" : parsedMatName;
+        String rawMaterial = opt(json, "material", "Papelão (Classe A)");
+        String rawClasse = opt(json, "classe", "");
+        currentQualityClass = com.aula.volta.data.model.AiAnalysisJSON.extractQualityClassLetter(rawMaterial, rawClasse);
+        currentMaterialName = com.aula.volta.data.model.AiAnalysisJSON.extractMaterialName(rawMaterial);
+        currentMaterial = com.aula.volta.data.model.AiAnalysisJSON.formatMaterialWithClass(rawMaterial, rawClasse);
 
         if (json.has("peso_estimado") && !json.get("peso_estimado").isJsonNull()) {
             try {
@@ -317,7 +339,8 @@ public class OccurrenceDetailFragment extends Fragment {
                 currentWeight = rawPeso.endsWith("kg") ? rawPeso : (rawPeso + " kg");
             }
         }
-        String contam = opt(json, "contaminacao", "baixa").trim();
+        String contam = opt(json, "contaminacao",
+                opt(json, "contaminacao_nivel", "baixa")).trim();
         if (contam.isEmpty()) {
             contam = "baixa";
         }
@@ -326,7 +349,7 @@ public class OccurrenceDetailFragment extends Fragment {
         applyPriorityBadge(currentPriority);
 
         currentSector = opt(json, "setor", "Frigorífico — Setor B2");
-        String quando = opt(json, "quando", "hoje, 09:12");
+        String quando = opt(json, "quando", opt(json, "data", "hoje, 09:12"));
         currentStatus = opt(json, "status", "EM_ANALISE");
 
         if (tvOccTitle != null) {
@@ -410,6 +433,7 @@ public class OccurrenceDetailFragment extends Fragment {
         if (btnToastOpenPgrs != null) {
             btnToastOpenPgrs.setVisibility(showPgrsButton ? View.VISIBLE : View.GONE);
         }
+        toastFinalized.removeCallbacks(hideBannerToastRunnable);
         toastFinalized.animate().cancel();
         toastFinalized.setAlpha(0f);
         toastFinalized.setVisibility(View.VISIBLE);
@@ -417,18 +441,18 @@ public class OccurrenceDetailFragment extends Fragment {
             toastFinalized.animate()
                     .alpha(1f)
                     .setDuration(300)
-                    .withEndAction(() -> toastFinalized.postDelayed(() -> {
+                    .withEndAction(() -> {
                         if (isAdded() && toastFinalized != null) {
-                            toastFinalized.animate()
-                                    .alpha(0f)
-                                    .setDuration(400)
-                                    .withEndAction(() -> toastFinalized.setVisibility(View.GONE))
-                                    .start();
+                            toastFinalized.postDelayed(hideBannerToastRunnable, 3500);
                         }
-                    }, 3500))
+                    })
                     .start();
         } else {
-            toastFinalized.animate().alpha(1f).setDuration(350).start();
+            toastFinalized.animate()
+                    .alpha(1f)
+                    .setDuration(350)
+                    .withEndAction(null)
+                    .start();
         }
     }
 
@@ -592,6 +616,7 @@ public class OccurrenceDetailFragment extends Fragment {
                 currentMaterialName, currentQualityClass, initialPrio, false, "");
         sheet.setOnClassificationChangedListener((material, qualityClass, priority, isHazard, reason) -> {
             String prevClass = currentQualityClass;
+            String prevMaterial = currentMaterial;
             currentQualityClass = qualityClass;
             currentMaterialName = material;
             currentMaterial = currentMaterialName + " (Classe " + currentQualityClass + ")";
@@ -609,6 +634,15 @@ public class OccurrenceDetailFragment extends Fragment {
                 PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
             }
 
+            OccurrenceStore.update(requireContext(), new Occurrence(
+                    occurrenceId,
+                    currentMaterial,
+                    currentSector,
+                    getString(R.string.notif_now),
+                    currentPriority,
+                    currentStatus,
+                    currentMaterial));
+
             // Subtítulo da ação aplicada (Figma 17d · 908:6409)
             if (tvEditClassSub != null) {
                 tvEditClassSub.setVisibility(View.VISIBLE);
@@ -616,7 +650,7 @@ public class OccurrenceDetailFragment extends Fragment {
             }
 
             AuditLog.append(requireContext(), "Breno Gomes", "ALTERAR_CLASSIFICACAO",
-                    "ocorrencia", occurrenceId, "Papelão (Classe " + prevClass + ")", currentMaterial);
+                    "ocorrencia", occurrenceId, prevMaterial, currentMaterial);
 
             Toast.makeText(requireContext(), "Classificação alterada para Classe " + currentQualityClass, Toast.LENGTH_SHORT).show();
         });

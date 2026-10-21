@@ -102,6 +102,19 @@ public class AiAnalysisFragment extends Fragment {
 
     private AiAnalysisJSON analysis;
     private ObjectAnimator scanAnimator;
+    private final Runnable hideCorrectionToastRunnable = () -> {
+        if (isAdded() && toastCorrectionSaved != null) {
+            toastCorrectionSaved.animate()
+                    .alpha(0f)
+                    .setDuration(400)
+                    .withEndAction(() -> {
+                        if (toastCorrectionSaved != null) {
+                            toastCorrectionSaved.setVisibility(View.GONE);
+                        }
+                    })
+                    .start();
+        }
+    };
 
     private String photoPath;
     private String remoteImageUrl;
@@ -189,6 +202,22 @@ public class AiAnalysisFragment extends Fragment {
             });
         }
 
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(),
+                new androidx.activity.OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        if (aiEditGroup != null && aiEditGroup.getVisibility() == View.VISIBLE) {
+                            cancelEditView();
+                        } else if (getView() != null) {
+                            Navigation.findNavController(getView()).navigateUp();
+                        } else {
+                            setEnabled(false);
+                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                        }
+                    }
+                });
+
         View btnBack = view.findViewById(R.id.btnBackAnalysis);
         btnBack.setOnClickListener(v -> {
             if (aiEditGroup.getVisibility() == View.VISIBLE) {
@@ -219,6 +248,10 @@ public class AiAnalysisFragment extends Fragment {
     @Override
     public void onDestroyView() {
         stopScanAnimation();
+        if (toastCorrectionSaved != null) {
+            toastCorrectionSaved.removeCallbacks(hideCorrectionToastRunnable);
+            toastCorrectionSaved.animate().cancel();
+        }
         super.onDestroyView();
     }
 
@@ -521,22 +554,14 @@ public class AiAnalysisFragment extends Fragment {
             }
         } else {
             String rawMat = analysis.getMaterial() != null ? analysis.getMaterial().trim() : "Papelão A";
-            if (rawMat.matches("(?i).*(\\bClasse\\s+B\\b|\\s+B$).*")) {
-                selectedClass = "Classe B";
-            } else if (rawMat.matches("(?i).*(\\bClasse\\s+C\\b|\\s+C$).*")) {
-                selectedClass = "Classe C";
-            } else {
-                selectedClass = "Classe A";
-            }
-            String cleanMat = rawMat
-                    .replaceAll("(?i)\\s*\\(Classe\\s+[ABC]\\)", "")
-                    .replaceAll("\\s+[ABC]$", "")
-                    .trim();
-            selectedMaterial = cleanMat.isEmpty() ? "Papelão" : cleanMat;
+            String classLetter = AiAnalysisJSON.extractQualityClassLetter(rawMat, null);
+            selectedClass = "Classe " + classLetter;
+            selectedMaterial = AiAnalysisJSON.extractMaterialName(rawMat);
 
             selectedContamination = (analysis.getContaminacao() != null
                     && analysis.getContaminacao().getNivel() != null)
-                    ? analysis.getContaminacao().getNivel() : "Baixa";
+                    ? AiAnalysisJSON.mapContaminationLabel(analysis.getContaminacao().getNivel())
+                    : "Baixa";
 
             if (analysis.getQuantidadeEstimada() > 0) {
                 currentWeight = (int) Math.round(analysis.getQuantidadeEstimada());
@@ -896,18 +921,18 @@ public class AiAnalysisFragment extends Fragment {
 
     private void showCorrectionSavedToast() {
         if (toastCorrectionSaved != null) {
+            toastCorrectionSaved.removeCallbacks(hideCorrectionToastRunnable);
+            toastCorrectionSaved.animate().cancel();
             toastCorrectionSaved.setAlpha(0f);
             toastCorrectionSaved.setVisibility(View.VISIBLE);
             toastCorrectionSaved.animate()
                     .alpha(1f)
                     .setDuration(300)
-                    .withEndAction(() -> toastCorrectionSaved.postDelayed(() -> {
+                    .withEndAction(() -> {
                         if (isAdded() && toastCorrectionSaved != null) {
-                            toastCorrectionSaved.animate().alpha(0f).setDuration(400)
-                                    .withEndAction(() -> toastCorrectionSaved.setVisibility(View.GONE))
-                                    .start();
+                            toastCorrectionSaved.postDelayed(hideCorrectionToastRunnable, 3500);
                         }
-                    }, 3500))
+                    })
                     .start();
         }
     }
@@ -924,7 +949,10 @@ public class AiAnalysisFragment extends Fragment {
      * para a tela de Ocorrência (Figma 17 · 851:4196 / R.id.nav_occurrence_full).
      */
     private void confirmOccurrence(View v) {
-        String material = isRevised ? selectedMaterial : (analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
+        String rawMat = isRevised
+                ? selectedMaterial
+                : (analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
+        String material = AiAnalysisJSON.formatMaterialWithClass(rawMat, selectedClass);
         double qtd = isRevised ? currentWeight : (analysis != null ? analysis.getQuantidadeEstimada() : 38.0);
         String unidade = "kg";
 
@@ -970,13 +998,7 @@ public class AiAnalysisFragment extends Fragment {
     private void persistOccurrenceDetail(String id, String material, double qtd, String unidade) {
         JsonObject detail = new JsonObject();
         detail.addProperty("id", id);
-        String baseMat = material != null
-                ? material.replaceAll("(?i)\\s*\\(Classe\\s+[ABC]\\)", "").replaceAll("\\s+[ABC]$", "").trim()
-                : "Papelão";
-        if (baseMat.isEmpty()) {
-            baseMat = "Papelão";
-        }
-        String formattedMat = baseMat + " (" + selectedClass + ")";
+        String formattedMat = AiAnalysisJSON.formatMaterialWithClass(material, selectedClass);
         detail.addProperty("titulo", (descricao != null && !descricao.isEmpty()) ? descricao : formattedMat);
         detail.addProperty("material", formattedMat);
         detail.addProperty("contaminacao", selectedContamination != null ? selectedContamination : "Baixa");

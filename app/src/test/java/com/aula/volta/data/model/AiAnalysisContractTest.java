@@ -118,4 +118,24 @@ public class AiAnalysisContractTest {
         assertEquals("Baixa", parsed.getContaminacao().getNivel());
         assertEquals("Prensar em fardo limpo", parsed.getObservacoes());
     }
+
+    @Test
+    public void materialAndClassFormatting_handlesTrailingLettersAndExplicitClassesWithoutDuplication() {
+        assertEquals("Papelão", AiAnalysisJSON.extractMaterialName("Papelão A"));
+        assertEquals("Papelão", AiAnalysisJSON.extractMaterialName("Papelão (Classe B)"));
+        assertEquals("Plástico Filme", AiAnalysisJSON.extractMaterialName("Plástico Filme C"));
+        assertEquals("Papelão", AiAnalysisJSON.extractMaterialName(null));
+        assertEquals("Papelão", AiAnalysisJSON.extractMaterialName("   "));
+
+        assertEquals("A", AiAnalysisJSON.extractQualityClassLetter("Papelão A", null));
+        assertEquals("B", AiAnalysisJSON.extractQualityClassLetter("Papelão B", null));
+        assertEquals("C", AiAnalysisJSON.extractQualityClassLetter("Papelão (Classe C)", null));
+        assertEquals("B", AiAnalysisJSON.extractQualityClassLetter("Papelão A", "Classe B"));
+        assertEquals("C", AiAnalysisJSON.extractQualityClassLetter("Plástico", "C"));
+
+        assertEquals("Papelão (Classe A)", AiAnalysisJSON.formatMaterialWithClass("Papelão A", "Classe A"));
+        assertEquals("Papelão (Classe B)", AiAnalysisJSON.formatMaterialWithClass("Papelão A", "Classe B"));
+        assertEquals("Plástico (Classe C)", AiAnalysisJSON.formatMaterialWithClass("Plástico (Classe A)", "C"));
+        assertEquals("Papelão (Classe A)", AiAnalysisJSON.formatMaterialWithClass("Papelão", "Classe A"));
+    }
 }
