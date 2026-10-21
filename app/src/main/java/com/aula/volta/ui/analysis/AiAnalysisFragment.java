@@ -93,6 +93,13 @@ public class AiAnalysisFragment extends Fragment {
     private String selectedContamination = "Baixa";
     private boolean isRevised = false;
 
+    // Snapshot para restaurar caso o usuário cancele a edição (16a -> Cancelar/Voltar)
+    private int snapshotWeight = 42;
+    private int snapshotUnits = 11;
+    private String snapshotMaterial = "Papelão";
+    private String snapshotClass = "Classe A";
+    private String snapshotContamination = "Baixa";
+
     private AiAnalysisJSON analysis;
     private ObjectAnimator scanAnimator;
 
@@ -185,7 +192,7 @@ public class AiAnalysisFragment extends Fragment {
         View btnBack = view.findViewById(R.id.btnBackAnalysis);
         btnBack.setOnClickListener(v -> {
             if (aiEditGroup.getVisibility() == View.VISIBLE) {
-                switchToResultView();
+                cancelEditView();
             } else {
                 Navigation.findNavController(v).navigateUp();
             }
@@ -494,36 +501,80 @@ public class AiAnalysisFragment extends Fragment {
             return;
         }
 
-        tvAiMaterial.setText(analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
-        String contaminacao = analysis.getContaminacao() != null ? analysis.getContaminacao().getNivel() : "Baixa";
-        tvAiContamination.setText(contaminacao);
-
         if (isRevised) {
-            tvAiQuantity.setText(currentWeight + " kg");
+            String classLetter = selectedClass != null ? selectedClass.replace("Classe ", "").trim() : "A";
+            tvAiMaterial.setText(selectedMaterial + (classLetter.isEmpty() ? "" : " " + classLetter));
+            tvAiContamination.setText(selectedContamination);
+            tvAiQuantity.setText("≈ " + currentWeight + " kg");
             badgeQuantityEdited.setVisibility(View.VISIBLE);
             cardAiQuantity.setBackgroundResource(R.drawable.bg_card_quantity_edited);
+            if (icAiStatusPill != null) {
+                icAiStatusPill.setImageResource(R.drawable.ic_pencil);
+                icAiStatusPill.setColorFilter(Color.WHITE);
+            }
             tvAiStatusPill.setText("Revisado por você");
             tvMiddleStatusHint.setText("Resultados revisados · prontos pro relatório");
-            tvMiddleStatusHint.setTextColor(requireContext().getColor(R.color.vf_green_deep));
-            icMiddleStatus.setVisibility(View.VISIBLE);
+            tvMiddleStatusHint.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            if (icMiddleStatus != null) {
+                icMiddleStatus.setImageResource(R.drawable.ic_check_circle_green);
+                icMiddleStatus.setVisibility(View.VISIBLE);
+            }
         } else {
+            String rawMat = analysis.getMaterial() != null ? analysis.getMaterial().trim() : "Papelão A";
+            if (rawMat.matches("(?i).*(\\bClasse\\s+B\\b|\\s+B$).*")) {
+                selectedClass = "Classe B";
+            } else if (rawMat.matches("(?i).*(\\bClasse\\s+C\\b|\\s+C$).*")) {
+                selectedClass = "Classe C";
+            } else {
+                selectedClass = "Classe A";
+            }
+            String cleanMat = rawMat
+                    .replaceAll("(?i)\\s*\\(Classe\\s+[ABC]\\)", "")
+                    .replaceAll("\\s+[ABC]$", "")
+                    .trim();
+            selectedMaterial = cleanMat.isEmpty() ? "Papelão" : cleanMat;
+
+            selectedContamination = (analysis.getContaminacao() != null
+                    && analysis.getContaminacao().getNivel() != null)
+                    ? analysis.getContaminacao().getNivel() : "Baixa";
+
+            if (analysis.getQuantidadeEstimada() > 0) {
+                currentWeight = (int) Math.round(analysis.getQuantidadeEstimada());
+            }
+            if (analysis.getUnidades() != null && analysis.getUnidades().getQuantidade() > 0) {
+                currentUnits = analysis.getUnidades().getQuantidade();
+            }
+            if (tvEditWeightValue != null) {
+                tvEditWeightValue.setText(String.valueOf(currentWeight));
+            }
+            if (tvEditUnitsValue != null) {
+                tvEditUnitsValue.setText(String.valueOf(currentUnits));
+            }
+
+            tvAiMaterial.setText(rawMat);
+            tvAiContamination.setText(selectedContamination);
             String quantidade = "≈ " + trimNumber(analysis.getQuantidadeEstimada()) + " " + analysis.getUnidade();
             tvAiQuantity.setText(quantidade);
             badgeQuantityEdited.setVisibility(View.GONE);
             cardAiQuantity.setBackgroundResource(R.drawable.bg_card_stat_recycled);
+            if (icAiStatusPill != null) {
+                icAiStatusPill.setImageResource(R.drawable.ic_sparkle);
+                icAiStatusPill.setColorFilter(Color.WHITE);
+            }
             tvAiStatusPill.setText(getString(R.string.ai_done));
             tvMiddleStatusHint.setText("Confira os resultados antes de gerar o relatório");
             tvMiddleStatusHint.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-            icMiddleStatus.setVisibility(View.GONE);
+            if (icMiddleStatus != null) {
+                icMiddleStatus.setVisibility(View.GONE);
+            }
         }
 
-        if (analysis.getUnidades() != null) {
+        if (analysis.getUnidades() != null && analysis.getUnidades().getTipo() != null) {
             tvAiUnitsLabel.setText(analysis.getUnidades().getTipo());
-            tvAiUnits.setText(currentUnits + " un.");
         } else {
             tvAiUnitsLabel.setText("Caixas");
-            tvAiUnits.setText("11 un.");
         }
+        tvAiUnits.setText(currentUnits + " un.");
 
         if (analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty()) {
             tvAiRecommendation.setText(analysis.getObservacoes());
@@ -604,10 +655,10 @@ public class AiAnalysisFragment extends Fragment {
             });
         }
 
-        // Botão Cancelar (16a -> volta para 16)
+        // Botão Cancelar (16a -> volta para 16 restaurando snapshot)
         MaterialButton btnCancel = root.findViewById(R.id.btnCancelCorrection);
         if (btnCancel != null) {
-            btnCancel.setOnClickListener(v -> switchToResultView());
+            btnCancel.setOnClickListener(v -> cancelEditView());
         }
     }
 
@@ -779,6 +830,12 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void switchToEditView() {
+        snapshotWeight = currentWeight;
+        snapshotUnits = currentUnits;
+        snapshotMaterial = selectedMaterial;
+        snapshotClass = selectedClass;
+        snapshotContamination = selectedContamination;
+
         aiResultGroup.setVisibility(View.GONE);
         aiLoadingGroup.setVisibility(View.GONE);
         aiEditGroup.setVisibility(View.VISIBLE);
@@ -790,11 +847,37 @@ public class AiAnalysisFragment extends Fragment {
         }
         tvAiHeaderTitle.setText("Editar análise");
         tvAiHeaderSubtitle.setText("Passo 2 de 2 · Revisão");
+        if (tvEditWeightValue != null) {
+            tvEditWeightValue.setText(String.valueOf(currentWeight));
+        }
+        if (tvEditUnitsValue != null) {
+            tvEditUnitsValue.setText(String.valueOf(currentUnits));
+        }
         if (getView() != null) {
             updateMaterialChipsUi(getView());
             updateClassPillsUi(getView());
             updateContaminationSegmentsUi(getView());
         }
+    }
+
+    private void cancelEditView() {
+        currentWeight = snapshotWeight;
+        currentUnits = snapshotUnits;
+        selectedMaterial = snapshotMaterial;
+        selectedClass = snapshotClass;
+        selectedContamination = snapshotContamination;
+        if (tvEditWeightValue != null) {
+            tvEditWeightValue.setText(String.valueOf(currentWeight));
+        }
+        if (tvEditUnitsValue != null) {
+            tvEditUnitsValue.setText(String.valueOf(currentUnits));
+        }
+        if (getView() != null) {
+            updateMaterialChipsUi(getView());
+            updateClassPillsUi(getView());
+            updateContaminationSegmentsUi(getView());
+        }
+        switchToResultView();
     }
 
     private void switchToResultView() {
@@ -887,9 +970,16 @@ public class AiAnalysisFragment extends Fragment {
     private void persistOccurrenceDetail(String id, String material, double qtd, String unidade) {
         JsonObject detail = new JsonObject();
         detail.addProperty("id", id);
-        String formattedMat = material.contains("(") ? material : (material + " (" + selectedClass + ")");
+        String baseMat = material != null
+                ? material.replaceAll("(?i)\\s*\\(Classe\\s+[ABC]\\)", "").replaceAll("\\s+[ABC]$", "").trim()
+                : "Papelão";
+        if (baseMat.isEmpty()) {
+            baseMat = "Papelão";
+        }
+        String formattedMat = baseMat + " (" + selectedClass + ")";
         detail.addProperty("titulo", (descricao != null && !descricao.isEmpty()) ? descricao : formattedMat);
         detail.addProperty("material", formattedMat);
+        detail.addProperty("contaminacao", selectedContamination != null ? selectedContamination : "Baixa");
         detail.addProperty("setor", (setor != null && !setor.isEmpty()) ? setor : "Frigorífico — Setor B2");
         detail.addProperty("peso_estimado", qtd);
         detail.addProperty("unidade", unidade);

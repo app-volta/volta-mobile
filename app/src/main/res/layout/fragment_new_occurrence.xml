@@ -6,6 +6,14 @@
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
+    <!-- Background oficial com fluidos e setas em marca d'água (Figma 851:3792) -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/bg_home_fluidos" />
+
     <!-- Conteúdo principal do formulário (12 e 14) -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -310,7 +318,7 @@
                     android:gravity="top"
                     android:hint="@string/occurrence_desc_hint"
                     android:inputType="textMultiLine|textCapSentences"
-                    android:minHeight="120dp"
+                    android:minHeight="92dp"
                     android:padding="14dp"
                     android:textColor="@color/vf_text_primary"
                     android:textColorHint="#93AC9E"
@@ -363,6 +371,13 @@
                         android:textColor="@color/vf_text_primary"
                         android:textSize="15sp"
                         android:textStyle="bold" />
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginStart="8dp"
+                        android:src="@drawable/ic_chevron_down"
+                        app:tint="@color/vf_text_secondary" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
@@ -617,7 +632,7 @@
                 android:layout_height="46dp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:background="@drawable/bg_camera_circle_btn"
+                android:background="@drawable/bg_camera_square_btn"
                 android:clickable="true"
                 android:focusable="true">
 

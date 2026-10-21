@@ -75,6 +75,8 @@ public class OccurrenceDetailFragment extends Fragment {
     private String currentLocalPhoto;
     private String currentRemoteUrl;
     private View toastFinalized;
+    private TextView tvToastFinalizedTitle;
+    private TextView tvToastFinalizedSub;
     private TextView btnToastOpenPgrs;
 
     // Tracker 3 steps
@@ -96,6 +98,8 @@ public class OccurrenceDetailFragment extends Fragment {
     private String currentMaterial = "Papelão (Classe A)";
     private String currentMaterialName = "Papelão";
     private String currentQualityClass = "A";
+    private String currentPriority = "ALTA";
+    private String currentContamination = "baixa";
     private String currentSector = "Frigorífico — Setor B2";
     private String currentWeight = "38 kg";
 
@@ -141,6 +145,8 @@ public class OccurrenceDetailFragment extends Fragment {
         btnFinalizeOcc = view.findViewById(R.id.btnFinalizeOcc);
         layoutBottomBarOcc = view.findViewById(R.id.layoutBottomBarOcc);
         toastFinalized = view.findViewById(R.id.toastFinalized);
+        tvToastFinalizedTitle = view.findViewById(R.id.tvToastFinalizedTitle);
+        tvToastFinalizedSub = view.findViewById(R.id.tvToastFinalizedSub);
         btnToastOpenPgrs = view.findViewById(R.id.btnToastOpenPgrs);
 
         stepCircle0 = view.findViewById(R.id.stepCircle0);
@@ -285,6 +291,40 @@ public class OccurrenceDetailFragment extends Fragment {
         }
 
         currentMaterial = opt(json, "material", "Papelão (Classe A)");
+        if (currentMaterial.matches("(?i).*(\\bClasse\\s+B\\b|\\s+B$).*")) {
+            currentQualityClass = "B";
+        } else if (currentMaterial.matches("(?i).*(\\bClasse\\s+C\\b|\\s+C$).*")) {
+            currentQualityClass = "C";
+        } else {
+            currentQualityClass = "A";
+        }
+        String parsedMatName = currentMaterial
+                .replaceAll("(?i)\\s*\\(Classe\\s+[ABC]\\)", "")
+                .replaceAll("\\s+[ABC]$", "")
+                .trim();
+        currentMaterialName = parsedMatName.isEmpty() ? "Papelão" : parsedMatName;
+
+        if (json.has("peso_estimado") && !json.get("peso_estimado").isJsonNull()) {
+            try {
+                double peso = json.get("peso_estimado").getAsDouble();
+                String pesoStr = (peso == Math.rint(peso))
+                        ? String.valueOf((int) peso)
+                        : String.format(java.util.Locale.forLanguageTag("pt-BR"), "%.1f", peso);
+                String unidade = opt(json, "unidade", "kg");
+                currentWeight = pesoStr + " " + unidade;
+            } catch (Exception e) {
+                String rawPeso = opt(json, "peso_estimado", "38");
+                currentWeight = rawPeso.endsWith("kg") ? rawPeso : (rawPeso + " kg");
+            }
+        }
+        String contam = opt(json, "contaminacao", "baixa").trim();
+        if (contam.isEmpty()) {
+            contam = "baixa";
+        }
+        currentContamination = contam.toLowerCase(java.util.Locale.forLanguageTag("pt-BR"));
+        currentPriority = opt(json, "prioridade", "ALTA");
+        applyPriorityBadge(currentPriority);
+
         currentSector = opt(json, "setor", "Frigorífico — Setor B2");
         String quando = opt(json, "quando", "hoje, 09:12");
         currentStatus = opt(json, "status", "EM_ANALISE");
@@ -300,7 +340,7 @@ public class OccurrenceDetailFragment extends Fragment {
             tvOccCardTitle.setText(currentMaterial);
         }
         if (tvOccCardLine != null) {
-            tvOccCardLine.setText("Contaminação baixa · ≈ " + currentWeight);
+            tvOccCardLine.setText("Contaminação " + currentContamination + " · ≈ " + currentWeight);
         }
         if (tvOccCardSubtitle != null) {
             tvOccCardSubtitle.setText(currentSector);
@@ -333,6 +373,63 @@ public class OccurrenceDetailFragment extends Fragment {
         displayOccurrencePhoto(localPhoto, remoteUrl);
 
         syncFinalizedUi();
+    }
+
+    private void applyPriorityBadge(String priority) {
+        if (tvOccPriority == null || !isAdded()) {
+            return;
+        }
+        String norm = priority != null
+                ? priority.trim().toUpperCase(java.util.Locale.forLanguageTag("pt-BR"))
+                : "ALTA";
+        if (norm.contains("BAIX") || norm.contains("LOW")) {
+            tvOccPriority.setText(getString(R.string.priority_baixa));
+            tvOccPriority.setBackgroundResource(R.drawable.bg_badge_baixa);
+            tvOccPriority.setTextColor(requireContext().getColor(R.color.priority_low_text));
+        } else if (norm.contains("MÉD") || norm.contains("MED")) {
+            tvOccPriority.setText(getString(R.string.priority_media));
+            tvOccPriority.setBackgroundResource(R.drawable.bg_badge_media);
+            tvOccPriority.setTextColor(requireContext().getColor(R.color.priority_medium_text));
+        } else {
+            tvOccPriority.setText(getString(R.string.priority_alta));
+            tvOccPriority.setBackgroundResource(R.drawable.bg_badge_alta);
+            tvOccPriority.setTextColor(requireContext().getColor(R.color.priority_high_text));
+        }
+    }
+
+    private void showTopBannerToast(String title, String subtitle, boolean showPgrsButton, boolean autoHide) {
+        if (toastFinalized == null || !isAdded()) {
+            return;
+        }
+        if (tvToastFinalizedTitle != null) {
+            tvToastFinalizedTitle.setText(title);
+        }
+        if (tvToastFinalizedSub != null) {
+            tvToastFinalizedSub.setText(subtitle);
+        }
+        if (btnToastOpenPgrs != null) {
+            btnToastOpenPgrs.setVisibility(showPgrsButton ? View.VISIBLE : View.GONE);
+        }
+        toastFinalized.animate().cancel();
+        toastFinalized.setAlpha(0f);
+        toastFinalized.setVisibility(View.VISIBLE);
+        if (autoHide) {
+            toastFinalized.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .withEndAction(() -> toastFinalized.postDelayed(() -> {
+                        if (isAdded() && toastFinalized != null) {
+                            toastFinalized.animate()
+                                    .alpha(0f)
+                                    .setDuration(400)
+                                    .withEndAction(() -> toastFinalized.setVisibility(View.GONE))
+                                    .start();
+                        }
+                    }, 3500))
+                    .start();
+        } else {
+            toastFinalized.animate().alpha(1f).setDuration(350).start();
+        }
     }
 
     private void displayOccurrencePhoto(@Nullable String localPath, @Nullable String remoteUrl) {
@@ -482,15 +579,34 @@ public class OccurrenceDetailFragment extends Fragment {
 
     /** Bottom sheet de alteração de classificação (Figma 17a · 908:5946) */
     private void showEditClassificationSheet(View v) {
+        String initialPrio = "Alta";
+        if (currentPriority != null) {
+            String pUpper = currentPriority.toUpperCase(java.util.Locale.forLanguageTag("pt-BR"));
+            if (pUpper.contains("BAIX") || pUpper.contains("LOW")) {
+                initialPrio = "Baixa";
+            } else if (pUpper.contains("MÉD") || pUpper.contains("MED")) {
+                initialPrio = "Média";
+            }
+        }
         EditClassificationSheet sheet = EditClassificationSheet.newInstance(
-                currentMaterialName, currentQualityClass, "Alta", false, "");
+                currentMaterialName, currentQualityClass, initialPrio, false, "");
         sheet.setOnClassificationChangedListener((material, qualityClass, priority, isHazard, reason) -> {
             String prevClass = currentQualityClass;
             currentQualityClass = qualityClass;
             currentMaterialName = material;
             currentMaterial = currentMaterialName + " (Classe " + currentQualityClass + ")";
+            currentPriority = priority != null
+                    ? priority.toUpperCase(java.util.Locale.forLanguageTag("pt-BR"))
+                    : "ALTA";
             if (tvOccCardTitle != null) {
                 tvOccCardTitle.setText(currentMaterial);
+            }
+            applyPriorityBadge(currentPriority);
+
+            if (currentDetailJson != null) {
+                currentDetailJson.addProperty("material", currentMaterial);
+                currentDetailJson.addProperty("prioridade", currentPriority);
+                PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
             }
 
             // Subtítulo da ação aplicada (Figma 17d · 908:6409)
@@ -520,7 +636,7 @@ public class OccurrenceDetailFragment extends Fragment {
             AuditLog.append(requireContext(), "Breno Gomes", "ADICIONAR_OBSERVACAO",
                     "ocorrencia", occurrenceId, null, obs);
 
-            Toast.makeText(requireContext(), "Observação adicionada com sucesso", Toast.LENGTH_SHORT).show();
+            showTopBannerToast("Observação salva!", "Adicionada ao histórico da ocorrência", false, true);
         });
         sheet.show(getChildFragmentManager(), "add_observation");
     }
@@ -567,7 +683,7 @@ public class OccurrenceDetailFragment extends Fragment {
                         currentMaterial,
                         currentSector,
                         getString(R.string.notif_now),
-                        "ALTA",
+                        currentPriority,
                         "EM_ANALISE",
                         currentMaterial);
                 OccurrenceStore.update(requireContext(), occ);
@@ -578,11 +694,12 @@ public class OccurrenceDetailFragment extends Fragment {
                 syncFinalizedUi();
 
                 // Exibe Toast Flutuante de Ocorrência Finalizada (Figma 19 · 851:4403)
-                if (toastFinalized != null) {
-                    toastFinalized.setAlpha(0f);
-                    toastFinalized.setVisibility(View.VISIBLE);
-                    toastFinalized.animate().alpha(1f).setDuration(350).start();
-                }
+                showTopBannerToast(
+                        getString(R.string.toast_finalized_title),
+                        getString(R.string.toast_finalized_sub),
+                        true,
+                        false
+                );
             });
         }
 
