@@ -133,6 +133,20 @@ public class NewOccurrenceFragment extends Fragment {
         photoEmptyGroup = view.findViewById(R.id.photoEmptyGroup);
         photoPreviewGroup = view.findViewById(R.id.photoPreviewGroup);
         imgPhotoPreview = view.findViewById(R.id.imgPhotoPreview);
+        if (imgPhotoPreview != null) {
+            imgPhotoPreview.setOnClickListener(v -> {
+                if (photoFile != null && photoFile.exists()) {
+                    String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
+                    String sectorName = (sectorIndex >= 0 && sectorIndex < sectors.length) ? sectors[sectorIndex] : "Setor não definido";
+                    com.aula.volta.ui.dialog.ImagePreviewDialog.show(
+                            getParentFragmentManager(),
+                            photoFile.getAbsolutePath(),
+                            "Foto do Resíduo",
+                            sectorName
+                    );
+                }
+            });
+        }
         btnSendAnalysis = view.findViewById(R.id.btnSendAnalysis);
         tvSector = view.findViewById(R.id.tvSector);
         etDescription = view.findViewById(R.id.etDescription);

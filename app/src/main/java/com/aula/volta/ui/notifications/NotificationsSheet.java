@@ -18,6 +18,7 @@ import com.aula.volta.NotificationAdapter;
 import com.aula.volta.R;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.model.Notification;
+import com.aula.volta.data.notification.FirestoreNotificationRepository;
 import com.aula.volta.util.BottomSheetImmersiveHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
@@ -26,7 +27,7 @@ import java.util.List;
 
 /**
  * Bottom sheet de notificações — Figma (790:1854).
- * Lê sempre do NotificationStore (mock agora, FCM depois sem mudar a tela).
+ * Lê e sincroniza via NotificationStore e Cloud Firestore.
  */
 public class NotificationsSheet extends BottomSheetDialogFragment {
 
@@ -43,7 +44,7 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
-        BottomSheetImmersiveHelper.configureBottomSheet(dialog);
+        BottomSheetImmersiveHelper.configureCollapsibleBottomSheet(dialog);
         return dialog;
     }
 
@@ -66,6 +67,12 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
 
         TextView tvMarkAll = view.findViewById(R.id.tvMarkAllRead);
         tvMarkAll.setOnClickListener(v -> {
+            List<Notification> cachedList = NotificationStore.cached(requireContext());
+            for (Notification n : cachedList) {
+                if (!n.isLida() && n.getId() != null) {
+                    FirestoreNotificationRepository.getInstance().markAsRead(n.getId());
+                }
+            }
             NotificationStore.markAllRead(requireContext());
             applyNotifications(NotificationStore.cached(requireContext()));
             notifyParentUpdated();
@@ -74,6 +81,9 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
         RecyclerView rvNotifications = view.findViewById(R.id.rvNotifications);
         adapter = new NotificationAdapter(notification -> {
             NotificationStore.markRead(requireContext(), notification.getId());
+            if (notification.getId() != null) {
+                FirestoreNotificationRepository.getInstance().markAsRead(notification.getId());
+            }
             notifyParentUpdated();
             if (notification.getOccurrenceId() != null
                     && !notification.getOccurrenceId().isEmpty()) {

@@ -29,6 +29,14 @@ public final class BottomSheetImmersiveHelper {
     }
 
     public static void configureBottomSheet(BottomSheetDialog dialog) {
+        configureBottomSheet(dialog, true);
+    }
+
+    public static void configureCollapsibleBottomSheet(BottomSheetDialog dialog) {
+        configureBottomSheet(dialog, false);
+    }
+
+    public static void configureBottomSheet(BottomSheetDialog dialog, boolean expandImmediately) {
         if (dialog == null) return;
 
         Window window = dialog.getWindow();
@@ -43,7 +51,7 @@ public final class BottomSheetImmersiveHelper {
                 public void onViewAttachedToWindow(@NonNull View v) {
                     // Sobrescreve imediatamente qualquer flag aplicada pelo BottomSheetDialog.onAttachedToWindow()
                     applyImmersiveWindow(window);
-                    stripBottomSheetInsets(dialog);
+                    stripBottomSheetInsets(dialog, expandImmediately);
                 }
 
                 @Override
@@ -59,7 +67,7 @@ public final class BottomSheetImmersiveHelper {
         }
 
         dialog.setOnShowListener(d -> {
-            stripBottomSheetInsets(dialog);
+            stripBottomSheetInsets(dialog, expandImmediately);
             Window w = dialog.getWindow();
             if (w != null) {
                 applyImmersiveWindow(w);
@@ -67,13 +75,13 @@ public final class BottomSheetImmersiveHelper {
                 applyImmersiveWindow(w);
                 w.getDecorView().post(() -> {
                     applyImmersiveWindow(w);
-                    stripBottomSheetInsets(dialog);
+                    stripBottomSheetInsets(dialog, expandImmediately);
                 });
             }
         });
     }
 
-    private static void stripBottomSheetInsets(BottomSheetDialog dialog) {
+    private static void stripBottomSheetInsets(BottomSheetDialog dialog, boolean expandImmediately) {
         View container = dialog.findViewById(com.google.android.material.R.id.container);
         if (container != null) {
             container.setFitsSystemWindows(false);
@@ -107,8 +115,14 @@ public final class BottomSheetImmersiveHelper {
 
             BottomSheetBehavior<FrameLayout> behavior = BottomSheetBehavior.from(bottomSheet);
             behavior.setGestureInsetBottomIgnored(true);
-            behavior.setSkipCollapsed(true);
-            behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            if (expandImmediately) {
+                behavior.setSkipCollapsed(true);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else {
+                int halfScreen = (int) (dialog.getContext().getResources().getDisplayMetrics().heightPixels * 0.52f);
+                behavior.setPeekHeight(halfScreen);
+                behavior.setSkipCollapsed(false);
+            }
         }
     }
 

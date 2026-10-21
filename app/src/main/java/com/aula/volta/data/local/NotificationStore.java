@@ -17,10 +17,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Único ponto de leitura/escrita de notificações da UI (item 5 do plano).
- *
- * <p>Mock local agora; FCM futuro pluga chamando {@link #pushLocal} a partir do
- * {@code FirebaseMessagingService} — zero mudança nas telas.</p>
+ * Único ponto de leitura/escrita de notificações da UI.
+ * Integrado ao Cloud Firestore e Firebase Cloud Messaging.
  */
 public final class NotificationStore {
 
@@ -31,6 +29,33 @@ public final class NotificationStore {
 
     public interface LoadCallback {
         void onResult(List<Notification> notifications);
+    }
+
+    public interface ChangeListener {
+        void onChange();
+    }
+
+    private static final List<ChangeListener> changeListeners = new ArrayList<>();
+
+    public static void addListener(ChangeListener listener) {
+        if (listener != null && !changeListeners.contains(listener)) {
+            changeListeners.add(listener);
+        }
+    }
+
+    public static void removeListener(ChangeListener listener) {
+        changeListeners.remove(listener);
+    }
+
+    private static void notifyChange() {
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            for (ChangeListener l : new ArrayList<>(changeListeners)) {
+                try {
+                    l.onChange();
+                } catch (Exception ignored) {
+                }
+            }
+        });
     }
 
     private NotificationStore() {
@@ -78,6 +103,13 @@ public final class NotificationStore {
         return list;
     }
 
+    public static boolean hasNotification(Context context, String id) {
+        if (id == null) {
+            return false;
+        }
+        return containsId(cached(context), id);
+    }
+
     public static int unreadCount(List<Notification> notifications) {
         int count = 0;
         if (notifications != null) {
@@ -90,15 +122,25 @@ public final class NotificationStore {
         return count;
     }
 
-    /** Ponto de entrada do FCM futuro (e do mock local agora). */
+    /** Ponto de entrada do Firestore, FCM e notificações locais criadas no app. */
     public static void pushLocal(Context context, Notification notification) {
+        if (notification == null) {
+            return;
+        }
         Context app = context.getApplicationContext();
         List<Notification> local = new ArrayList<>(localOnly(app));
+        if (containsId(local, notification.getId())) {
+            return;
+        }
         local.add(0, notification);
         PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
+
         List<Notification> list = new ArrayList<>(cached(app));
-        list.add(0, notification);
-        PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+        if (!containsId(list, notification.getId())) {
+            list.add(0, notification);
+            PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+        }
+        notifyChange();
     }
 
     /** Locais ainda não vindos da API (sobrevivem ao refresh). */
@@ -144,7 +186,7 @@ public final class NotificationStore {
     }
 
     private static boolean containsId(List<Notification> list, String id) {
-        if (id == null) {
+        if (id == null || list == null) {
             return false;
         }
         for (Notification n : list) {
@@ -179,6 +221,7 @@ public final class NotificationStore {
             }
         }
         PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
+        notifyChange();
     }
 
     public static void markAllRead(Context context) {
@@ -204,5 +247,6 @@ public final class NotificationStore {
         PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
 
         saveReadIds(app, readSet);
+        notifyChange();
     }
 }

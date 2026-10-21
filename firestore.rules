@@ -1,0 +1,179 @@
+rules_version = '2';
+
+// =============================================================================
+// VOLTA — Cloud Firestore Security Rules
+// =============================================================================
+// Security architecture designed for the VOLTA Waste Management & Circular Economy
+// mobile application (Android / Firebase Firestore).
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // Assumed Data Model
+    // =========================================================================
+    //
+    // Collection: notifications
+    // Document ID: auto-generated or string ID (e.g., n1, n2, or Firestore UUID)
+    //
+    // Fields:
+    //   - id: string (optional, 1..128 chars) - Client or local notification identifier
+    //   - tipo: string (required, enum) - Notification category:
+    //       ['NOVA_OCORRENCIA', 'COLETA_AGENDADA', 'APROVACAO', 'META', 'RANKING', 'SYNC', 'ALERTA', 'INFO', 'SISTEMA']
+    //   - titulo: string (required, 1..200 chars) - Title displayed in UI and system status bar
+    //   - descricao: string (optional, 0..1000 chars) - Detail text / body
+    //   - icone: string (optional, 1..50 chars) - Icon name (e.g. 'bell', 'check', 'truck', 'trophy', 'star')
+    //   - tint: string (optional, 1..50 chars) - Hex color for tint (e.g. '#12A05E')
+    //   - bg: string (optional, 1..50 chars) - Hex color for container background (e.g. '#E2F7EC')
+    //   - lida: bool (required) - Read status indicator
+    //   - timestamp: timestamp (required) - Creation / server timestamp
+    //   - occurrence_id: string (optional/nullable, 0..100 chars) - Associated occurrence ID
+    //   - user_id: string (required, 1..128 chars) - Target recipient ('all' for broadcast or user UID)
+    //   - tempo_relativo: string (optional, 0..100 chars) - Formatted time label (e.g. 'há 5 min')
+    //
+    // =========================================================================
+
+    // =========================================================================
+    // Environment & Feature Flags
+    // =========================================================================
+
+    /**
+     * Development Mode Flag:
+     * Set to true to allow development/test operations while authentication screens
+     * and Firebase Auth tokens are being provisioned in earlier phases.
+     * Set to false for strict production enforcement requiring request.auth != null.
+     */
+    function isDevelopmentTestMode() {
+      return true;
+    }
+
+    // =========================================================================
+    // Helper Functions
+    // =========================================================================
+
+    /**
+     * Check if request has an authenticated Firebase user.
+     */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /**
+     * Check if user is an administrator via custom token claims or verified admin email.
+     */
+    function isAdmin() {
+      return isAuthenticated() && (
+        ('admin' in request.auth.token && request.auth.token.admin == true) ||
+        ('role' in request.auth.token && request.auth.token.role == 'admin') ||
+        (request.auth.token.email != null && request.auth.token.email.matches(".*@admin\\.volta\\.com$"))
+      );
+    }
+
+    /**
+     * Check if user is owner of the given user ID.
+     */
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    /**
+     * Verify list of allowed notification types.
+     */
+    function isAllowedNotificationType(tipo) {
+      return tipo in [
+        'NOVA_OCORRENCIA',
+        'COLETA_AGENDADA',
+        'APROVACAO',
+        'META',
+        'RANKING',
+        'SYNC',
+        'ALERTA',
+        'INFO',
+        'SISTEMA'
+      ];
+    }
+
+    /**
+     * Strict Domain Validator for Notification documents.
+     * Enforced on BOTH create and update operations to prevent the Update Bypass vulnerability.
+     */
+    function isValidNotification(data) {
+      let allowedFields = [
+        'id', 'tipo', 'titulo', 'descricao', 'icone', 'tint', 'bg',
+        'lida', 'timestamp', 'occurrence_id', 'user_id', 'tempo_relativo'
+      ];
+      let requiredFields = [
+        'tipo', 'titulo', 'lida', 'timestamp', 'user_id'
+      ];
+
+      return data.keys().hasAll(requiredFields) &&
+             data.keys().hasOnly(allowedFields) &&
+             data.tipo is string && isAllowedNotificationType(data.tipo) &&
+             data.titulo is string && data.titulo.size() >= 1 && data.titulo.size() <= 200 &&
+             (!('descricao' in data) || (data.descricao is string && data.descricao.size() <= 1000)) &&
+             (!('icone' in data) || (data.icone is string && data.icone.size() >= 1 && data.icone.size() <= 50)) &&
+             (!('tint' in data) || (data.tint is string && data.tint.size() >= 1 && data.tint.size() <= 50)) &&
+             (!('bg' in data) || (data.bg is string && data.bg.size() >= 1 && data.bg.size() <= 50)) &&
+             data.lida is bool &&
+             data.timestamp is timestamp &&
+             (!('occurrence_id' in data) || data.occurrence_id == null || (data.occurrence_id is string && data.occurrence_id.size() <= 100)) &&
+             data.user_id is string && data.user_id.size() >= 1 && data.user_id.size() <= 128 &&
+             (!('id' in data) || (data.id is string && data.id.size() >= 1 && data.id.size() <= 128)) &&
+             (!('tempo_relativo' in data) || (data.tempo_relativo is string && data.tempo_relativo.size() <= 100));
+    }
+
+    // =========================================================================
+    // Rules: notifications Collection
+    // =========================================================================
+
+    match /notifications/{notificationId} {
+
+      /**
+       * READ:
+       * Allows authenticated users (or public read during development test mode)
+       * to retrieve real-time notification streams.
+       * Accommodates the client query:
+       * db.collection("notifications").orderBy("timestamp", Query.Direction.DESCENDING).limit(50)
+       */
+      allow read: if isAuthenticated() || isDevelopmentTestMode();
+
+      /**
+       * CREATE:
+       * Allowed for authenticated users or system services (or during development test mode).
+       * Must strictly satisfy schema type bounds and size limits.
+       * Non-admin users cannot target arbitrary other users' private queues.
+       */
+      allow create: if (isAuthenticated() || isDevelopmentTestMode())
+                    && isValidNotification(request.resource.data)
+                    && (isDevelopmentTestMode() || isAdmin() || request.resource.data.user_id in ['all', request.auth.uid]);
+
+      /**
+       * UPDATE:
+       * Restricted strictly to marking notifications as read ('lida' field).
+       * - MUST satisfy isValidNotification (Validator Function Pattern)
+       * - ONLY 'lida' may be altered; all other metadata (title, text, type, timestamp) is immutable
+       * - Only the targeted recipient ('all' or matching user UID), admin, or dev mode can update
+       */
+      allow update: if (isAuthenticated() || isDevelopmentTestMode())
+                    && isValidNotification(request.resource.data)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lida'])
+                    && (isDevelopmentTestMode() || resource.data.user_id == 'all' || resource.data.user_id == request.auth.uid || isAdmin());
+
+      /**
+       * DELETE:
+       * Restricted strictly to administrators or document owners.
+       */
+      allow delete: if (isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin()))
+                    || (isDevelopmentTestMode() && isAdmin());
+    }
+
+    // =========================================================================
+    // Default Deny
+    // =========================================================================
+    // Strictly deny read and write access to all other paths in the database.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

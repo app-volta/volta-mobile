@@ -72,6 +72,8 @@ public class OccurrenceDetailFragment extends Fragment {
     private TextView tvObserveSub;
     private MaterialButton btnFinalizeOcc;
     private View layoutBottomBarOcc;
+    private String currentLocalPhoto;
+    private String currentRemoteUrl;
     private View toastFinalized;
     private TextView btnToastOpenPgrs;
 
@@ -115,6 +117,17 @@ public class OccurrenceDetailFragment extends Fragment {
         tvOccSubtitle = view.findViewById(R.id.tvOccSubtitle);
         tvOccStatus = view.findViewById(R.id.tvOccStatus);
         imgOccThumbnail = view.findViewById(R.id.imgOccThumbnail);
+        if (imgOccThumbnail != null) {
+            imgOccThumbnail.setOnClickListener(v -> {
+                com.aula.volta.ui.dialog.ImagePreviewDialog.show(
+                        getParentFragmentManager(),
+                        currentLocalPhoto,
+                        currentRemoteUrl,
+                        currentMaterial != null ? currentMaterial : "Foto da Ocorrência",
+                        currentSector != null ? currentSector : ("Ocorrência #" + occurrenceId)
+                );
+            });
+        }
         tvOccCardTitle = view.findViewById(R.id.tvOccCardTitle);
         tvOccCardLine = view.findViewById(R.id.tvOccCardLine);
         tvOccCardSubtitle = view.findViewById(R.id.tvOccCardSubtitle);
@@ -323,6 +336,8 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void displayOccurrencePhoto(@Nullable String localPath, @Nullable String remoteUrl) {
+        this.currentLocalPhoto = localPath;
+        this.currentRemoteUrl = remoteUrl;
         if (imgOccThumbnail == null) {
             return;
         }
@@ -556,6 +571,9 @@ public class OccurrenceDetailFragment extends Fragment {
                         "EM_ANALISE",
                         currentMaterial);
                 OccurrenceStore.update(requireContext(), occ);
+
+                com.aula.volta.data.notification.NotificationHelper.notifyPgrsFinalized(
+                        requireContext(), occurrenceId);
 
                 syncFinalizedUi();
 

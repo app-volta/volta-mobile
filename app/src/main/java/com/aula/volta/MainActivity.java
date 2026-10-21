@@ -160,6 +160,17 @@ public class MainActivity extends AppCompatActivity {
         // Canais de Notificação Android (Fase 26)
         com.aula.volta.data.notification.NotificationHelper.createChannels(this);
 
+        // Notificações em Tempo Real via Firebase Cloud Firestore
+        com.aula.volta.data.notification.FirestoreNotificationRepository.getInstance().startListening(this);
+
+        // Obtenção do Token FCM (Cloud Messaging)
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        android.util.Log.d("VoltaFCM", "FCM Device Token: " + task.getResult());
+                    }
+                });
+
         // Sincronização Offline Industrial (Fase 25)
         com.aula.volta.data.sync.SyncManager.registerNetworkCallback(this);
         com.aula.volta.data.sync.SyncManager.syncPending(this);

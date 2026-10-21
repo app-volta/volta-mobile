@@ -12,11 +12,12 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.aula.volta.MainActivity;
 import com.aula.volta.R;
+import com.aula.volta.data.local.NotificationStore;
+import com.aula.volta.data.model.Notification;
 
 /**
- * Utilitário central para criação de canais e emissão de notificações
- * na bandeja do sistema Android.
- * Fase 26 — Canais de Notificação Android & Notificações Locais em Tempo Real.
+ * Utilitário central para criação de canais, emissão de notificações na bandeja do sistema Android,
+ * armazenamento no cache unificado e replicação em tempo real no Cloud Firestore.
  */
 public final class NotificationHelper {
 
@@ -70,54 +71,159 @@ public final class NotificationHelper {
     }
 
     /**
-     * Emite notificação de nova ocorrência registrada.
+     * Emite notificação de nova ocorrência registrada e replica no Firestore.
      */
     public static void notifyOccurrenceCreated(Context context, String occurrenceId,
                                               String material, String setor) {
         String title = context.getString(R.string.notif_occurrence_title, occurrenceId);
         String body = context.getString(R.string.notif_occurrence_desc, material, setor);
+        String notifId = "occ_" + occurrenceId;
+
+        // 1. Bandeja nativa Android
         showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
                 title, body, occurrenceId);
+
+        // 2. Cache local do app
+        NotificationStore.pushLocal(context, new Notification(
+                notifId,
+                "NOVA_OCORRENCIA",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "bell",
+                "#C68A10",
+                "#FDF3DE",
+                false,
+                occurrenceId
+        ));
+
+        // 3. Cloud Firestore em tempo real
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#C68A10", "#FDF3DE");
     }
 
     /**
-     * Emite notificação de coleta agendada com a cooperativa.
+     * Emite notificação de coleta agendada com a cooperativa e replica no Firestore.
      */
     public static void notifyPickupScheduled(Context context, String coopName, String horario) {
         String title = context.getString(R.string.notif_pickup_title);
         String body = context.getString(R.string.notif_pickup_body, coopName, horario);
+        String notifId = "pickup_" + System.currentTimeMillis();
+
         showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
                 title, body, null);
+
+        NotificationStore.pushLocal(context, new Notification(
+                notifId,
+                "COLETA_AGENDADA",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "truck",
+                "#3B82F6",
+                "#E4EFFF",
+                false,
+                null
+        ));
+
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                title, body, "COLETA_AGENDADA", null, "truck", "#3B82F6", "#E4EFFF");
     }
 
     /**
-     * Emite notificação nativa de destinação solicitada para cooperativa.
+     * Emite notificação nativa de destinação solicitada para cooperativa e replica no Firestore.
      */
     public static void notifyDestinationRequested(Context context, String coopName, String occurrenceId) {
         String title = context.getString(R.string.notif_pick_title, coopName);
         String body = context.getString(R.string.notif_pick_desc, occurrenceId);
+        String notifId = "dest_" + occurrenceId + "_" + System.currentTimeMillis();
+
         showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
                 title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                notifId,
+                "COLETA_AGENDADA",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "truck",
+                "#3B82F6",
+                "#E4EFFF",
+                false,
+                occurrenceId
+        ));
+
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                title, body, "COLETA_AGENDADA", occurrenceId, "truck", "#3B82F6", "#E4EFFF");
     }
 
     /**
-     * Emite notificação de ocorrência finalizada no PGRS.
+     * Emite notificação de ocorrência finalizada no PGRS e replica no Firestore.
      */
     public static void notifyPgrsFinalized(Context context, String occurrenceId) {
         String title = context.getString(R.string.notif_pgrs_finalized_title, occurrenceId);
         String body = context.getString(R.string.notif_pgrs_finalized_body);
+        String notifId = "pgrs_" + occurrenceId;
+
         showNotification(context, CHANNEL_GOALS, (int) System.currentTimeMillis(),
                 title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                notifId,
+                "META",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "trophy",
+                "#8B6FE0",
+                "#EFEAFB",
+                false,
+                occurrenceId
+        ));
+
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                title, body, "META", occurrenceId, "trophy", "#8B6FE0", "#EFEAFB");
     }
 
     /**
-     * Emite notificação quando uma ocorrência offline é sincronizada na nuvem.
+     * Emite notificação quando uma ocorrência offline é sincronizada na nuvem e replica no Firestore.
      */
     public static void notifySyncComplete(Context context, String occurrenceId,
                                           String material, String setor) {
         String title = context.getString(R.string.sync_success_title, occurrenceId);
         String body = context.getString(R.string.sync_success_desc, material, setor);
+        String notifId = "sync_" + occurrenceId;
+
         showNotification(context, CHANNEL_SYNC, (int) System.currentTimeMillis(),
+                title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                notifId,
+                "SYNC",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "check",
+                "#0E7C48",
+                "#E2F7EC",
+                false,
+                occurrenceId
+        ));
+
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                title, body, "SYNC", occurrenceId, "check", "#0E7C48", "#E2F7EC");
+    }
+
+    /**
+     * Emite notificação remota vinda do Firebase (FCM / Firestore).
+     */
+    public static void notifyRemote(Context context, String channelId, String title,
+                                    String body, String occurrenceId) {
+        if (channelId == null || channelId.isEmpty()) {
+            channelId = CHANNEL_OCCURRENCES;
+        }
+        showNotification(context, channelId, (int) System.currentTimeMillis(),
                 title, body, occurrenceId);
     }
 

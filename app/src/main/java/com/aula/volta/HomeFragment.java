@@ -154,6 +154,13 @@ public class HomeFragment extends Fragment {
         loadSummary();
         loadOccurrences();
         loadNotificationDot();
+        NotificationStore.addListener(this::loadNotificationDot);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        NotificationStore.removeListener(this::loadNotificationDot);
     }
 
     @Override

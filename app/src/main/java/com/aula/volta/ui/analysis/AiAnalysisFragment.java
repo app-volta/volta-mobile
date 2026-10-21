@@ -146,11 +146,29 @@ public class AiAnalysisFragment extends Fragment {
         ImageView imgAiPhoto = view.findViewById(R.id.imgAiPhoto);
         if (photoPath != null && imgAiPhoto != null) {
             imgAiPhoto.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            imgAiPhoto.setOnClickListener(v -> {
+                String title = (tvAiMaterial != null && tvAiMaterial.getText() != null)
+                        ? tvAiMaterial.getText().toString() : "Foto do Resíduo";
+                com.aula.volta.ui.dialog.ImagePreviewDialog.show(
+                        getParentFragmentManager(),
+                        photoPath,
+                        title,
+                        setor != null ? setor : "Análise de IA"
+                );
+            });
         }
 
         ImageView imgAiPhotoScan = view.findViewById(R.id.imgAiPhotoScan);
         if (photoPath != null && imgAiPhotoScan != null) {
             imgAiPhotoScan.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            imgAiPhotoScan.setOnClickListener(v -> {
+                com.aula.volta.ui.dialog.ImagePreviewDialog.show(
+                        getParentFragmentManager(),
+                        photoPath,
+                        "Imagem em Análise",
+                        setor != null ? setor : "Identificação de IA"
+                );
+            });
         }
 
         View btnBack = view.findViewById(R.id.btnBackAnalysis);
@@ -336,6 +354,14 @@ public class AiAnalysisFragment extends Fragment {
         ImageView imgEditPhotoThumb = root.findViewById(R.id.imgEditPhotoThumb);
         if (photoPath != null && imgEditPhotoThumb != null) {
             imgEditPhotoThumb.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            imgEditPhotoThumb.setOnClickListener(v -> {
+                com.aula.volta.ui.dialog.ImagePreviewDialog.show(
+                        getParentFragmentManager(),
+                        photoPath,
+                        "Foto do Resíduo",
+                        setor != null ? setor : "Classificação manual"
+                );
+            });
         }
 
         // Stepper Peso
@@ -772,21 +798,8 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void pushOccurrenceNotification(String occurrenceId, String material) {
-        String desc = (setor != null && !setor.isEmpty())
-                ? getString(R.string.notif_occurrence_desc, material, setor)
-                : material;
-        Notification notification = new Notification(
-                "local_" + System.currentTimeMillis(),
-                "NOVA_OCORRENCIA",
-                getString(R.string.notif_occurrence_title, occurrenceId),
-                desc,
-                getString(R.string.notif_now),
-                "bell",
-                "#C68A10",
-                "#FDF3DE",
-                false,
-                occurrenceId);
-        NotificationStore.pushLocal(requireContext(), notification);
+        com.aula.volta.data.notification.NotificationHelper.notifyOccurrenceCreated(
+                requireContext(), occurrenceId, material, setor != null ? setor : "");
     }
 
     private void pushOccurrenceToList(String occurrenceId, String material) {
