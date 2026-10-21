@@ -381,11 +381,13 @@ public class NewOccurrenceFragment extends Fragment {
             Bitmap bmp = BitmapFactory.decodeFile(photoFile.getAbsolutePath());
             imgPhotoPreview.setImageBitmap(bmp);
             btnSendAnalysis.setEnabled(true);
+            btnSendAnalysis.setBackgroundTintList(null);
             btnSendAnalysis.setBackgroundResource(R.drawable.bg_btn_primary_v);
             btnSendAnalysis.setTextColor(requireContext().getColor(R.color.white));
         } else {
             imgPhotoPreview.setImageDrawable(null);
             btnSendAnalysis.setEnabled(false);
+            btnSendAnalysis.setBackgroundTintList(null);
             btnSendAnalysis.setBackgroundResource(R.drawable.bg_btn_disabled_v);
             btnSendAnalysis.setTextColor(requireContext().getColor(R.color.vf_disabled_text));
         }

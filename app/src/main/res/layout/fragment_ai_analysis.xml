@@ -1,23 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Análise IA — Figma 851:3792 (15 · escaneando, 16 · análise, 16a · editar, 16b · revisada) -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
-    <!-- Background oficial com fluidos e setas em marca d'água (Figma 790:1625) -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:importantForAccessibility="no"
-        android:scaleType="fitXY"
-        android:src="@drawable/bg_home_fluidos" />
-
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollAiAnalysis"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@+id/layoutBottomBarAi"
+        android:layout_alignParentTop="true"
         android:fillViewport="true">
 
         <LinearLayout
@@ -30,33 +24,36 @@
             android:paddingBottom="24dp">
 
             <!-- Botão Voltar (Sombra blur sem borda - Figma 851:3989) -->
-            <FrameLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btnBackAnalysis"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginBottom="16dp"
-                android:background="@drawable/bg_circle_white_shadow"
                 android:clickable="true"
                 android:contentDescription="@string/occurrence_back"
-                android:elevation="3dp"
-                android:focusable="true">
+                android:focusable="true"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
 
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_chevron_left" />
-            </FrameLayout>
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="#1B2430" />
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Título e Subtítulo (Figma 851:3992 / 851:3993) -->
             <TextView
                 android:id="@+id/tvAiHeaderTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
+                android:fontFamily="@font/poppins_bold"
                 android:text="@string/ai_title"
                 android:textColor="@color/vf_text_primary"
-                android:textSize="27sp"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -68,7 +65,7 @@
                 android:fontFamily="sans-serif"
                 android:text="@string/occurrence_step_2"
                 android:textColor="@color/vf_text_secondary"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
 
             <!-- Progresso 2 de 2: duas barras cheias verdes (Figma 851:3994 / 851:3995) -->
             <LinearLayout
@@ -350,47 +347,11 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Confiança Bar Skeleton (0%) -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:background="@drawable/bg_confidence_row"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="14dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
-                        android:text="@string/ai_label_confidence"
-                        android:textColor="@color/vf_text_secondary"
-                        android:textSize="13sp" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="6dp"
-                        android:layout_marginStart="14dp"
-                        android:layout_marginEnd="14dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_step_track"
-                        android:orientation="horizontal" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif"
-                        android:text="0%"
-                        android:textColor="@color/vf_green_deep"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
                 <!-- Skeleton VOLTA recomenda -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:layout_marginBottom="24dp"
                     android:background="@drawable/bg_card_stat_resolved"
                     android:gravity="center_vertical"
@@ -412,7 +373,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif"
+                            android:fontFamily="@font/poppins_bold"
                             android:text="@string/ai_label_recommendation"
                             android:textColor="@color/vf_green"
                             android:textSize="13.5sp"
@@ -427,44 +388,6 @@
                             android:textColor="@color/vf_reco_text"
                             android:textSize="12sp" />
                     </LinearLayout>
-                </LinearLayout>
-
-                <!-- Botões desabilitados durante loading -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:alpha="0.4"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_marginEnd="8dp"
-                        android:layout_weight="2"
-                        android:background="@drawable/bg_btn_primary_v"
-                        android:enabled="false"
-                        android:text="@string/ai_confirm"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null"
-                        app:cornerRadius="16dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_btn_edit_outline"
-                        android:enabled="false"
-                        android:text="@string/ai_edit"
-                        android:textAllCaps="false"
-                        android:textColor="@color/vf_green"
-                        android:textSize="14.5sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null"
-                        app:cornerRadius="16dp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -579,7 +502,7 @@
                     <LinearLayout
                         android:id="@+id/cardAiType"
                         android:layout_width="0dp"
-                        android:layout_height="68dp"
+                        android:layout_height="72dp"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_type_gold"
@@ -592,7 +515,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif"
+                            android:fontFamily="@font/poppins_semibold"
                             android:text="@string/ai_label_type"
                             android:textColor="@color/vf_gold"
                             android:textSize="12.5sp" />
@@ -602,10 +525,10 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:fontFamily="sans-serif"
+                            android:fontFamily="@font/poppins_bold"
                             android:text="Papelão A"
                             android:textColor="@color/vf_gold"
-                            android:textSize="18sp"
+                            android:textSize="20sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -613,7 +536,7 @@
                     <LinearLayout
                         android:id="@+id/cardAiContamination"
                         android:layout_width="0dp"
-                        android:layout_height="68dp"
+                        android:layout_height="72dp"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_stat_resolved"
@@ -626,7 +549,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif"
+                            android:fontFamily="@font/poppins_semibold"
                             android:text="@string/ai_label_contamination"
                             android:textColor="@color/vf_green"
                             android:textSize="12.5sp" />
@@ -636,10 +559,10 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:fontFamily="sans-serif"
+                            android:fontFamily="@font/poppins_bold"
                             android:text="Baixa"
                             android:textColor="@color/vf_green"
-                            android:textSize="18sp"
+                            android:textSize="20sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
@@ -662,7 +585,7 @@
                         <LinearLayout
                             android:id="@+id/cardAiQuantity"
                             android:layout_width="match_parent"
-                            android:layout_height="68dp"
+                            android:layout_height="72dp"
                             android:background="@drawable/bg_card_stat_recycled"
                             android:orientation="vertical"
                             android:paddingStart="14dp"
@@ -673,7 +596,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:fontFamily="sans-serif"
+                                android:fontFamily="@font/poppins_semibold"
                                 android:text="@string/ai_label_quantity"
                                 android:textColor="@color/vf_blue"
                                 android:textSize="12.5sp" />
@@ -683,10 +606,10 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:fontFamily="sans-serif"
+                                android:fontFamily="@font/poppins_bold"
                                 android:text="≈ 38 kg"
                                 android:textColor="@color/vf_blue"
-                                android:textSize="18sp"
+                                android:textSize="20sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
@@ -714,7 +637,7 @@
                     <LinearLayout
                         android:id="@+id/cardAiUnits"
                         android:layout_width="0dp"
-                        android:layout_height="68dp"
+                        android:layout_height="72dp"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_card_stat_purple"
@@ -728,7 +651,7 @@
                             android:id="@+id/tvAiUnitsLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif"
+                            android:fontFamily="@font/poppins_semibold"
                             android:text="Caixas"
                             android:textColor="@color/vf_purple"
                             android:textSize="12.5sp" />
@@ -738,10 +661,10 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:fontFamily="sans-serif"
+                            android:fontFamily="@font/poppins_bold"
                             android:text="11 un."
                             android:textColor="@color/vf_purple"
-                            android:textSize="18sp"
+                            android:textSize="20sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
@@ -834,45 +757,6 @@
                             android:textColor="#355443"
                             android:textSize="12.5sp" />
                     </LinearLayout>
-                </LinearLayout>
-
-                <!-- Botões Inferiores: Confirmar e gerar relatório / Editar (Figma 851:4185 / 851:4187) -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnConfirmAnalysis"
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="2"
-                        android:background="@drawable/bg_btn_primary_v"
-                        android:fontFamily="sans-serif"
-                        android:text="Confirmar e gerar relatório"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null"
-                        app:cornerRadius="16dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnEditAnalysis"
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_btn_edit_outline"
-                        android:fontFamily="sans-serif"
-                        android:text="Editar"
-                        android:textAllCaps="false"
-                        android:textColor="#1BA463"
-                        android:textSize="14.5sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null"
-                        app:cornerRadius="16dp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -1444,55 +1328,110 @@
                             android:textSize="12.5sp" />
                     </LinearLayout>
                 </LinearLayout>
-
-                <!-- Botões Salvar Correção e Cancelar (Figma 907:5210) -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSaveCorrection"
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1.6"
-                        android:background="@drawable/bg_btn_primary_v"
-                        android:fontFamily="sans-serif"
-                        android:text="Salvar correção"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="14.5sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null"
-                        app:cornerRadius="16dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCancelCorrection"
-                        android:layout_width="0dp"
-                        android:layout_height="56dp"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_btn_edit_outline"
-                        android:fontFamily="sans-serif"
-                        android:text="Cancelar"
-                        android:textAllCaps="false"
-                        android:textColor="@color/vf_text_secondary"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        app:backgroundTint="@null"
-                        app:cornerRadius="16dp" />
-                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Barra Inferior Fixa de Ações (Figma 851:3972 / 851:4185 / 907:5210) -->
+    <FrameLayout
+        android:id="@+id/layoutBottomBarAi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/vf_bg"
+        android:paddingStart="20dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp">
+
+        <!-- Ações do Resultado (16 e 16b) -->
+        <LinearLayout
+            android:id="@+id/bottomBarActionsResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConfirmAnalysis"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="2"
+                android:background="@drawable/bg_btn_primary_v"
+                android:fontFamily="@font/poppins_bold"
+                android:text="Confirmar e gerar relatório"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14.5sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="16dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditAnalysis"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_btn_edit_outline"
+                android:fontFamily="@font/poppins_bold"
+                android:text="Editar"
+                android:textAllCaps="false"
+                android:textColor="#1BA463"
+                android:textSize="14.5sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="16dp" />
+        </LinearLayout>
+
+        <!-- Ações do Modo Editar (16a) -->
+        <LinearLayout
+            android:id="@+id/bottomBarActionsEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveCorrection"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1.7"
+                android:background="@drawable/bg_btn_primary_v"
+                android:fontFamily="@font/poppins_bold"
+                android:text="Salvar correção"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14.5sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="16dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelCorrection"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_btn_edit_outline"
+                android:fontFamily="@font/poppins_semibold"
+                android:text="Cancelar"
+                android:textAllCaps="false"
+                android:textColor="#1BA463"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:cornerRadius="16dp" />
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- Top Toast de Correção Salva (Figma 16b · 907:5084) -->
     <LinearLayout
         android:id="@+id/toastCorrectionSaved"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
+        android:layout_alignParentTop="true"
         android:layout_marginStart="16dp"
         android:layout_marginTop="12dp"
         android:layout_marginEnd="16dp"
@@ -1546,4 +1485,4 @@
                 android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
-</FrameLayout>
+</RelativeLayout>

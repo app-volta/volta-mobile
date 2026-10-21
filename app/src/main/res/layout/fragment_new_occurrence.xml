@@ -6,14 +6,6 @@
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
-    <!-- Background oficial com fluidos e setas em marca d'água (Figma 790:1625) -->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:importantForAccessibility="no"
-        android:scaleType="fitXY"
-        android:src="@drawable/bg_home_fluidos" />
-
     <!-- Conteúdo principal do formulário (12 e 14) -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -36,32 +28,35 @@
                 android:paddingBottom="16dp">
 
                 <!-- Botão Voltar (Sombra blur sem borda - Figma 851:3807) -->
-                <FrameLayout
+                <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnBackRegister"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_marginBottom="16dp"
-                    android:background="@drawable/bg_circle_white_shadow"
                     android:clickable="true"
                     android:contentDescription="@string/occurrence_back"
-                    android:elevation="3dp"
-                    android:focusable="true">
+                    android:focusable="true"
+                    app:cardBackgroundColor="@color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    app:strokeWidth="0dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/ic_chevron_left" />
-                </FrameLayout>
+                        android:src="@drawable/ic_chevron_left"
+                        app:tint="#1B2430" />
+                </com.google.android.material.card.MaterialCardView>
 
                 <!-- Título e Subtítulo (Figma 851:3810 / 851:3811) -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
+                    android:fontFamily="@font/poppins_bold"
                     android:text="@string/occurrence_new_title"
                     android:textColor="@color/vf_text_primary"
-                    android:textSize="27sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -72,7 +67,7 @@
                     android:fontFamily="sans-serif"
                     android:text="@string/occurrence_step_1"
                     android:textColor="@color/vf_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="14sp" />
 
                 <!-- Progresso 1 de 2: duas barras arredondadas discretas (Figma 851:3812 / 851:3813) -->
                 <LinearLayout
@@ -116,11 +111,14 @@
                         android:paddingEnd="20dp"
                         android:paddingBottom="24dp">
 
-                        <!-- Círculo da Câmera 64x64 verde claro (Figma 851:3815) -->
-                        <FrameLayout
+                        <!-- Círculo da Câmera 64x64 verde claro perfeito (Figma 851:3815) -->
+                        <com.google.android.material.card.MaterialCardView
                             android:layout_width="64dp"
                             android:layout_height="64dp"
-                            android:background="@drawable/bg_circle_green_light">
+                            app:cardBackgroundColor="#E2F7EC"
+                            app:cardCornerRadius="32dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="0dp">
 
                             <ImageView
                                 android:layout_width="28dp"
@@ -128,7 +126,7 @@
                                 android:layout_gravity="center"
                                 android:src="@drawable/ic_camera_official"
                                 app:tint="#12A05E" />
-                        </FrameLayout>
+                        </com.google.android.material.card.MaterialCardView>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -295,10 +293,10 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
+                    android:fontFamily="@font/poppins_semibold"
                     android:text="@string/occurrence_desc_label"
                     android:textColor="@color/vf_text_primary"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <EditText
@@ -312,20 +310,20 @@
                     android:gravity="top"
                     android:hint="@string/occurrence_desc_hint"
                     android:inputType="textMultiLine|textCapSentences"
-                    android:minHeight="92dp"
+                    android:minHeight="120dp"
                     android:padding="14dp"
                     android:textColor="@color/vf_text_primary"
                     android:textColorHint="#93AC9E"
-                    android:textSize="13.5sp" />
+                    android:textSize="14.5sp" />
 
                 <!-- Campo Localização (Figma 851:3835 / 851:3836) -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif"
+                    android:fontFamily="@font/poppins_semibold"
                     android:text="@string/occurrence_location_label"
                     android:textColor="@color/vf_text_primary"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -361,17 +359,10 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:fontFamily="sans-serif"
+                        android:fontFamily="@font/poppins_semibold"
                         android:textColor="@color/vf_text_primary"
-                        android:textSize="14.5sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
-
-                    <!-- Seta para baixo discreta (Figma 851:3842) -->
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_chevron_down"
-                        app:tint="@color/vf_text_secondary" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
@@ -392,7 +383,7 @@
                 android:layout_height="56dp"
                 android:background="@drawable/bg_btn_disabled_v"
                 android:enabled="false"
-                android:fontFamily="sans-serif"
+                android:fontFamily="@font/poppins_bold"
                 android:text="@string/occurrence_btn_send_analysis"
                 android:textAllCaps="false"
                 android:textColor="@color/vf_disabled_text"

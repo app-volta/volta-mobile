@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Checkmark simples verde oficial (Figma 851:3947: #0E7C48 w=1.8dp) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="14dp"
     android:height="14dp"
-    android:viewportWidth="16"
-    android:viewportHeight="16">
+    android:viewportWidth="14"
+    android:viewportHeight="14">
     <path
-        android:pathData="M2.5,8.5 L6,12 L13.5,4"
-        android:strokeWidth="2.2"
-        android:strokeColor="#12A05E"
+        android:pathData="M2.5,7.2 L5.5,10.2 L11.5,3.8"
+        android:strokeWidth="1.8"
+        android:strokeColor="#0E7C48"
         android:fillColor="@android:color/transparent"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />

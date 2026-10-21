@@ -196,7 +196,7 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_camera"
+                android:src="@drawable/ic_camera_official"
                 app:tint="@color/vf_green" />
         </FrameLayout>
 

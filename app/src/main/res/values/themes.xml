@@ -16,6 +16,9 @@
         <!-- Status Bar -->
         <item name="android:statusBarColor">@color/volta_background_light</item>
         <item name="android:windowLightStatusBar">true</item>
+
+        <!-- Bottom Sheet Dialog Theme -->
+        <item name="bottomSheetDialogTheme">@style/Theme.Volta.BottomSheetDialog</item>
     </style>
 
     <style name="Theme.Volta" parent="Base.Theme.Volta" />
@@ -36,5 +39,6 @@
 
     <style name="Volta.BottomSheetModal" parent="Widget.Material3.BottomSheet.Modal">
         <item name="backgroundTint">@android:color/transparent</item>
+        <item name="shapeAppearance">@null</item>
     </style>
 </resources>

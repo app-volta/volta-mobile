@@ -1,25 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Câmera oficial Volta — Figma 851:3816 (12 · Registrar) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="18dp"
-    android:height="16dp"
-    android:viewportWidth="18"
-    android:viewportHeight="16">
-    <!-- Camera oficial Volta - extraído de NovoRegistro.svg clip 55,168 -->
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="28"
+    android:viewportHeight="28">
     <path
-        android:pathData="M14.5385,3.846 H3.4616 C1.9321,3.846 0.6923,5.086 0.6923,6.615 V12.154 C0.6923,13.683 1.9321,14.923 3.4616,14.923 H14.5385 C16.0679,14.923 17.3077,13.683 17.3077,12.154 V6.615 C17.3077,5.086 16.0679,3.846 14.5385,3.846 Z"
-        android:strokeWidth="1.45"
-        android:strokeColor="#0E7C48"
-        android:fillColor="@android:color/transparent"
-        android:strokeLineJoin="round" />
+        android:pathData="M4.66667,9.33325H8.16667L10.5,5.83325H17.5L19.8333,9.33325H23.3333C23.6428,9.33325 23.9395,9.45617 24.1583,9.67496C24.3771,9.89375 24.5,10.1905 24.5,10.4999V22.1666C24.5,22.476 24.3771,22.7728 24.1583,22.9915C23.9395,23.2103 23.6428,23.3333 23.3333,23.3333H4.66667C4.35725,23.3333 4.0605,23.2103 3.84171,22.9915C3.62292,22.7728 3.5,22.476 3.5,22.1666V10.4999C3.5,10.1905 3.62292,9.89375 3.84171,9.67496C4.0605,9.45617 4.35725,9.33325 4.66667,9.33325Z"
+        android:strokeWidth="2.2"
+        android:strokeColor="#1BA463"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
     <path
-        android:pathData="M5.8846,3.846 L7.2692,1.077 H10.7308 L12.1154,3.846"
-        android:strokeWidth="1.45"
-        android:strokeColor="#0E7C48"
-        android:fillColor="@android:color/transparent"
-        android:strokeLineJoin="round" />
-    <path
-        android:pathData="M9,11.946 A2.9077,2.9077 0 1,0 9,6.131 A2.9077,2.9077 0 1,0 9,11.946 Z"
-        android:strokeWidth="1.45"
-        android:strokeColor="#0E7C48"
+        android:pathData="M18.0833,15.7501C18.0833,18.0052 16.2552,19.8334 14,19.8334C11.7448,19.8334 9.91666,18.0052 9.91666,15.7501C9.91666,13.4949 11.7448,11.6667 14,11.6667C16.2552,11.6667 18.0833,13.4949 18.0833,15.7501Z"
+        android:strokeWidth="2.2"
+        android:strokeColor="#1BA463"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
         android:fillColor="@android:color/transparent" />
 </vector>

@@ -54,6 +54,8 @@ public class AiAnalysisFragment extends Fragment {
     private LinearLayout aiResultGroup;
     private LinearLayout aiEditGroup;
     private View toastCorrectionSaved;
+    private View bottomBarActionsResult;
+    private View bottomBarActionsEdit;
 
     private TextView tvAiHeaderTitle;
     private TextView tvAiHeaderSubtitle;
@@ -111,6 +113,15 @@ public class AiAnalysisFragment extends Fragment {
         aiResultGroup = view.findViewById(R.id.aiResultGroup);
         aiEditGroup = view.findViewById(R.id.aiEditGroup);
         toastCorrectionSaved = view.findViewById(R.id.toastCorrectionSaved);
+        bottomBarActionsResult = view.findViewById(R.id.bottomBarActionsResult);
+        bottomBarActionsEdit = view.findViewById(R.id.bottomBarActionsEdit);
+
+        if (bottomBarActionsResult != null) {
+            bottomBarActionsResult.setVisibility(View.GONE);
+        }
+        if (bottomBarActionsEdit != null) {
+            bottomBarActionsEdit.setVisibility(View.GONE);
+        }
 
         tvAiHeaderTitle = view.findViewById(R.id.tvAiHeaderTitle);
         tvAiHeaderSubtitle = view.findViewById(R.id.tvAiHeaderSubtitle);
@@ -231,6 +242,12 @@ public class AiAnalysisFragment extends Fragment {
         aiLoadingGroup.setVisibility(View.GONE);
         aiEditGroup.setVisibility(View.GONE);
         aiResultGroup.setVisibility(View.VISIBLE);
+        if (bottomBarActionsResult != null) {
+            bottomBarActionsResult.setVisibility(View.VISIBLE);
+        }
+        if (bottomBarActionsEdit != null) {
+            bottomBarActionsEdit.setVisibility(View.GONE);
+        }
 
         if (analysis == null) {
             return;
@@ -516,6 +533,12 @@ public class AiAnalysisFragment extends Fragment {
         aiResultGroup.setVisibility(View.GONE);
         aiLoadingGroup.setVisibility(View.GONE);
         aiEditGroup.setVisibility(View.VISIBLE);
+        if (bottomBarActionsResult != null) {
+            bottomBarActionsResult.setVisibility(View.GONE);
+        }
+        if (bottomBarActionsEdit != null) {
+            bottomBarActionsEdit.setVisibility(View.VISIBLE);
+        }
         tvAiHeaderTitle.setText("Editar análise");
         tvAiHeaderSubtitle.setText("Passo 2 de 2 · Revisão");
         if (getView() != null) {
@@ -529,6 +552,12 @@ public class AiAnalysisFragment extends Fragment {
         aiEditGroup.setVisibility(View.GONE);
         aiLoadingGroup.setVisibility(View.GONE);
         aiResultGroup.setVisibility(View.VISIBLE);
+        if (bottomBarActionsEdit != null) {
+            bottomBarActionsEdit.setVisibility(View.GONE);
+        }
+        if (bottomBarActionsResult != null) {
+            bottomBarActionsResult.setVisibility(View.VISIBLE);
+        }
         tvAiHeaderTitle.setText(getString(R.string.ai_title));
         tvAiHeaderSubtitle.setText(getString(R.string.occurrence_step_2));
     }
