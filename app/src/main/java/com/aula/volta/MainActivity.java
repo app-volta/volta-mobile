@@ -178,6 +178,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            com.aula.volta.util.BottomSheetImmersiveHelper.applyImmersiveWindow(getWindow());
+        }
+    }
+
+    @Override
     public boolean onSupportNavigateUp() {
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragmentContainerView);

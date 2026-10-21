@@ -1,5 +1,6 @@
 package com.aula.volta.ui.notifications;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -17,6 +18,8 @@ import com.aula.volta.NotificationAdapter;
 import com.aula.volta.R;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.model.Notification;
+import com.aula.volta.util.BottomSheetImmersiveHelper;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.util.List;
@@ -34,6 +37,14 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
     private TextView tvEmptyNotifications;
 
     public NotificationsSheet() {
+    }
+
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
+        BottomSheetImmersiveHelper.configureBottomSheet(dialog);
+        return dialog;
     }
 
     @Nullable

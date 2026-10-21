@@ -11,7 +11,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import android.app.Dialog;
 import com.aula.volta.R;
+import com.aula.volta.util.BottomSheetImmersiveHelper;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -31,6 +34,14 @@ public class OccurrencesFilterSheet extends BottomSheetDialogFragment {
 
     private ArrayList<String> materials = new ArrayList<>();
     private ArrayList<String> statuses = new ArrayList<>();
+
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
+        BottomSheetImmersiveHelper.configureBottomSheet(dialog);
+        return dialog;
+    }
 
     public OccurrencesFilterSheet() {
     }

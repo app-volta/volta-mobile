@@ -443,6 +443,7 @@ public class OccurrenceDetailFragment extends Fragment {
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
+        com.aula.volta.util.BottomSheetImmersiveHelper.configureDialog(dialog);
 
         TextView tvSummary = dialogView.findViewById(R.id.tvDialogSummaryTitle);
         TextView tvSector = dialogView.findViewById(R.id.tvDialogSummarySector);

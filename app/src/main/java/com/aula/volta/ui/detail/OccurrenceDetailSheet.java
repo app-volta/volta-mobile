@@ -12,7 +12,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.app.Dialog;
 import com.aula.volta.R;
+import com.aula.volta.util.BottomSheetImmersiveHelper;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
@@ -41,6 +44,14 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
     private TextView tvAuthor;
     private TextView tvDate;
     private TextView tvConfidence;
+
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
+        BottomSheetImmersiveHelper.configureBottomSheet(dialog);
+        return dialog;
+    }
 
     public OccurrenceDetailSheet() {
     }
