@@ -6,6 +6,14 @@
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
+    <!-- Background oficial com fluidos e setas em marca d'água (Figma 790:1625) -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/bg_home_fluidos" />
+
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollAiAnalysis"
         android:layout_width="match_parent"

@@ -381,172 +381,47 @@ public class OccurrenceDetailFragment extends Fragment {
 
     /** Bottom sheet de alteração de classificação (Figma 17a · 908:5946) */
     private void showEditClassificationSheet(View v) {
-        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.Theme_Volta_BottomSheetDialog);
-        View dialogView = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_edit_classification, null);
-        dialog.setContentView(dialogView);
-
-        final String[] selectedClass = { "B" };
-        final String[] selectedMaterial = { currentMaterialName };
-
-        LinearLayout colA = dialogView.findViewById(R.id.colClassA);
-        LinearLayout colB = dialogView.findViewById(R.id.colClassB);
-        LinearLayout colC = dialogView.findViewById(R.id.colClassC);
-        TextView tvATitle = dialogView.findViewById(R.id.tvClassATitle);
-        TextView tvASub = dialogView.findViewById(R.id.tvClassASub);
-        TextView tvBTitle = dialogView.findViewById(R.id.tvClassBTitle);
-        TextView tvBSub = dialogView.findViewById(R.id.tvClassBSub);
-        TextView tvCTitle = dialogView.findViewById(R.id.tvClassCTitle);
-        TextView tvCSub = dialogView.findViewById(R.id.tvClassCSub);
-
-        Runnable updateClassUi = () -> {
-            boolean isA = "A".equals(selectedClass[0]);
-            boolean isB = "B".equals(selectedClass[0]);
-            boolean isC = "C".equals(selectedClass[0]);
-
-            if (colA != null) {
-                colA.setBackgroundResource(isA ? R.drawable.bg_chip_gold_selected : 0);
-                if (tvATitle != null) tvATitle.setTextColor(isA ? 0xFFC68A10 : 0xFF0F172A);
-                if (tvASub != null) tvASub.setTextColor(isA ? 0xFFC68A10 : 0xFF64748B);
+        EditClassificationSheet sheet = EditClassificationSheet.newInstance(
+                currentMaterialName, currentQualityClass, "Alta", false, "");
+        sheet.setOnClassificationChangedListener((material, qualityClass, priority, isHazard, reason) -> {
+            String prevClass = currentQualityClass;
+            currentQualityClass = qualityClass;
+            currentMaterialName = material;
+            currentMaterial = currentMaterialName + " (Classe " + currentQualityClass + ")";
+            if (tvOccCardTitle != null) {
+                tvOccCardTitle.setText(currentMaterial);
             }
-            if (colB != null) {
-                colB.setBackgroundResource(isB ? R.drawable.bg_chip_gold_selected : 0);
-                if (tvBTitle != null) tvBTitle.setTextColor(isB ? 0xFFC68A10 : 0xFF0F172A);
-                if (tvBSub != null) tvBSub.setTextColor(isB ? 0xFFC68A10 : 0xFF64748B);
+
+            // Subtítulo da ação aplicada (Figma 17d · 908:6409)
+            if (tvEditClassSub != null) {
+                tvEditClassSub.setVisibility(View.VISIBLE);
+                tvEditClassSub.setText("✓ Qualidade " + prevClass + " → " + currentQualityClass + " · prioridade " + priority.toLowerCase());
             }
-            if (colC != null) {
-                colC.setBackgroundResource(isC ? R.drawable.bg_chip_gold_selected : 0);
-                if (tvCTitle != null) tvCTitle.setTextColor(isC ? 0xFFC68A10 : 0xFF0F172A);
-                if (tvCSub != null) tvCSub.setTextColor(isC ? 0xFFC68A10 : 0xFF64748B);
-            }
-        };
 
-        if (colA != null) colA.setOnClickListener(x -> { selectedClass[0] = "A"; updateClassUi.run(); });
-        if (colB != null) colB.setOnClickListener(x -> { selectedClass[0] = "B"; updateClassUi.run(); });
-        if (colC != null) colC.setOnClickListener(x -> { selectedClass[0] = "C"; updateClassUi.run(); });
+            AuditLog.append(requireContext(), "Breno Gomes", "ALTERAR_CLASSIFICACAO",
+                    "ocorrencia", occurrenceId, "Papelão (Classe " + prevClass + ")", currentMaterial);
 
-        View btnClose = dialogView.findViewById(R.id.btnCloseSheet);
-        if (btnClose != null) {
-            btnClose.setOnClickListener(b -> dialog.dismiss());
-        }
-
-
-        View btnConfirm = dialogView.findViewById(R.id.btnConfirmEditClass);
-        if (btnConfirm != null) {
-            btnConfirm.setOnClickListener(b -> {
-                dialog.dismiss();
-                String prevClass = currentQualityClass;
-                currentQualityClass = selectedClass[0];
-                currentMaterial = selectedMaterial[0] + " (Classe " + currentQualityClass + ")";
-                if (tvOccCardTitle != null) {
-                    tvOccCardTitle.setText(currentMaterial);
-                }
-
-                // Subtítulo da ação aplicada (Figma 17d · 908:6409)
-                if (tvEditClassSub != null) {
-                    tvEditClassSub.setVisibility(View.VISIBLE);
-                    tvEditClassSub.setText("✓ Qualidade " + prevClass + " → " + currentQualityClass + " · prioridade alta");
-                }
-
-                AuditLog.append(requireContext(), "Breno Gomes", "ALTERAR_CLASSIFICACAO",
-                        "ocorrencia", occurrenceId, "Papelão (Classe " + prevClass + ")", currentMaterial);
-
-                Toast.makeText(requireContext(), "Classificação alterada para Classe " + currentQualityClass, Toast.LENGTH_SHORT).show();
-            });
-        }
-
-        dialog.show();
+            Toast.makeText(requireContext(), "Classificação alterada para Classe " + currentQualityClass, Toast.LENGTH_SHORT).show();
+        });
+        sheet.show(getChildFragmentManager(), "edit_classification");
     }
 
     /** Bottom sheet de adicionar observação (Figma 17c · 908:6103) */
     private void showAddObservationSheet(View v) {
-        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.Theme_Volta_BottomSheetDialog);
-        View dialogView = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_add_observation, null);
-        dialog.setContentView(dialogView);
+        AddObservationSheet sheet = AddObservationSheet.newInstance();
+        sheet.setOnObservationSavedListener(obs -> {
+            // Subtítulo da observação adicionada (Figma 17d · 908:6409)
+            if (tvObserveSub != null) {
+                tvObserveSub.setVisibility(View.VISIBLE);
+                tvObserveSub.setText("✓ 1 observação · agora");
+            }
 
-        EditText etInput = dialogView.findViewById(R.id.etObservationInput);
-        TextView tvCounter = dialogView.findViewById(R.id.tvCharCounter);
+            AuditLog.append(requireContext(), "Breno Gomes", "ADICIONAR_OBSERVACAO",
+                    "ocorrencia", occurrenceId, null, obs);
 
-        if (etInput != null && tvCounter != null) {
-            tvCounter.setText(etInput.getText().length() + "/280");
-            etInput.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    tvCounter.setText(s.length() + "/280");
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                }
-            });
-        }
-
-        // Atalhos rápidos
-        View shortcutWet = dialogView.findViewById(R.id.shortcutWet);
-        if (shortcutWet != null && etInput != null) {
-            shortcutWet.setOnClickListener(b -> {
-                String cur = etInput.getText().toString();
-                if (!cur.contains("Material separado")) {
-                    etInput.setText(cur.isEmpty() ? "Material separado." : cur + " Material separado.");
-                }
-            });
-        }
-
-        View shortcutBlocked = dialogView.findViewById(R.id.shortcutBlocked);
-        if (shortcutBlocked != null && etInput != null) {
-            shortcutBlocked.setOnClickListener(b -> {
-                String cur = etInput.getText().toString();
-                if (!cur.contains("Área isolada")) {
-                    etInput.setText(cur.isEmpty() ? "Área isolada." : cur + " Área isolada.");
-                }
-            });
-        }
-
-        View shortcutEpi = dialogView.findViewById(R.id.shortcutEpi);
-        if (shortcutEpi != null && etInput != null) {
-            shortcutEpi.setOnClickListener(b -> {
-                String cur = etInput.getText().toString();
-                if (!cur.contains("Pede pallet")) {
-                    etInput.setText(cur.isEmpty() ? "Pede pallet." : cur + " Pede pallet.");
-                }
-            });
-        }
-
-        View btnClose = dialogView.findViewById(R.id.btnCloseObsSheet);
-        if (btnClose != null) {
-            btnClose.setOnClickListener(b -> dialog.dismiss());
-        }
-
-        View btnCancel = dialogView.findViewById(R.id.btnCancelObservation);
-        if (btnCancel != null) {
-            btnCancel.setOnClickListener(b -> dialog.dismiss());
-        }
-
-        View btnSave = dialogView.findViewById(R.id.btnSaveObservation);
-        if (btnSave != null) {
-            btnSave.setOnClickListener(b -> {
-                String obs = etInput != null ? etInput.getText().toString().trim() : "";
-                dialog.dismiss();
-
-                // Subtítulo da observação adicionada (Figma 17d · 908:6409)
-                if (tvObserveSub != null) {
-                    tvObserveSub.setVisibility(View.VISIBLE);
-                    tvObserveSub.setText("✓ 1 observação · agora");
-                }
-
-                AuditLog.append(requireContext(), "Breno Gomes", "ADICIONAR_OBSERVACAO",
-                        "ocorrencia", occurrenceId, null, obs);
-
-                Toast.makeText(requireContext(), "Observação adicionada com sucesso", Toast.LENGTH_SHORT).show();
-            });
-        }
-
-        dialog.show();
+            Toast.makeText(requireContext(), "Observação adicionada com sucesso", Toast.LENGTH_SHORT).show();
+        });
+        sheet.show(getChildFragmentManager(), "add_observation");
     }
 
     /** Diálogo de confirmação para finalizar (Figma 851:4885) */

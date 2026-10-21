@@ -6,6 +6,14 @@
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
+    <!-- Background oficial com fluidos e setas em marca d'água (Figma 790:1625) -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/bg_home_fluidos" />
+
     <!-- Conteúdo principal do formulário (12 e 14) -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -372,7 +380,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/vf_bg"
+            android:background="@android:color/transparent"
             android:paddingStart="20dp"
             android:paddingTop="10dp"
             android:paddingEnd="20dp"

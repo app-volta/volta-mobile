@@ -2,6 +2,7 @@ package com.aula.volta.ui.analysis;
 
 import android.animation.ObjectAnimator;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -356,19 +357,56 @@ public class AiAnalysisFragment extends Fragment {
         for (TextView chip : chips) {
             if (chip == null) continue;
             chip.setOnClickListener(v -> {
-                for (TextView c : chips) {
-                    if (c == null) continue;
-                    c.setBackgroundResource(R.drawable.bg_chip_white_stroke);
-                    c.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-                    String text = c.getText().toString().replace("✓ ", "");
-                    c.setText(text);
-                }
-                chip.setBackgroundResource(R.drawable.bg_chip_gold_selected);
-                chip.setTextColor(android.graphics.Color.parseColor("#C68A10"));
-                String clean = chip.getText().toString().replace("✓ ", "");
-                chip.setText("✓ " + clean);
+                String clean = chip.getText().toString().replace("✓ ", "").trim();
                 selectedMaterial = clean;
+                updateMaterialChipsUi(root);
             });
+        }
+        updateMaterialChipsUi(root);
+    }
+
+    private void updateMaterialChipsUi(View root) {
+        TextView chipPapelao = root.findViewById(R.id.chipMatPapelao);
+        TextView chipPlastico = root.findViewById(R.id.chipMatPlastico);
+        TextView chipMetal = root.findViewById(R.id.chipMatMetal);
+        TextView chipVidro = root.findViewById(R.id.chipMatVidro);
+        TextView chipOrganico = root.findViewById(R.id.chipMatOrganico);
+        TextView chipOutro = root.findViewById(R.id.chipMatOutro);
+
+        TextView[] chips = {chipPapelao, chipPlastico, chipMetal, chipVidro, chipOrganico, chipOutro};
+        for (TextView c : chips) {
+            if (c == null) continue;
+            c.setBackgroundResource(R.drawable.bg_chip_white_stroke);
+            c.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            String text = c.getText().toString().replace("✓ ", "");
+            c.setText(text);
+        }
+
+        String lower = selectedMaterial.toLowerCase();
+        if (lower.contains("papel") && chipPapelao != null) {
+            chipPapelao.setBackgroundResource(R.drawable.bg_chip_gold_selected);
+            chipPapelao.setTextColor(Color.parseColor("#C68A10"));
+            chipPapelao.setText("✓ " + chipPapelao.getText().toString().replace("✓ ", ""));
+        } else if ((lower.contains("plást") || lower.contains("plast")) && chipPlastico != null) {
+            chipPlastico.setBackgroundResource(R.drawable.bg_chip_blue_selected);
+            chipPlastico.setTextColor(Color.parseColor("#3B82F6"));
+            chipPlastico.setText("✓ " + chipPlastico.getText().toString().replace("✓ ", ""));
+        } else if (lower.contains("metal") && chipMetal != null) {
+            chipMetal.setBackgroundResource(R.drawable.bg_chip_purple_selected);
+            chipMetal.setTextColor(Color.parseColor("#8B6FE0"));
+            chipMetal.setText("✓ " + chipMetal.getText().toString().replace("✓ ", ""));
+        } else if (lower.contains("vidro") && chipVidro != null) {
+            chipVidro.setBackgroundResource(R.drawable.bg_chip_gray_selected);
+            chipVidro.setTextColor(Color.parseColor("#6B7280"));
+            chipVidro.setText("✓ " + chipVidro.getText().toString().replace("✓ ", ""));
+        } else if (lower.contains("org") && chipOrganico != null) {
+            chipOrganico.setBackgroundResource(R.drawable.bg_chip_green_selected);
+            chipOrganico.setTextColor(Color.parseColor("#12A05E"));
+            chipOrganico.setText("✓ " + chipOrganico.getText().toString().replace("✓ ", ""));
+        } else if (chipOutro != null) {
+            chipOutro.setBackgroundResource(R.drawable.bg_chip_gray_selected);
+            chipOutro.setTextColor(Color.parseColor("#475569"));
+            chipOutro.setText("✓ " + chipOutro.getText().toString().replace("✓ ", ""));
         }
     }
 
@@ -381,15 +419,34 @@ public class AiAnalysisFragment extends Fragment {
         for (TextView pill : pills) {
             if (pill == null) continue;
             pill.setOnClickListener(v -> {
-                for (TextView p : pills) {
-                    if (p == null) continue;
-                    p.setBackgroundResource(R.drawable.bg_class_circle_unselected);
-                    p.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-                }
-                pill.setBackgroundResource(R.drawable.bg_class_circle_selected);
-                pill.setTextColor(android.graphics.Color.WHITE);
                 selectedClass = "Classe " + pill.getText().toString();
+                updateClassPillsUi(root);
             });
+        }
+        updateClassPillsUi(root);
+    }
+
+    private void updateClassPillsUi(View root) {
+        TextView pillA = root.findViewById(R.id.pillClassA);
+        TextView pillB = root.findViewById(R.id.pillClassB);
+        TextView pillC = root.findViewById(R.id.pillClassC);
+
+        TextView[] pills = {pillA, pillB, pillC};
+        for (TextView p : pills) {
+            if (p == null) continue;
+            p.setBackgroundResource(R.drawable.bg_class_circle_unselected);
+            p.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+        }
+
+        if (selectedClass.endsWith("A") && pillA != null) {
+            pillA.setBackgroundResource(R.drawable.bg_class_circle_selected);
+            pillA.setTextColor(Color.WHITE);
+        } else if (selectedClass.endsWith("B") && pillB != null) {
+            pillB.setBackgroundResource(R.drawable.bg_class_circle_selected);
+            pillB.setTextColor(Color.WHITE);
+        } else if (selectedClass.endsWith("C") && pillC != null) {
+            pillC.setBackgroundResource(R.drawable.bg_class_circle_selected);
+            pillC.setTextColor(Color.WHITE);
         }
     }
 
@@ -400,59 +457,58 @@ public class AiAnalysisFragment extends Fragment {
 
         if (segBaixa != null) {
             segBaixa.setOnClickListener(v -> {
-                segBaixa.setBackgroundResource(R.drawable.bg_segment_green_selected);
-                segBaixa.setTextColor(android.graphics.Color.parseColor("#0E7C48"));
-                segBaixa.setText("✓ Baixa");
-                if (segMedia != null) {
-                    segMedia.setBackground(null);
-                    segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-                    segMedia.setText("Média");
-                }
-                if (segAlta != null) {
-                    segAlta.setBackground(null);
-                    segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-                    segAlta.setText("Alta");
-                }
                 selectedContamination = "Baixa";
+                updateContaminationSegmentsUi(root);
             });
         }
-
         if (segMedia != null) {
             segMedia.setOnClickListener(v -> {
-                segMedia.setBackgroundResource(R.drawable.bg_segment_gold_selected);
-                segMedia.setTextColor(requireContext().getColor(R.color.vf_gold));
-                segMedia.setText("✓ Média");
-                if (segBaixa != null) {
-                    segBaixa.setBackground(null);
-                    segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-                    segBaixa.setText("Baixa");
-                }
-                if (segAlta != null) {
-                    segAlta.setBackground(null);
-                    segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-                    segAlta.setText("Alta");
-                }
                 selectedContamination = "Média";
+                updateContaminationSegmentsUi(root);
             });
         }
-
         if (segAlta != null) {
             segAlta.setOnClickListener(v -> {
-                segAlta.setBackgroundResource(R.drawable.bg_segment_pink_selected);
-                segAlta.setTextColor(requireContext().getColor(R.color.vf_pink));
-                segAlta.setText("✓ Alta");
-                if (segBaixa != null) {
-                    segBaixa.setBackground(null);
-                    segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-                    segBaixa.setText("Baixa");
-                }
-                if (segMedia != null) {
-                    segMedia.setBackground(null);
-                    segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-                    segMedia.setText("Média");
-                }
                 selectedContamination = "Alta";
+                updateContaminationSegmentsUi(root);
             });
+        }
+        updateContaminationSegmentsUi(root);
+    }
+
+    private void updateContaminationSegmentsUi(View root) {
+        TextView segBaixa = root.findViewById(R.id.segContamBaixa);
+        TextView segMedia = root.findViewById(R.id.segContamMedia);
+        TextView segAlta = root.findViewById(R.id.segContamAlta);
+
+        if (segBaixa != null) {
+            segBaixa.setBackground(null);
+            segBaixa.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            segBaixa.setText("Baixa");
+        }
+        if (segMedia != null) {
+            segMedia.setBackground(null);
+            segMedia.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            segMedia.setText("Média");
+        }
+        if (segAlta != null) {
+            segAlta.setBackground(null);
+            segAlta.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            segAlta.setText("Alta");
+        }
+
+        if ("Baixa".equalsIgnoreCase(selectedContamination) && segBaixa != null) {
+            segBaixa.setBackgroundResource(R.drawable.bg_segment_green_selected);
+            segBaixa.setTextColor(Color.parseColor("#0E7C48"));
+            segBaixa.setText("✓ Baixa");
+        } else if (("Média".equalsIgnoreCase(selectedContamination) || "Media".equalsIgnoreCase(selectedContamination)) && segMedia != null) {
+            segMedia.setBackgroundResource(R.drawable.bg_segment_gold_selected);
+            segMedia.setTextColor(requireContext().getColor(R.color.vf_gold));
+            segMedia.setText("✓ Média");
+        } else if ("Alta".equalsIgnoreCase(selectedContamination) && segAlta != null) {
+            segAlta.setBackgroundResource(R.drawable.bg_segment_pink_selected);
+            segAlta.setTextColor(requireContext().getColor(R.color.vf_pink));
+            segAlta.setText("✓ Alta");
         }
     }
 
@@ -462,6 +518,11 @@ public class AiAnalysisFragment extends Fragment {
         aiEditGroup.setVisibility(View.VISIBLE);
         tvAiHeaderTitle.setText("Editar análise");
         tvAiHeaderSubtitle.setText("Passo 2 de 2 · Revisão");
+        if (getView() != null) {
+            updateMaterialChipsUi(getView());
+            updateClassPillsUi(getView());
+            updateContaminationSegmentsUi(getView());
+        }
     }
 
     private void switchToResultView() {
