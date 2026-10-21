@@ -14,6 +14,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,8 +28,8 @@ import java.util.concurrent.Executors;
  * Realiza upload direto (unsigned) de fotos para a nuvem do Cloudinary,
  * retornando a secure_url HTTPS para envio à IA e ao backend.
  *
- * Caso o CLOUD_NAME ou UPLOAD_PRESET não estejam configurados, o serviço
- * aciona o fallback gracioso (retornando a URI local da foto sem travar o app).
+ * Possui controle de idempotência (cache por arquivo + fila in-flight) para garantir
+ * que a mesma foto nunca seja enviada duas vezes ao Cloudinary.
  */
 public final class CloudinaryUploader {
 
@@ -36,6 +41,13 @@ public final class CloudinaryUploader {
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    // Cache de URLs já enviadas (filePath -> secureUrl) para evitar upload duplicado da mesma foto
+    private static final Map<String, String> uploadedUrlCache = new ConcurrentHashMap<>();
+    private static final Map<String, String> uploadedPublicIdCache = new ConcurrentHashMap<>();
+
+    // Controle de uploads em andamento (filePath -> lista de callbacks aguardando)
+    private static final Map<String, List<UploadCallback>> inFlightCallbacks = new HashMap<>();
+
     public interface UploadCallback {
         void onSuccess(String remoteUrl, String publicId);
         void onError(Exception exception, String fallbackLocalPath);
@@ -45,26 +57,63 @@ public final class CloudinaryUploader {
     }
 
     /**
-     * Faz upload da imagem no Cloudinary em background.
-     * Se não configurado, chama o fallback imediatamente.
+     * Retorna a URL do Cloudinary já existente para este arquivo local, se já tiver sido enviado.
+     */
+    public static String getCachedUrl(String localFilePath) {
+        if (localFilePath == null) return null;
+        return uploadedUrlCache.get(localFilePath);
+    }
+
+    /**
+     * Faz upload da imagem no Cloudinary em background (apenas 1 vez por arquivo).
+     * Se o mesmo arquivo já estiver subindo ou já tiver subido, reaproveita o resultado.
      */
     public static void uploadImage(Context context, File imageFile, UploadCallback callback) {
         if (imageFile == null || !imageFile.exists()) {
             if (callback != null) {
-                callback.onError(new IllegalArgumentException("Arquivo de imagem inválido"), null);
+                mainHandler.post(() -> callback.onError(
+                        new IllegalArgumentException("Arquivo de imagem inválido"), null));
             }
             return;
         }
 
-        // Se ainda não configurado no Cloudinary, executa fallback gracioso com arquivo local
+        final String fileKey = imageFile.getAbsolutePath();
+
+        // 1. Se esta foto já foi enviada anteriormente, retorna imediatamente a URL sem re-upar
+        String cachedUrl = uploadedUrlCache.get(fileKey);
+        if (cachedUrl != null && !cachedUrl.isEmpty()) {
+            final String cachedId = uploadedPublicIdCache.getOrDefault(fileKey, "");
+            if (callback != null) {
+                mainHandler.post(() -> callback.onSuccess(cachedUrl, cachedId));
+            }
+            return;
+        }
+
+        // 2. Se ainda não configurado no Cloudinary, executa fallback gracioso com arquivo local
         if (CLOUD_NAME == null || CLOUD_NAME.trim().isEmpty()
                 || UPLOAD_PRESET == null || UPLOAD_PRESET.trim().isEmpty()) {
             if (callback != null) {
                 mainHandler.post(() -> callback.onError(
                         new IllegalStateException("Cloudinary não configurado (usando imagem local)"),
-                        imageFile.getAbsolutePath()));
+                        fileKey));
             }
             return;
+        }
+
+        // 3. Se já existe um upload em andamento para este mesmo arquivo, apenas anexa o callback
+        synchronized (inFlightCallbacks) {
+            List<UploadCallback> waiting = inFlightCallbacks.get(fileKey);
+            if (waiting != null) {
+                if (callback != null) {
+                    waiting.add(callback);
+                }
+                return;
+            }
+            List<UploadCallback> newList = new ArrayList<>();
+            if (callback != null) {
+                newList.add(callback);
+            }
+            inFlightCallbacks.put(fileKey, newList);
         }
 
         executor.execute(() -> {
@@ -76,9 +125,12 @@ public final class CloudinaryUploader {
 
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
+                conn.setConnectTimeout(20000);
+                conn.setReadTimeout(30000);
                 conn.setDoOutput(true);
                 conn.setDoInput(true);
                 conn.setUseCaches(false);
+                conn.setRequestProperty("Connection", "close");
                 conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
                 OutputStream outputStream = conn.getOutputStream();
@@ -106,14 +158,14 @@ public final class CloudinaryUploader {
                 writer.append(LINE_FEED);
                 writer.flush();
 
-                FileInputStream inputStream = new FileInputStream(imageFile);
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
+                try (FileInputStream inputStream = new FileInputStream(imageFile)) {
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    outputStream.flush();
                 }
-                outputStream.flush();
-                inputStream.close();
 
                 writer.append(LINE_FEED);
                 writer.append("--").append(boundary).append("--").append(LINE_FEED);
@@ -127,25 +179,52 @@ public final class CloudinaryUploader {
                     String secureUrl = json.get("secure_url").getAsString();
                     String publicId = json.has("public_id") ? json.get("public_id").getAsString() : "";
 
-                    mainHandler.post(() -> {
-                        if (callback != null) {
-                            callback.onSuccess(secureUrl, publicId);
-                        }
-                    });
+                    uploadedUrlCache.put(fileKey, secureUrl);
+                    uploadedPublicIdCache.put(fileKey, publicId);
+
+                    dispatchSuccess(fileKey, secureUrl, publicId);
                 } else {
                     throw new Exception("Cloudinary retornou HTTP " + status);
                 }
             } catch (Exception e) {
-                mainHandler.post(() -> {
-                    if (callback != null) {
-                        callback.onError(e, imageFile.getAbsolutePath());
-                    }
-                });
+                dispatchError(fileKey, e, fileKey);
             } finally {
                 if (conn != null) {
                     conn.disconnect();
                 }
             }
         });
+    }
+
+    private static void dispatchSuccess(String fileKey, String secureUrl, String publicId) {
+        final List<UploadCallback> callbacks;
+        synchronized (inFlightCallbacks) {
+            callbacks = inFlightCallbacks.remove(fileKey);
+        }
+        if (callbacks != null) {
+            mainHandler.post(() -> {
+                for (UploadCallback cb : callbacks) {
+                    if (cb != null) {
+                        cb.onSuccess(secureUrl, publicId);
+                    }
+                }
+            });
+        }
+    }
+
+    private static void dispatchError(String fileKey, Exception error, String fallbackPath) {
+        final List<UploadCallback> callbacks;
+        synchronized (inFlightCallbacks) {
+            callbacks = inFlightCallbacks.remove(fileKey);
+        }
+        if (callbacks != null) {
+            mainHandler.post(() -> {
+                for (UploadCallback cb : callbacks) {
+                    if (cb != null) {
+                        cb.onError(error, fallbackPath);
+                    }
+                }
+            });
+        }
     }
 }

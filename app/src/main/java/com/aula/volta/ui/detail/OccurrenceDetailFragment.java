@@ -147,13 +147,9 @@ public class OccurrenceDetailFragment extends Fragment {
             occurrenceId = "8514";
         }
 
-        String photoPath = getArguments() != null ? getArguments().getString("photoPath") : null;
-        if (photoPath != null && imgOccThumbnail != null) {
-            File f = new File(photoPath);
-            if (f.exists()) {
-                imgOccThumbnail.setImageBitmap(BitmapFactory.decodeFile(photoPath));
-            }
-        }
+        String argPhotoPath = getArguments() != null ? getArguments().getString("photoPath") : null;
+        String argImageUrl = getArguments() != null ? getArguments().getString("imageUrl") : null;
+        displayOccurrencePhoto(argPhotoPath, argImageUrl);
 
         View btnBack = view.findViewById(R.id.btnBackOcc);
         if (btnBack != null) {
@@ -197,6 +193,16 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void loadDetail() {
+        // Carrega imediatamente do cache local se existir para exibir foto e dados sem atraso
+        String cachedStr = PrefsHelper.getJson(requireContext(), PREFS, occurrenceId);
+        if (cachedStr != null && !cachedStr.isEmpty()) {
+            try {
+                currentDetailJson = JsonParser.parseString(cachedStr).getAsJsonObject();
+                applyDetail(currentDetailJson);
+            } catch (Exception ignored) {
+            }
+        }
+
         OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
         api.getOccurrence(occurrenceId).enqueue(new Callback<JsonObject>() {
             @Override
@@ -205,9 +211,19 @@ public class OccurrenceDetailFragment extends Fragment {
                     return;
                 }
                 if (response.isSuccessful() && response.body() != null) {
-                    currentDetailJson = response.body();
+                    JsonObject body = response.body();
+                    // Preserva photoPath e imageUrl locais caso a API/Mock não os retorne
+                    if (currentDetailJson != null) {
+                        if (!body.has("photoPath") && currentDetailJson.has("photoPath")) {
+                            body.addProperty("photoPath", currentDetailJson.get("photoPath").getAsString());
+                        }
+                        if (!body.has("imageUrl") && currentDetailJson.has("imageUrl")) {
+                            body.addProperty("imageUrl", currentDetailJson.get("imageUrl").getAsString());
+                        }
+                    }
+                    currentDetailJson = body;
                     applyDetail(currentDetailJson);
-                } else {
+                } else if (currentDetailJson == null) {
                     loadFromCacheOrMock();
                 }
             }
@@ -217,7 +233,9 @@ public class OccurrenceDetailFragment extends Fragment {
                 if (!isAdded()) {
                     return;
                 }
-                loadFromCacheOrMock();
+                if (currentDetailJson == null) {
+                    loadFromCacheOrMock();
+                }
             }
         });
     }
@@ -276,12 +294,71 @@ public class OccurrenceDetailFragment extends Fragment {
         }
 
         String autoReport = opt(json, "relatorio_auto",
-                "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta.");
+                opt(json, "relatorio_automatico",
+                        "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta."));
         if (tvOccAutoReport != null) {
             tvOccAutoReport.setText(autoReport);
         }
 
+        String localPhoto = opt(json, "photoPath",
+                getArguments() != null ? getArguments().getString("photoPath", "") : "");
+        String remoteUrl = opt(json, "imageUrl",
+                opt(json, "foto_url",
+                        getArguments() != null ? getArguments().getString("imageUrl", "") : ""));
+
+        if (localPhoto.isEmpty() && remoteUrl.isEmpty()) {
+            String latestStr = PrefsHelper.getJson(requireContext(), PREFS, "latest_photo");
+            if (latestStr != null && !latestStr.isEmpty()) {
+                try {
+                    JsonObject latestObj = JsonParser.parseString(latestStr).getAsJsonObject();
+                    localPhoto = opt(latestObj, "photoPath", "");
+                    remoteUrl = opt(latestObj, "imageUrl", opt(latestObj, "foto_url", ""));
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        displayOccurrencePhoto(localPhoto, remoteUrl);
+
         syncFinalizedUi();
+    }
+
+    private void displayOccurrencePhoto(@Nullable String localPath, @Nullable String remoteUrl) {
+        if (imgOccThumbnail == null) {
+            return;
+        }
+        if (localPath != null && !localPath.isEmpty()) {
+            File f = new File(localPath);
+            if (f.exists()) {
+                android.graphics.Bitmap bmp = BitmapFactory.decodeFile(localPath);
+                if (bmp != null) {
+                    imgOccThumbnail.setImageBitmap(bmp);
+                    return;
+                }
+            }
+        }
+        if (remoteUrl != null && remoteUrl.startsWith("http")) {
+            new Thread(() -> {
+                try {
+                    java.net.URL url = new java.net.URL(remoteUrl);
+                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(15000);
+                    conn.setDoInput(true);
+                    conn.connect();
+                    try (java.io.InputStream is = conn.getInputStream()) {
+                        android.graphics.Bitmap bmp = BitmapFactory.decodeStream(is);
+                        if (bmp != null && isAdded()) {
+                            imgOccThumbnail.post(() -> {
+                                if (isAdded() && imgOccThumbnail != null) {
+                                    imgOccThumbnail.setImageBitmap(bmp);
+                                }
+                            });
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }).start();
+        }
     }
 
     /**

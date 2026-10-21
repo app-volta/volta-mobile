@@ -397,6 +397,11 @@ public class NewOccurrenceFragment extends Fragment {
         if (photoFile == null || !photoFile.exists()) {
             return;
         }
+        btnSendAnalysis.setEnabled(false);
+
+        // Inicia o upload no Cloudinary exatamente ao clicar no botão "Enviar para análise"
+        com.aula.volta.data.upload.CloudinaryUploader.uploadImage(requireContext(), photoFile, null);
+
         String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
         Bundle args = new Bundle();
         args.putString("photoPath", photoFile.getAbsolutePath());
@@ -447,7 +452,7 @@ public class NewOccurrenceFragment extends Fragment {
                 return null;
             }
 
-            File out = new File(requireContext().getCacheDir(),
+            File out = new File(requireContext().getFilesDir(),
                     "volta_photo_" + System.currentTimeMillis() + ".jpg");
             try (FileOutputStream fos = new FileOutputStream(out)) {
                 bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, fos);

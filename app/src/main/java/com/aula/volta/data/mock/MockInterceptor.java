@@ -2,6 +2,8 @@ package com.aula.volta.data.mock;
 
 import android.content.Context;
 
+import com.aula.volta.data.local.PrefsHelper;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -14,10 +16,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * Mock removível (Fase 0). Responde path → JSON de app/src/main/assets/mock/.
- *
- * <p>Remover o mock na Fase 13 = apagar data/mock/ + assets/mock/ + USE_MOCK=false.
- * Fragments/UI: zero toque.</p>
+ * Mock removível (Fase 0). Responde path → JSON de app/src/main/assets/mock/
+ * ou do cache local de ocorrências criadas na sessão.
  */
 public class MockInterceptor implements Interceptor {
 
@@ -33,15 +33,29 @@ public class MockInterceptor implements Interceptor {
         String path = request.url().encodedPath();
         String method = request.method();
 
+        // Se for GET /occurrences/{id} e existir detalhe salvo localmente (com foto/Cloudinary URL), retorna o salvo
+        if (path.matches("/occurrences/[^/]+") && method.equals("GET")) {
+            String id = path.substring("/occurrences/".length());
+            String cached = PrefsHelper.getJson(context, "cache_occurrence_detail", id);
+            if (cached != null && !cached.isEmpty()) {
+                return jsonResponse(request, 200, cached);
+            }
+        }
+
+        // Se for POST /occurrences, gera um ID único para cada ocorrência criada
+        if (path.equals("/occurrences") && method.equals("POST")) {
+            String uniqueId = String.valueOf(10000 + (System.currentTimeMillis() % 90000));
+            String createdJson = "{\"id\":\"" + uniqueId + "\",\"status\":\"EM_ANALISE\"}";
+            return jsonResponse(request, 200, createdJson);
+        }
+
         String asset = assetFor(method, path);
         if (asset == null) {
             return jsonResponse(request, 404, "{\"erro\":\"mock nao encontrado\"}");
         }
 
-        // Simula latência de rede para os estados de loading aparecerem pelo caminho real.
-        // IA demora mais (tela "Analisando imagem...").
         try {
-            Thread.sleep(asset.equals("ai_analysis.json") ? 1500 : 600);
+            Thread.sleep(asset.equals("ai_analysis.json") ? 1200 : 300);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

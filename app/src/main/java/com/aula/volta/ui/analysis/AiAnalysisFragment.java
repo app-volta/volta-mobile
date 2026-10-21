@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
@@ -25,6 +26,7 @@ import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
+import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
@@ -170,8 +172,12 @@ public class AiAnalysisFragment extends Fragment {
 
         setupEditControls(view);
 
-        startScanAnimation(view);
-        analyzePhoto();
+        if (analysis != null) {
+            applyAnalysis();
+        } else {
+            startScanAnimation(view);
+            analyzePhoto();
+        }
     }
 
     @Override
@@ -665,10 +671,39 @@ public class AiAnalysisFragment extends Fragment {
         });
     }
 
+    private void persistOccurrenceDetail(String id, String material, double qtd, String unidade) {
+        JsonObject detail = new JsonObject();
+        detail.addProperty("id", id);
+        String formattedMat = material.contains("(") ? material : (material + " (" + selectedClass + ")");
+        detail.addProperty("titulo", (descricao != null && !descricao.isEmpty()) ? descricao : formattedMat);
+        detail.addProperty("material", formattedMat);
+        detail.addProperty("setor", (setor != null && !setor.isEmpty()) ? setor : "Frigorífico — Setor B2");
+        detail.addProperty("peso_estimado", qtd);
+        detail.addProperty("unidade", unidade);
+        detail.addProperty("status", "EM_ANALISE");
+        detail.addProperty("prioridade", "ALTA");
+        detail.addProperty("quando", "agora");
+        if (photoPath != null && !photoPath.isEmpty()) {
+            detail.addProperty("photoPath", photoPath);
+        }
+        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+            detail.addProperty("imageUrl", remoteImageUrl);
+            detail.addProperty("foto_url", remoteImageUrl);
+        }
+        String relatorio = (analysis != null && analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty())
+                ? analysis.getObservacoes()
+                : "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta.";
+        detail.addProperty("relatorio_auto", relatorio);
+
+        PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", id, detail.toString());
+        PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", "latest_photo", detail.toString());
+    }
+
     private void registerAndNavigate(View v, String id, String material, double qtd, String unidade) {
         if (!isAdded() || getContext() == null) {
             return;
         }
+        persistOccurrenceDetail(id, material, qtd, unidade);
         AuditLog.append(requireContext(), "Breno Gomes", "CRIAR",
                 "ocorrencia", id, null, "NOVO");
         pushOccurrenceNotification(id, material);
@@ -676,7 +711,7 @@ public class AiAnalysisFragment extends Fragment {
 
         Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
 
-        // Navega para a tela 17 · Ocorrência (OccurrenceDetailFragment)
+        // Navega para a tela 17 · Ocorrência (OccurrenceDetailFragment) removendo a tela de loading da pilha
         try {
             Bundle args = new Bundle();
             args.putString("occurrenceId", id);
@@ -684,9 +719,12 @@ public class AiAnalysisFragment extends Fragment {
             if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
                 args.putString("imageUrl", remoteImageUrl);
             }
+            NavOptions navOptions = new NavOptions.Builder()
+                    .setPopUpTo(R.id.nav_ai_analysis, true)
+                    .build();
             View target = getView() != null ? getView() : v;
             if (target != null) {
-                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args);
+                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args, navOptions);
             }
         } catch (Exception e) {
             if (getView() != null) {
@@ -699,7 +737,8 @@ public class AiAnalysisFragment extends Fragment {
         if (!isAdded() || getContext() == null) {
             return;
         }
-        String localId = "8514";
+        String localId = String.valueOf(10000 + (System.currentTimeMillis() % 90000));
+        persistOccurrenceDetail(localId, material, qtd, unidade);
         PendingOccurrence pending = new PendingOccurrence(
                 localId, photoPath, descricao, setor, material, qtd, unidade, System.currentTimeMillis());
         SyncQueue.enqueue(requireContext(), pending);
@@ -718,9 +757,12 @@ public class AiAnalysisFragment extends Fragment {
             if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
                 args.putString("imageUrl", remoteImageUrl);
             }
+            NavOptions navOptions = new NavOptions.Builder()
+                    .setPopUpTo(R.id.nav_ai_analysis, true)
+                    .build();
             View target = getView() != null ? getView() : v;
             if (target != null) {
-                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args);
+                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args, navOptions);
             }
         } catch (Exception e) {
             if (getView() != null) {
