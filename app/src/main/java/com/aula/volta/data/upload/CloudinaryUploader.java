@@ -28,9 +28,10 @@ import java.util.concurrent.Executors;
  */
 public final class CloudinaryUploader {
 
-    // Configurações do Cloudinary (preencher assim que criar a conta gratuita)
-    public static String CLOUD_NAME = ""; // Ex: "volta-cloud"
-    public static String UPLOAD_PRESET = ""; // Ex: "volta_unsigned"
+    // Configurações oficiais do Cloudinary do projeto VOLTA
+    public static String CLOUD_NAME = "kgou1air";
+    public static String UPLOAD_PRESET = "AI-Analysis";
+    public static String ASSET_FOLDER = "Ocorrencia/Assets/Images";
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -88,6 +89,14 @@ public final class CloudinaryUploader {
                 writer.append("Content-Disposition: form-data; name=\"upload_preset\"").append(LINE_FEED);
                 writer.append("Content-Type: text/plain; charset=UTF-8").append(LINE_FEED);
                 writer.append(LINE_FEED).append(UPLOAD_PRESET).append(LINE_FEED);
+
+                // Campo folder (Ocorrencia/Assets/Images)
+                if (ASSET_FOLDER != null && !ASSET_FOLDER.trim().isEmpty()) {
+                    writer.append("--").append(boundary).append(LINE_FEED);
+                    writer.append("Content-Disposition: form-data; name=\"folder\"").append(LINE_FEED);
+                    writer.append("Content-Type: text/plain; charset=UTF-8").append(LINE_FEED);
+                    writer.append(LINE_FEED).append(ASSET_FOLDER).append(LINE_FEED);
+                }
 
                 // Campo file (arquivo binário)
                 String fileName = imageFile.getName();

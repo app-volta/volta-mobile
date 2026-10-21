@@ -31,9 +31,11 @@ import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.sync.PendingOccurrence;
 import com.aula.volta.data.sync.SyncManager;
 import com.aula.volta.data.sync.SyncQueue;
+import com.aula.volta.data.upload.CloudinaryUploader;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.JsonObject;
 
+import java.io.File;
 import java.util.Locale;
 
 import retrofit2.Call;
@@ -86,6 +88,7 @@ public class AiAnalysisFragment extends Fragment {
     private ObjectAnimator scanAnimator;
 
     private String photoPath;
+    private String remoteImageUrl;
     private String descricao;
     private String setor;
 
@@ -204,9 +207,39 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void analyzePhoto() {
+        if (photoPath != null && !photoPath.isEmpty()) {
+            File imageFile = new File(photoPath);
+            if (imageFile.exists()) {
+                CloudinaryUploader.uploadImage(requireContext(), imageFile, new CloudinaryUploader.UploadCallback() {
+                    @Override
+                    public void onSuccess(String remoteUrl, String publicId) {
+                        remoteImageUrl = remoteUrl;
+                        executeAiAnalysisRequest(remoteUrl);
+                    }
+
+                    @Override
+                    public void onError(Exception exception, String fallbackLocalPath) {
+                        executeAiAnalysisRequest(fallbackLocalPath);
+                    }
+                });
+                return;
+            }
+        }
+        executeAiAnalysisRequest(null);
+    }
+
+    private void executeAiAnalysisRequest(@Nullable String imageUrl) {
+        if (!isAdded()) {
+            return;
+        }
         AiAnalysisAPI api = ApiClient.get(requireContext()).create(AiAnalysisAPI.class);
         JsonObject body = new JsonObject();
         body.addProperty("setor", setor == null ? "" : setor);
+        body.addProperty("descricao", descricao == null ? "" : descricao);
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            body.addProperty("imageUrl", imageUrl);
+            body.addProperty("foto_url", imageUrl);
+        }
         api.analyzeOccurrence("novo", body).enqueue(new Callback<AiAnalysisJSON>() {
             @Override
             public void onResponse(@NonNull Call<AiAnalysisJSON> call,
@@ -606,6 +639,10 @@ public class AiAnalysisFragment extends Fragment {
         body.addProperty("setor", setor == null ? "" : setor);
         body.addProperty("material", material);
         body.addProperty("quantidade_estimada", qtd);
+        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+            body.addProperty("imageUrl", remoteImageUrl);
+            body.addProperty("foto_url", remoteImageUrl);
+        }
 
         api.createOccurrence(body).enqueue(new Callback<JsonObject>() {
             @Override
@@ -644,6 +681,9 @@ public class AiAnalysisFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("occurrenceId", id);
             args.putString("photoPath", photoPath);
+            if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+                args.putString("imageUrl", remoteImageUrl);
+            }
             View target = getView() != null ? getView() : v;
             if (target != null) {
                 Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args);
@@ -675,6 +715,9 @@ public class AiAnalysisFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("occurrenceId", localId);
             args.putString("photoPath", photoPath);
+            if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+                args.putString("imageUrl", remoteImageUrl);
+            }
             View target = getView() != null ? getView() : v;
             if (target != null) {
                 Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args);
