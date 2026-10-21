@@ -35,7 +35,7 @@
         android:layout_marginBottom="8dp"
         android:fontFamily="@font/poppins_bold"
         android:gravity="center"
-        android:text="Finalizar ocorrência?"
+        android:text="@string/occ_finalize_title"
         android:textColor="@color/vf_text_primary"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -49,7 +49,7 @@
         android:fontFamily="sans-serif"
         android:gravity="center"
         android:lineSpacingExtra="3dp"
-        android:text="A ocorrência será marcada como concluída e entra no relatório PGRS do mês."
+        android:text="@string/occ_finalize_text"
         android:textColor="@color/vf_text_secondary"
         android:textSize="14sp" />
 
@@ -80,7 +80,7 @@
         android:layout_marginBottom="12dp"
         android:background="@drawable/bg_btn_primary_v"
         android:fontFamily="@font/poppins_semibold"
-        android:text="Sim, finalizar"
+        android:text="@string/occ_finalize_yes"
         android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="15sp"

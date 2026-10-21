@@ -590,7 +590,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/poppins_semibold"
-                android:text="Ocorrência finalizada"
+                android:text="@string/toast_finalized_title"
                 android:textColor="@color/white"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -601,7 +601,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:fontFamily="sans-serif"
-                android:text="Já entrou no relatório PGRS do mês"
+                android:text="@string/toast_finalized_sub"
                 android:textColor="@color/vf_toast_sub"
                 android:textSize="11sp" />
         </LinearLayout>

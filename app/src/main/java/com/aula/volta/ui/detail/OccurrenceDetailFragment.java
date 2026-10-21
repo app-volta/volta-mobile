@@ -290,7 +290,10 @@ public class OccurrenceDetailFragment extends Fragment {
     private void syncFinalizedUi() {
         if (!isAdded()) return;
 
-        boolean isDone = "APROVADA".equals(currentStatus) || "RESOLVIDO".equals(currentStatus);
+        boolean isDone = "APROVADA".equalsIgnoreCase(currentStatus)
+                || "RESOLVIDO".equalsIgnoreCase(currentStatus)
+                || "FINALIZADA".equalsIgnoreCase(currentStatus)
+                || "CONCLUIDA".equalsIgnoreCase(currentStatus);
 
         // Tracker de 3 passos
         if (stepCircle0 != null) {
@@ -337,9 +340,12 @@ public class OccurrenceDetailFragment extends Fragment {
                 tvOccStatus.setTextColor(requireContext().getColor(R.color.status_aprovada_text));
             }
 
-            // Na tela 19, 'Alterar classificação' e 'Finalizar ocorrência' somem
+            // Na tela finalizada pela gestão Web, ações de edição e botão de envio somem
             if (rowEditClass != null) {
                 rowEditClass.setVisibility(View.GONE);
+            }
+            if (rowObserve != null) {
+                rowObserve.setVisibility(View.GONE);
             }
             if (layoutBottomBarOcc != null) {
                 layoutBottomBarOcc.setVisibility(View.GONE);
@@ -369,6 +375,9 @@ public class OccurrenceDetailFragment extends Fragment {
 
             if (rowEditClass != null) {
                 rowEditClass.setVisibility(View.VISIBLE);
+            }
+            if (rowObserve != null) {
+                rowObserve.setVisibility(View.VISIBLE);
             }
             if (layoutBottomBarOcc != null) {
                 layoutBottomBarOcc.setVisibility(View.VISIBLE);
@@ -448,27 +457,15 @@ public class OccurrenceDetailFragment extends Fragment {
         if (btnYes != null) {
             btnYes.setOnClickListener(b -> {
                 dialog.dismiss();
-                currentStatus = "APROVADA";
+                currentStatus = "EM_ANALISE";
 
-                AuditLog.append(requireContext(), "Breno Gomes", "FINALIZAR",
-                        "ocorrencia", occurrenceId, "EM_ANALISE", "APROVADA");
+                AuditLog.append(requireContext(), "Breno Gomes", "ENVIAR",
+                        "ocorrencia", occurrenceId, "RASCUNHO", "EM_ANALISE");
 
-                NotificationStore.pushLocal(requireContext(), new Notification(
-                        "local_" + System.currentTimeMillis(),
-                        "OCORRENCIA_FINALIZADA",
-                        getString(R.string.notif_finalize_title, occurrenceId),
-                        getString(R.string.notif_finalize_desc),
-                        getString(R.string.notif_now),
-                        "check",
-                        "#12A05E",
-                        "#E2F7EC",
-                        false,
-                        occurrenceId));
-
-                NotificationHelper.notifyPgrsFinalized(requireContext(), occurrenceId);
+                Toast.makeText(requireContext(), R.string.occ_finalize_done, Toast.LENGTH_SHORT).show();
 
                 if (currentDetailJson != null) {
-                    currentDetailJson.addProperty("status", "APROVADA");
+                    currentDetailJson.addProperty("status", "EM_ANALISE");
                     PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
                 }
 
@@ -478,7 +475,7 @@ public class OccurrenceDetailFragment extends Fragment {
                         currentSector,
                         getString(R.string.notif_now),
                         "ALTA",
-                        "RESOLVIDO",
+                        "EM_ANALISE",
                         currentMaterial);
                 OccurrenceStore.update(requireContext(), occ);
 
