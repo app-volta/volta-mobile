@@ -12,15 +12,18 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Repositório e gerenciador em tempo real das notificações no Cloud Firestore.
  * Conecta-se à coleção "notifications" e sincroniza instantaneamente com o NotificationStore e
- * a bandeja do sistema Android.
+ * a bandeja do sistema Android com garantia de não duplicação.
  */
 public class FirestoreNotificationRepository {
 
@@ -30,6 +33,10 @@ public class FirestoreNotificationRepository {
     private static volatile FirestoreNotificationRepository instance;
     private ListenerRegistration listenerRegistration;
     private boolean isListening = false;
+
+    // Rastreia notificações emitidas localmente por este dispositivo para evitar duplicações por eco do Firestore
+    private final Set<String> localSentDocIds = Collections.synchronizedSet(new HashSet<>());
+    private final Set<String> localSentKeys = Collections.synchronizedSet(new HashSet<>());
 
     private FirestoreNotificationRepository() {
     }
@@ -73,15 +80,22 @@ public class FirestoreNotificationRepository {
                 for (DocumentChange dc : snapshots.getDocumentChanges()) {
                     if (dc.getType() == DocumentChange.Type.ADDED) {
                         try {
-                            Notification notification = parseDocument(dc.getDocument().getId(), dc.getDocument().getData());
+                            String docId = dc.getDocument().getId();
+                            Notification notification = parseDocument(docId, dc.getDocument().getData());
                             if (notification != null) {
-                                boolean alreadyCached = NotificationStore.hasNotification(appContext, notification.getId());
+                                String contentKey = (notification.getOccurrenceId() != null ? notification.getOccurrenceId() : "")
+                                        + "|" + (notification.getTipo() != null ? notification.getTipo() : "")
+                                        + "|" + (notification.getTitulo() != null ? notification.getTitulo() : "");
 
-                                // Integra diretamente ao NotificationStore do app
+                                boolean wasSentLocally = localSentDocIds.contains(docId) || localSentKeys.contains(contentKey);
+                                boolean alreadyCached = NotificationStore.hasNotification(appContext, notification);
+
+                                // Integra ao NotificationStore de forma segura e deduplicada
                                 NotificationStore.pushLocal(appContext, notification);
 
-                                // Se é uma nova notificação remota não lida, notifica na bandeja do sistema
-                                if (!alreadyCached && !notification.isLida()) {
+                                // Notifica na bandeja nativa apenas se não foi originada neste dispositivo,
+                                // não estiver previamente em cache e não tiver sido marcada como lida
+                                if (!wasSentLocally && !alreadyCached && !notification.isLida()) {
                                     String channelId = NotificationHelper.CHANNEL_OCCURRENCES;
                                     if ("META".equalsIgnoreCase(notification.getTipo())) {
                                         channelId = NotificationHelper.CHANNEL_GOALS;
@@ -94,7 +108,7 @@ public class FirestoreNotificationRepository {
                                             notification.getTitulo(),
                                             notification.getDescricao(),
                                             notification.getOccurrenceId()
-                                        );
+                                    );
                                 }
                             }
                         } catch (Exception e) {
@@ -123,11 +137,26 @@ public class FirestoreNotificationRepository {
     }
 
     /**
-     * Envia uma nova notificação para o Cloud Firestore.
+     * Envia uma nova notificação para o Cloud Firestore com ID determinístico.
      */
-    public void sendNotification(String titulo, String descricao, String tipo,
+    public void sendNotification(String docId, String titulo, String descricao, String tipo,
                                  String occurrenceId, String icone, String tint, String bg) {
         try {
+            if (docId == null || docId.trim().isEmpty()) {
+                if (occurrenceId != null && !occurrenceId.isEmpty()) {
+                    docId = "occ_" + occurrenceId;
+                } else {
+                    docId = "notif_" + System.currentTimeMillis();
+                }
+            }
+
+            // Registra localmente para ignorar o eco do snapshot listener
+            localSentDocIds.add(docId);
+            String contentKey = (occurrenceId != null ? occurrenceId : "")
+                    + "|" + (tipo != null ? tipo : "NOVA_OCORRENCIA")
+                    + "|" + (titulo != null ? titulo : "");
+            localSentKeys.add(contentKey);
+
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             Map<String, Object> data = new HashMap<>();
             data.put("titulo", titulo);
@@ -141,15 +170,22 @@ public class FirestoreNotificationRepository {
             data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
             data.put("user_id", "all");
 
+            final String finalDocId = docId;
             db.collection(COLLECTION_NOTIFICATIONS)
-                    .add(data)
-                    .addOnSuccessListener(documentReference ->
-                            Log.d(TAG, "Notificação enviada ao Firestore com ID: " + documentReference.getId()))
+                    .document(finalDocId)
+                    .set(data)
+                    .addOnSuccessListener(aVoid ->
+                            Log.d(TAG, "Notificação enviada ao Firestore com ID determinístico: " + finalDocId))
                     .addOnFailureListener(e ->
                             Log.w(TAG, "Erro ao enviar notificação ao Firestore", e));
         } catch (Exception e) {
             Log.e(TAG, "Exceção ao enviar notificação", e);
         }
+    }
+
+    public void sendNotification(String titulo, String descricao, String tipo,
+                                 String occurrenceId, String icone, String tint, String bg) {
+        sendNotification(null, titulo, descricao, tipo, occurrenceId, icone, tint, bg);
     }
 
     /**

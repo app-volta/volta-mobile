@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -15,17 +16,54 @@ import com.aula.volta.R;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.model.Notification;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Utilitário central para criação de canais, emissão de notificações na bandeja do sistema Android,
- * armazenamento no cache unificado e replicação em tempo real no Cloud Firestore.
+ * armazenamento no cache unificado e replicação em tempo real no Cloud Firestore com garantia anti-duplicação.
  */
 public final class NotificationHelper {
+
+    private static final String TAG = "NotificationHelper";
 
     public static final String CHANNEL_OCCURRENCES = "volta_occurrences";
     public static final String CHANNEL_GOALS = "volta_goals";
     public static final String CHANNEL_SYNC = "volta_sync";
 
+    // Debouncing in-memory para suprimir qualquer emissão duplicada no sistema Android dentro da janela de 3s
+    private static final Map<String, Long> sRecentlyEmitted = new ConcurrentHashMap<>();
+    private static final long DEBOUNCE_WINDOW_MS = 3000L;
+
     private NotificationHelper() {
+    }
+
+    /**
+     * Calcula um ID numérico determinístico para a notificação na bandeja do Android.
+     * Isso assegura que re-emissões do mesmo evento apenas atualizem a notificação existente,
+     * em vez de empilhar notificações duplicadas.
+     */
+    public static int computeNotificationId(String occurrenceId, String title, String body) {
+        if (occurrenceId != null && !occurrenceId.isEmpty()) {
+            return Math.abs(occurrenceId.hashCode());
+        }
+        String key = (title != null ? title : "") + "_" + (body != null ? body : "");
+        return Math.abs(key.hashCode());
+    }
+
+    private static boolean isDuplicateDebounced(String occurrenceId, String title, String body) {
+        long now = System.currentTimeMillis();
+        String key = (occurrenceId != null ? occurrenceId : "") + "|" + (title != null ? title : "") + "|" + (body != null ? body : "");
+        Long last = sRecentlyEmitted.get(key);
+        if (last != null && (now - last) < DEBOUNCE_WINDOW_MS) {
+            Log.d(TAG, "Notificação suprimida por debouncing recente: " + key);
+            return true;
+        }
+        sRecentlyEmitted.put(key, now);
+        if (sRecentlyEmitted.size() > 60) {
+            sRecentlyEmitted.entrySet().removeIf(entry -> (now - entry.getValue()) > 10000L);
+        }
+        return false;
     }
 
     /**
@@ -71,19 +109,20 @@ public final class NotificationHelper {
     }
 
     /**
-     * Emite notificação de nova ocorrência registrada e replica no Firestore.
+     * Emite notificação de nova ocorrência registrada e replica no Firestore com ID determinístico.
      */
     public static void notifyOccurrenceCreated(Context context, String occurrenceId,
                                               String material, String setor) {
         String title = context.getString(R.string.notif_occurrence_title, occurrenceId);
         String body = context.getString(R.string.notif_occurrence_desc, material, setor);
         String notifId = "occ_" + occurrenceId;
+        int notificationId = computeNotificationId(occurrenceId, title, body);
 
-        // 1. Bandeja nativa Android
-        showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
+        // 1. Bandeja nativa Android com proteção anti-duplicação
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, occurrenceId);
 
-        // 2. Cache local do app
+        // 2. Cache local do app com deduplicação
         NotificationStore.pushLocal(context, new Notification(
                 notifId,
                 "NOVA_OCORRENCIA",
@@ -97,9 +136,9 @@ public final class NotificationHelper {
                 occurrenceId
         ));
 
-        // 3. Cloud Firestore em tempo real
+        // 3. Cloud Firestore em tempo real utilizando o mesmo ID determinístico
         FirestoreNotificationRepository.getInstance().sendNotification(
-                title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#C68A10", "#FDF3DE");
+                notifId, title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#C68A10", "#FDF3DE");
     }
 
     /**
@@ -109,8 +148,9 @@ public final class NotificationHelper {
         String title = context.getString(R.string.notif_pickup_title);
         String body = context.getString(R.string.notif_pickup_body, coopName, horario);
         String notifId = "pickup_" + System.currentTimeMillis();
+        int notificationId = computeNotificationId(null, title, body);
 
-        showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, null);
 
         NotificationStore.pushLocal(context, new Notification(
@@ -127,7 +167,7 @@ public final class NotificationHelper {
         ));
 
         FirestoreNotificationRepository.getInstance().sendNotification(
-                title, body, "COLETA_AGENDADA", null, "truck", "#3B82F6", "#E4EFFF");
+                notifId, title, body, "COLETA_AGENDADA", null, "truck", "#3B82F6", "#E4EFFF");
     }
 
     /**
@@ -136,9 +176,10 @@ public final class NotificationHelper {
     public static void notifyDestinationRequested(Context context, String coopName, String occurrenceId) {
         String title = context.getString(R.string.notif_pick_title, coopName);
         String body = context.getString(R.string.notif_pick_desc, occurrenceId);
-        String notifId = "dest_" + occurrenceId + "_" + System.currentTimeMillis();
+        String notifId = "dest_" + occurrenceId;
+        int notificationId = computeNotificationId(occurrenceId, title, body);
 
-        showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, occurrenceId);
 
         NotificationStore.pushLocal(context, new Notification(
@@ -155,7 +196,7 @@ public final class NotificationHelper {
         ));
 
         FirestoreNotificationRepository.getInstance().sendNotification(
-                title, body, "COLETA_AGENDADA", occurrenceId, "truck", "#3B82F6", "#E4EFFF");
+                notifId, title, body, "COLETA_AGENDADA", occurrenceId, "truck", "#3B82F6", "#E4EFFF");
     }
 
     /**
@@ -165,8 +206,9 @@ public final class NotificationHelper {
         String title = context.getString(R.string.notif_pgrs_finalized_title, occurrenceId);
         String body = context.getString(R.string.notif_pgrs_finalized_body);
         String notifId = "pgrs_" + occurrenceId;
+        int notificationId = computeNotificationId(occurrenceId, title, body);
 
-        showNotification(context, CHANNEL_GOALS, (int) System.currentTimeMillis(),
+        showNotification(context, CHANNEL_GOALS, notificationId,
                 title, body, occurrenceId);
 
         NotificationStore.pushLocal(context, new Notification(
@@ -183,7 +225,7 @@ public final class NotificationHelper {
         ));
 
         FirestoreNotificationRepository.getInstance().sendNotification(
-                title, body, "META", occurrenceId, "trophy", "#8B6FE0", "#EFEAFB");
+                notifId, title, body, "META", occurrenceId, "trophy", "#8B6FE0", "#EFEAFB");
     }
 
     /**
@@ -194,8 +236,9 @@ public final class NotificationHelper {
         String title = context.getString(R.string.sync_success_title, occurrenceId);
         String body = context.getString(R.string.sync_success_desc, material, setor);
         String notifId = "sync_" + occurrenceId;
+        int notificationId = computeNotificationId(occurrenceId, title, body);
 
-        showNotification(context, CHANNEL_SYNC, (int) System.currentTimeMillis(),
+        showNotification(context, CHANNEL_SYNC, notificationId,
                 title, body, occurrenceId);
 
         NotificationStore.pushLocal(context, new Notification(
@@ -212,7 +255,7 @@ public final class NotificationHelper {
         ));
 
         FirestoreNotificationRepository.getInstance().sendNotification(
-                title, body, "SYNC", occurrenceId, "check", "#0E7C48", "#E2F7EC");
+                notifId, title, body, "SYNC", occurrenceId, "check", "#0E7C48", "#E2F7EC");
     }
 
     /**
@@ -223,12 +266,16 @@ public final class NotificationHelper {
         if (channelId == null || channelId.isEmpty()) {
             channelId = CHANNEL_OCCURRENCES;
         }
-        showNotification(context, channelId, (int) System.currentTimeMillis(),
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+        showNotification(context, channelId, notificationId,
                 title, body, occurrenceId);
     }
 
     private static void showNotification(Context context, String channelId, int notificationId,
                                         String title, String body, String occurrenceId) {
+        if (isDuplicateDebounced(occurrenceId, title, body)) {
+            return;
+        }
         try {
             NotificationManagerCompat manager = NotificationManagerCompat.from(context);
             if (!manager.areNotificationsEnabled()) {
