@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Estado Pressionado / Clicado: Fundo Vermelho Sólido -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#E8556C" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+    <!-- Estado Normal: Fundo Transparente com Borda Vermelha #E8556C -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <stroke
+                android:width="1.5dp"
+                android:color="#E8556C" />
+            <corners android:radius="14dp" />
+        </shape>
+    </item>
+</selector>

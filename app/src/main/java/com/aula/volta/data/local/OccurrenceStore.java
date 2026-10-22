@@ -175,17 +175,41 @@ public final class OccurrenceStore {
                 PrefsHelper.listType(Occurrence.class));
     }
 
-    /** Locais no topo, sem duplicar ids. */
+    /**
+     * Mescla ocorrências locais com a API oficial do banco de dados.
+     * Itens retornados pelo banco (/incidents) são a fonte primária de verdade e contêm a URL da foto.
+     * Itens locais ainda pendentes de sincronização permanecem no topo da lista.
+     */
     static List<Occurrence> mergedWithLocal(Context app, List<Occurrence> api) {
-        List<Occurrence> merged = new ArrayList<>(localOnly(app));
+        List<Occurrence> local = localOnly(app);
+        List<Occurrence> result = new ArrayList<>();
+
+        java.util.Set<String> apiIds = new java.util.HashSet<>();
         if (api != null) {
             for (Occurrence o : api) {
-                if (!containsId(merged, o.getId())) {
-                    merged.add(o);
+                if (o.getId() != null) {
+                    apiIds.add(o.getId());
                 }
             }
         }
-        return merged;
+
+        // Mantém no topo apenas itens locais que ainda não estão presentes na resposta do banco
+        List<Occurrence> remainingLocal = new ArrayList<>();
+        if (local != null) {
+            for (Occurrence loc : local) {
+                if (loc != null && loc.getId() != null && !apiIds.contains(loc.getId())) {
+                    remainingLocal.add(loc);
+                    result.add(loc);
+                }
+            }
+        }
+        PrefsHelper.putList(app, PREFS, KEY_LOCAL, remainingLocal);
+
+        // Adiciona todos os itens oficiais retornados pelo banco
+        if (api != null) {
+            result.addAll(api);
+        }
+        return result;
     }
 
     private static boolean containsId(List<Occurrence> list, String id) {

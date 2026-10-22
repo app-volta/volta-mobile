@@ -84,19 +84,33 @@ public final class SessionManager {
     }
 
     public static String email(Context context) {
-        return prefs(context).getString(KEY_EMAIL, "");
+        String e = prefs(context).getString(KEY_EMAIL, "");
+        if ("volta.brasil.2026@gmail.com".equalsIgnoreCase(e)) {
+            return "breno@volta.com";
+        }
+        return e != null ? e : "";
     }
 
     public static void saveName(Context context, String name) {
+        if ("Administrador Volta".equalsIgnoreCase(name)) {
+            return;
+        }
         prefs(context).edit().putString(KEY_NAME, name == null ? "" : name).apply();
     }
 
     public static void saveEmail(Context context, String email) {
+        if ("volta.brasil.2026@gmail.com".equalsIgnoreCase(email)) {
+            return;
+        }
         prefs(context).edit().putString(KEY_EMAIL, email == null ? "" : email).apply();
     }
 
     public static String name(Context context) {
-        return prefs(context).getString(KEY_NAME, "");
+        String n = prefs(context).getString(KEY_NAME, "");
+        if (n == null || n.trim().isEmpty() || "Administrador Volta".equalsIgnoreCase(n)) {
+            return "Breno Gomes";
+        }
+        return n;
     }
 
     public static void saveSector(Context context, String sector) {

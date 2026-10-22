@@ -156,14 +156,15 @@ public final class ChatbotAuthClient {
                     authApi.login(new LoginRequest(email, password)).execute();
 
             if (!loginCall.isSuccessful() || loginCall.body() == null || !loginCall.body().hasToken()) {
-                loginCall = authApi.login(new LoginRequest(ApiClient.ADMIN_EMAIL, ApiClient.ADMIN_PASSWORD)).execute();
+                // Tenta com as credenciais padrão do colaborador de QA (Breno Gomes)
+                loginCall = authApi.login(new LoginRequest(ApiClient.EMPLOYEE_EMAIL, ApiClient.EMPLOYEE_PASSWORD)).execute();
             }
 
             if (loginCall.isSuccessful() && loginCall.body() != null && loginCall.body().hasToken()) {
                 String newToken = loginCall.body().getToken().trim();
                 SessionManager.saveToken(appContext, newToken);
                 ApiClient.saveToken(appContext, newToken);
-                Log.i(TAG, "Token QA renovado com sucesso.");
+                Log.i(TAG, "Token QA de colaborador renovado com sucesso.");
                 return newToken;
             }
         } catch (Exception e) {

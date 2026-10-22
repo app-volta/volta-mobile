@@ -24,6 +24,9 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
 import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.AuthAPI;
+import com.aula.volta.data.model.UserResponseDTO;
+import java.util.Calendar;
 import com.aula.volta.data.api.ReportAPI;
 import com.aula.volta.data.local.SessionManager;
 import java.io.File;
@@ -53,6 +56,9 @@ public class HomeFragment extends Fragment {
     private ProgressBar loadingHome;
     private TextView tvEmptyOccurrences;
     private TextView tvNotifCount;
+    private TextView tvGreeting;
+    private TextView tvUserName;
+    private TextView tvAvatarInitials;
     private OccurrenceAdapter adapter;
 
     /** Contador das 3 cargas (resumo, ocorrências, notificações) para esconder o loading. */
@@ -76,6 +82,11 @@ public class HomeFragment extends Fragment {
         tvStatResolvedCount = view.findViewById(R.id.tvStatResolvedCount);
         tvStatRecycledCount = view.findViewById(R.id.tvStatRecycledCount);
         tvNotifCount = view.findViewById(R.id.tvNotifCount);
+        tvGreeting = view.findViewById(R.id.tvGreeting);
+        tvUserName = view.findViewById(R.id.tvUserName);
+        tvAvatarInitials = view.findViewById(R.id.tvAvatarInitials);
+
+        updateGreetingAndUser();
 
         View avatarContainer = view.findViewById(R.id.avatarContainer);
         if (avatarContainer != null) {
@@ -189,8 +200,88 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        updateGreetingAndUser();
         loadNotificationDot();
         loadAvatarPhoto();
+    }
+
+    /**
+     * Atualiza a saudação ("Bom dia,", "Boa tarde,", "Boa noite,") dependendo do horário local
+     * e vincula o nome e iniciais do colaborador obtidos do SessionManager e da API oficial do banco (GET /users/me).
+     */
+    private void updateGreetingAndUser() {
+        if (!isAdded() || getView() == null) return;
+        if (tvGreeting == null) tvGreeting = getView().findViewById(R.id.tvGreeting);
+        if (tvUserName == null) tvUserName = getView().findViewById(R.id.tvUserName);
+        if (tvAvatarInitials == null) tvAvatarInitials = getView().findViewById(R.id.tvAvatarInitials);
+
+        // 1. Saudação contextual baseada na hora do dia
+        Calendar cal = Calendar.getInstance();
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        String greeting;
+        if (hour >= 5 && hour < 12) {
+            greeting = "Bom dia,";
+        } else if (hour >= 12 && hour < 18) {
+            greeting = "Boa tarde,";
+        } else {
+            greeting = "Boa noite,";
+        }
+        if (tvGreeting != null) {
+            tvGreeting.setText(greeting);
+        }
+
+        // 2. Nome da sessão local
+        String currentName = SessionManager.name(requireContext());
+        if (currentName == null || currentName.trim().isEmpty() || "Breno Liu".equalsIgnoreCase(currentName)) {
+            currentName = "Breno Gomes";
+        }
+        applyUserNameAndInitials(currentName);
+
+        // 3. Atualização ao vivo via API oficial do banco (GET /users/me)
+        try {
+            AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+            authApi.getMe().enqueue(new Callback<UserResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
+                    if (isAdded() && response.isSuccessful() && response.body() != null) {
+                        UserResponseDTO u = response.body();
+                        // Protege contra conta admin se estivermos na sessão de colaborador
+                        if ("volta.brasil.2026@gmail.com".equalsIgnoreCase(u.getEmail()) || "ADMIN".equalsIgnoreCase(u.getRole())) {
+                            String myEmail = SessionManager.email(requireContext());
+                            if (!"volta.brasil.2026@gmail.com".equalsIgnoreCase(myEmail)) {
+                                return;
+                            }
+                        }
+                        if (u.getName() != null && !u.getName().trim().isEmpty()) {
+                            SessionManager.saveName(requireContext(), u.getName().trim());
+                            applyUserNameAndInitials(u.getName().trim());
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<UserResponseDTO> call, @NonNull Throwable t) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void applyUserNameAndInitials(String name) {
+        if (!isAdded() || name == null) return;
+        if (tvUserName != null) {
+            tvUserName.setText(name);
+        }
+        if (tvAvatarInitials != null) {
+            String initials = "BG";
+            String[] parts = name.trim().split("\\s+");
+            if (parts.length >= 2) {
+                initials = ("" + parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase(Locale.ROOT);
+            } else if (parts.length == 1 && !parts[0].isEmpty()) {
+                initials = parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase(Locale.ROOT);
+            }
+            tvAvatarInitials.setText(initials);
+        }
     }
 
     private void loadAvatarPhoto() {
@@ -247,6 +338,25 @@ public class HomeFragment extends Fragment {
                 }
             }).start();
         } else {
+            try {
+                String email = SessionManager.email(requireContext());
+                if (email != null && !email.isEmpty()) {
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(email)
+                            .get()
+                            .addOnSuccessListener(snapshot -> {
+                                if (isAdded() && snapshot != null && snapshot.exists()) {
+                                    String firestorePhoto = snapshot.getString("photoUrl");
+                                    if (firestorePhoto != null && !firestorePhoto.isEmpty()) {
+                                        SessionManager.saveProfilePhotoUrl(requireContext(), firestorePhoto);
+                                        loadAvatarPhoto();
+                                    }
+                                }
+                            });
+                }
+            } catch (Exception ignored) {
+            }
             imgAvatar.setVisibility(View.GONE);
             if (tvInitials != null) tvInitials.setVisibility(View.VISIBLE);
         }

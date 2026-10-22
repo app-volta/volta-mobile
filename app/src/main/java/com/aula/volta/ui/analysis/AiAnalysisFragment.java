@@ -1124,7 +1124,6 @@ public class AiAnalysisFragment extends Fragment {
         AuditLog.append(requireContext(), "Breno Gomes", "CRIAR",
                 "ocorrencia", id, null, "NOVO");
         pushOccurrenceNotification(id, material);
-        pushOccurrenceToList(id, material);
 
         Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
 
@@ -1204,6 +1203,8 @@ public class AiAnalysisFragment extends Fragment {
                 getString(R.string.notif_now),
                 "ALTA",
                 "NOVO",
-                material));
+                material,
+                remoteImageUrl,
+                photoPath));
     }
 }

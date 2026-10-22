@@ -49,19 +49,28 @@
         android:textColor="#7C8698"
         android:textSize="14sp" />
 
-    <!-- Botão Sim, sair -->
-    <com.google.android.material.button.MaterialButton
+    <!-- Botão Sim, sair (borda vermelha e sem fundo; quando clicado fica vermelho e texto branco) -->
+    <FrameLayout
         android:id="@+id/btnConfirmLogout"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="24dp"
-        android:background="@drawable/bg_button_logout"
-        android:fontFamily="@font/font_inter"
-        android:text="Sim, sair"
-        android:textAllCaps="false"
-        android:textColor="#E8556C"
-        android:textSize="14.5sp"
-        android:textStyle="bold" />
+        android:background="@drawable/bg_button_logout_outline"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:id="@+id/tvConfirmLogoutText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:duplicateParentState="true"
+            android:fontFamily="@font/font_inter"
+            android:text="Sim, sair"
+            android:textColor="@color/sl_button_logout_text"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </FrameLayout>
 
     <!-- Link Voltar / Cancelar -->
     <TextView

@@ -1,7 +1,12 @@
 package com.aula.volta.ui.profile;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,9 +17,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.fragment.app.Fragment;
@@ -25,10 +34,12 @@ import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.AuthAPI;
 import com.aula.volta.data.local.SessionManager;
 import com.aula.volta.data.model.UserResponseDTO;
+import com.aula.volta.data.upload.CloudinaryUploader;
 import com.aula.volta.ui.dialog.ProfilePhotoSheet;
 import com.google.gson.JsonObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -40,6 +51,8 @@ import retrofit2.Response;
 
 /**
  * 23a · Perfil · editar dados (Figma 1721:1264).
+ * Suporte completo a alteração de foto via câmera ou galeria, com upload no Cloudinary (preset Perfil-Photo),
+ * sincronização em tempo real no banco oficial (PUT /users/me) e espelhamento no Cloud Firestore.
  */
 public class EditProfileFragment extends Fragment {
 
@@ -53,7 +66,48 @@ public class EditProfileFragment extends Fragment {
 
     private String selectedSector = "";
 
+    private File cameraTempFile;
+    private ActivityResultLauncher<Uri> takePictureLauncher;
+    private ActivityResultLauncher<String> pickImageLauncher;
+    private ActivityResultLauncher<String> requestCameraPermissionLauncher;
+
     public EditProfileFragment() {
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Launcher de captura de foto pela câmera
+        takePictureLauncher = registerForActivityResult(
+                new ActivityResultContracts.TakePicture(), success -> {
+                    if (success && cameraTempFile != null && cameraTempFile.exists()) {
+                        processAndSaveProfilePhoto(cameraTempFile);
+                    }
+                });
+
+        // Launcher de seleção de foto pela galeria
+        pickImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(), uri -> {
+                    if (uri != null) {
+                        File cached = copyUriToProfileCache(uri);
+                        if (cached != null) {
+                            processAndSaveProfilePhoto(cached);
+                        }
+                    }
+                });
+
+        // Launcher de permissão de câmera
+        requestCameraPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(), isGranted -> {
+                    if (isGranted) {
+                        launchCamera();
+                    } else {
+                        Toast.makeText(requireContext(),
+                                R.string.profile_photo_camera_perm_required,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Nullable
@@ -128,6 +182,8 @@ public class EditProfileFragment extends Fragment {
 
     private void loadAvatar() {
         if (!isAdded()) return;
+
+        // 1. Tenta carregar do cache local
         String localPath = SessionManager.getProfilePhotoLocal(requireContext());
         if (localPath != null && !localPath.isEmpty()) {
             File f = new File(localPath);
@@ -140,6 +196,7 @@ public class EditProfileFragment extends Fragment {
             }
         }
 
+        // 2. Tenta carregar da URL remota do Cloudinary
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
             new Thread(() -> {
@@ -152,6 +209,11 @@ public class EditProfileFragment extends Fragment {
                     try (InputStream is = conn.getInputStream()) {
                         Bitmap bmp = BitmapFactory.decodeStream(is);
                         if (bmp != null && isAdded()) {
+                            File f = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+                            try (FileOutputStream fos = new FileOutputStream(f)) {
+                                bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+                            }
+                            SessionManager.saveProfilePhotoLocal(requireContext(), f.getAbsolutePath());
                             requireActivity().runOnUiThread(() -> displayCircularPhoto(bmp));
                         }
                     }
@@ -159,6 +221,27 @@ public class EditProfileFragment extends Fragment {
                 }
             }).start();
         } else {
+            // 3. Fallback: Consulta foto persistida no Cloud Firestore
+            try {
+                String email = SessionManager.email(requireContext());
+                if (email != null && !email.isEmpty()) {
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(email)
+                            .get()
+                            .addOnSuccessListener(snapshot -> {
+                                if (isAdded() && snapshot != null && snapshot.exists()) {
+                                    String firestorePhoto = snapshot.getString("photoUrl");
+                                    if (firestorePhoto != null && !firestorePhoto.isEmpty()) {
+                                        SessionManager.saveProfilePhotoUrl(requireContext(), firestorePhoto);
+                                        loadAvatar();
+                                    }
+                                }
+                            });
+                }
+            } catch (Exception ignored) {
+            }
+
             if (imgEditProfilePhoto != null) imgEditProfilePhoto.setVisibility(View.GONE);
             if (tvEditProfileInitials != null) tvEditProfileInitials.setVisibility(View.VISIBLE);
         }
@@ -181,22 +264,229 @@ public class EditProfileFragment extends Fragment {
         sheet.setOnPhotoOptionSelectedListener(new ProfilePhotoSheet.OnPhotoOptionSelectedListener() {
             @Override
             public void onCameraSelected() {
-                Toast.makeText(requireContext(), "Abra a tela de perfil para capturar nova foto", Toast.LENGTH_SHORT).show();
+                checkCameraPermissionAndLaunch();
             }
 
             @Override
             public void onGallerySelected() {
-                Toast.makeText(requireContext(), "Abra a tela de perfil para escolher nova foto", Toast.LENGTH_SHORT).show();
+                pickImageLauncher.launch("image/*");
             }
 
             @Override
             public void onRemoveSelected() {
-                SessionManager.clearProfilePhoto(requireContext());
-                if (imgEditProfilePhoto != null) imgEditProfilePhoto.setVisibility(View.GONE);
-                if (tvEditProfileInitials != null) tvEditProfileInitials.setVisibility(View.VISIBLE);
+                removeProfilePhoto();
             }
         });
         sheet.show(getChildFragmentManager(), "edit_photo_sheet");
+    }
+
+    private void checkCameraPermissionAndLaunch() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            launchCamera();
+        } else {
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
+    }
+
+    private void launchCamera() {
+        try {
+            cameraTempFile = File.createTempFile("profile_cam_", ".jpg", requireContext().getCacheDir());
+            Uri uri = FileProvider.getUriForFile(requireContext(),
+                    requireContext().getPackageName() + ".fileprovider", cameraTempFile);
+            takePictureLauncher.launch(uri);
+        } catch (Exception e) {
+            Toast.makeText(requireContext(), "Não foi possível abrir a câmera", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private File copyUriToProfileCache(Uri uri) {
+        try {
+            File out = new File(requireContext().getCacheDir(), "profile_pick_" + System.currentTimeMillis() + ".jpg");
+            try (InputStream in = requireContext().getContentResolver().openInputStream(uri);
+                 FileOutputStream fos = new FileOutputStream(out)) {
+                byte[] buffer = new byte[8192];
+                int n;
+                while ((n = in.read(buffer)) != -1) {
+                    fos.write(buffer, 0, n);
+                }
+            }
+            return out;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Processa a imagem (EXIF + Center Crop 1:1 quadrado + redimensionamento 512x512),
+     * atualiza o avatar imediatamente na tela e faz o upload assíncrono para o Cloudinary
+     * usando o preset Perfil-Photo e pasta Perfil/Assets/Image.
+     */
+    private void processAndSaveProfilePhoto(File sourceFile) {
+        if (sourceFile == null || !sourceFile.exists()) {
+            return;
+        }
+        try {
+            Bitmap bitmap = BitmapFactory.decodeFile(sourceFile.getAbsolutePath());
+            if (bitmap == null) {
+                Toast.makeText(requireContext(), "Erro ao processar imagem", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Corrige orientação EXIF se necessário
+            try {
+                ExifInterface exif = new ExifInterface(sourceFile.getAbsolutePath());
+                int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                int degrees = 0;
+                if (orientation == ExifInterface.ORIENTATION_ROTATE_90) degrees = 90;
+                else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) degrees = 180;
+                else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) degrees = 270;
+                if (degrees != 0) {
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(degrees);
+                    bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                }
+            } catch (Exception ignored) {
+            }
+
+            // Recorte quadrado 1:1 centralizado (Center Crop)
+            int minDim = Math.min(bitmap.getWidth(), bitmap.getHeight());
+            int cropX = (bitmap.getWidth() - minDim) / 2;
+            int cropY = (bitmap.getHeight() - minDim) / 2;
+            Bitmap square = Bitmap.createBitmap(bitmap, cropX, cropY, minDim, minDim);
+            Bitmap finalAvatar = Bitmap.createScaledBitmap(square, 512, 512, true);
+
+            // Salva permanentemente no diretório de arquivos do app
+            File avatarFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+            try (FileOutputStream fos = new FileOutputStream(avatarFile)) {
+                finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+            }
+
+            // Grava caminho local na sessão
+            SessionManager.saveProfilePhotoLocal(requireContext(), avatarFile.getAbsolutePath());
+
+            // Atualiza UI instantaneamente com avatar circular sem atraso
+            displayCircularPhoto(finalAvatar);
+
+            Toast.makeText(requireContext(), R.string.profile_photo_uploading, Toast.LENGTH_SHORT).show();
+
+            // Dispara upload para o Cloudinary (preset Perfil-Photo / pasta Perfil/Assets/Image)
+            CloudinaryUploader.uploadProfileImage(requireContext(), avatarFile, new CloudinaryUploader.UploadCallback() {
+                @Override
+                public void onSuccess(String remoteUrl, String publicId) {
+                    if (!isAdded()) return;
+                    SessionManager.saveProfilePhotoUrl(requireContext(), remoteUrl);
+                    Log.i(TAG, "Foto de perfil enviada ao Cloudinary com sucesso: " + remoteUrl);
+
+                    // 1. Salva no banco de dados oficial via PUT /users/me
+                    try {
+                        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+                        JsonObject body = new JsonObject();
+                        String nameToSave = etEditProfileName != null && etEditProfileName.getText() != null
+                                ? etEditProfileName.getText().toString().trim() : SessionManager.name(requireContext());
+                        body.addProperty("name", nameToSave);
+                        body.addProperty("position", selectedSector != null ? selectedSector : SessionManager.sector(requireContext()));
+                        body.addProperty("photoUrl", remoteUrl);
+                        authApi.updateMe(body).enqueue(new Callback<UserResponseDTO>() {
+                            @Override
+                            public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
+                                Log.i(TAG, "Foto de perfil salva no banco oficial (PUT /users/me): " + response.code());
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull Call<UserResponseDTO> call, @NonNull Throwable t) {
+                                Log.w(TAG, "Falha ao salvar foto de perfil no banco oficial: " + t.getMessage());
+                            }
+                        });
+                    } catch (Exception e) {
+                        Log.w(TAG, "Erro ao chamar updateMe: " + e.getMessage());
+                    }
+
+                    // 2. Replica no Cloud Firestore (coleção users)
+                    try {
+                        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+                        java.util.Map<String, Object> uDoc = new java.util.HashMap<>();
+                        uDoc.put("photoUrl", remoteUrl);
+                        uDoc.put("avatarUrl", remoteUrl);
+                        uDoc.put("name", etEditProfileName != null && etEditProfileName.getText() != null
+                                ? etEditProfileName.getText().toString().trim() : SessionManager.name(requireContext()));
+                        uDoc.put("email", SessionManager.email(requireContext()));
+                        uDoc.put("position", selectedSector);
+                        uDoc.put("updatedAt", com.google.firebase.Timestamp.now());
+                        String email = SessionManager.email(requireContext());
+                        if (email != null && !email.isEmpty()) {
+                            db.collection("users").document(email).set(uDoc, com.google.firebase.firestore.SetOptions.merge());
+                        }
+                    } catch (Exception e) {
+                        Log.w(TAG, "Erro ao sincronizar foto no Firestore: " + e.getMessage());
+                    }
+
+                    Toast.makeText(requireContext(), R.string.profile_photo_success, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onError(Exception exception, String fallbackLocalPath) {
+                    if (!isAdded()) return;
+                    Log.w(TAG, "Falha no upload da foto de perfil no Cloudinary: " + exception.getMessage());
+                    Toast.makeText(requireContext(), R.string.profile_photo_offline, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao salvar foto de perfil", e);
+            Toast.makeText(requireContext(), "Erro ao processar imagem", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void removeProfilePhoto() {
+        File avatarFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+        if (avatarFile.exists()) {
+            avatarFile.delete();
+        }
+        SessionManager.clearProfilePhoto(requireContext());
+        if (imgEditProfilePhoto != null) {
+            imgEditProfilePhoto.setImageDrawable(null);
+            imgEditProfilePhoto.setVisibility(View.GONE);
+        }
+        if (tvEditProfileInitials != null) {
+            tvEditProfileInitials.setVisibility(View.VISIBLE);
+        }
+
+        // Remove do banco oficial via PUT /users/me
+        try {
+            AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+            JsonObject body = new JsonObject();
+            body.addProperty("name", SessionManager.name(requireContext()));
+            body.addProperty("position", selectedSector);
+            body.addProperty("photoUrl", "");
+            authApi.updateMe(body).enqueue(new Callback<UserResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
+                    Log.i(TAG, "Foto de perfil removida do banco oficial.");
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<UserResponseDTO> call, @NonNull Throwable t) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
+
+        // Remove do Cloud Firestore
+        try {
+            String email = SessionManager.email(requireContext());
+            if (email != null && !email.isEmpty()) {
+                java.util.Map<String, Object> update = new java.util.HashMap<>();
+                update.put("photoUrl", null);
+                update.put("avatarUrl", null);
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("users").document(email)
+                        .set(update, com.google.firebase.firestore.SetOptions.merge());
+            }
+        } catch (Exception ignored) {
+        }
+
+        Toast.makeText(requireContext(), R.string.profile_photo_removed, Toast.LENGTH_SHORT).show();
     }
 
     private void showSectorDialog() {
@@ -255,6 +545,11 @@ public class EditProfileFragment extends Fragment {
                 java.util.Map<String, Object> update = new java.util.HashMap<>();
                 update.put("name", newName);
                 update.put("position", selectedSector);
+                String photo = SessionManager.getProfilePhotoUrl(requireContext());
+                if (photo != null && !photo.isEmpty()) {
+                    update.put("photoUrl", photo);
+                    update.put("avatarUrl", photo);
+                }
                 update.put("updatedAt", com.google.firebase.Timestamp.now());
                 com.google.firebase.firestore.FirebaseFirestore.getInstance()
                         .collection("users").document(email)

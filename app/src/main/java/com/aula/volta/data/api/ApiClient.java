@@ -88,6 +88,24 @@ public final class ApiClient {
 
                         try {
                             Response response = chain.proceed(builder.build());
+                            // Se a requisição deu 401 e não é login, tenta renovar o token JWT e repetir imediatamente
+                            if (response.code() == 401 && !original.url().encodedPath().contains("/auth/login")) {
+                                response.close();
+                                String refreshed = ChatbotAuthClient.refreshQaTokenBlocking(appContext);
+                                if (refreshed != null && !refreshed.isEmpty()) {
+                                    Request retry = original.newBuilder()
+                                            .header("Authorization", "Bearer " + refreshed)
+                                            .header("Host", "api.qa.54.210.1.34.sslip.io")
+                                            .header("X-Company-Id", ADMIN_COMPANY_ID)
+                                            .header("Accept", "application/json; charset=utf-8")
+                                            .build();
+                                    Response retryResp = chain.proceed(retry);
+                                    if (retryResp.code() < 500) {
+                                        return retryResp;
+                                    }
+                                    response = retryResp;
+                                }
+                            }
                             // Se a API do banco respondeu (2xx, 3xx, 4xx cliente), retorna a resposta real
                             if (response.code() < 500) {
                                 return response;

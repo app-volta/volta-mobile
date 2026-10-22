@@ -284,6 +284,13 @@ public class ProfileFragment extends Fragment {
                     }
                     if (response.isSuccessful() && response.body() != null) {
                         UserResponseDTO u = response.body();
+                        // Protege contra sobreposição por conta de admin
+                        if ("volta.brasil.2026@gmail.com".equalsIgnoreCase(u.getEmail()) || "ADMIN".equalsIgnoreCase(u.getRole())) {
+                            String myEmail = SessionManager.email(requireContext());
+                            if (!"volta.brasil.2026@gmail.com".equalsIgnoreCase(myEmail)) {
+                                return;
+                            }
+                        }
                         if (u.getName() != null && !u.getName().isEmpty()) {
                             SessionManager.saveName(requireContext(), u.getName());
                             if (tvProfileName != null) {

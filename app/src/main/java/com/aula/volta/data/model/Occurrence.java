@@ -63,7 +63,7 @@ public class Occurrence {
         String sector = "Frigorífico — Setor B2";
         String prio = inc.getPriority() != null ? inc.getPriority() : "MEDIA";
         String stat = inc.getStatus() != null ? inc.getStatus() : "EM_ANALISE";
-        String mat = "Aparas de Papelão";
+        String mat = resolveMaterial(inc);
         String time = "Hoje";
         if (inc.getRegisteredAt() != null && !inc.getRegisteredAt().isEmpty()) {
             time = inc.getRegisteredAt().replace("T", " ");
@@ -73,6 +73,27 @@ public class Occurrence {
         }
         String photoUrl = inc.getPhotoUrl();
         return new Occurrence(id, desc, sector, time, prio, stat, mat, photoUrl, null);
+    }
+
+    private static String resolveMaterial(IncidentResponseDTO inc) {
+        String desc = inc.getEmployeeDescription() != null ? inc.getEmployeeDescription().toLowerCase(java.util.Locale.ROOT) : "";
+        String wId = inc.getWasteTypeId() != null ? inc.getWasteTypeId().toLowerCase(java.util.Locale.ROOT) : "";
+        if (wId.contains("4e73b22b") || desc.contains("papel") || desc.contains("papelão") || desc.contains("cartão")) {
+            return "Aparas de Papelão";
+        }
+        if (wId.contains("bd985415") || desc.contains("plást") || desc.contains("plast") || desc.contains("pet") || desc.contains("filme")) {
+            return "Plástico Filme";
+        }
+        if (wId.contains("7020bc8b") || desc.contains("metal") || desc.contains("alum") || desc.contains("aço") || desc.contains("lata")) {
+            return "Alumínio Limpo";
+        }
+        if (wId.contains("976a4df6") || desc.contains("vidro") || desc.contains("garrafa")) {
+            return "Vidro Misto";
+        }
+        if (desc.contains("orgân") || desc.contains("organ")) {
+            return "Orgânico";
+        }
+        return "Resíduo Reciclável";
     }
 
     public String getId() {

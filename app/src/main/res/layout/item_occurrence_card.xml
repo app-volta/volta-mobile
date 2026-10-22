@@ -20,6 +20,14 @@
         android:background="@drawable/bg_occurrence_icon">
 
         <ImageView
+            android:id="@+id/cardThumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
+
+        <ImageView
             android:id="@+id/cardIcon"
             android:layout_width="21dp"
             android:layout_height="21dp"
