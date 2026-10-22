@@ -40,6 +40,7 @@ import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.local.SessionManager;
 import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.upload.CloudinaryUploader;
+import com.aula.volta.ui.dialog.LogoutDialog;
 import com.aula.volta.ui.dialog.ProfilePhotoSheet;
 import com.google.gson.JsonObject;
 
@@ -155,22 +156,38 @@ public class ProfileFragment extends Fragment {
         if (imgProfileCameraBadge != null) {
             imgProfileCameraBadge.setOnClickListener(openPhotoPicker);
         }
+        // Navegação para Editar Perfil (Figma 1721:1264)
         View btnEdit = view.findViewById(R.id.btnEditProfile);
         if (btnEdit != null) {
-            btnEdit.setOnClickListener(openPhotoPicker);
+            btnEdit.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigate(R.id.nav_edit_profile));
         }
 
+        // Navegação para Notificações (Figma 1721:1460)
         view.findViewById(R.id.rowProfileNotifications).setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.nav_notifications));
+                Navigation.findNavController(v).navigate(R.id.nav_notification_settings));
 
+        // Navegação para Minha Unidade (Figma 1721:1606)
         view.findViewById(R.id.rowProfileUnit).setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.occ_soon,
-                        Toast.LENGTH_SHORT).show());
+                Navigation.findNavController(v).navigate(R.id.nav_my_unit));
 
+        // Assistente IA
         view.findViewById(R.id.rowProfileHelp).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.nav_assistant));
 
+        // Diálogo Sair da Conta (Figma 1721:1709)
         view.findViewById(R.id.btnLogout).setOnClickListener(v -> showLogoutDialog());
+
+        // Listener de resultados ao retornar de Editar Perfil ou Alterar Senha (Figma 1723:1366 e 1723:1460)
+        getParentFragmentManager().setFragmentResultListener("profile_result", getViewLifecycleOwner(), (requestKey, result) -> {
+            if (result.getBoolean("profileSaved", false)) {
+                bindUserData();
+                loadProfilePhoto();
+                showFeedbackToast("Dados salvos", "Alterações salvas com sucesso");
+            } else if (result.getBoolean("passwordChanged", false)) {
+                showFeedbackToast("Senha alterada", "Sua senha foi atualizada com sucesso");
+            }
+        });
 
         loadNumbers();
         loadNotifCount();
@@ -629,6 +646,7 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         bindUserData();
+        loadProfilePhoto();
         loadNotifCount();
     }
 
@@ -764,19 +782,40 @@ public class ProfileFragment extends Fragment {
     }
 
     private void showLogoutDialog() {
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.profile_logout_title)
-                .setMessage(R.string.profile_logout_msg)
-                .setPositiveButton(R.string.profile_logout, (dialog, which) -> {
-                    SessionManager.logout(requireContext());
-                    android.content.Intent intent = new android.content.Intent(
-                            requireContext(), com.aula.volta.ui.auth.AuthActivity.class);
-                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                            | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    requireActivity().finish();
+        // Diálogo customizado conforme Figma 1721:1709
+        LogoutDialog.newInstance().show(getChildFragmentManager(), "logout_dialog");
+    }
+
+    /**
+     * Exibe o Toast animado na parte inferior da tela (Figma 1723:1366 e 1723:1460).
+     */
+    private void showFeedbackToast(String title, String subtitle) {
+        View toast = getView() != null ? getView().findViewById(R.id.toastProfileFeedback) : null;
+        if (toast == null) return;
+        TextView tvTitle = toast.findViewById(R.id.tvToastFeedbackTitle);
+        TextView tvSubtitle = toast.findViewById(R.id.tvToastFeedbackSubtitle);
+        if (tvTitle != null) tvTitle.setText(title);
+        if (tvSubtitle != null) tvSubtitle.setText(subtitle);
+
+        toast.setVisibility(View.VISIBLE);
+        toast.setAlpha(0f);
+        toast.setTranslationY(60f);
+        toast.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(300)
+                .withEndAction(() -> {
+                    toast.postDelayed(() -> {
+                        if (isAdded() && toast.getVisibility() == View.VISIBLE) {
+                            toast.animate()
+                                    .alpha(0f)
+                                    .translationY(60f)
+                                    .setDuration(300)
+                                    .withEndAction(() -> toast.setVisibility(View.GONE))
+                                    .start();
+                        }
+                    }, 3000);
                 })
-                .setNegativeButton(R.string.pick_confirm_no, null)
-                .show();
+                .start();
     }
 }

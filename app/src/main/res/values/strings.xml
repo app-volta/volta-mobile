@@ -210,6 +210,8 @@
 
     <!-- Foto de Perfil & Cloudinary (Perfil-Photo / Perfil/Assets/Image) -->
     <string name="cancel">Cancelar</string>
+    <string name="btn_back">Voltar</string>
+    <string name="auth_cd_toggle_password">Alternar visibilidade da senha</string>
     <string name="profile_photo_title">Foto de perfil</string>
     <string name="profile_photo_subtitle">Escolha como deseja atualizar sua foto</string>
     <string name="profile_photo_camera">Tirar foto com a câmera</string>

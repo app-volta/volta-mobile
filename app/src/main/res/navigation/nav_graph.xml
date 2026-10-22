@@ -40,6 +40,31 @@
         android:label="@string/nav_profile"
         tools:layout="@layout/fragment_profile" />
 
+    <!-- Seção 6 · Perfil — configurações da conta (Figma 1721:1263) -->
+    <fragment
+        android:id="@+id/nav_edit_profile"
+        android:name="com.aula.volta.ui.profile.EditProfileFragment"
+        android:label="Editar perfil"
+        tools:layout="@layout/fragment_edit_profile" />
+
+    <fragment
+        android:id="@+id/nav_change_password"
+        android:name="com.aula.volta.ui.profile.ChangePasswordFragment"
+        android:label="Alterar senha"
+        tools:layout="@layout/fragment_change_password" />
+
+    <fragment
+        android:id="@+id/nav_notification_settings"
+        android:name="com.aula.volta.ui.profile.NotificationSettingsFragment"
+        android:label="Notificações"
+        tools:layout="@layout/fragment_notification_settings" />
+
+    <fragment
+        android:id="@+id/nav_my_unit"
+        android:name="com.aula.volta.ui.profile.UnitFragment"
+        android:label="Minha unidade"
+        tools:layout="@layout/fragment_unit" />
+
     <fragment
         android:id="@+id/nav_ai_analysis"
         android:name="com.aula.volta.ui.analysis.AiAnalysisFragment"
