@@ -17,8 +17,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.widget.ImageView;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
+
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.ReportAPI;
+import com.aula.volta.data.local.SessionManager;
+import java.io.File;
 import com.aula.volta.data.model.EsgMetricResponseDTO;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
@@ -68,6 +76,13 @@ public class HomeFragment extends Fragment {
         tvStatResolvedCount = view.findViewById(R.id.tvStatResolvedCount);
         tvStatRecycledCount = view.findViewById(R.id.tvStatRecycledCount);
         tvNotifCount = view.findViewById(R.id.tvNotifCount);
+
+        View avatarContainer = view.findViewById(R.id.avatarContainer);
+        if (avatarContainer != null) {
+            avatarContainer.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigate(R.id.nav_profile));
+        }
+        loadAvatarPhoto();
 
         // _________________________________________________________________________________________
         //            AÇÕES DA HOME (navegação interna, sem item na bottom bar)
@@ -168,6 +183,32 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadNotificationDot();
+        loadAvatarPhoto();
+    }
+
+    private void loadAvatarPhoto() {
+        if (!isAdded() || getView() == null) return;
+        ImageView imgAvatar = getView().findViewById(R.id.imgAvatarPhoto);
+        TextView tvInitials = getView().findViewById(R.id.tvAvatarInitials);
+        if (imgAvatar == null) return;
+
+        String localPath = SessionManager.getProfilePhotoLocal(requireContext());
+        if (localPath != null && !localPath.isEmpty()) {
+            File f = new File(localPath);
+            if (f.exists()) {
+                Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
+                if (bmp != null) {
+                    RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
+                    circular.setCircular(true);
+                    imgAvatar.setImageDrawable(circular);
+                    imgAvatar.setVisibility(View.VISIBLE);
+                    if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+                    return;
+                }
+            }
+        }
+        imgAvatar.setVisibility(View.GONE);
+        if (tvInitials != null) tvInitials.setVisibility(View.VISIBLE);
     }
 
     /** Resumo da unidade via GET /reports/summary (mock → API-ready). */

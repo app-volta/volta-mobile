@@ -55,12 +55,22 @@
                 android:orientation="horizontal"
                 android:padding="20dp">
 
-                <!-- Avatar circular branco com iniciais em verde (Figma 790:3492: 74x74dp) -->
+                <!-- Avatar circular branco com iniciais em verde e suporte a foto de perfil (Figma 790:3492: 74x74dp) -->
                 <FrameLayout
                     android:id="@+id/avatarContainer"
                     android:layout_width="74dp"
                     android:layout_height="74dp"
-                    android:background="@drawable/bg_circle_avatar_white">
+                    android:background="@drawable/bg_circle_avatar_white"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:id="@+id/imgProfilePhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@string/profile_name"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone" />
 
                     <TextView
                         android:id="@+id/tvProfileInitials"
@@ -72,6 +82,16 @@
                         android:textSize="24sp"
                         android:textStyle="bold"
                         tools:text="BG" />
+
+                    <ImageView
+                        android:id="@+id/imgProfileCameraBadge"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="bottom|end"
+                        android:background="@drawable/bg_circle_camera_badge"
+                        android:contentDescription="@string/profile_edit"
+                        android:padding="4dp"
+                        android:src="@drawable/ic_camera_white" />
                 </FrameLayout>
 
                 <!-- Informações do usuário -->

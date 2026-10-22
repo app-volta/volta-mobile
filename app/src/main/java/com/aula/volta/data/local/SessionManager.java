@@ -17,6 +17,8 @@ public final class SessionManager {
     private static final String KEY_TOKEN = "user_jwt_token";
     private static final String KEY_CHAT_SESSION_ID = "chat_session_id";
     private static final String KEY_SECTOR = "user_sector";
+    private static final String KEY_PROFILE_PHOTO_URL = "user_profile_photo_url";
+    private static final String KEY_PROFILE_PHOTO_LOCAL = "user_profile_photo_local";
 
     private SessionManager() {
     }
@@ -105,5 +107,28 @@ public final class SessionManager {
 
     public static String sector(Context context) {
         return prefs(context).getString(KEY_SECTOR, "");
+    }
+
+    public static void saveProfilePhotoUrl(Context context, String url) {
+        prefs(context).edit().putString(KEY_PROFILE_PHOTO_URL, url == null ? "" : url).apply();
+    }
+
+    public static String getProfilePhotoUrl(Context context) {
+        return prefs(context).getString(KEY_PROFILE_PHOTO_URL, "");
+    }
+
+    public static void saveProfilePhotoLocal(Context context, String localPath) {
+        prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, localPath == null ? "" : localPath).apply();
+    }
+
+    public static String getProfilePhotoLocal(Context context) {
+        return prefs(context).getString(KEY_PROFILE_PHOTO_LOCAL, "");
+    }
+
+    public static void clearProfilePhoto(Context context) {
+        prefs(context).edit()
+                .remove(KEY_PROFILE_PHOTO_URL)
+                .remove(KEY_PROFILE_PHOTO_LOCAL)
+                .apply();
     }
 }

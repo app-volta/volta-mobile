@@ -35,8 +35,14 @@ public final class CloudinaryUploader {
 
     // Configurações oficiais do Cloudinary do projeto VOLTA
     public static String CLOUD_NAME = "kgou1air";
+
+    // Ocorrências / Análise de IA
     public static String UPLOAD_PRESET = "AI-Analysis";
     public static String ASSET_FOLDER = "Ocorrencia/Assets/Images";
+
+    // Fotos de Perfil (Perfil-Photo / Perfil/Assets/Image)
+    public static String PROFILE_UPLOAD_PRESET = "Perfil-Photo";
+    public static String PROFILE_ASSET_FOLDER = "Perfil/Assets/Image";
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -68,7 +74,24 @@ public final class CloudinaryUploader {
      * Faz upload da imagem no Cloudinary em background (apenas 1 vez por arquivo).
      * Se o mesmo arquivo já estiver subindo ou já tiver subido, reaproveita o resultado.
      */
+    /**
+     * Faz upload da imagem de ocorrência (preset AI-Analysis, pasta Ocorrencia/Assets/Images).
+     */
     public static void uploadImage(Context context, File imageFile, UploadCallback callback) {
+        uploadImage(context, imageFile, UPLOAD_PRESET, ASSET_FOLDER, callback);
+    }
+
+    /**
+     * Faz upload da foto de perfil (preset Perfil-Photo, pasta Perfil/Assets/Image).
+     */
+    public static void uploadProfileImage(Context context, File imageFile, UploadCallback callback) {
+        uploadImage(context, imageFile, PROFILE_UPLOAD_PRESET, PROFILE_ASSET_FOLDER, callback);
+    }
+
+    /**
+     * Faz upload da imagem no Cloudinary com preset e pasta especificados.
+     */
+    public static void uploadImage(Context context, File imageFile, String uploadPreset, String assetFolder, UploadCallback callback) {
         if (imageFile == null || !imageFile.exists()) {
             if (callback != null) {
                 mainHandler.post(() -> callback.onError(
@@ -77,9 +100,9 @@ public final class CloudinaryUploader {
             return;
         }
 
-        final String fileKey = imageFile.getAbsolutePath();
+        final String fileKey = imageFile.getAbsolutePath() + "_" + imageFile.lastModified() + "_" + uploadPreset;
 
-        // 1. Se esta foto já foi enviada anteriormente, retorna imediatamente a URL sem re-upar
+        // 1. Se esta foto já foi enviada anteriormente com este preset, reaproveita a URL
         String cachedUrl = uploadedUrlCache.get(fileKey);
         if (cachedUrl != null && !cachedUrl.isEmpty()) {
             final String cachedId = uploadedPublicIdCache.getOrDefault(fileKey, "");
@@ -91,11 +114,11 @@ public final class CloudinaryUploader {
 
         // 2. Se ainda não configurado no Cloudinary, executa fallback gracioso com arquivo local
         if (CLOUD_NAME == null || CLOUD_NAME.trim().isEmpty()
-                || UPLOAD_PRESET == null || UPLOAD_PRESET.trim().isEmpty()) {
+                || uploadPreset == null || uploadPreset.trim().isEmpty()) {
             if (callback != null) {
                 mainHandler.post(() -> callback.onError(
                         new IllegalStateException("Cloudinary não configurado (usando imagem local)"),
-                        fileKey));
+                        imageFile.getAbsolutePath()));
             }
             return;
         }
@@ -140,14 +163,14 @@ public final class CloudinaryUploader {
                 writer.append("--").append(boundary).append(LINE_FEED);
                 writer.append("Content-Disposition: form-data; name=\"upload_preset\"").append(LINE_FEED);
                 writer.append("Content-Type: text/plain; charset=UTF-8").append(LINE_FEED);
-                writer.append(LINE_FEED).append(UPLOAD_PRESET).append(LINE_FEED);
+                writer.append(LINE_FEED).append(uploadPreset).append(LINE_FEED);
 
-                // Campo folder (Ocorrencia/Assets/Images)
-                if (ASSET_FOLDER != null && !ASSET_FOLDER.trim().isEmpty()) {
+                // Campo folder
+                if (assetFolder != null && !assetFolder.trim().isEmpty()) {
                     writer.append("--").append(boundary).append(LINE_FEED);
                     writer.append("Content-Disposition: form-data; name=\"folder\"").append(LINE_FEED);
                     writer.append("Content-Type: text/plain; charset=UTF-8").append(LINE_FEED);
-                    writer.append(LINE_FEED).append(ASSET_FOLDER).append(LINE_FEED);
+                    writer.append(LINE_FEED).append(assetFolder).append(LINE_FEED);
                 }
 
                 // Campo file (arquivo binário)
