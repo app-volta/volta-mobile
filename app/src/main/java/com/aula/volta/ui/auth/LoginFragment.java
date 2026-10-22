@@ -59,9 +59,11 @@ public class LoginFragment extends Fragment {
 
         view.findViewById(R.id.btnTogglePassword).setOnClickListener(v -> {
             passwordVisible = !passwordVisible;
+            android.graphics.Typeface tf = etPassword.getTypeface();
             etPassword.setInputType(passwordVisible
                     ? InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                     : InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            etPassword.setTypeface(tf);
             etPassword.setSelection(etPassword.getText().length());
         });
 

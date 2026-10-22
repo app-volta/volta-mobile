@@ -1,5 +1,6 @@
 package com.aula.volta.ui.auth;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.InputType;
@@ -45,8 +46,23 @@ public class RegisterFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Restaura estado em caso de rotação de tela
+        TextView tvSector = view.findViewById(R.id.tvRegisterSector);
+        if (savedInstanceState != null) {
+            selectedSector = savedInstanceState.getString("selected_sector", "");
+            if (!selectedSector.isEmpty() && tvSector != null) {
+                tvSector.setText(selectedSector);
+                tvSector.setTextColor(requireContext().getColor(R.color.vf_text_primary));
+            }
+            passwordVisible = savedInstanceState.getBoolean("password_visible", false);
+        }
+
         // Botão Fechar circular superior direito e link Rodapé "Entrar"
-        View.OnClickListener goBack = v -> Navigation.findNavController(v).navigateUp();
+        View.OnClickListener goBack = v -> {
+            if (!Navigation.findNavController(v).popBackStack(R.id.auth_login, false)) {
+                Navigation.findNavController(v).navigateUp();
+            }
+        };
         View btnClose = view.findViewById(R.id.btnCloseRegister);
         if (btnClose != null) {
             btnClose.setOnClickListener(goBack);
@@ -57,43 +73,44 @@ public class RegisterFragment extends Fragment {
         }
 
         // Card Setor e Diálogo de Seleção
-        TextView tvSector = view.findViewById(R.id.tvRegisterSector);
         View cardSector = view.findViewById(R.id.cardRegisterSector);
-        if (cardSector != null && tvSector != null) {
-            cardSector.setOnClickListener(v -> {
-                String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
-                new MaterialAlertDialogBuilder(requireContext())
-                        .setTitle(R.string.auth_register_sector_hint)
-                        .setItems(sectors, (dialog, which) -> {
-                            selectedSector = sectors[which];
+        View.OnClickListener openSectorDialog = v -> {
+            String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.auth_register_sector_hint)
+                    .setItems(sectors, (dialog, which) -> {
+                        selectedSector = sectors[which];
+                        if (tvSector != null) {
                             tvSector.setText(selectedSector);
                             tvSector.setTextColor(requireContext().getColor(R.color.vf_text_primary));
-                        })
-                        .show();
-            });
+                        }
+                    })
+                    .show();
+        };
+        if (cardSector != null) {
+            cardSector.setOnClickListener(openSectorDialog);
         }
 
-        // Toggle Visibilidade de Senha
+        // Toggle Visibilidade de Senha (preservando Typeface/Fonte)
         EditText etPassword = view.findViewById(R.id.etRegisterPassword);
         ImageView btnToggle = view.findViewById(R.id.btnToggleRegisterPassword);
         if (etPassword != null && btnToggle != null) {
+            applyPasswordVisibility(etPassword, btnToggle, passwordVisible);
             btnToggle.setOnClickListener(v -> {
                 passwordVisible = !passwordVisible;
-                etPassword.setInputType(passwordVisible
-                        ? InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                        : InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                etPassword.setSelection(etPassword.getText().length());
-                btnToggle.setColorFilter(requireContext().getColor(
-                        passwordVisible ? R.color.login_btn_text_green : R.color.vf_text_secondary));
+                applyPasswordVisibility(etPassword, btnToggle, passwordVisible);
             });
         }
 
         // Checkbox e Texto dos Termos
         CheckBox cbTerms = view.findViewById(R.id.cbTerms);
         TextView tvTerms = view.findViewById(R.id.tvTerms);
+        View rowTerms = view.findViewById(R.id.rowTerms);
         if (tvTerms != null) {
             tvTerms.setText(Html.fromHtml(getString(R.string.auth_register_terms), Html.FROM_HTML_MODE_LEGACY));
-            tvTerms.setOnClickListener(v -> {
+        }
+        if (rowTerms != null) {
+            rowTerms.setOnClickListener(v -> {
                 if (cbTerms != null) {
                     cbTerms.setChecked(!cbTerms.isChecked());
                 }
@@ -107,18 +124,18 @@ public class RegisterFragment extends Fragment {
             String password = textOf(view, R.id.etRegisterPassword);
 
             if (name.isEmpty()) {
-                Toast.makeText(requireContext(), "Informe seu nome e sobrenome", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), R.string.auth_name_hint, Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (email.isEmpty() || !email.contains("@")) {
-                Toast.makeText(requireContext(), "Informe um e-mail válido", Toast.LENGTH_SHORT).show();
+            if (!AuthValidator.isValidEmail(email)) {
+                Toast.makeText(requireContext(), R.string.auth_invalid, Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (selectedSector == null || selectedSector.trim().isEmpty()) {
+            if (!AuthValidator.isValidSector(selectedSector)) {
                 Toast.makeText(requireContext(), R.string.auth_register_sector_required, Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (password.length() < 8) {
+            if (!AuthValidator.isValidPassword(password)) {
                 Toast.makeText(requireContext(), R.string.auth_register_pw_min, Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -134,8 +151,27 @@ public class RegisterFragment extends Fragment {
             args.putString("email", email);
             args.putString("name", name);
             args.putString("sector", selectedSector);
+            args.putString("password", password);
             Navigation.findNavController(v).navigate(R.id.auth_confirm, args);
         });
+    }
+
+    private void applyPasswordVisibility(EditText etPassword, ImageView btnToggle, boolean visible) {
+        Typeface tf = etPassword.getTypeface();
+        etPassword.setInputType(visible
+                ? InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                : InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        etPassword.setTypeface(tf);
+        etPassword.setSelection(etPassword.getText().length());
+        btnToggle.setColorFilter(requireContext().getColor(
+                visible ? R.color.login_btn_text_green : R.color.vf_text_secondary));
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("selected_sector", selectedSector);
+        outState.putBoolean("password_visible", passwordVisible);
     }
 
     private String textOf(View root, int id) {

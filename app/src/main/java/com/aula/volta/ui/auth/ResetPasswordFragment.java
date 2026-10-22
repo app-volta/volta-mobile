@@ -1,6 +1,7 @@
 package com.aula.volta.ui.auth;
 
 import android.content.res.ColorStateList;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -74,9 +75,11 @@ public class ResetPasswordFragment extends Fragment {
         if (btnToggleNew != null && etNew != null) {
             btnToggleNew.setOnClickListener(v -> {
                 passwordVisible = !passwordVisible;
+                Typeface tf = etNew.getTypeface();
                 etNew.setInputType(passwordVisible
                         ? InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                         : InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                etNew.setTypeface(tf);
                 etNew.setSelection(etNew.getText().length());
                 btnToggleNew.setColorFilter(requireContext().getColor(
                         passwordVisible ? R.color.login_btn_text_green : R.color.vf_text_secondary));
@@ -90,7 +93,7 @@ public class ResetPasswordFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                updateStrength(etNew.getText().length());
+                updateStrength(etNew != null ? etNew.getText().length() : 0);
                 updateConfirmState();
             }
 
@@ -99,16 +102,20 @@ public class ResetPasswordFragment extends Fragment {
             }
         };
 
-        etNew.addTextChangedListener(watcher);
-        etConfirm.addTextChangedListener(watcher);
+        if (etNew != null) {
+            etNew.addTextChangedListener(watcher);
+        }
+        if (etConfirm != null) {
+            etConfirm.addTextChangedListener(watcher);
+        }
 
         updateStrength(0);
         updateConfirmState();
 
         view.findViewById(R.id.btnSavePassword).setOnClickListener(v -> {
-            String first = etNew.getText().toString();
-            String second = etConfirm.getText().toString();
-            if (first.length() < 8) {
+            String first = etNew != null ? etNew.getText().toString() : "";
+            String second = etConfirm != null ? etConfirm.getText().toString() : "";
+            if (!AuthValidator.isValidPassword(first)) {
                 Toast.makeText(requireContext(), R.string.auth_register_pw_min,
                         Toast.LENGTH_SHORT).show();
                 return;
@@ -124,30 +131,25 @@ public class ResetPasswordFragment extends Fragment {
 
     /** 1 Fraca (#E5484D) · 2 Média (#E8893A) · 3 Boa (#1BA463) · 4 Forte (#0E7C48). */
     private void updateStrength(int length) {
-        if (!isAdded()) return;
-        int level;
-        int labelRes;
-        int colorRes;
-        if (length >= 8) {
-            level = 4;
-            labelRes = R.string.auth_pw_strong;
-            colorRes = R.color.status_aprovada_text;
-        } else if (length >= 6) {
-            level = 3;
-            labelRes = R.string.auth_pw_good;
-            colorRes = R.color.login_btn_text_green;
-        } else if (length >= 4) {
-            level = 2;
-            labelRes = R.string.auth_pw_fair;
-            colorRes = R.color.priority_medium_text;
-        } else {
-            level = length == 0 ? 0 : 1;
-            labelRes = R.string.auth_pw_weak;
-            colorRes = R.color.priority_high_text;
+        if (!isAdded() || tvStrength == null) return;
+        if (length == 0) {
+            tvStrength.setText("");
+            for (View segment : segments) {
+                if (segment != null) {
+                    segment.setBackgroundResource(R.drawable.bg_strength_bar_track);
+                    segment.setBackgroundTintList(null);
+                }
+            }
+            return;
         }
+
+        int level = AuthValidator.calculateStrengthLevel(length);
+        int labelRes = AuthValidator.getStrengthLabelRes(level);
+        int colorRes = AuthValidator.getStrengthColorRes(level);
 
         int activeColor = requireContext().getColor(colorRes);
         for (int i = 0; i < segments.length; i++) {
+            if (segments[i] == null) continue;
             if (i < level) {
                 segments[i].setBackgroundResource(R.drawable.bg_strength_bar_filled);
                 segments[i].setBackgroundTintList(ColorStateList.valueOf(activeColor));
@@ -168,7 +170,7 @@ public class ResetPasswordFragment extends Fragment {
         if (!isAdded() || cardConfirm == null || etNew == null || etConfirm == null) return;
         String first = etNew.getText().toString();
         String second = etConfirm.getText().toString();
-        boolean matching = !first.isEmpty() && first.length() >= 8 && first.equals(second);
+        boolean matching = AuthValidator.isPasswordMatch(first, second);
 
         if (matching) {
             cardConfirm.setBackgroundResource(R.drawable.bg_card_surface_matching);

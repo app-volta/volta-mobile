@@ -29,6 +29,10 @@
             android:name="sector"
             android:defaultValue=""
             app:argType="string" />
+        <argument
+            android:name="password"
+            android:defaultValue=""
+            app:argType="string" />
     </fragment>
 
     <fragment
@@ -43,6 +47,10 @@
             app:argType="string" />
         <argument
             android:name="sector"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="password"
             android:defaultValue=""
             app:argType="string" />
     </fragment>

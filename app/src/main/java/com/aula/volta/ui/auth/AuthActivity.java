@@ -46,11 +46,14 @@ public class AuthActivity extends AppCompatActivity {
                         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
                 if (insetsController != null) {
                     insetsController.setAppearanceLightStatusBars(isLightScreen);
+                    insetsController.setAppearanceLightNavigationBars(isLightScreen);
                 }
                 if (isLightScreen) {
                     getWindow().setStatusBarColor(getColor(R.color.vf_bg));
+                    getWindow().setNavigationBarColor(getColor(R.color.vf_bg));
                 } else {
-                    getWindow().setStatusBarColor(getColor(R.color.cta_gradient_end));
+                    getWindow().setStatusBarColor(getColor(R.color.cta_gradient_start));
+                    getWindow().setNavigationBarColor(getColor(R.color.cta_gradient_end));
                 }
             });
         }

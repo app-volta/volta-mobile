@@ -36,8 +36,12 @@ public class SuccessFragment extends Fragment {
             String email = getArguments() != null ? getArguments().getString("email") : "";
             String name = getArguments() != null ? getArguments().getString("name") : "";
             String sector = getArguments() != null ? getArguments().getString("sector") : "";
+            String password = getArguments() != null ? getArguments().getString("password") : "";
             SessionManager.login(requireContext(),
-                    email == null ? "" : email, name == null ? "" : name);
+                    email == null ? "" : email,
+                    password == null ? "" : password,
+                    name == null ? "" : name,
+                    "");
             if (sector != null && !sector.isEmpty()) {
                 SessionManager.saveSector(requireContext(), sector);
             }

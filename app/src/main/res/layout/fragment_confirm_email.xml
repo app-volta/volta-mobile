@@ -11,7 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="28dp"
+        android:paddingStart="28dp"
+        android:paddingEnd="12dp"
         android:paddingTop="28dp"
         android:paddingBottom="24dp">
 
@@ -168,6 +169,7 @@
             android:id="@+id/btnConfirmCode"
             android:layout_width="match_parent"
             android:layout_height="54dp"
+            android:layout_marginEnd="16dp"
             android:layout_marginBottom="24dp"
             android:background="@drawable/bg_button_gradient"
             android:fontFamily="@font/font_poppins"
@@ -182,6 +184,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
             android:gravity="center"
             android:orientation="vertical">
 

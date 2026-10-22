@@ -93,16 +93,23 @@ public class PasswordCodeFragment extends Fragment {
                 return false;
             });
         }
-
-        tvResend = view.findViewById(R.id.tvResend);
-        tvResend.setOnClickListener(v -> {
-            if (canResend) {
-                Toast.makeText(requireContext(), R.string.auth_code_sent,
-                        Toast.LENGTH_SHORT).show();
-                startResendTimer();
+        boxes[0].post(() -> {
+            if (isAdded()) {
+                boxes[0].requestFocus();
             }
         });
-        startResendTimer();
+
+        tvResend = view.findViewById(R.id.tvResend);
+        if (tvResend != null) {
+            tvResend.setOnClickListener(v -> {
+                if (canResend) {
+                    Toast.makeText(requireContext(), R.string.auth_code_sent,
+                            Toast.LENGTH_SHORT).show();
+                    startResendTimer();
+                }
+            });
+            startResendTimer();
+        }
 
         view.findViewById(R.id.btnConfirmPasscode).setOnClickListener(v -> {
             StringBuilder code = new StringBuilder();
