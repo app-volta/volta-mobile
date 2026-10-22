@@ -117,10 +117,39 @@ public final class OccurrenceStore {
         });
     }
 
-    /** Lista em memória vinda do cache (sem rede). */
+    /** Lista em memória vinda do cache (sem rede); se vazia, carrega o catálogo inicial do app. */
     public static List<Occurrence> cached(Context context) {
-        return PrefsHelper.getList(context.getApplicationContext(), PREFS, KEY_LIST,
+        Context app = context.getApplicationContext();
+        List<Occurrence> list = PrefsHelper.getList(app, PREFS, KEY_LIST,
                 PrefsHelper.listType(Occurrence.class));
+        if (list == null || list.isEmpty()) {
+            list = loadInitialOccurrencesFromAssets(app);
+            if (!list.isEmpty()) {
+                PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+            }
+        }
+        return list != null ? list : new ArrayList<>();
+    }
+
+    private static List<Occurrence> loadInitialOccurrencesFromAssets(Context context) {
+        try (java.io.InputStream in = context.getAssets().open("mock/occurrences.json")) {
+            int size = in.available();
+            byte[] buffer = new byte[size];
+            in.read(buffer);
+            String json = new String(buffer, java.nio.charset.StandardCharsets.UTF_8);
+            com.google.gson.reflect.TypeToken<List<OccurrenceJSON>> token =
+                    new com.google.gson.reflect.TypeToken<List<OccurrenceJSON>>() {};
+            List<OccurrenceJSON> jsonList = new com.google.gson.Gson().fromJson(json, token.getType());
+            List<Occurrence> result = new ArrayList<>();
+            if (jsonList != null) {
+                for (OccurrenceJSON j : jsonList) {
+                    result.add(Occurrence.fromJson(j));
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     /** Ocorrência lançada no app: topo da lista e sobrevive ao refresh. */

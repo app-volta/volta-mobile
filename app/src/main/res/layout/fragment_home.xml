@@ -171,16 +171,17 @@
                 android:gravity="center"
                 android:orientation="horizontal" />
 
-            <!-- Loading da Home -->
-            <ProgressBar
+            <!-- Loading da Home (Material CircularProgressIndicator verde ativo que gira suavemente) -->
+            <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:id="@+id/loadingHome"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="@dimen/spacing_medium" 
+                android:layout_marginBottom="@dimen/spacing_medium"
                 android:indeterminate="true"
-                android:indeterminateTint="#1BA463"
-                android:indeterminateTintMode="src_in" />
+                app:indicatorColor="#1BA463"
+                app:indicatorSize="36dp"
+                app:trackThickness="3.5dp" />
 
             <!-- =================================================================================== -->
             <!--                            RESUMO DA UNIDADE — 3 Cards (Figma 790:1684..1703)      -->
@@ -243,7 +244,7 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="—"
+                        android:text="9"
                         tools:text="9"
                         android:textColor="@color/stat_open_icon"
                         android:textSize="22sp"
@@ -296,7 +297,7 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="—"
+                        android:text="43"
                         tools:text="43"
                         android:textColor="@color/stat_resolved_icon"
                         android:textSize="22sp"
@@ -348,7 +349,7 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="—"
+                        android:text="1.147"
                         tools:text="1.147"
                         android:textColor="@color/stat_recycled_icon"
                         android:textSize="22sp"

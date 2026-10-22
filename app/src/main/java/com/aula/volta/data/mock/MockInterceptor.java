@@ -55,7 +55,7 @@ public class MockInterceptor implements Interceptor {
         }
 
         try {
-            Thread.sleep(asset.equals("ai_analysis.json") ? 1200 : 300);
+            Thread.sleep(asset.equals("ai_analysis.json") ? 600 : 10);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -83,7 +83,10 @@ public class MockInterceptor implements Interceptor {
         if ((path.equals("/cooperatives/recommended") || path.equals("/cooperatives") || path.equals("/collections")) && method.equals("GET")) {
             return "cooperatives.json";
         }
-        if ((path.equals("/reports/summary") || path.equals("/esg/metrics") || path.equals("/esg/score")) && method.equals("GET")) {
+        if ((path.equals("/esg/metrics") || path.equals("/metrics/esg")) && method.equals("GET")) {
+            return "esg_metrics.json";
+        }
+        if ((path.equals("/reports/summary") || path.equals("/esg/score")) && method.equals("GET")) {
             return "reports.json";
         }
         return null;

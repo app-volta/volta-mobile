@@ -60,9 +60,9 @@ public final class ApiClient {
             final Context appContext = context.getApplicationContext();
             Gson gson = new GsonBuilder().create();
             OkHttpClient.Builder http = new OkHttpClient.Builder()
-                    .connectTimeout(15, TimeUnit.SECONDS)
-                    .readTimeout(20, TimeUnit.SECONDS)
-                    .writeTimeout(15, TimeUnit.SECONDS);
+                    .connectTimeout(3500, TimeUnit.MILLISECONDS)
+                    .readTimeout(4000, TimeUnit.MILLISECONDS)
+                    .writeTimeout(4000, TimeUnit.MILLISECONDS);
 
             if (USE_MOCK) {
                 http.addInterceptor(new MockInterceptor(appContext));
