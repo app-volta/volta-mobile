@@ -36,7 +36,7 @@ public final class ApiClient {
     private static final String BASE_URL_MOCK = "https://volta.mock/";
 
     /** Base URL do backend oficial conectado ao banco de dados */
-    public static String BASE_URL_REAL = "https://api.54.210.1.34.sslip.io/";
+    public static String BASE_URL_REAL = "https://api.qa.54.210.1.34.sslip.io/";
 
     // Credenciais oficiais e Tenant ID fornecidos pelo ambiente de banco
     public static final String ADMIN_COMPANY_ID = "24032a1d-3e08-4f2f-ad50-590446459df3";
@@ -82,6 +82,7 @@ public final class ApiClient {
                         if (token != null && !token.isEmpty()) {
                             builder.header("Authorization", "Bearer " + token);
                         }
+                        builder.header("Host", "api.qa.54.210.1.34.sslip.io");
                         builder.header("X-Company-Id", ADMIN_COMPANY_ID);
                         builder.header("Accept", "application/json; charset=utf-8");
 

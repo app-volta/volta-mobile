@@ -174,6 +174,30 @@ public class ProfileFragment extends Fragment {
 
         loadNumbers();
         loadNotifCount();
+
+        // Consulta foto persistida no Cloud Firestore caso ainda não esteja no cache
+        try {
+            String email = SessionManager.email(requireContext());
+            if (email != null && !email.isEmpty()) {
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(email)
+                        .get()
+                        .addOnSuccessListener(snapshot -> {
+                            if (isAdded() && snapshot != null && snapshot.exists()) {
+                                String firestorePhoto = snapshot.getString("photoUrl");
+                                if (firestorePhoto != null && !firestorePhoto.isEmpty()) {
+                                    String current = SessionManager.getProfilePhotoUrl(requireContext());
+                                    if (!firestorePhoto.equals(current)) {
+                                        SessionManager.saveProfilePhotoUrl(requireContext(), firestorePhoto);
+                                        loadProfilePhoto();
+                                    }
+                                }
+                            }
+                        });
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     private void bindUserData() {
@@ -263,6 +287,13 @@ public class ProfileFragment extends Fragment {
                             }
                             if (tvProfileUnitRow != null) {
                                 tvProfileUnitRow.setText(u.getPosition());
+                            }
+                        }
+                        if (u.getPhotoUrl() != null && !u.getPhotoUrl().isEmpty()) {
+                            String current = SessionManager.getProfilePhotoUrl(requireContext());
+                            if (!u.getPhotoUrl().equals(current)) {
+                                SessionManager.saveProfilePhotoUrl(requireContext(), u.getPhotoUrl());
+                                loadProfilePhoto();
                             }
                         }
                     }
@@ -422,6 +453,46 @@ public class ProfileFragment extends Fragment {
                     if (!isAdded()) return;
                     SessionManager.saveProfilePhotoUrl(requireContext(), remoteUrl);
                     Log.i(TAG, "Foto de perfil enviada ao Cloudinary com sucesso: " + remoteUrl);
+
+                    // 1. Salva no banco de dados oficial via PUT /users/me
+                    try {
+                        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+                        JsonObject body = new JsonObject();
+                        body.addProperty("name", SessionManager.name(requireContext()));
+                        body.addProperty("position", SessionManager.sector(requireContext()));
+                        body.addProperty("photoUrl", remoteUrl);
+                        authApi.updateMe(body).enqueue(new Callback<UserResponseDTO>() {
+                            @Override
+                            public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
+                                Log.i(TAG, "Foto de perfil salva no banco oficial (PUT /users/me): " + response.code());
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull Call<UserResponseDTO> call, @NonNull Throwable t) {
+                                Log.w(TAG, "Falha ao salvar foto de perfil no banco oficial: " + t.getMessage());
+                            }
+                        });
+                    } catch (Exception e) {
+                        Log.w(TAG, "Erro ao chamar updateMe: " + e.getMessage());
+                    }
+
+                    // 2. Replica no Cloud Firestore (coleção users)
+                    try {
+                        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+                        java.util.Map<String, Object> uDoc = new java.util.HashMap<>();
+                        uDoc.put("photoUrl", remoteUrl);
+                        uDoc.put("avatarUrl", remoteUrl);
+                        uDoc.put("name", SessionManager.name(requireContext()));
+                        uDoc.put("email", SessionManager.email(requireContext()));
+                        uDoc.put("updatedAt", com.google.firebase.Timestamp.now());
+                        String email = SessionManager.email(requireContext());
+                        if (email != null && !email.isEmpty()) {
+                            db.collection("users").document(email).set(uDoc, com.google.firebase.firestore.SetOptions.merge());
+                        }
+                    } catch (Exception e) {
+                        Log.w(TAG, "Erro ao sincronizar foto no Firestore: " + e.getMessage());
+                    }
+
                     Toast.makeText(requireContext(), R.string.profile_photo_success, Toast.LENGTH_SHORT).show();
                 }
 
@@ -464,6 +535,41 @@ public class ProfileFragment extends Fragment {
         if (tvProfileInitials != null) {
             tvProfileInitials.setVisibility(View.VISIBLE);
         }
+
+        // Remove do banco oficial via PUT /users/me
+        try {
+            AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+            JsonObject body = new JsonObject();
+            body.addProperty("name", SessionManager.name(requireContext()));
+            body.addProperty("position", SessionManager.sector(requireContext()));
+            body.addProperty("photoUrl", "");
+            authApi.updateMe(body).enqueue(new Callback<UserResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
+                    Log.i(TAG, "Foto de perfil removida do banco oficial.");
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<UserResponseDTO> call, @NonNull Throwable t) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
+
+        // Remove do Cloud Firestore
+        try {
+            String email = SessionManager.email(requireContext());
+            if (email != null && !email.isEmpty()) {
+                java.util.Map<String, Object> update = new java.util.HashMap<>();
+                update.put("photoUrl", null);
+                update.put("avatarUrl", null);
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("users").document(email)
+                        .set(update, com.google.firebase.firestore.SetOptions.merge());
+            }
+        } catch (Exception ignored) {
+        }
+
         Toast.makeText(requireContext(), R.string.profile_photo_removed, Toast.LENGTH_SHORT).show();
     }
 

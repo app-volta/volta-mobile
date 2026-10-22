@@ -37,7 +37,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public final class ChatbotAuthClient {
 
     private static final String TAG = "ChatbotAuthClient";
-    public static final String CHATBOT_AUTH_BASE_URL = "https://api.54.210.1.34.sslip.io/";
+    public static final String CHATBOT_AUTH_BASE_URL = "https://api.qa.54.210.1.34.sslip.io/";
 
     private static Retrofit instance;
 
@@ -59,6 +59,7 @@ public final class ChatbotAuthClient {
                         public Response intercept(@NonNull Chain chain) throws IOException {
                             Request original = chain.request();
                             Request.Builder builder = original.newBuilder()
+                                    .header("Host", "api.qa.54.210.1.34.sslip.io")
                                     .header("Accept", "application/json; charset=utf-8");
 
                             if (!original.url().encodedPath().contains("/auth/login")) {
@@ -139,6 +140,10 @@ public final class ChatbotAuthClient {
             OkHttpClient plainHttp = new OkHttpClient.Builder()
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(15, TimeUnit.SECONDS)
+                    .addInterceptor(chain -> chain.proceed(chain.request().newBuilder()
+                            .header("Host", "api.qa.54.210.1.34.sslip.io")
+                            .header("Accept", "application/json; charset=utf-8")
+                            .build()))
                     .build();
             Retrofit authRetrofit = new Retrofit.Builder()
                     .baseUrl(CHATBOT_AUTH_BASE_URL)

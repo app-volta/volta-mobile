@@ -25,6 +25,9 @@ public class UserResponseDTO {
     @SerializedName("role")
     private String role;
 
+    @SerializedName(value = "photoUrl", alternate = {"avatarUrl", "imageUrl", "foto_url", "photo_url"})
+    private String photoUrl;
+
     public UserResponseDTO() {
     }
 
@@ -74,5 +77,13 @@ public class UserResponseDTO {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 }

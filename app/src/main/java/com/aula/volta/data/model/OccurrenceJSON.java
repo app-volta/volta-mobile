@@ -21,6 +21,9 @@ public class OccurrenceJSON {
 
     private String unidade;
 
+    @SerializedName(value = "photoUrl", alternate = {"photo_url", "imageUrl", "foto_url"})
+    private String photoUrl;
+
     public String getId() {
         return id;
     }
@@ -55,5 +58,13 @@ public class OccurrenceJSON {
 
     public String getUnidade() {
         return unidade;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 }

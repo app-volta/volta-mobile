@@ -156,6 +156,13 @@ public class HomeFragment extends Fragment {
         adapter = new OccurrenceAdapter(occurrence -> {
             Bundle args = new Bundle();
             args.putString("occurrenceId", occurrence.getId());
+            if (occurrence.getPhotoUrl() != null && !occurrence.getPhotoUrl().isEmpty()) {
+                args.putString("photoUrl", occurrence.getPhotoUrl());
+                args.putString("imageUrl", occurrence.getPhotoUrl());
+            }
+            if (occurrence.getPhotoPath() != null && !occurrence.getPhotoPath().isEmpty()) {
+                args.putString("photoPath", occurrence.getPhotoPath());
+            }
             Navigation.findNavController(requireView()).navigate(R.id.nav_occurrence_full, args);
         });
         rvRecent.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -207,8 +214,42 @@ public class HomeFragment extends Fragment {
                 }
             }
         }
-        imgAvatar.setVisibility(View.GONE);
-        if (tvInitials != null) tvInitials.setVisibility(View.VISIBLE);
+
+        String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
+        if (remoteUrl != null && remoteUrl.startsWith("http")) {
+            new Thread(() -> {
+                try {
+                    java.net.URL url = new java.net.URL(remoteUrl);
+                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(15000);
+                    conn.connect();
+                    try (java.io.InputStream is = conn.getInputStream()) {
+                        Bitmap bmp = BitmapFactory.decodeStream(is);
+                        if (bmp != null && isAdded()) {
+                            File f = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+                            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
+                                bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+                            }
+                            SessionManager.saveProfilePhotoLocal(requireContext(), f.getAbsolutePath());
+                            requireActivity().runOnUiThread(() -> {
+                                if (isAdded() && imgAvatar != null) {
+                                    RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
+                                    circular.setCircular(true);
+                                    imgAvatar.setImageDrawable(circular);
+                                    imgAvatar.setVisibility(View.VISIBLE);
+                                    if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+                                }
+                            });
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }).start();
+        } else {
+            imgAvatar.setVisibility(View.GONE);
+            if (tvInitials != null) tvInitials.setVisibility(View.VISIBLE);
+        }
     }
 
     /** Resumo da unidade via GET /reports/summary (mock → API-ready). */

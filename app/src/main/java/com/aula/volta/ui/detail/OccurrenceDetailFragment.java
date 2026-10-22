@@ -181,7 +181,9 @@ public class OccurrenceDetailFragment extends Fragment {
         }
 
         String argPhotoPath = getArguments() != null ? getArguments().getString("photoPath") : null;
-        String argImageUrl = getArguments() != null ? getArguments().getString("imageUrl") : null;
+        String argImageUrl = getArguments() != null
+                ? getArguments().getString("photoUrl", getArguments().getString("imageUrl"))
+                : null;
         displayOccurrencePhoto(argPhotoPath, argImageUrl);
 
         View btnBack = view.findViewById(R.id.btnBackOcc);
@@ -427,9 +429,12 @@ public class OccurrenceDetailFragment extends Fragment {
 
         String localPhoto = opt(json, "photoPath",
                 getArguments() != null ? getArguments().getString("photoPath", "") : "");
-        String remoteUrl = opt(json, "imageUrl",
-                opt(json, "foto_url",
-                        getArguments() != null ? getArguments().getString("imageUrl", "") : ""));
+        String remoteUrl = opt(json, "photoUrl",
+                opt(json, "imageUrl",
+                        opt(json, "foto_url",
+                                getArguments() != null
+                                        ? getArguments().getString("photoUrl", getArguments().getString("imageUrl", ""))
+                                        : "")));
 
         if (localPhoto.isEmpty() && remoteUrl.isEmpty()) {
             String latestStr = PrefsHelper.getJson(requireContext(), PREFS, "latest_photo");

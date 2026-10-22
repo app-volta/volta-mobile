@@ -15,9 +15,17 @@ public class Occurrence {
     private final String prioridade;
     private final String status;
     private final String material;
+    private final String photoUrl;
+    private final String photoPath;
 
     public Occurrence(String id, String titulo, String setor, String tempoRelativo,
                       String prioridade, String status, String material) {
+        this(id, titulo, setor, tempoRelativo, prioridade, status, material, null, null);
+    }
+
+    public Occurrence(String id, String titulo, String setor, String tempoRelativo,
+                      String prioridade, String status, String material,
+                      String photoUrl, String photoPath) {
         this.id = id;
         this.titulo = titulo;
         this.setor = setor;
@@ -25,9 +33,14 @@ public class Occurrence {
         this.prioridade = prioridade;
         this.status = status;
         this.material = material;
+        this.photoUrl = photoUrl;
+        this.photoPath = photoPath;
     }
 
     public static Occurrence fromJson(OccurrenceJSON json) {
+        if (json == null) {
+            return null;
+        }
         return new Occurrence(
                 json.getId(),
                 json.getTitulo(),
@@ -35,7 +48,9 @@ public class Occurrence {
                 json.getTempoRelativo(),
                 json.getPrioridade(),
                 json.getStatus(),
-                json.getMaterial());
+                json.getMaterial(),
+                json.getPhotoUrl(),
+                null);
     }
 
     public static Occurrence fromIncident(IncidentResponseDTO inc) {
@@ -56,7 +71,8 @@ public class Occurrence {
                 time = time.substring(0, 16);
             }
         }
-        return new Occurrence(id, desc, sector, time, prio, stat, mat);
+        String photoUrl = inc.getPhotoUrl();
+        return new Occurrence(id, desc, sector, time, prio, stat, mat, photoUrl, null);
     }
 
     public String getId() {
@@ -85,5 +101,13 @@ public class Occurrence {
 
     public String getMaterial() {
         return material;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public String getPhotoPath() {
+        return photoPath;
     }
 }

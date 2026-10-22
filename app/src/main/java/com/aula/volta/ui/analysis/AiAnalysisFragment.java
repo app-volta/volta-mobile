@@ -961,32 +961,121 @@ public class AiAnalysisFragment extends Fragment {
             return;
         }
 
-        OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
-        JsonObject body = new JsonObject();
-        body.addProperty("setor", setor == null ? "" : setor);
-        body.addProperty("material", material);
-        body.addProperty("quantidade_estimada", qtd);
-        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
-            body.addProperty("photoUrl", remoteImageUrl);
-            body.addProperty("imageUrl", remoteImageUrl);
-            body.addProperty("foto_url", remoteImageUrl);
+        // Se a foto ainda não tem URL remota do Cloudinary, tenta obter do cache ou sobe agora
+        if (remoteImageUrl == null || remoteImageUrl.isEmpty()) {
+            if (photoPath != null && !photoPath.isEmpty()) {
+                String cached = CloudinaryUploader.getCachedUrl(photoPath);
+                if (cached != null && !cached.isEmpty()) {
+                    remoteImageUrl = cached;
+                    sendIncidentToBackend(v, material, qtd, unidade, cached);
+                    return;
+                }
+                File imageFile = new File(photoPath);
+                if (imageFile.exists()) {
+                    CloudinaryUploader.uploadImage(requireContext(), imageFile, new CloudinaryUploader.UploadCallback() {
+                        @Override
+                        public void onSuccess(String remoteUrl, String publicId) {
+                            if (!isAdded()) return;
+                            remoteImageUrl = remoteUrl;
+                            sendIncidentToBackend(v, material, qtd, unidade, remoteUrl);
+                        }
+
+                        @Override
+                        public void onError(Exception exception, String fallbackLocalPath) {
+                            if (!isAdded()) return;
+                            sendIncidentToBackend(v, material, qtd, unidade, null);
+                        }
+                    });
+                    return;
+                }
+            }
         }
 
-        api.createOccurrence(body).enqueue(new Callback<JsonObject>() {
+        sendIncidentToBackend(v, material, qtd, unidade, remoteImageUrl);
+    }
+
+    private void sendIncidentToBackend(View v, String material, double qtd, String unidade, @Nullable String photoUrl) {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+
+        String areaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+        String wasteTypeId = "bd985415-4b25-4c07-beca-cc086dce9b13";
+        String lowerMat = material.toLowerCase(Locale.ROOT);
+        if (lowerMat.contains("papel")) {
+            wasteTypeId = "4e73b22b-586b-4e12-82dc-98df718d09aa"; // CARDBOARD
+        } else if (lowerMat.contains("metal")) {
+            wasteTypeId = "7020bc8b-fba0-4ecb-9975-aaeb7428f522"; // METAL
+        } else if (lowerMat.contains("vidro")) {
+            wasteTypeId = "976a4df6-1fc6-407b-b353-8d9e68c1c456"; // GLASS
+        } else if (lowerMat.contains("orgânico") || lowerMat.contains("organico")) {
+            wasteTypeId = "bc7f6c3c-8c08-4100-84cf-29d3809088ba"; // ORGANIC
+        } else if (lowerMat.contains("perigoso")) {
+            wasteTypeId = "e999c0ec-a841-4547-a877-33e070e171b3"; // HAZARDOUS
+        }
+
+        String contaminationLevel = "LOW";
+        if (selectedContamination != null) {
+            String c = selectedContamination.toLowerCase(Locale.ROOT);
+            if (c.contains("alta") || c.contains("high")) {
+                contaminationLevel = "HIGH";
+            } else if (c.contains("méd") || c.contains("med")) {
+                contaminationLevel = "MEDIUM";
+            }
+        }
+
+        String empDesc = (descricao != null && !descricao.isEmpty())
+                ? descricao
+                : "Resíduo registrado via app mobile no setor " + (setor != null ? setor : "Operacional");
+
+        IncidentRequestDTO req = new IncidentRequestDTO(
+                areaId,
+                wasteTypeId,
+                photoUrl,
+                empDesc,
+                contaminationLevel,
+                qtd,
+                "MEDIUM"
+        );
+
+        OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
+        api.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
             @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+            public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
                 if (!isAdded()) {
                     return;
                 }
-                String id = (analysis != null && analysis.getIncidentId() != null && !analysis.getIncidentId().isEmpty())
-                        ? analysis.getIncidentId()
-                        : (response.body() != null && response.body().has("id")
-                        ? response.body().get("id").getAsString() : "8514");
-                registerAndNavigate(v, id, material, qtd, unidade);
+                if (response.isSuccessful() && response.body() != null && response.body().getId() != null) {
+                    IncidentResponseDTO inc = response.body();
+                    String id = inc.getId();
+                    String savedPhotoUrl = inc.getPhotoUrl() != null ? inc.getPhotoUrl() : photoUrl;
+
+                    // Replica no Cloud Firestore para sincronização em tempo real
+                    try {
+                        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+                        java.util.Map<String, Object> fDoc = new java.util.HashMap<>();
+                        fDoc.put("id", id);
+                        fDoc.put("photoUrl", savedPhotoUrl);
+                        fDoc.put("setor", setor != null ? setor : "Linha de Produção A");
+                        fDoc.put("material", material);
+                        fDoc.put("quantidade", qtd);
+                        fDoc.put("status", "EM_ANALISE");
+                        fDoc.put("timestamp", com.google.firebase.Timestamp.now());
+                        db.collection("incidents").document(id).set(fDoc, com.google.firebase.firestore.SetOptions.merge());
+                    } catch (Exception ignored) {
+                    }
+
+                    Occurrence occ = Occurrence.fromIncident(inc);
+                    OccurrenceStore.pushLocal(requireContext(), occ);
+
+                    registerAndNavigate(v, id, material, qtd, unidade);
+                } else {
+                    saveOfflineAndNavigateToDetail(v, material, qtd, unidade);
+                }
             }
 
             @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
                 if (!isAdded()) {
                     return;
                 }
@@ -1046,6 +1135,7 @@ public class AiAnalysisFragment extends Fragment {
             args.putString("photoPath", photoPath);
             if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
                 args.putString("imageUrl", remoteImageUrl);
+                args.putString("photoUrl", remoteImageUrl);
             }
             NavOptions navOptions = new NavOptions.Builder()
                     .setPopUpTo(R.id.nav_ai_analysis, true)
@@ -1084,6 +1174,7 @@ public class AiAnalysisFragment extends Fragment {
             args.putString("photoPath", photoPath);
             if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
                 args.putString("imageUrl", remoteImageUrl);
+                args.putString("photoUrl", remoteImageUrl);
             }
             NavOptions navOptions = new NavOptions.Builder()
                     .setPopUpTo(R.id.nav_ai_analysis, true)

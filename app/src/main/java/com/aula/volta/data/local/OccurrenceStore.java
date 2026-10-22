@@ -8,6 +8,8 @@ import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.model.OccurrenceJSON;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +55,22 @@ public final class OccurrenceStore {
                         Occurrence occ = Occurrence.fromIncident(inc);
                         if (occ != null) {
                             list.add(occ);
+                            if (inc.getId() != null && inc.getPhotoUrl() != null && !inc.getPhotoUrl().isEmpty()) {
+                                try {
+                                    String existing = PrefsHelper.getJson(app, "cache_occurrence_detail", inc.getId());
+                                    JsonObject d = (existing != null && !existing.isEmpty())
+                                            ? JsonParser.parseString(existing).getAsJsonObject()
+                                            : new JsonObject();
+                                    d.addProperty("id", inc.getId());
+                                    d.addProperty("photoUrl", inc.getPhotoUrl());
+                                    d.addProperty("imageUrl", inc.getPhotoUrl());
+                                    d.addProperty("material", occ.getMaterial());
+                                    d.addProperty("setor", occ.getSetor());
+                                    d.addProperty("titulo", occ.getTitulo());
+                                    PrefsHelper.putJson(app, "cache_occurrence_detail", inc.getId(), d.toString());
+                                } catch (Exception ignored) {
+                                }
+                            }
                         }
                     }
                     list = mergedWithLocal(app, list);

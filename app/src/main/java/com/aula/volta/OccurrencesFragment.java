@@ -80,6 +80,13 @@ public class OccurrencesFragment extends Fragment {
         adapter = new OccurrenceAdapter(occurrence -> {
             Bundle args = new Bundle();
             args.putString("occurrenceId", occurrence.getId());
+            if (occurrence.getPhotoUrl() != null && !occurrence.getPhotoUrl().isEmpty()) {
+                args.putString("photoUrl", occurrence.getPhotoUrl());
+                args.putString("imageUrl", occurrence.getPhotoUrl());
+            }
+            if (occurrence.getPhotoPath() != null && !occurrence.getPhotoPath().isEmpty()) {
+                args.putString("photoPath", occurrence.getPhotoPath());
+            }
             Navigation.findNavController(requireView()).navigate(R.id.nav_occurrence_full, args);
         });
         rvOccurrences.setLayoutManager(new LinearLayoutManager(requireContext()));
