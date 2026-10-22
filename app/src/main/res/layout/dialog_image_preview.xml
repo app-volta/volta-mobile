@@ -134,20 +134,6 @@
                 android:textColor="#94A3B8"
                 android:textSize="12sp" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/btnResetZoom"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true"
-            android:fontFamily="@font/font_inter"
-            android:padding="8dp"
-            android:text="Ajustar"
-            android:textColor="@color/volta_green_primary"
-            android:textSize="13sp"
-            android:textStyle="bold" />
     </LinearLayout>
 
 </FrameLayout>

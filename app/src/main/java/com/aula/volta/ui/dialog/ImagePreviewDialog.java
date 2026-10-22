@@ -123,15 +123,6 @@ public class ImagePreviewDialog extends DialogFragment {
             btnClose.setOnClickListener(v -> dismiss());
         }
 
-        View btnReset = view.findViewById(R.id.btnResetZoom);
-        if (btnReset != null) {
-            btnReset.setOnClickListener(v -> {
-                if (imgPreviewZoom != null) {
-                    imgPreviewZoom.fitImageToCenter();
-                }
-            });
-        }
-
         Bundle args = getArguments();
         String localPath = args != null ? args.getString(ARG_LOCAL_PATH) : null;
         String remoteUrl = args != null ? args.getString(ARG_REMOTE_URL) : null;
