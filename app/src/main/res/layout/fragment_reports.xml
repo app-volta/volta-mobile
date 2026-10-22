@@ -1,614 +1,1130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Relatórios — Figma 790:3322: PGRS, período, mês, meta, por material -->
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Relatórios — Figma 790:3322 & 1408:2420: Fluidos, Período, PGRS, Mês, Meta, Materiais, Setores, Histórico, Exportar e Toast -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/volta_background_light"
-    android:fillViewport="true">
+    android:background="@color/volta_background_light">
 
-    <LinearLayout
+    <!-- Fundo com fluidos e marca d'água oficial (Figma 790:3323) -->
+    <ImageView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/spacing_normal">
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/bg_home_fluidos" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_reports"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_title"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:text="@string/reports_subtitle"
-            android:textColor="@color/volta_text_secondary_light"
-            android:textSize="@dimen/text_size_body_small" />
-
-        <!-- Período -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/chipWeek"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/spacing_small"
-                android:layout_weight="1"
-                android:background="@drawable/bg_chip_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:text="@string/reports_period_week"
-                android:textSize="@dimen/text_size_body_small"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/chipMonth"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/spacing_small"
-                android:layout_weight="1"
-                android:background="@drawable/bg_chip_selected"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:text="@string/reports_period_month"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_size_body_small"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/chipQuarter"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/bg_chip_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:text="@string/reports_period_quarter"
-                android:textSize="@dimen/text_size_body_small"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Card PGRS -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_card_cta"
-            android:padding="@dimen/spacing_normal">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:layout_toStartOf="@+id/iconPgrs"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/reports_pgrs_title"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_section"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginBottom="@dimen/spacing_small"
-                    android:text="@string/reports_pgrs_sub"
-                    android:textColor="@color/white"
-                    android:textSize="@dimen/text_size_body_small" />
-
-                <TextView
-                    android:id="@+id/btnGeneratePgrs"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_button_cta_white"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:paddingStart="@dimen/spacing_normal"
-                    android:paddingTop="10dp"
-                    android:paddingEnd="@dimen/spacing_normal"
-                    android:paddingBottom="10dp"
-                    android:text="@string/reports_pgrs_button"
-                    android:textColor="@color/volta_green_dark"
-                    android:textSize="@dimen/text_size_body_small"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <ImageView
-                android:id="@+id/iconPgrs"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:src="@drawable/ic_nav_reports"
-                app:tint="@color/white" />
-        </RelativeLayout>
-
-        <!-- Neste mês -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:text="@string/reports_month_title"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_section"
-            android:textStyle="bold" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/card_stat_height"
-                android:layout_marginEnd="@dimen/spacing_small"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_stat_open"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_small">
-
-                <TextView
-                    android:id="@+id/tvReportOccurrences"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/stat_open_icon"
-                    android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="@string/reports_stat_occurrences"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/card_stat_height"
-                android:layout_marginEnd="@dimen/spacing_small"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_stat_resolved"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_small">
-
-                <TextView
-                    android:id="@+id/tvReportKg"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/stat_resolved_icon"
-                    android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="@string/reports_stat_kg"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/card_stat_height"
-                android:layout_weight="1"
-                android:background="@drawable/bg_card_stat_recycled"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_small">
-
-                <TextView
-                    android:id="@+id/tvReportRate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/stat_recycled_icon"
-                    android:textSize="@dimen/text_size_title"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="@string/reports_stat_rate"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_caption" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Comparação vs. mês passado (Figma 790:3322) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_card_surface"
             android:orientation="vertical"
-            android:padding="@dimen/spacing_normal">
+            android:paddingStart="24dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="120dp">
+
+            <!-- =============================================================================== -->
+            <!--                                  HEADER                                         -->
+            <!-- =============================================================================== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_bold"
+                android:text="@string/nav_reports"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="28sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="@string/reports_vs_last_month"
-                android:textColor="@color/volta_text_secondary_light"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="16dp"
+                android:fontFamily="@font/font_inter"
+                android:text="@string/reports_subtitle"
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="13.5sp" />
 
+            <!-- =============================================================================== -->
+            <!--                           CHIPS DE PERÍODO (Figma 790:3337)                     -->
+            <!-- =============================================================================== -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
+                android:layout_height="40dp"
+                android:layout_marginBottom="16dp"
                 android:orientation="horizontal">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/chipWeek"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:background="@drawable/bg_chip_unselected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="@font/font_inter"
+                    android:gravity="center"
+                    android:text="@string/reports_period_week"
+                    android:textColor="#3F4957"
+                    android:textSize="14sp" />
 
-                    <ImageView
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:layout_marginEnd="4dp"
-                        android:contentDescription="@string/reports_vs_occ"
-                        android:src="@drawable/ic_arrow_up_green" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/reports_vs_occ"
-                        android:textColor="@color/status_aprovada_text"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
+                <TextView
+                    android:id="@+id/chipMonth"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:background="@drawable/bg_chip_selected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="@font/font_inter"
+                    android:gravity="center"
+                    android:text="@string/reports_period_month"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-                    <ImageView
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:layout_marginEnd="4dp"
-                        android:contentDescription="@string/reports_vs_kg"
-                        android:src="@drawable/ic_arrow_up_green" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/reports_vs_kg"
-                        android:textColor="@color/status_aprovada_text"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
+                <TextView
+                    android:id="@+id/chipQuarter"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:layout_marginEnd="4dp"
-                        android:contentDescription="@string/reports_vs_rate"
-                        android:src="@drawable/ic_arrow_up_green" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/reports_vs_rate"
-                        android:textColor="@color/status_aprovada_text"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    android:background="@drawable/bg_chip_unselected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="@font/font_inter"
+                    android:gravity="center"
+                    android:text="@string/reports_period_quarter"
+                    android:textColor="#3F4957"
+                    android:textSize="14sp" />
             </LinearLayout>
-        </LinearLayout>
 
-        <!-- Meta do mês -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_card_surface"
-            android:orientation="vertical"
-            android:padding="@dimen/spacing_normal">
-
+            <!-- =============================================================================== -->
+            <!--                           CARD PGRS (Figma 790:3343)                            -->
+            <!-- =============================================================================== -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_small">
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/bg_card_cta"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_toStartOf="@+id/iconPgrs"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:text="@string/reports_pgrs_title"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="12dp"
+                        android:fontFamily="@font/font_inter"
+                        android:text="@string/reports_pgrs_sub"
+                        android:textColor="@color/white"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/btnGeneratePgrs"
+                        android:layout_width="wrap_content"
+                        android:layout_height="34dp"
+                        android:background="@drawable/bg_button_cta_white"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:fontFamily="@font/font_inter"
+                        android:gravity="center"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="@string/reports_pgrs_button"
+                        android:textColor="@color/volta_green_deep"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/iconPgrs"
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_nav_reports"
+                    app:tint="@color/white" />
+            </RelativeLayout>
+
+            <!-- =============================================================================== -->
+            <!--                         SEÇÃO: NESTE MÊS (Figma 790:3357)                       -->
+            <!-- =============================================================================== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:fontFamily="@font/poppins_bold"
+                android:text="@string/reports_month_title"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="88dp"
+                android:layout_marginBottom="12dp"
+                android:orientation="horizontal">
+
+                <!-- KPI: Ocorrências -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_open"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:id="@+id/tvReportOccurrences"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:textColor="#E8893A"
+                        android:textSize="21sp"
+                        android:textStyle="bold"
+                        tools:text="52" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/font_inter"
+                        android:gravity="center"
+                        android:text="@string/reports_stat_occurrences"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+
+                <!-- KPI: Kg recuperados -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_resolved"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:id="@+id/tvReportKg"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:textColor="#0E7C48"
+                        android:textSize="21sp"
+                        android:textStyle="bold"
+                        tools:text="1.147" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/font_inter"
+                        android:gravity="center"
+                        android:text="@string/reports_stat_kg"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+
+                <!-- KPI: Taxa coleta -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_stat_recycled"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:id="@+id/tvReportRate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:textColor="#3B82F6"
+                        android:textSize="21sp"
+                        android:textStyle="bold"
+                        tools:text="89%" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/font_inter"
+                        android:gravity="center"
+                        android:text="@string/reports_stat_rate"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="11.5sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- =============================================================================== -->
+            <!--                   COMPARAÇÃO VS. MÊS PASSADO (Figma 790:3367)                   -->
+            <!-- =============================================================================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:background="@drawable/bg_card_surface_16"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="@font/font_inter"
+                    android:text="@string/reports_vs_last_month"
+                    android:textColor="@color/vf_text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- Col 1 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:layout_marginEnd="4dp"
+                                android:src="@drawable/ic_arrow_up_green" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/font_inter"
+                                android:text="+12"
+                                android:textColor="#0E7C48"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/font_inter"
+                            android:text="ocorrências"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <!-- Col 2 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:layout_marginEnd="4dp"
+                                android:src="@drawable/ic_arrow_up_green" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/font_inter"
+                                android:text="+8%"
+                                android:textColor="#0E7C48"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/font_inter"
+                            android:text="recuperado"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+
+                    <!-- Col 3 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:layout_marginEnd="4dp"
+                                android:src="@drawable/ic_arrow_up_green" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/font_inter"
+                                android:text="+3%"
+                                android:textColor="#0E7C48"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/font_inter"
+                            android:text="taxa"
+                            android:textColor="@color/vf_text_secondary"
+                            android:textSize="11.5sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- =============================================================================== -->
+            <!--                       CARD META DO MÊS (Figma 790:3381)                         -->
+            <!-- =============================================================================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/bg_card_surface"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:fontFamily="@font/poppins_bold"
+                        android:text="@string/reports_goal_title"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvGoalPercent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/bg_badge_baixa"
+                        android:fontFamily="@font/font_inter"
+                        android:paddingStart="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="3dp"
+                        android:textColor="#0E7C48"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        tools:text="76%" />
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvGoalCurrent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="21sp"
+                        android:textStyle="bold"
+                        tools:text="1.147 kg" />
+
+                    <TextView
+                        android:id="@+id/tvGoalTotal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:fontFamily="@font/font_inter"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="13sp"
+                        tools:text="de 1.500 kg" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="9dp"
+                    android:background="@drawable/bg_progress_track"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:id="@+id/viewGoalProgress"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="76"
+                        android:background="@drawable/bg_progress_filled" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- =============================================================================== -->
+            <!--                   POR TIPO DE MATERIAL (Figma 790:3389 & 3390)                  -->
+            <!-- =============================================================================== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:fontFamily="@font/poppins_bold"
+                android:text="@string/reports_by_material"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/materialContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/bg_card_surface"
+                android:orientation="vertical"
+                android:padding="16dp" />
+
+            <!-- =============================================================================== -->
+            <!--                TOP SETORES DA FÁBRICA (Figma 790:3407 & 3408..3428)             -->
+            <!-- =============================================================================== -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:fontFamily="@font/poppins_bold"
+                android:text="@string/reports_top_sectors"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <!-- Setor 1: Frigorífico B2 (Figma 790:3408) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_card_surface_16"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <TextView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:background="@drawable/bg_profile_icon_stats"
+                    android:fontFamily="@font/font_inter"
+                    android:gravity="center"
+                    android:text="1"
+                    android:textColor="#C68A10"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Frigorífico B2"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="342 kg"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Mini Barra Setor 1 -->
+                <LinearLayout
+                    android:layout_width="120dp"
+                    android:layout_height="6dp"
+                    android:background="@drawable/bg_profile_icon_stats"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="85"
+                        android:background="#C68A10" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="15" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Setor 2: Expedição (Figma 790:3415) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_card_surface_16"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <TextView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:background="@drawable/bg_profile_icon_email"
+                    android:fontFamily="@font/font_inter"
+                    android:gravity="center"
+                    android:text="2"
+                    android:textColor="#3B82F6"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Expedição"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="218 kg"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Mini Barra Setor 2 -->
+                <LinearLayout
+                    android:layout_width="120dp"
+                    android:layout_height="6dp"
+                    android:background="@drawable/bg_profile_icon_email"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="55"
+                        android:background="#3B82F6" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="45" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Setor 3: Manutenção (Figma 790:3422) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_card_surface_16"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <TextView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:background="@drawable/bg_profile_icon_calendar"
+                    android:fontFamily="@font/font_inter"
+                    android:gravity="center"
+                    android:text="3"
+                    android:textColor="#8B6FE0"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Manutenção"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="187 kg"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Mini Barra Setor 3 -->
+                <LinearLayout
+                    android:layout_width="120dp"
+                    android:layout_height="6dp"
+                    android:background="@drawable/bg_profile_icon_calendar"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="47"
+                        android:background="#8B6FE0" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="53" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- =============================================================================== -->
+            <!--                HISTÓRICO RECENTE (Figma 790:3429 & 3434..3459)                  -->
+            <!-- =============================================================================== -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
                     android:layout_centerVertical="true"
-                    android:text="@string/reports_goal_title"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_body"
+                    android:fontFamily="@font/poppins_bold"
+                    android:text="@string/reports_recent_history"
+                    android:textColor="@color/vf_text_primary"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tvGoalPercent"
+                <LinearLayout
+                    android:id="@+id/btnReportsFilter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:background="@drawable/bg_badge_baixa"
-                    android:paddingStart="10dp"
-                    android:paddingTop="4dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="4dp"
-                    android:textColor="@color/priority_low_text"
-                    android:textSize="@dimen/text_size_caption"
-                    android:textStyle="bold" />
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="4dp">
+
+                    <ImageView
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:src="@drawable/ic_filter"
+                        app:tint="#1BA463" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:fontFamily="@font/font_inter"
+                        android:text="@string/reports_filter"
+                        android:textColor="#1BA463"
+                        android:textSize="13.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </RelativeLayout>
 
+            <!-- Item 1: Papelão molhado (Figma 790:3434) -->
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing_small"
+                android:id="@+id/rowRecentHistory1"
+                android:layout_width="match_parent"
+                android:layout_height="66dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_card_surface_18"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <FrameLayout
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_profile_icon_stats">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_occurrence_waste" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Papelão molhado"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Frigorífico B2 · 12 min"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_profile_icon_stats"
+                    android:fontFamily="@font/font_inter"
+                    android:paddingStart="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="4dp"
+                    android:text="EM ANÁLISE"
+                    android:textColor="#C68A10"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Item 2: Plástico embalagem (Figma 790:3442) -->
+            <LinearLayout
+                android:id="@+id/rowRecentHistory2"
+                android:layout_width="match_parent"
+                android:layout_height="66dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_card_surface_18"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <FrameLayout
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_profile_icon_email">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_occurrence_waste_blue" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Plástico embalagem"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Expedição · 1h"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_profile_icon_recycled"
+                    android:fontFamily="@font/font_inter"
+                    android:paddingStart="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="4dp"
+                    android:text="APROVADA"
+                    android:textColor="#0E7C48"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Item 3: Sucata metálica (Figma 790:3451) -->
+            <LinearLayout
+                android:id="@+id/rowRecentHistory3"
+                android:layout_width="match_parent"
+                android:layout_height="66dp"
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/bg_card_surface_18"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <FrameLayout
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_profile_icon_calendar">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_occurrence_waste_purple" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Sucata metálica"
+                        android:textColor="@color/vf_text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/font_inter"
+                        android:text="Manutenção · ontem"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_profile_icon_recycled"
+                    android:fontFamily="@font/font_inter"
+                    android:paddingStart="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="4dp"
+                    android:text="COLETADA"
+                    android:textColor="#0E7C48"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- =============================================================================== -->
+            <!--             BOTÃO EXPORTAR TODOS OS DADOS (Figma 1376:990 / 1408:2558)          -->
+            <!-- =============================================================================== -->
+            <LinearLayout
+                android:id="@+id/btnExportAllData"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_button_export_outline"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
                 android:orientation="horizontal">
 
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_download"
+                    app:tint="#1BA463" />
+
                 <TextView
-                    android:id="@+id/tvGoalCurrent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="@dimen/text_size_title"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:text="@string/reports_export_all"
+                    android:textColor="#1BA463"
+                    android:textSize="14.5sp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvGoalTotal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_small"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="@dimen/text_size_body_small" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="8dp"
-                android:background="@drawable/bg_progress_track"
-                android:orientation="horizontal">
-
-                <View
-                    android:id="@+id/viewGoalProgress"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_progress_filled" />
-            </LinearLayout>
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-        <!-- Por tipo de material -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:text="@string/reports_by_material"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_section"
-            android:textStyle="bold" />
+    <!-- =================================================================================== -->
+    <!--            FAB CIRCULAR DO MASCOTE VOLTA FLUTUANTE (Figma 790:3466: 66x66dp)        -->
+    <!-- =================================================================================== -->
+    <FrameLayout
+        android:id="@+id/fabMascotReports"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bg_mascot_circle"
+        android:clickable="true"
+        android:contentDescription="Assistente VOLTA"
+        android:elevation="8dp"
+        android:focusable="true">
+
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_volta_arrow_white"
+            app:tint="#5DA753" />
+    </FrameLayout>
+
+    <!-- =================================================================================== -->
+    <!--            TOAST: DADOS EXPORTADOS (Figma 1408:2420 / 1408:2565)                    -->
+    <!-- =================================================================================== -->
+    <FrameLayout
+        android:id="@+id/toastExported"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:clickable="true"
+        android:elevation="16dp"
+        android:focusable="true"
+        android:visibility="gone">
 
         <LinearLayout
-            android:id="@+id/materialContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:background="@drawable/bg_card_surface"
-            android:orientation="vertical"
-            android:padding="@dimen/spacing_normal" />
+            android:layout_height="68dp"
+            android:background="@drawable/bg_toast_finalized"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp">
 
-        <!-- Top setores da fábrica (Figma 790:3407) -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:text="@string/reports_top_sectors"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="@dimen/text_size_section"
-            android:textStyle="bold" />
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_toast_icon_square">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:background="@drawable/bg_card_surface"
-            android:orientation="vertical"
-            android:padding="@dimen/spacing_normal">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_check_simple_green"
+                    app:tint="@color/white" />
+            </FrameLayout>
 
-            <!-- Setor 1 -->
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp">
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/bg_rank_number"
-                    android:gravity="center"
-                    android:text="1"
-                    android:textColor="@color/status_aprovada_text"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:text="Frigorífico B2"
-                    android:textColor="@color/volta_text_primary_light"
+                    android:fontFamily="@font/poppins_bold"
+                    android:text="@string/reports_toast_exported_title"
+                    android:textColor="@color/white"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="342 kg"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp"
-                android:background="@color/notification_circle_border" />
-
-            <!-- Setor 2 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp">
-
-                <TextView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/bg_rank_number"
-                    android:gravity="center"
-                    android:text="2"
-                    android:textColor="@color/status_aprovada_text"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:text="Expedição"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="218 kg"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="4dp"
-                android:background="@color/notification_circle_border" />
-
-            <!-- Setor 3 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp">
-
-                <TextView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:background="@drawable/bg_rank_number"
-                    android:gravity="center"
-                    android:text="3"
-                    android:textColor="@color/status_aprovada_text"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:text="Manutenção"
-                    android:textColor="@color/volta_text_primary_light"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="187 kg"
-                    android:textColor="@color/volta_text_secondary_light"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="@font/font_inter"
+                    android:text="@string/reports_toast_exported_sub"
+                    android:textColor="#B4BCC9"
+                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
+    </FrameLayout>
 
-        <!-- Botão Exportar todos os dados (Figma 790:3460) -->
-        <LinearLayout
-            android:id="@+id/btnExportAllData"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="32dp"
-            android:background="@drawable/bg_button_export_outline"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginEnd="8dp"
-                android:contentDescription="@string/reports_export_all"
-                android:src="@drawable/ic_download" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/reports_export_all"
-                android:textColor="@color/status_aprovada_text"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+</FrameLayout>

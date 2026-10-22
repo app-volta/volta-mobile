@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Botão Exportar todos os dados (Figma 1376:990: fundo branco, borda #1BA463 1.5dp, raio 16dp) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/volta_green_subtle" />
+    <solid android:color="@color/white" />
     <stroke
         android:width="1.5dp"
-        android:color="@color/volta_green_primary" />
+        android:color="#1BA463" />
     <corners android:radius="16dp" />
 </shape>
