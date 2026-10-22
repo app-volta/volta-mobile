@@ -204,12 +204,12 @@ public class OccurrenceDetailFragment extends Fragment {
             btnFinalizeOcc.setOnClickListener(this::showFinalizeDialog);
         }
 
-        // Ação do Toast PGRS
+        // Ação do Toast PGRS (abre PDF mockado)
         View.OnClickListener openPgrsAction = v -> {
             try {
-                File report = PgrsReport.generate(requireContext());
+                File report = PgrsReport.generatePdf(requireContext());
                 if (report != null) {
-                    PgrsReport.share(requireContext(), report);
+                    PgrsReport.openPdf(requireContext(), report);
                 } else {
                     Toast.makeText(requireContext(), R.string.reports_nothing, Toast.LENGTH_SHORT).show();
                 }
@@ -221,6 +221,20 @@ public class OccurrenceDetailFragment extends Fragment {
             btnToastOpenPgrs.setOnClickListener(openPgrsAction);
         }
         if (toastFinalized != null) {
+            com.aula.volta.util.ToastSwipeHelper.attach(toastFinalized, hideBannerToastRunnable,
+                    new com.aula.volta.util.ToastSwipeHelper.OnSwipeListener() {
+                        @Override
+                        public void onDismissed() {
+                            if (toastFinalized != null) {
+                                toastFinalized.setVisibility(View.GONE);
+                            }
+                        }
+
+                        @Override
+                        public void onSwipeDown() {
+                            openPgrsAction.onClick(toastFinalized);
+                        }
+                    });
             toastFinalized.setOnClickListener(v -> {
                 if (btnToastOpenPgrs != null && btnToastOpenPgrs.getVisibility() == View.VISIBLE) {
                     openPgrsAction.onClick(v);
@@ -407,7 +421,7 @@ public class OccurrenceDetailFragment extends Fragment {
             tvOccTitle.setText(getString(R.string.occ_title));
         }
         if (tvOccSubtitle != null) {
-            tvOccSubtitle.setText("Registrada por Breno G. · " + quando);
+            tvOccSubtitle.setText("Registrada por " + com.aula.volta.data.local.SessionManager.name(requireContext()) + " • " + quando);
         }
 
         if (tvOccCardTitle != null) {
@@ -491,23 +505,17 @@ public class OccurrenceDetailFragment extends Fragment {
         toastFinalized.animate().cancel();
         toastFinalized.setAlpha(0f);
         toastFinalized.setVisibility(View.VISIBLE);
-        if (autoHide) {
-            toastFinalized.animate()
-                    .alpha(1f)
-                    .setDuration(300)
-                    .withEndAction(() -> {
-                        if (isAdded() && toastFinalized != null) {
-                            toastFinalized.postDelayed(hideBannerToastRunnable, 3500);
-                        }
-                    })
-                    .start();
-        } else {
-            toastFinalized.animate()
-                    .alpha(1f)
-                    .setDuration(350)
-                    .withEndAction(null)
-                    .start();
-        }
+        toastFinalized.setTranslationX(0f);
+        toastFinalized.setTranslationY(0f);
+        toastFinalized.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .withEndAction(() -> {
+                    if (isAdded() && toastFinalized != null) {
+                        toastFinalized.postDelayed(hideBannerToastRunnable, 4000);
+                    }
+                })
+                .start();
     }
 
     private void displayOccurrencePhoto(@Nullable String localPath, @Nullable String remoteUrl) {
@@ -703,7 +711,7 @@ public class OccurrenceDetailFragment extends Fragment {
                 tvEditClassSub.setText("✓ Qualidade " + prevClass + " → " + currentQualityClass + " · prioridade " + priority.toLowerCase());
             }
 
-            AuditLog.append(requireContext(), "Breno Gomes", "ALTERAR_CLASSIFICACAO",
+            AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ALTERAR_CLASSIFICACAO",
                     "ocorrencia", occurrenceId, prevMaterial, currentMaterial);
 
             Toast.makeText(requireContext(), "Classificação alterada para Classe " + currentQualityClass, Toast.LENGTH_SHORT).show();
@@ -721,7 +729,7 @@ public class OccurrenceDetailFragment extends Fragment {
                 tvObserveSub.setText("✓ 1 observação · agora");
             }
 
-            AuditLog.append(requireContext(), "Breno Gomes", "ADICIONAR_OBSERVACAO",
+            AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ADICIONAR_OBSERVACAO",
                     "ocorrencia", occurrenceId, null, obs);
 
             showTopBannerToast("Observação salva!", "Adicionada ao histórico da ocorrência", false, true);
@@ -756,7 +764,7 @@ public class OccurrenceDetailFragment extends Fragment {
                 dialog.dismiss();
                 currentStatus = "EM_ANALISE";
 
-                AuditLog.append(requireContext(), "Breno Gomes", "ENVIAR",
+                AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ENVIAR",
                         "ocorrencia", occurrenceId, "RASCUNHO", "EM_ANALISE");
 
                 Toast.makeText(requireContext(), R.string.occ_finalize_done, Toast.LENGTH_SHORT).show();

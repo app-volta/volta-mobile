@@ -88,6 +88,8 @@ public class AiAnalysisFragment extends Fragment {
     private TextView tvEditUnitsValue;
     private int currentWeight = 42;
     private int currentUnits = 11;
+    private int initialEstimatedWeight = 42;
+    private int initialEstimatedUnits = 11;
     private String selectedMaterial = "Papelão";
     private String selectedClass = "Classe A";
     private String selectedContamination = "Baixa";
@@ -209,23 +211,22 @@ public class AiAnalysisFragment extends Fragment {
                     public void handleOnBackPressed() {
                         if (aiEditGroup != null && aiEditGroup.getVisibility() == View.VISIBLE) {
                             cancelEditView();
-                        } else if (getView() != null) {
-                            Navigation.findNavController(getView()).navigateUp();
                         } else {
-                            setEnabled(false);
-                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                            showExitConfirmationDialog();
                         }
                     }
                 });
 
         View btnBack = view.findViewById(R.id.btnBackAnalysis);
-        btnBack.setOnClickListener(v -> {
-            if (aiEditGroup.getVisibility() == View.VISIBLE) {
-                cancelEditView();
-            } else {
-                Navigation.findNavController(v).navigateUp();
-            }
-        });
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                if (aiEditGroup != null && aiEditGroup.getVisibility() == View.VISIBLE) {
+                    cancelEditView();
+                } else {
+                    showExitConfirmationDialog();
+                }
+            });
+        }
 
         // Botão Editar (16 -> 16a)
         MaterialButton btnEdit = view.findViewById(R.id.btnEditAnalysis);
@@ -236,6 +237,25 @@ public class AiAnalysisFragment extends Fragment {
         btnConfirm.setOnClickListener(this::confirmOccurrence);
 
         setupEditControls(view);
+
+        if (toastCorrectionSaved != null) {
+            com.aula.volta.util.ToastSwipeHelper.attach(toastCorrectionSaved, hideCorrectionToastRunnable,
+                    new com.aula.volta.util.ToastSwipeHelper.OnSwipeListener() {
+                        @Override
+                        public void onDismissed() {
+                            if (toastCorrectionSaved != null) {
+                                toastCorrectionSaved.setVisibility(View.GONE);
+                            }
+                        }
+
+                        @Override
+                        public void onSwipeDown() {
+                            if (isAdded()) {
+                                com.aula.volta.data.report.PgrsReport.openPdf(requireContext(), null);
+                            }
+                        }
+                    });
+        }
 
         if (analysis != null) {
             applyAnalysis();
@@ -534,13 +554,37 @@ public class AiAnalysisFragment extends Fragment {
             return;
         }
 
+        boolean weightChanged = (currentWeight != initialEstimatedWeight);
+        boolean unitsChanged = (currentUnits != initialEstimatedUnits);
+
         if (isRevised) {
             String classLetter = selectedClass != null ? selectedClass.replace("Classe ", "").trim() : "A";
             tvAiMaterial.setText(selectedMaterial + (classLetter.isEmpty() ? "" : " " + classLetter));
             tvAiContamination.setText(selectedContamination);
             tvAiQuantity.setText("≈ " + currentWeight + " kg");
-            badgeQuantityEdited.setVisibility(View.VISIBLE);
-            cardAiQuantity.setBackgroundResource(R.drawable.bg_card_quantity_edited);
+
+            // Destaque dinâmico de quantidade: apenas se alterado em relação à estimativa da IA
+            if (badgeQuantityEdited != null) {
+                badgeQuantityEdited.setVisibility(weightChanged ? View.VISIBLE : View.GONE);
+            }
+            if (cardAiQuantity != null) {
+                cardAiQuantity.setBackgroundResource(weightChanged
+                        ? R.drawable.bg_card_quantity_edited
+                        : R.drawable.bg_card_stat_recycled);
+            }
+
+            // Destaque dinâmico de unidades/caixas: apenas se alterado em relação à estimativa da IA
+            TextView badgeUnitsResult = getView() != null ? getView().findViewById(R.id.badgeUnitsEditedResult) : null;
+            LinearLayout cardUnits = getView() != null ? getView().findViewById(R.id.cardAiUnits) : null;
+            if (badgeUnitsResult != null) {
+                badgeUnitsResult.setVisibility(unitsChanged ? View.VISIBLE : View.GONE);
+            }
+            if (cardUnits != null) {
+                cardUnits.setBackgroundResource(unitsChanged
+                        ? R.drawable.bg_card_quantity_edited
+                        : R.drawable.bg_card_stat_purple);
+            }
+
             if (icAiStatusPill != null) {
                 icAiStatusPill.setImageResource(R.drawable.ic_pencil);
                 icAiStatusPill.setColorFilter(Color.WHITE);
@@ -564,10 +608,12 @@ public class AiAnalysisFragment extends Fragment {
                     : "Baixa";
 
             if (analysis.getQuantidadeEstimada() > 0) {
-                currentWeight = (int) Math.round(analysis.getQuantidadeEstimada());
+                initialEstimatedWeight = (int) Math.round(analysis.getQuantidadeEstimada());
+                currentWeight = initialEstimatedWeight;
             }
             if (analysis.getUnidades() != null && analysis.getUnidades().getQuantidade() > 0) {
-                currentUnits = analysis.getUnidades().getQuantidade();
+                initialEstimatedUnits = analysis.getUnidades().getQuantidade();
+                currentUnits = initialEstimatedUnits;
             }
             if (tvEditWeightValue != null) {
                 tvEditWeightValue.setText(String.valueOf(currentWeight));
@@ -582,6 +628,10 @@ public class AiAnalysisFragment extends Fragment {
             tvAiQuantity.setText(quantidade);
             badgeQuantityEdited.setVisibility(View.GONE);
             cardAiQuantity.setBackgroundResource(R.drawable.bg_card_stat_recycled);
+            TextView badgeUnitsResult = getView() != null ? getView().findViewById(R.id.badgeUnitsEditedResult) : null;
+            if (badgeUnitsResult != null) badgeUnitsResult.setVisibility(View.GONE);
+            LinearLayout cardUnits = getView() != null ? getView().findViewById(R.id.cardAiUnits) : null;
+            if (cardUnits != null) cardUnits.setBackgroundResource(R.drawable.bg_card_stat_purple);
             if (icAiStatusPill != null) {
                 icAiStatusPill.setImageResource(R.drawable.ic_sparkle);
                 icAiStatusPill.setColorFilter(Color.WHITE);
@@ -632,6 +682,7 @@ public class AiAnalysisFragment extends Fragment {
                 if (currentWeight > 1) {
                     currentWeight--;
                     tvEditWeightValue.setText(String.valueOf(currentWeight));
+                    updateEditSteppersUi(root);
                 }
             });
         }
@@ -639,6 +690,7 @@ public class AiAnalysisFragment extends Fragment {
             btnWeightPlus.setOnClickListener(v -> {
                 currentWeight++;
                 tvEditWeightValue.setText(String.valueOf(currentWeight));
+                updateEditSteppersUi(root);
             });
         }
 
@@ -650,6 +702,7 @@ public class AiAnalysisFragment extends Fragment {
                 if (currentUnits > 1) {
                     currentUnits--;
                     tvEditUnitsValue.setText(String.valueOf(currentUnits));
+                    updateEditSteppersUi(root);
                 }
             });
         }
@@ -657,8 +710,10 @@ public class AiAnalysisFragment extends Fragment {
             btnUnitsPlus.setOnClickListener(v -> {
                 currentUnits++;
                 tvEditUnitsValue.setText(String.valueOf(currentUnits));
+                updateEditSteppersUi(root);
             });
         }
+        updateEditSteppersUi(root);
 
         // Chips de Material
         setupMaterialChips(root);
@@ -854,6 +909,55 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
+    private void updateEditSteppersUi(View root) {
+        if (root == null) return;
+        View stepperWeight = root.findViewById(R.id.stepperWeightContainer);
+        View badgeWeight = root.findViewById(R.id.badgeWeightEdited);
+        View stepperUnits = root.findViewById(R.id.stepperUnitsContainer);
+        View badgeUnits = root.findViewById(R.id.badgeUnitsEdited);
+
+        boolean weightChanged = (currentWeight != initialEstimatedWeight);
+        if (stepperWeight != null) {
+            stepperWeight.setBackgroundResource(weightChanged ? R.drawable.bg_stepper_blue : R.drawable.bg_stepper_card_normal);
+        }
+        if (badgeWeight != null) {
+            badgeWeight.setVisibility(weightChanged ? View.VISIBLE : View.GONE);
+        }
+
+        boolean unitsChanged = (currentUnits != initialEstimatedUnits);
+        if (stepperUnits != null) {
+            stepperUnits.setBackgroundResource(unitsChanged ? R.drawable.bg_stepper_blue : R.drawable.bg_stepper_card_normal);
+        }
+        if (badgeUnits != null) {
+            badgeUnits.setVisibility(unitsChanged ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void showExitConfirmationDialog() {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Cancelar ocorrência?")
+                .setMessage("Se você voltar, a ocorrência será excluída. Deseja realmente sair?")
+                .setNegativeButton("Continuar", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton("Sim, excluir", (dialog, which) -> {
+                    dialog.dismiss();
+                    if (createdIncidentId != null && !createdIncidentId.isEmpty()) {
+                        try {
+                            OccurrenceStore.remove(requireContext(), createdIncidentId);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    if (getView() != null) {
+                        Navigation.findNavController(getView()).popBackStack(R.id.nav_home, false);
+                    } else if (getActivity() != null) {
+                        getActivity().finish();
+                    }
+                })
+                .show();
+    }
+
     private void switchToEditView() {
         snapshotWeight = currentWeight;
         snapshotUnits = currentUnits;
@@ -882,6 +986,7 @@ public class AiAnalysisFragment extends Fragment {
             updateMaterialChipsUi(getView());
             updateClassPillsUi(getView());
             updateContaminationSegmentsUi(getView());
+            updateEditSteppersUi(getView());
         }
     }
 
@@ -930,7 +1035,7 @@ public class AiAnalysisFragment extends Fragment {
                     .setDuration(300)
                     .withEndAction(() -> {
                         if (isAdded() && toastCorrectionSaved != null) {
-                            toastCorrectionSaved.postDelayed(hideCorrectionToastRunnable, 3500);
+                            toastCorrectionSaved.postDelayed(hideCorrectionToastRunnable, 4000);
                         }
                     })
                     .start();
@@ -1121,27 +1226,20 @@ public class AiAnalysisFragment extends Fragment {
             return;
         }
         persistOccurrenceDetail(id, material, qtd, unidade);
-        AuditLog.append(requireContext(), "Breno Gomes", "CRIAR",
+        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR",
                 "ocorrencia", id, null, "NOVO");
         pushOccurrenceNotification(id, material);
 
         Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
 
-        // Navega para a tela 17 · Ocorrência (OccurrenceDetailFragment) removendo a tela de loading da pilha
+        // Retorna direto para a tela inicial (nav_home) limpando a pilha de registro (requisito oficial)
         try {
-            Bundle args = new Bundle();
-            args.putString("occurrenceId", id);
-            args.putString("photoPath", photoPath);
-            if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
-                args.putString("imageUrl", remoteImageUrl);
-                args.putString("photoUrl", remoteImageUrl);
-            }
             NavOptions navOptions = new NavOptions.Builder()
-                    .setPopUpTo(R.id.nav_ai_analysis, true)
+                    .setPopUpTo(R.id.nav_home, false)
                     .build();
             View target = getView() != null ? getView() : v;
             if (target != null) {
-                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args, navOptions);
+                Navigation.findNavController(target).navigate(R.id.nav_home, null, navOptions);
             }
         } catch (Exception e) {
             if (getView() != null) {
@@ -1160,7 +1258,7 @@ public class AiAnalysisFragment extends Fragment {
                 localId, photoPath, descricao, setor, material, qtd, unidade, System.currentTimeMillis());
         SyncQueue.enqueue(requireContext(), pending);
 
-        AuditLog.append(requireContext(), "Breno Gomes", "CRIAR_OFFLINE",
+        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR_OFFLINE",
                 "ocorrencia", localId, null, "PENDENTE_SYNC");
         pushOccurrenceNotification(localId, material);
         pushOccurrenceToList(localId, material);
@@ -1168,19 +1266,12 @@ public class AiAnalysisFragment extends Fragment {
         Toast.makeText(requireContext(), R.string.sync_saved_offline, Toast.LENGTH_SHORT).show();
 
         try {
-            Bundle args = new Bundle();
-            args.putString("occurrenceId", localId);
-            args.putString("photoPath", photoPath);
-            if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
-                args.putString("imageUrl", remoteImageUrl);
-                args.putString("photoUrl", remoteImageUrl);
-            }
             NavOptions navOptions = new NavOptions.Builder()
-                    .setPopUpTo(R.id.nav_ai_analysis, true)
+                    .setPopUpTo(R.id.nav_home, false)
                     .build();
             View target = getView() != null ? getView() : v;
             if (target != null) {
-                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args, navOptions);
+                Navigation.findNavController(target).navigate(R.id.nav_home, null, navOptions);
             }
         } catch (Exception e) {
             if (getView() != null) {

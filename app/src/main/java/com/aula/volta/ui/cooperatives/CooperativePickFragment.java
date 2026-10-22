@@ -248,7 +248,7 @@ public class CooperativePickFragment extends Fragment {
         dialogView.findViewById(R.id.btnConfirmDestYes).setOnClickListener(v -> {
             dialog.dismiss();
 
-            AuditLog.append(requireContext(), "Breno Gomes", "SOLICITAR_DESTINACAO",
+            AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "SOLICITAR_DESTINACAO",
                     "ocorrencia", occurrenceId, null, coop.getNome());
 
             // Disparo oficial da coleta para a API do banco de dados (POST /collections)

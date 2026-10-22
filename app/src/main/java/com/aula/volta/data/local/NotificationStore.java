@@ -23,6 +23,14 @@ import retrofit2.Response;
 public final class NotificationStore {
 
     private static final String PREFS = "cache_notifications";
+
+    private static String getPrefsName(Context context) {
+        String email = SessionManager.email(context);
+        if (email == null || email.trim().isEmpty()) {
+            return PREFS;
+        }
+        return PREFS + "_" + Math.abs(email.trim().toLowerCase().hashCode());
+    }
     private static final String KEY_LIST = "list";
     private static final String KEY_LOCAL = "local_only";
     private static final String KEY_READ_IDS = "read_ids";
@@ -132,7 +140,7 @@ public final class NotificationStore {
                     }
                     list = mergedWithLocal(app, list);
                     list = deduplicate(list);
-                    PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+                    PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
                     callback.onResult(list);
                 } else {
                     callback.onResult(cached(app));
@@ -149,11 +157,11 @@ public final class NotificationStore {
     /** Lista em memória vinda do cache (sem rede), com sanitização automática de duplicatas antigas. */
     public static List<Notification> cached(Context context) {
         Context app = context.getApplicationContext();
-        List<Notification> rawList = PrefsHelper.getList(app, PREFS, KEY_LIST,
+        List<Notification> rawList = PrefsHelper.getList(app, getPrefsName(app), KEY_LIST,
                 PrefsHelper.listType(Notification.class));
         List<Notification> list = deduplicate(rawList);
         if (list.size() != rawList.size()) {
-            PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+            PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
         }
         Set<String> readSet = readIds(app);
         for (Notification n : list) {
@@ -210,7 +218,7 @@ public final class NotificationStore {
         } else {
             local.add(0, notification);
         }
-        PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
+        PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, local);
 
         List<Notification> list = new ArrayList<>(cached(app));
         int existingListIdx = findIndex(list, notification);
@@ -219,25 +227,25 @@ public final class NotificationStore {
         } else {
             list.add(0, notification);
         }
-        PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+        PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
         notifyChange();
     }
 
     /** Locais ainda não vindos da API (sobrevivem ao refresh). */
     static List<Notification> localOnly(Context app) {
-        return PrefsHelper.getList(app, PREFS, KEY_LOCAL,
+        return PrefsHelper.getList(app, getPrefsName(app), KEY_LOCAL,
                 PrefsHelper.listType(Notification.class));
     }
 
     /** Conjunto de IDs já marcados como lidos pelo usuário (sobrevive ao refresh da API/mock). */
     private static Set<String> readIds(Context app) {
-        List<String> stored = PrefsHelper.getList(app, PREFS, KEY_READ_IDS,
+        List<String> stored = PrefsHelper.getList(app, getPrefsName(app), KEY_READ_IDS,
                 PrefsHelper.listType(String.class));
         return new HashSet<>(stored);
     }
 
     private static void saveReadIds(Context app, Set<String> ids) {
-        PrefsHelper.putList(app, PREFS, KEY_READ_IDS, new ArrayList<>(ids));
+        PrefsHelper.putList(app, getPrefsName(app), KEY_READ_IDS, new ArrayList<>(ids));
     }
 
     /** Mescla locais no topo com itens da API sem duplicar e preservando estado de leitura. */
@@ -280,7 +288,7 @@ public final class NotificationStore {
                 n.setLida(true);
             }
         }
-        PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+        PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
 
         List<Notification> local = localOnly(app);
         for (Notification n : local) {
@@ -288,7 +296,7 @@ public final class NotificationStore {
                 n.setLida(true);
             }
         }
-        PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
+        PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, local);
         notifyChange();
     }
 
@@ -303,7 +311,7 @@ public final class NotificationStore {
                 readSet.add(n.getId());
             }
         }
-        PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+        PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
 
         List<Notification> local = localOnly(app);
         for (Notification n : local) {
@@ -312,7 +320,7 @@ public final class NotificationStore {
                 readSet.add(n.getId());
             }
         }
-        PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
+        PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, local);
 
         saveReadIds(app, readSet);
         notifyChange();

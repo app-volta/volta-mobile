@@ -212,6 +212,28 @@ public final class OccurrenceStore {
         return result;
     }
 
+    public static void remove(Context context, String id) {
+        if (id == null) {
+            return;
+        }
+        Context app = context.getApplicationContext();
+        List<Occurrence> local = new ArrayList<>(localOnly(app));
+        for (int i = local.size() - 1; i >= 0; i--) {
+            if (id.equals(local.get(i).getId())) {
+                local.remove(i);
+            }
+        }
+        PrefsHelper.putList(app, PREFS, KEY_LOCAL, local);
+
+        List<Occurrence> list = new ArrayList<>(cached(app));
+        for (int i = list.size() - 1; i >= 0; i--) {
+            if (id.equals(list.get(i).getId())) {
+                list.remove(i);
+            }
+        }
+        PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+    }
+
     private static boolean containsId(List<Occurrence> list, String id) {
         if (id == null) {
             return false;

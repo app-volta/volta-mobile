@@ -115,16 +115,14 @@ public final class NotificationHelper {
                                               String material, String setor) {
         String title = context.getString(R.string.notif_occurrence_title, occurrenceId);
         String body = context.getString(R.string.notif_occurrence_desc, material, setor);
-        String notifId = "occ_" + occurrenceId;
+        String singularId = "occ_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
         int notificationId = computeNotificationId(occurrenceId, title, body);
 
-        // 1. Bandeja nativa Android com proteção anti-duplicação
         showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, occurrenceId);
 
-        // 2. Cache local do app com deduplicação
         NotificationStore.pushLocal(context, new Notification(
-                notifId,
+                singularId,
                 "NOVA_OCORRENCIA",
                 title,
                 body,
@@ -136,9 +134,9 @@ public final class NotificationHelper {
                 occurrenceId
         ));
 
-        // 3. Cloud Firestore em tempo real utilizando o mesmo ID determinístico
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
         FirestoreNotificationRepository.getInstance().sendNotification(
-                notifId, title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#C68A10", "#FDF3DE");
+                singularId, title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#C68A10", "#FDF3DE", myEmail);
     }
 
     /**
@@ -147,14 +145,14 @@ public final class NotificationHelper {
     public static void notifyPickupScheduled(Context context, String coopName, String horario) {
         String title = context.getString(R.string.notif_pickup_title);
         String body = context.getString(R.string.notif_pickup_body, coopName, horario);
-        String notifId = "pickup_" + System.currentTimeMillis();
+        String singularId = "pickup_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString();
         int notificationId = computeNotificationId(null, title, body);
 
         showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, null);
 
         NotificationStore.pushLocal(context, new Notification(
-                notifId,
+                singularId,
                 "COLETA_AGENDADA",
                 title,
                 body,
@@ -166,8 +164,9 @@ public final class NotificationHelper {
                 null
         ));
 
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
         FirestoreNotificationRepository.getInstance().sendNotification(
-                notifId, title, body, "COLETA_AGENDADA", null, "truck", "#3B82F6", "#E4EFFF");
+                singularId, title, body, "COLETA_AGENDADA", null, "truck", "#3B82F6", "#E4EFFF", myEmail);
     }
 
     /**
@@ -176,14 +175,14 @@ public final class NotificationHelper {
     public static void notifyDestinationRequested(Context context, String coopName, String occurrenceId) {
         String title = context.getString(R.string.notif_pick_title, coopName);
         String body = context.getString(R.string.notif_pick_desc, occurrenceId);
-        String notifId = "dest_" + occurrenceId;
+        String singularId = "dest_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
         int notificationId = computeNotificationId(occurrenceId, title, body);
 
         showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, occurrenceId);
 
         NotificationStore.pushLocal(context, new Notification(
-                notifId,
+                singularId,
                 "COLETA_AGENDADA",
                 title,
                 body,
@@ -195,8 +194,9 @@ public final class NotificationHelper {
                 occurrenceId
         ));
 
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
         FirestoreNotificationRepository.getInstance().sendNotification(
-                notifId, title, body, "COLETA_AGENDADA", occurrenceId, "truck", "#3B82F6", "#E4EFFF");
+                singularId, title, body, "COLETA_AGENDADA", occurrenceId, "truck", "#3B82F6", "#E4EFFF", myEmail);
     }
 
     /**
@@ -205,14 +205,14 @@ public final class NotificationHelper {
     public static void notifyPgrsFinalized(Context context, String occurrenceId) {
         String title = context.getString(R.string.notif_pgrs_finalized_title, occurrenceId);
         String body = context.getString(R.string.notif_pgrs_finalized_body);
-        String notifId = "pgrs_" + occurrenceId;
+        String singularId = "pgrs_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
         int notificationId = computeNotificationId(occurrenceId, title, body);
 
         showNotification(context, CHANNEL_GOALS, notificationId,
                 title, body, occurrenceId);
 
         NotificationStore.pushLocal(context, new Notification(
-                notifId,
+                singularId,
                 "META",
                 title,
                 body,
@@ -224,8 +224,9 @@ public final class NotificationHelper {
                 occurrenceId
         ));
 
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
         FirestoreNotificationRepository.getInstance().sendNotification(
-                notifId, title, body, "META", occurrenceId, "trophy", "#8B6FE0", "#EFEAFB");
+                singularId, title, body, "META", occurrenceId, "trophy", "#8B6FE0", "#EFEAFB", myEmail);
     }
 
     /**

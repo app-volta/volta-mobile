@@ -11,6 +11,8 @@ import android.content.SharedPreferences;
 public final class SessionManager {
 
     private static final String PREFS = "session";
+    private static final String PREFS_PERSISTENT = "user_profiles_cache";
+
     private static final String KEY_EMAIL = "user_email";
     private static final String KEY_NAME = "user_name";
     private static final String KEY_PASSWORD = "user_password";
@@ -28,8 +30,13 @@ public final class SessionManager {
                 .getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
+    private static SharedPreferences persistentPrefs(Context context) {
+        return context.getApplicationContext()
+                .getSharedPreferences(PREFS_PERSISTENT, Context.MODE_PRIVATE);
+    }
+
     public static boolean isLoggedIn(Context context) {
-        String email = prefs(context).getString(KEY_EMAIL, null);
+        String email = email(context);
         return email != null && !email.isEmpty();
     }
 
@@ -38,12 +45,30 @@ public final class SessionManager {
     }
 
     public static void login(Context context, String email, String password, String name, String token) {
+        String cleanEmail = email == null ? "" : email.trim();
+        String cleanName = name == null ? "" : name.trim();
         prefs(context).edit()
-                .putString(KEY_EMAIL, email == null ? "" : email)
+                .putString(KEY_EMAIL, cleanEmail)
                 .putString(KEY_PASSWORD, password == null ? "" : password)
-                .putString(KEY_NAME, name == null ? "" : name)
+                .putString(KEY_NAME, cleanName)
                 .putString(KEY_TOKEN, token == null ? "" : token)
                 .apply();
+
+        if (!cleanEmail.isEmpty()) {
+            persistentPrefs(context).edit()
+                    .putString("active_user_email", cleanEmail)
+                    .putString("user_name_" + cleanEmail, cleanName)
+                    .apply();
+            // Restaura foto de perfil previamente em cache para este usuário caso já exista
+            String cachedPhotoUrl = persistentPrefs(context).getString("photo_url_" + cleanEmail, "");
+            String cachedPhotoLocal = persistentPrefs(context).getString("photo_local_" + cleanEmail, "");
+            if (!cachedPhotoUrl.isEmpty() || !cachedPhotoLocal.isEmpty()) {
+                prefs(context).edit()
+                        .putString(KEY_PROFILE_PHOTO_URL, cachedPhotoUrl)
+                        .putString(KEY_PROFILE_PHOTO_LOCAL, cachedPhotoLocal)
+                        .apply();
+            }
+        }
     }
 
     public static void saveToken(Context context, String token) {
@@ -80,37 +105,86 @@ public final class SessionManager {
     }
 
     public static void logout(Context context) {
+        String currentEmail = email(context);
+        String currentPhotoUrl = getProfilePhotoUrl(context);
+        String currentPhotoLocal = getProfilePhotoLocal(context);
+        String currentName = name(context);
+        if (currentEmail != null && !currentEmail.isEmpty()) {
+            persistentPrefs(context).edit()
+                    .putString("photo_url_" + currentEmail, currentPhotoUrl)
+                    .putString("photo_local_" + currentEmail, currentPhotoLocal)
+                    .putString("user_name_" + currentEmail, currentName)
+                    .apply();
+        }
+        persistentPrefs(context).edit().remove("active_user_email").apply();
         prefs(context).edit().clear().apply();
     }
 
     public static String email(Context context) {
         String e = prefs(context).getString(KEY_EMAIL, "");
-        if ("volta.brasil.2026@gmail.com".equalsIgnoreCase(e)) {
-            return "breno@volta.com";
+        if (e != null && !e.isEmpty()) {
+            return e;
         }
-        return e != null ? e : "";
+        String persistent = persistentPrefs(context).getString("active_user_email", "");
+        if (persistent != null && !persistent.isEmpty()) {
+            prefs(context).edit().putString(KEY_EMAIL, persistent).apply();
+            return persistent;
+        }
+        return "";
     }
 
     public static void saveName(Context context, String name) {
-        if ("Administrador Volta".equalsIgnoreCase(name)) {
+        if (name == null || name.trim().isEmpty()) {
             return;
         }
-        prefs(context).edit().putString(KEY_NAME, name == null ? "" : name).apply();
+        prefs(context).edit().putString(KEY_NAME, name.trim()).apply();
+        String currentEmail = email(context);
+        if (currentEmail != null && !currentEmail.isEmpty()) {
+            persistentPrefs(context).edit()
+                    .putString("user_name_" + currentEmail, name.trim())
+                    .apply();
+        }
     }
 
     public static void saveEmail(Context context, String email) {
-        if ("volta.brasil.2026@gmail.com".equalsIgnoreCase(email)) {
+        if (email == null || email.trim().isEmpty()) {
             return;
         }
-        prefs(context).edit().putString(KEY_EMAIL, email == null ? "" : email).apply();
+        prefs(context).edit().putString(KEY_EMAIL, email.trim()).apply();
     }
 
     public static String name(Context context) {
         String n = prefs(context).getString(KEY_NAME, "");
-        if (n == null || n.trim().isEmpty() || "Administrador Volta".equalsIgnoreCase(n)) {
-            return "Breno Gomes";
+        if (n != null && !n.trim().isEmpty()) {
+            return n.trim();
         }
-        return n;
+        String currentEmail = email(context);
+        if (currentEmail != null && !currentEmail.isEmpty()) {
+            String cachedName = persistentPrefs(context).getString("user_name_" + currentEmail, "");
+            if (cachedName != null && !cachedName.trim().isEmpty()) {
+                return cachedName.trim();
+            }
+            if (currentEmail.contains("@")) {
+                String prefix = currentEmail.split("@")[0].replace('.', ' ').replace('_', ' ').trim();
+                if (!prefix.isEmpty()) {
+                    String[] words = prefix.split("\\s+");
+                    StringBuilder sb = new StringBuilder();
+                    for (String w : words) {
+                        if (!w.isEmpty()) {
+                            if (sb.length() > 0) sb.append(" ");
+                            sb.append(Character.toUpperCase(w.charAt(0)));
+                            if (w.length() > 1) {
+                                sb.append(w.substring(1).toLowerCase());
+                            }
+                        }
+                    }
+                    if (sb.length() > 0) {
+                        return sb.toString();
+                    }
+                }
+            }
+        }
+        return "Colaborador";
     }
 
     public static void saveSector(Context context, String sector) {
@@ -124,25 +198,74 @@ public final class SessionManager {
     }
 
     public static void saveProfilePhotoUrl(Context context, String url) {
-        prefs(context).edit().putString(KEY_PROFILE_PHOTO_URL, url == null ? "" : url).apply();
+        saveProfilePhotoUrl(context, email(context), url);
+    }
+
+    public static void saveProfilePhotoUrl(Context context, String userEmail, String url) {
+        String cleanUrl = url == null ? "" : url;
+        prefs(context).edit().putString(KEY_PROFILE_PHOTO_URL, cleanUrl).apply();
+        if (userEmail != null && !userEmail.isEmpty()) {
+            persistentPrefs(context).edit()
+                    .putString("photo_url_" + userEmail, cleanUrl)
+                    .apply();
+        }
     }
 
     public static String getProfilePhotoUrl(Context context) {
-        return prefs(context).getString(KEY_PROFILE_PHOTO_URL, "");
+        return getProfilePhotoUrl(context, email(context));
+    }
+
+    public static String getProfilePhotoUrl(Context context, String userEmail) {
+        String url = prefs(context).getString(KEY_PROFILE_PHOTO_URL, "");
+        if (url != null && !url.isEmpty()) {
+            return url;
+        }
+        if (userEmail != null && !userEmail.isEmpty()) {
+            return persistentPrefs(context).getString("photo_url_" + userEmail, "");
+        }
+        return "";
     }
 
     public static void saveProfilePhotoLocal(Context context, String localPath) {
-        prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, localPath == null ? "" : localPath).apply();
+        saveProfilePhotoLocal(context, email(context), localPath);
+    }
+
+    public static void saveProfilePhotoLocal(Context context, String userEmail, String localPath) {
+        String cleanPath = localPath == null ? "" : localPath;
+        prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, cleanPath).apply();
+        if (userEmail != null && !userEmail.isEmpty()) {
+            persistentPrefs(context).edit()
+                    .putString("photo_local_" + userEmail, cleanPath)
+                    .apply();
+        }
     }
 
     public static String getProfilePhotoLocal(Context context) {
-        return prefs(context).getString(KEY_PROFILE_PHOTO_LOCAL, "");
+        return getProfilePhotoLocal(context, email(context));
+    }
+
+    public static String getProfilePhotoLocal(Context context, String userEmail) {
+        String path = prefs(context).getString(KEY_PROFILE_PHOTO_LOCAL, "");
+        if (path != null && !path.isEmpty()) {
+            return path;
+        }
+        if (userEmail != null && !userEmail.isEmpty()) {
+            return persistentPrefs(context).getString("photo_local_" + userEmail, "");
+        }
+        return "";
     }
 
     public static void clearProfilePhoto(Context context) {
+        String currentEmail = email(context);
         prefs(context).edit()
                 .remove(KEY_PROFILE_PHOTO_URL)
                 .remove(KEY_PROFILE_PHOTO_LOCAL)
                 .apply();
+        if (currentEmail != null && !currentEmail.isEmpty()) {
+            persistentPrefs(context).edit()
+                    .remove("photo_url_" + currentEmail)
+                    .remove("photo_local_" + currentEmail)
+                    .apply();
+        }
     }
 }

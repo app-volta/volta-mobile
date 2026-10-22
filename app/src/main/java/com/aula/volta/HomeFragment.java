@@ -185,6 +185,11 @@ public class HomeFragment extends Fragment {
                 getViewLifecycleOwner(),
                 (requestKey, result) -> loadNotificationDot());
 
+        if (tvStatOpenCount != null) tvStatOpenCount.setText("—");
+        if (tvStatResolvedCount != null) tvStatResolvedCount.setText("—");
+        if (tvStatRecycledCount != null) tvStatRecycledCount.setText("—");
+        if (loadingHome != null) loadingHome.setVisibility(View.VISIBLE);
+
         loadSummary();
         loadOccurrences();
         loadNotificationDot();
@@ -233,7 +238,7 @@ public class HomeFragment extends Fragment {
         // 2. Nome da sessão local
         String currentName = SessionManager.name(requireContext());
         if (currentName == null || currentName.trim().isEmpty() || "Breno Liu".equalsIgnoreCase(currentName)) {
-            currentName = "Breno Gomes";
+            currentName = "Colaborador";
         }
         applyUserNameAndInitials(currentName);
 
@@ -245,12 +250,9 @@ public class HomeFragment extends Fragment {
                 public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
                     if (isAdded() && response.isSuccessful() && response.body() != null) {
                         UserResponseDTO u = response.body();
-                        // Protege contra conta admin se estivermos na sessão de colaborador
-                        if ("volta.brasil.2026@gmail.com".equalsIgnoreCase(u.getEmail()) || "ADMIN".equalsIgnoreCase(u.getRole())) {
-                            String myEmail = SessionManager.email(requireContext());
-                            if (!"volta.brasil.2026@gmail.com".equalsIgnoreCase(myEmail)) {
-                                return;
-                            }
+                        String myEmail = SessionManager.email(requireContext());
+                        if (myEmail.isEmpty() || (u.getEmail() != null && !u.getEmail().trim().isEmpty() && !u.getEmail().equalsIgnoreCase(myEmail))) {
+                            return;
                         }
                         if (u.getName() != null && !u.getName().trim().isEmpty()) {
                             SessionManager.saveName(requireContext(), u.getName().trim());
@@ -290,19 +292,31 @@ public class HomeFragment extends Fragment {
         TextView tvInitials = getView().findViewById(R.id.tvAvatarInitials);
         if (imgAvatar == null) return;
 
+        String email = SessionManager.email(requireContext());
         String localPath = SessionManager.getProfilePhotoLocal(requireContext());
+        File localFile = null;
         if (localPath != null && !localPath.isEmpty()) {
             File f = new File(localPath);
-            if (f.exists()) {
-                Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
-                if (bmp != null) {
-                    RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
-                    circular.setCircular(true);
-                    imgAvatar.setImageDrawable(circular);
-                    imgAvatar.setVisibility(View.VISIBLE);
-                    if (tvInitials != null) tvInitials.setVisibility(View.GONE);
-                    return;
-                }
+            if (f.exists()) localFile = f;
+        }
+        if (localFile == null && !email.isEmpty()) {
+            File userHashed = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(email.hashCode()) + ".jpg");
+            if (userHashed.exists()) localFile = userHashed;
+        }
+        if (localFile == null) {
+            File generalFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+            if (generalFile.exists()) localFile = generalFile;
+        }
+
+        if (localFile != null && localFile.exists()) {
+            Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+            if (bmp != null) {
+                RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
+                circular.setCircular(true);
+                imgAvatar.setImageDrawable(circular);
+                imgAvatar.setVisibility(View.VISIBLE);
+                if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+                return;
             }
         }
 
@@ -339,7 +353,6 @@ public class HomeFragment extends Fragment {
             }).start();
         } else {
             try {
-                String email = SessionManager.email(requireContext());
                 if (email != null && !email.isEmpty()) {
                     com.google.firebase.firestore.FirebaseFirestore.getInstance()
                             .collection("users")

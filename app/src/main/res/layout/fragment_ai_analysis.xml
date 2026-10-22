@@ -612,39 +612,63 @@
                     </FrameLayout>
 
                     <!-- Card 4: Caixas / Unidades (Roxo) -->
-                    <LinearLayout
-                        android:id="@+id/cardAiUnits"
+                    <FrameLayout
                         android:layout_width="0dp"
                         android:layout_height="72dp"
                         android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_card_stat_purple"
-                        android:orientation="vertical"
-                        android:paddingStart="14dp"
-                        android:paddingTop="10dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="10dp">
+                        android:layout_weight="1">
 
+                        <LinearLayout
+                            android:id="@+id/cardAiUnits"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_card_stat_purple"
+                            android:orientation="vertical"
+                            android:paddingStart="14dp"
+                            android:paddingTop="10dp"
+                            android:paddingEnd="14dp"
+                            android:paddingBottom="10dp">
+
+                            <TextView
+                                android:id="@+id/tvAiUnitsLabel"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_semibold"
+                                android:text="Caixas"
+                                android:textColor="@color/vf_purple"
+                                android:textSize="12.5sp" />
+
+                            <TextView
+                                android:id="@+id/tvAiUnits"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="@font/poppins_bold"
+                                android:text="11 un."
+                                android:textColor="@color/vf_purple"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Badge "editado" Unidades -->
                         <TextView
-                            android:id="@+id/tvAiUnitsLabel"
+                            android:id="@+id/badgeUnitsEditedResult"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="@font/poppins_semibold"
-                            android:text="Caixas"
-                            android:textColor="@color/vf_purple"
-                            android:textSize="12.5sp" />
-
-                        <TextView
-                            android:id="@+id/tvAiUnits"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:fontFamily="@font/poppins_bold"
-                            android:text="11 un."
-                            android:textColor="@color/vf_purple"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                            android:layout_gravity="top|end"
+                            android:layout_margin="8dp"
+                            android:background="@drawable/bg_badge_editado_blue"
+                            android:fontFamily="sans-serif"
+                            android:paddingStart="6dp"
+                            android:paddingTop="2dp"
+                            android:paddingEnd="6dp"
+                            android:paddingBottom="2dp"
+                            android:text="editado"
+                            android:textColor="@color/vf_blue"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
                 </LinearLayout>
 
                 <!-- Box de Orientação: "Confira os resultados antes de gerar o relatório" (Figma 851:4170) -->
@@ -1039,7 +1063,7 @@
                     android:orientation="horizontal"
                     android:weightSum="2">
 
-                    <!-- Coluna Quantidade (com borda azul e badge editado) -->
+                    <!-- Coluna Quantidade (com destaque dinâmico se editado) -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1064,6 +1088,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/badgeWeightEdited"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:background="@drawable/bg_badge_editado_blue"
@@ -1074,15 +1099,17 @@
                                 android:text="editado"
                                 android:textColor="#3B82F6"
                                 android:textSize="9sp"
-                                android:textStyle="bold" />
+                                android:textStyle="bold"
+                                android:visibility="gone" />
                         </LinearLayout>
 
                         <!-- Stepper Box Quantidade -->
                         <LinearLayout
+                            android:id="@+id/stepperWeightContainer"
                             android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_stepper_blue"
+                            android:background="@drawable/bg_stepper_card_normal"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
                             android:paddingStart="8dp"
@@ -1119,16 +1146,17 @@
                                     android:layout_height="wrap_content"
                                     android:fontFamily="sans-serif"
                                     android:text="42"
-                                    android:textColor="#3B82F6"
+                                    android:textColor="@color/vf_text_primary"
                                     android:textSize="20sp"
                                     android:textStyle="bold" />
 
                                 <TextView
+                                    android:id="@+id/tvEditWeightUnit"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:fontFamily="sans-serif"
                                     android:text="kg"
-                                    android:textColor="#3B82F6"
+                                    android:textColor="@color/vf_text_secondary"
                                     android:textSize="11sp" />
                             </LinearLayout>
 
@@ -1152,6 +1180,7 @@
                         </LinearLayout>
 
                         <TextView
+                            android:id="@+id/tvEditWeightEstimateHint"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
@@ -1169,17 +1198,41 @@
                         android:layout_weight="1"
                         android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif"
-                            android:text="Caixas"
-                            android:textColor="@color/vf_text_primary"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif"
+                                android:text="Caixas"
+                                android:textColor="@color/vf_text_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/badgeUnitsEdited"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_badge_editado_blue"
+                                android:paddingStart="6dp"
+                                android:paddingTop="2dp"
+                                android:paddingEnd="6dp"
+                                android:paddingBottom="2dp"
+                                android:text="editado"
+                                android:textColor="#3B82F6"
+                                android:textSize="9sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+                        </LinearLayout>
 
                         <!-- Stepper Box Caixas -->
                         <LinearLayout
+                            android:id="@+id/stepperUnitsContainer"
                             android:layout_width="match_parent"
                             android:layout_height="64dp"
                             android:layout_marginTop="6dp"

@@ -112,7 +112,7 @@ public class ReportsFragment extends Fragment {
             }
             String actor = SessionManager.name(requireContext());
             if (actor == null || actor.isEmpty()) {
-                actor = "Breno Gomes";
+                actor = com.aula.volta.data.local.SessionManager.name(requireContext());
             }
             AuditLog.append(requireContext(), actor, "GERAR",
                     "relatorio", report.getName(), null, null);
@@ -120,6 +120,25 @@ public class ReportsFragment extends Fragment {
         });
 
         toastExported = view.findViewById(R.id.toastExported);
+        if (toastExported != null) {
+            com.aula.volta.util.ToastSwipeHelper.attach(toastExported, hideToastRunnable,
+                    new com.aula.volta.util.ToastSwipeHelper.OnSwipeListener() {
+                        @Override
+                        public void onDismissed() {
+                            if (toastExported != null) {
+                                toastExported.setVisibility(View.GONE);
+                            }
+                        }
+
+                        @Override
+                        public void onSwipeDown() {
+                            if (isAdded()) {
+                                java.io.File report = PgrsReport.generate(requireContext());
+                                PgrsReport.openPdf(requireContext(), report);
+                            }
+                        }
+                    });
+        }
         View btnExportAll = view.findViewById(R.id.btnExportAllData);
         if (btnExportAll != null) {
             btnExportAll.setOnClickListener(v -> {
@@ -128,7 +147,7 @@ public class ReportsFragment extends Fragment {
                 if (report != null) {
                     String actor = SessionManager.name(requireContext());
                     if (actor == null || actor.isEmpty()) {
-                        actor = "Breno Gomes";
+                        actor = com.aula.volta.data.local.SessionManager.name(requireContext());
                     }
                     AuditLog.append(requireContext(), actor, "EXPORTAR_DADOS",
                             "relatorio", report.getName(), null, null);

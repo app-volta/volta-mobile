@@ -357,13 +357,20 @@ public class EditProfileFragment extends Fragment {
             Bitmap finalAvatar = Bitmap.createScaledBitmap(square, 512, 512, true);
 
             // Salva permanentemente no diretório de arquivos do app
+            String myEmail = SessionManager.email(requireContext());
             File avatarFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
             try (FileOutputStream fos = new FileOutputStream(avatarFile)) {
                 finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos);
             }
+            if (!myEmail.isEmpty()) {
+                File hashedFile = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(myEmail.hashCode()) + ".jpg");
+                try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
+                    finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
+                }
+            }
 
             // Grava caminho local na sessão
-            SessionManager.saveProfilePhotoLocal(requireContext(), avatarFile.getAbsolutePath());
+            SessionManager.saveProfilePhotoLocal(requireContext(), myEmail, avatarFile.getAbsolutePath());
 
             // Atualiza UI instantaneamente com avatar circular sem atraso
             displayCircularPhoto(finalAvatar);

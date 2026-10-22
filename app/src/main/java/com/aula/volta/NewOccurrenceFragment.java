@@ -78,6 +78,24 @@ public class NewOccurrenceFragment extends Fragment {
     private ActivityResultLauncher<String> pickImageLauncher;
     private ActivityResultLauncher<String> requestCameraPermissionLauncher;
 
+    private void showCancelRegistrationDialog() {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Cancelar ocorrência?")
+                .setMessage("Se você voltar, a ocorrência será excluída. Deseja realmente sair?")
+                .setNegativeButton("Continuar", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton("Sim, excluir", (dialog, which) -> {
+                    dialog.dismiss();
+                    photoFile = null;
+                    if (getView() != null) {
+                        Navigation.findNavController(getView()).popBackStack(R.id.nav_home, false);
+                    }
+                })
+                .show();
+    }
+
     public NewOccurrenceFragment() {
         // Construtor vazio obrigatório
     }
@@ -158,8 +176,32 @@ public class NewOccurrenceFragment extends Fragment {
         sectorIndex = 0;
         tvSector.setText(getResources().getStringArray(R.array.occurrence_sector_options)[0]);
 
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(),
+                new androidx.activity.OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        if (cameraViewfinderOverlay != null && cameraViewfinderOverlay.getVisibility() == View.VISIBLE) {
+                            closeCameraOverlay();
+                        } else if (photoFile != null && photoFile.exists()) {
+                            showCancelRegistrationDialog();
+                        } else if (getView() != null) {
+                            Navigation.findNavController(getView()).navigateUp();
+                        } else {
+                            setEnabled(false);
+                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                        }
+                    }
+                });
+
         View btnBack = view.findViewById(R.id.btnBackRegister);
-        btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
+        btnBack.setOnClickListener(v -> {
+            if (photoFile != null && photoFile.exists()) {
+                showCancelRegistrationDialog();
+            } else {
+                Navigation.findNavController(v).navigateUp();
+            }
+        });
 
         // Botão Câmera -> Inicia captura de foto real
         MaterialButton btnCamera = view.findViewById(R.id.btnCaptureCamera);

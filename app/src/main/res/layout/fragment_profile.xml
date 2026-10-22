@@ -337,7 +337,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:fontFamily="@font/font_inter"
-                        android:text="52 registradas"
+                        android:text="—"
+                        tools:text="52 registradas"
                         android:textColor="@color/vf_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -389,7 +390,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:fontFamily="@font/font_inter"
-                        android:text="1.147 kg"
+                        android:text="—"
+                        tools:text="1.147 kg"
                         android:textColor="@color/vf_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />

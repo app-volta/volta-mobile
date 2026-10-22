@@ -85,7 +85,7 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
                         Toast.LENGTH_SHORT).show();
                 return;
             }
-            AuditLog.append(requireContext(), "Breno Gomes", "GERAR",
+            AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "GERAR",
                     "relatorio", report.getName(), null, null);
             PgrsReport.share(requireContext(), report);
         });

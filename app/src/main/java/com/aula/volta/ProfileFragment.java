@@ -147,6 +147,10 @@ public class ProfileFragment extends Fragment {
         tvRecovered = view.findViewById(R.id.tvProfileRecovered);
         tvNotifCount = view.findViewById(R.id.tvProfileNotifCount);
 
+        if (tvOccurrences != null) tvOccurrences.setText("—");
+        if (tvRecovered != null) tvRecovered.setText("—");
+        if (tvNotifCount != null) tvNotifCount.setText("—");
+
         bindUserData();
 
         View.OnClickListener openPhotoPicker = v -> showPhotoOptionsSheet();
@@ -225,7 +229,7 @@ public class ProfileFragment extends Fragment {
         // Nome e Iniciais
         String name = SessionManager.name(requireContext());
         if (name == null || name.trim().isEmpty()) {
-            name = getString(R.string.profile_name);
+            name = "Colaborador";
         }
         if (tvProfileName != null) {
             tvProfileName.setText(name);
@@ -284,12 +288,9 @@ public class ProfileFragment extends Fragment {
                     }
                     if (response.isSuccessful() && response.body() != null) {
                         UserResponseDTO u = response.body();
-                        // Protege contra sobreposição por conta de admin
-                        if ("volta.brasil.2026@gmail.com".equalsIgnoreCase(u.getEmail()) || "ADMIN".equalsIgnoreCase(u.getRole())) {
-                            String myEmail = SessionManager.email(requireContext());
-                            if (!"volta.brasil.2026@gmail.com".equalsIgnoreCase(myEmail)) {
-                                return;
-                            }
+                        String myEmail = SessionManager.email(requireContext());
+                        if (myEmail.isEmpty() || (u.getEmail() != null && !u.getEmail().trim().isEmpty() && !u.getEmail().equalsIgnoreCase(myEmail))) {
+                            return;
                         }
                         if (u.getName() != null && !u.getName().isEmpty()) {
                             SessionManager.saveName(requireContext(), u.getName());
@@ -457,13 +458,20 @@ public class ProfileFragment extends Fragment {
             Bitmap finalAvatar = Bitmap.createScaledBitmap(square, 512, 512, true);
 
             // Salva permanentemente no diretório de arquivos do app
+            String myEmail = SessionManager.email(requireContext());
             File avatarFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
             try (FileOutputStream fos = new FileOutputStream(avatarFile)) {
                 finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos);
             }
+            if (!myEmail.isEmpty()) {
+                File hashedFile = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(myEmail.hashCode()) + ".jpg");
+                try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
+                    finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
+                }
+            }
 
             // Grava caminho local na sessão
-            SessionManager.saveProfilePhotoLocal(requireContext(), avatarFile.getAbsolutePath());
+            SessionManager.saveProfilePhotoLocal(requireContext(), myEmail, avatarFile.getAbsolutePath());
 
             // Atualiza UI instantaneamente com avatar circular sem atraso
             displayCircularProfileBitmap(finalAvatar);
@@ -600,16 +608,28 @@ public class ProfileFragment extends Fragment {
     private void loadProfilePhoto() {
         if (!isAdded()) return;
 
-        // 1. Prioriza imagem local em cache
+        // 1. Prioriza imagem local em cache (associada ao usuário ativo)
+        String email = SessionManager.email(requireContext());
         String localPath = SessionManager.getProfilePhotoLocal(requireContext());
+        File localFile = null;
         if (localPath != null && !localPath.isEmpty()) {
             File f = new File(localPath);
-            if (f.exists()) {
-                Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
-                if (bmp != null) {
-                    displayCircularProfileBitmap(bmp);
-                    return;
-                }
+            if (f.exists()) localFile = f;
+        }
+        if (localFile == null && !email.isEmpty()) {
+            File userHashed = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(email.hashCode()) + ".jpg");
+            if (userHashed.exists()) localFile = userHashed;
+        }
+        if (localFile == null) {
+            File generalFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+            if (generalFile.exists()) localFile = generalFile;
+        }
+
+        if (localFile != null && localFile.exists()) {
+            Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+            if (bmp != null) {
+                displayCircularProfileBitmap(bmp);
+                return;
             }
         }
 

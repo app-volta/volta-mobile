@@ -77,11 +77,22 @@ public class FirestoreNotificationRepository {
                     return;
                 }
 
+                String currentEmail = com.aula.volta.data.local.SessionManager.email(appContext);
                 for (DocumentChange dc : snapshots.getDocumentChanges()) {
                     if (dc.getType() == DocumentChange.Type.ADDED) {
                         try {
                             String docId = dc.getDocument().getId();
-                            Notification notification = parseDocument(docId, dc.getDocument().getData());
+                            Map<String, Object> docData = dc.getDocument().getData();
+                            if (docData != null) {
+                                String targetUser = (String) docData.get("user_id");
+                                if (targetUser != null && !targetUser.isEmpty() && !"all".equalsIgnoreCase(targetUser)) {
+                                    if (!currentEmail.isEmpty() && !targetUser.equalsIgnoreCase(currentEmail)) {
+                                        // Notificação singular de outro usuário; ignora
+                                        continue;
+                                    }
+                                }
+                            }
+                            Notification notification = parseDocument(docId, docData);
                             if (notification != null) {
                                 String contentKey = (notification.getOccurrenceId() != null ? notification.getOccurrenceId() : "")
                                         + "|" + (notification.getTipo() != null ? notification.getTipo() : "")
@@ -140,14 +151,11 @@ public class FirestoreNotificationRepository {
      * Envia uma nova notificação para o Cloud Firestore com ID determinístico.
      */
     public void sendNotification(String docId, String titulo, String descricao, String tipo,
-                                 String occurrenceId, String icone, String tint, String bg) {
+                                 String occurrenceId, String icone, String tint, String bg, String userId) {
         try {
             if (docId == null || docId.trim().isEmpty()) {
-                if (occurrenceId != null && !occurrenceId.isEmpty()) {
-                    docId = "occ_" + occurrenceId;
-                } else {
-                    docId = "notif_" + System.currentTimeMillis();
-                }
+                String prefix = (occurrenceId != null && !occurrenceId.isEmpty()) ? "occ_" + occurrenceId + "_" : "notif_";
+                docId = prefix + java.util.UUID.randomUUID().toString();
             }
 
             // Registra localmente para ignorar o eco do snapshot listener
@@ -159,6 +167,7 @@ public class FirestoreNotificationRepository {
 
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             Map<String, Object> data = new HashMap<>();
+            data.put("id", docId);
             data.put("titulo", titulo);
             data.put("descricao", descricao);
             data.put("tipo", tipo != null ? tipo : "NOVA_OCORRENCIA");
@@ -168,19 +177,24 @@ public class FirestoreNotificationRepository {
             data.put("bg", bg != null ? bg : "#E2F7EC");
             data.put("lida", false);
             data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
-            data.put("user_id", "all");
+            data.put("user_id", (userId != null && !userId.isEmpty()) ? userId : "all");
 
             final String finalDocId = docId;
             db.collection(COLLECTION_NOTIFICATIONS)
                     .document(finalDocId)
                     .set(data)
                     .addOnSuccessListener(aVoid ->
-                            Log.d(TAG, "Notificação enviada ao Firestore com ID determinístico: " + finalDocId))
+                            Log.d(TAG, "Notificação enviada ao Firestore com ID singular: " + finalDocId))
                     .addOnFailureListener(e ->
                             Log.w(TAG, "Erro ao enviar notificação ao Firestore", e));
         } catch (Exception e) {
             Log.e(TAG, "Exceção ao enviar notificação", e);
         }
+    }
+
+    public void sendNotification(String docId, String titulo, String descricao, String tipo,
+                                 String occurrenceId, String icone, String tint, String bg) {
+        sendNotification(docId, titulo, descricao, tipo, occurrenceId, icone, tint, bg, "all");
     }
 
     public void sendNotification(String titulo, String descricao, String tipo,

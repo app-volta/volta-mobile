@@ -177,7 +177,10 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="@dimen/spacing_medium" />
+                android:layout_marginBottom="@dimen/spacing_medium" 
+                android:indeterminate="true"
+                android:indeterminateTint="#1BA463"
+                android:indeterminateTintMode="src_in" />
 
             <!-- =================================================================================== -->
             <!--                            RESUMO DA UNIDADE — 3 Cards (Figma 790:1684..1703)      -->
@@ -240,7 +243,8 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="9"
+                        android:text="—"
+                        tools:text="9"
                         android:textColor="@color/stat_open_icon"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -292,7 +296,8 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="43"
+                        android:text="—"
+                        tools:text="43"
                         android:textColor="@color/stat_resolved_icon"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -343,7 +348,8 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="1.147"
+                        android:text="—"
+                        tools:text="1.147"
                         android:textColor="@color/stat_recycled_icon"
                         android:textSize="22sp"
                         android:textStyle="bold" />
