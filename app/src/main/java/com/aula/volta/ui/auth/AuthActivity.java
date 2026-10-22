@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.aula.volta.MainActivity;
@@ -27,12 +30,29 @@ public class AuthActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_auth);
 
-        getWindow().setStatusBarColor(getColor(R.color.cta_gradient_end));
-        androidx.core.view.WindowInsetsControllerCompat controller =
-                androidx.core.view.WindowCompat.getInsetsController(
-                        getWindow(), getWindow().getDecorView());
-        if (controller != null) {
-            controller.setAppearanceLightStatusBars(false);
+        NavHostFragment navHost = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.authContainer);
+        if (navHost != null) {
+            NavController navController = navHost.getNavController();
+            navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+                int id = destination.getId();
+                boolean isLightScreen = (id == R.id.auth_register
+                        || id == R.id.auth_confirm
+                        || id == R.id.auth_forgot
+                        || id == R.id.auth_passcode
+                        || id == R.id.auth_reset);
+
+                WindowInsetsControllerCompat insetsController =
+                        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+                if (insetsController != null) {
+                    insetsController.setAppearanceLightStatusBars(isLightScreen);
+                }
+                if (isLightScreen) {
+                    getWindow().setStatusBarColor(getColor(R.color.vf_bg));
+                } else {
+                    getWindow().setStatusBarColor(getColor(R.color.cta_gradient_end));
+                }
+            });
         }
     }
 

@@ -9,17 +9,17 @@
     android:orientation="vertical"
     android:padding="@dimen/spacing_large">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_xlarge"
+    <!-- Logo VOLTA Branco Superior (102x30dp) -->
+    <ImageView
+        android:layout_width="102dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="40dp"
         android:layout_marginBottom="32dp"
-        android:text="VOLTA"
-        android:textColor="@color/white"
-        android:textSize="28sp"
-        android:textStyle="bold" />
+        android:contentDescription="@string/app_name"
+        android:scaleType="fitCenter"
+        android:src="@drawable/logo_volta_white" />
 
-    <!-- Mascote VOLTA com selo circular de check sobreposto (Figma 790:1091) -->
+    <!-- Mascote VOLTA com selo circular de check sobreposto no topo direito (Figma 790:1091) -->
     <FrameLayout
         android:layout_width="160dp"
         android:layout_height="180dp"
@@ -36,9 +36,9 @@
         <FrameLayout
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:layout_gravity="bottom|end"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
             android:background="@drawable/bg_badge_check_white"
             android:elevation="4dp">
 
@@ -48,13 +48,14 @@
                 android:layout_gravity="center"
                 android:contentDescription="@string/auth_success_title"
                 android:src="@drawable/ic_notif_check"
-                app:tint="@color/status_aprovada_text" />
+                app:tint="@color/login_btn_text_green" />
         </FrameLayout>
     </FrameLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/font_poppins"
         android:text="@string/auth_success_title"
         android:textColor="@color/white"
         android:textSize="26sp"
@@ -65,6 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="40dp"
+        android:fontFamily="@font/font_inter"
         android:gravity="center"
         android:lineSpacingExtra="3dp"
         android:text="@string/auth_success_sub"
@@ -76,8 +78,10 @@
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:backgroundTint="@color/white"
+        android:fontFamily="@font/font_poppins"
         android:text="@string/auth_start"
-        android:textColor="@color/status_aprovada_text"
+        android:textAllCaps="false"
+        android:textColor="@color/login_btn_text_green"
         android:textSize="15sp"
         android:textStyle="bold"
         app:cornerRadius="16dp" />

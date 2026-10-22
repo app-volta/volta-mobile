@@ -48,6 +48,7 @@ public class ConfirmEmailFragment extends Fragment {
 
         String email = getArguments() != null ? getArguments().getString("email") : "";
         String name = getArguments() != null ? getArguments().getString("name") : "";
+        String sector = getArguments() != null ? getArguments().getString("sector") : "";
 
         TextView tvEmail = view.findViewById(R.id.tvConfirmEmail);
         if (tvEmail != null) {
@@ -123,6 +124,7 @@ public class ConfirmEmailFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("email", email);
             args.putString("name", name);
+            args.putString("sector", sector);
             Navigation.findNavController(v).navigate(R.id.auth_success, args);
         });
     }

@@ -1,9 +1,15 @@
 package com.aula.volta.ui.auth;
 
 import android.os.Bundle;
+import android.text.Html;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -12,11 +18,18 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.data.local.SessionManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 /**
- * Cadastro — espelho do Login (Fase 13, mock: valida e segue ao código).
+ * Cadastro — Figma 790:1007.
+ * 4 cards com chips coloridos, seleção de setor industrial,
+ * aceite de termos e validações completas (mínimo de 8 caracteres de senha).
  */
 public class RegisterFragment extends Fragment {
+
+    private String selectedSector = "";
+    private boolean passwordVisible = false;
 
     public RegisterFragment() {
     }
@@ -32,26 +45,101 @@ public class RegisterFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Botão Fechar circular superior direito e link Rodapé "Entrar"
+        View.OnClickListener goBack = v -> Navigation.findNavController(v).navigateUp();
+        View btnClose = view.findViewById(R.id.btnCloseRegister);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(goBack);
+        }
+        View btnGoLogin = view.findViewById(R.id.btnGoLogin);
+        if (btnGoLogin != null) {
+            btnGoLogin.setOnClickListener(goBack);
+        }
+
+        // Card Setor e Diálogo de Seleção
+        TextView tvSector = view.findViewById(R.id.tvRegisterSector);
+        View cardSector = view.findViewById(R.id.cardRegisterSector);
+        if (cardSector != null && tvSector != null) {
+            cardSector.setOnClickListener(v -> {
+                String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.auth_register_sector_hint)
+                        .setItems(sectors, (dialog, which) -> {
+                            selectedSector = sectors[which];
+                            tvSector.setText(selectedSector);
+                            tvSector.setTextColor(requireContext().getColor(R.color.vf_text_primary));
+                        })
+                        .show();
+            });
+        }
+
+        // Toggle Visibilidade de Senha
+        EditText etPassword = view.findViewById(R.id.etRegisterPassword);
+        ImageView btnToggle = view.findViewById(R.id.btnToggleRegisterPassword);
+        if (etPassword != null && btnToggle != null) {
+            btnToggle.setOnClickListener(v -> {
+                passwordVisible = !passwordVisible;
+                etPassword.setInputType(passwordVisible
+                        ? InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                        : InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                etPassword.setSelection(etPassword.getText().length());
+                btnToggle.setColorFilter(requireContext().getColor(
+                        passwordVisible ? R.color.login_btn_text_green : R.color.vf_text_secondary));
+            });
+        }
+
+        // Checkbox e Texto dos Termos
+        CheckBox cbTerms = view.findViewById(R.id.cbTerms);
+        TextView tvTerms = view.findViewById(R.id.tvTerms);
+        if (tvTerms != null) {
+            tvTerms.setText(Html.fromHtml(getString(R.string.auth_register_terms), Html.FROM_HTML_MODE_LEGACY));
+            tvTerms.setOnClickListener(v -> {
+                if (cbTerms != null) {
+                    cbTerms.setChecked(!cbTerms.isChecked());
+                }
+            });
+        }
+
+        // Submissão do Cadastro com Validações
         view.findViewById(R.id.btnCreateAccount).setOnClickListener(v -> {
             String name = textOf(view, R.id.etRegisterName).trim();
             String email = textOf(view, R.id.etRegisterEmail).trim();
             String password = textOf(view, R.id.etRegisterPassword);
-            if (name.isEmpty() || !email.contains("@") || password.length() < 4) {
-                Toast.makeText(requireContext(), R.string.auth_invalid,
-                        Toast.LENGTH_SHORT).show();
+
+            if (name.isEmpty()) {
+                Toast.makeText(requireContext(), "Informe seu nome e sobrenome", Toast.LENGTH_SHORT).show();
                 return;
             }
+            if (email.isEmpty() || !email.contains("@")) {
+                Toast.makeText(requireContext(), "Informe um e-mail válido", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (selectedSector == null || selectedSector.trim().isEmpty()) {
+                Toast.makeText(requireContext(), R.string.auth_register_sector_required, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (password.length() < 8) {
+                Toast.makeText(requireContext(), R.string.auth_register_pw_min, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (cbTerms != null && !cbTerms.isChecked()) {
+                Toast.makeText(requireContext(), R.string.auth_register_terms_required, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Persiste o setor localmente na sessão
+            SessionManager.saveSector(requireContext(), selectedSector);
+
             Bundle args = new Bundle();
             args.putString("email", email);
             args.putString("name", name);
+            args.putString("sector", selectedSector);
             Navigation.findNavController(v).navigate(R.id.auth_confirm, args);
         });
-        view.findViewById(R.id.btnGoLogin).setOnClickListener(v ->
-                Navigation.findNavController(v).navigateUp());
     }
 
     private String textOf(View root, int id) {
-        android.widget.EditText et = root.findViewById(id);
+        EditText et = root.findViewById(id);
         return et == null ? "" : et.getText().toString();
     }
 }

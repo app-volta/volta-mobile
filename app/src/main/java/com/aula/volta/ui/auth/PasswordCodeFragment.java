@@ -47,8 +47,14 @@ public class PasswordCodeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         String email = getArguments() != null ? getArguments().getString("email") : "";
-        ((TextView) view.findViewById(R.id.tvPasscodeSub)).setText(
-                getString(R.string.auth_code_sub, email == null ? "" : email));
+        TextView tvSub = view.findViewById(R.id.tvPasscodeSub);
+        TextView tvEmail = view.findViewById(R.id.tvPasscodeEmail);
+        if (tvSub != null) {
+            tvSub.setText(R.string.auth_confirm_sub);
+        }
+        if (tvEmail != null) {
+            tvEmail.setText(email == null || email.isEmpty() ? "seu e-mail" : email);
+        }
 
         view.findViewById(R.id.btnBackPasscode).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());

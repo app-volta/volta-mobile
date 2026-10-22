@@ -35,8 +35,12 @@ public class SuccessFragment extends Fragment {
         view.findViewById(R.id.btnStart).setOnClickListener(v -> {
             String email = getArguments() != null ? getArguments().getString("email") : "";
             String name = getArguments() != null ? getArguments().getString("name") : "";
+            String sector = getArguments() != null ? getArguments().getString("sector") : "";
             SessionManager.login(requireContext(),
                     email == null ? "" : email, name == null ? "" : name);
+            if (sector != null && !sector.isEmpty()) {
+                SessionManager.saveSector(requireContext(), sector);
+            }
             ((AuthActivity) requireActivity()).finishLogin();
         });
     }

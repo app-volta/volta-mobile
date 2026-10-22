@@ -1,155 +1,328 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cadastro — espelho do Login (Fase 13, mock) -->
+<!-- Cadastro — Figma 790:1007 -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_auth_green"
+    android:background="@color/vf_bg"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="@dimen/spacing_large">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="28dp"
+        android:paddingBottom="24dp">
 
+        <!-- Barra superior: Logo VOLTA Verde à esquerda + Botão Fechar circular à direita (Figma 790:1007) -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="28dp">
+
+            <ImageView
+                android:id="@+id/ivRegisterTopLogo"
+                android:layout_width="116dp"
+                android:layout_height="34dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitStart"
+                android:src="@drawable/logo_volta_green" />
+
+            <FrameLayout
+                android:id="@+id/btnCloseRegister"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_notification_circle"
+                android:clickable="true"
+                android:contentDescription="@string/occurrence_back"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chevron_down"
+                    app:tint="@color/vf_text_primary" />
+            </FrameLayout>
+        </RelativeLayout>
+
+        <!-- Título e Subtítulo -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_xlarge"
-            android:text="VOLTA"
-            android:textColor="@color/white"
-            android:textSize="34sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_large"
+            android:fontFamily="@font/font_poppins"
             android:text="@string/auth_register_title"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_headline"
+            android:textColor="@color/vf_text_primary"
+            android:textSize="26sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_xs"
-            android:layout_marginBottom="@dimen/spacing_large"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="24dp"
+            android:fontFamily="@font/font_inter"
             android:text="@string/auth_register_sub"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body_small" />
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="14sp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_xs"
-            android:text="@string/auth_name"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold" />
+        <!-- 1. Card Nome (Chip pêssego #FFEFE2 + ic_nav_profile + hint "Seu nome e sobrenome") -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_card_surface_default"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
 
-        <EditText
-            android:id="@+id/etRegisterName"
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_chip_r9"
+                android:backgroundTint="@color/priority_medium_bg">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_nav_profile"
+                    app:tint="@color/priority_medium_text" />
+            </FrameLayout>
+
+            <EditText
+                android:id="@+id/etRegisterName"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/font_inter"
+                android:hint="Seu nome e sobrenome"
+                android:importantForAutofill="no"
+                android:inputType="textPersonName|textCapWords"
+                android:textColor="@color/vf_text_primary"
+                android:textColorHint="@color/volta_text_muted_light"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- 2. Card E-mail (Chip azul #E4EFFF + ic_mail + hint "nome@empresa.com.br") -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_card_surface_default"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_chip_r9"
+                android:backgroundTint="@color/vf_blue_bg">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_mail"
+                    app:tint="@color/vf_blue" />
+            </FrameLayout>
+
+            <EditText
+                android:id="@+id/etRegisterEmail"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/font_inter"
+                android:hint="nome@empresa.com.br"
+                android:importantForAutofill="no"
+                android:inputType="textEmailAddress"
+                android:textColor="@color/vf_text_primary"
+                android:textColorHint="@color/volta_text_muted_light"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- 3. Card Setor (Chip roxo #EFEAFB + ic_factory + hint "Selecione seu setor" + ic_chevron_down) -->
+        <LinearLayout
+            android:id="@+id/cardRegisterSector"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_card_surface_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_chip_r9"
+                android:backgroundTint="@color/vf_purple_bg">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_factory"
+                    app:tint="@color/vf_purple" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvRegisterSector"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/font_inter"
+                android:text="@string/auth_register_sector_hint"
+                android:textColor="@color/volta_text_muted_light"
+                android:textSize="14sp" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_chevron_down"
+                app:tint="@color/vf_text_secondary" />
+        </LinearLayout>
+
+        <!-- 4. Card Senha (Chip verde #E2F7EC + ic_lock + hint "Mínimo de 8 caracteres" + toggle eye) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="18dp"
+            android:background="@drawable/bg_card_surface_default"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_chip_r9"
+                android:backgroundTint="@color/vf_green_bg">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_lock"
+                    app:tint="@color/status_aprovada_text" />
+            </FrameLayout>
+
+            <EditText
+                android:id="@+id/etRegisterPassword"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/font_inter"
+                android:hint="@string/auth_register_pw_hint"
+                android:importantForAutofill="no"
+                android:inputType="textPassword"
+                android:textColor="@color/vf_text_primary"
+                android:textColorHint="@color/volta_text_muted_light"
+                android:textSize="14sp" />
+
+            <ImageView
+                android:id="@+id/btnToggleRegisterPassword"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:clickable="true"
+                android:contentDescription="@null"
+                android:focusable="true"
+                android:src="@drawable/ic_eye"
+                app:tint="@color/vf_text_secondary" />
+        </LinearLayout>
+
+        <!-- Checkbox Termos de Uso e Política de Privacidade -->
+        <LinearLayout
+            android:id="@+id/rowTerms"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_button_cta_white"
-            android:hint="@string/auth_name_hint"
-            android:importantForAutofill="no"
-            android:inputType="textPersonName"
-            android:minHeight="@dimen/button_height_primary"
-            android:paddingStart="@dimen/spacing_normal"
-            android:paddingEnd="@dimen/spacing_normal"
-            android:textColor="@color/auth_input_text"
-            android:textColorHint="@color/auth_input_hint"
-            android:textSize="@dimen/text_size_body" />
+            android:layout_marginBottom="24dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_xs"
-            android:text="@string/auth_email"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold" />
+            <CheckBox
+                android:id="@+id/cbTerms"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@drawable/sl_checkbox_terms"
+                android:paddingStart="10dp" />
 
-        <EditText
-            android:id="@+id/etRegisterEmail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_button_cta_white"
-            android:hint="@string/auth_email_hint"
-            android:importantForAutofill="no"
-            android:inputType="textEmailAddress"
-            android:minHeight="@dimen/button_height_primary"
-            android:paddingStart="@dimen/spacing_normal"
-            android:paddingEnd="@dimen/spacing_normal"
-            android:textColor="@color/auth_input_text"
-            android:textColorHint="@color/auth_input_hint"
-            android:textSize="@dimen/text_size_body" />
+            <TextView
+                android:id="@+id/tvTerms"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="@font/font_inter"
+                android:lineSpacingExtra="2dp"
+                android:text="Li e aceito os Termos de Uso e a Política de Privacidade da VOLTA."
+                android:textColor="@color/vf_text_body"
+                android:textSize="13sp" />
+        </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_xs"
-            android:text="@string/auth_password"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/etRegisterPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:background="@drawable/bg_button_cta_white"
-            android:hint="••••••••"
-            android:importantForAutofill="no"
-            android:inputType="textPassword"
-            android:minHeight="@dimen/button_height_primary"
-            android:paddingStart="@dimen/spacing_normal"
-            android:paddingEnd="@dimen/spacing_normal"
-            android:textColor="@color/auth_input_text"
-            android:textColorHint="@color/auth_input_hint"
-            android:textSize="@dimen/text_size_body" />
-
-        <com.google.android.material.button.MaterialButton
+        <!-- CTA Criar Conta (Fundo gradiente verde oficial) -->
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnCreateAccount"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height_primary"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:background="@drawable/bg_button_cta_white"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_button_gradient"
+            android:fontFamily="@font/font_poppins"
+            android:stateListAnimator="@null"
             android:text="@string/auth_create_btn"
-            android:textColor="@color/volta_green_dark"
-            android:textSize="@dimen/text_size_body"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
+        <!-- Rodapé: Já tem conta? Entrar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
             android:gravity="center"
             android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/font_inter"
                 android:text="@string/auth_have_account"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_size_body_small" />
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/btnGoLogin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_xs"
+                android:layout_marginStart="6dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:padding="@dimen/spacing_xs"
+                android:fontFamily="@font/font_poppins"
+                android:padding="4dp"
                 android:text="@string/auth_enter"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_size_body_small"
+                android:textColor="@color/login_btn_text_green"
+                android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>

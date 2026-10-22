@@ -297,9 +297,15 @@
     <string name="auth_confirm_password">Confirmar nova senha</string>
     <string name="auth_save_password">Salvar nova senha</string>
     <string name="auth_pw_weak">Fraca</string>
-    <string name="auth_pw_fair">Razoável</string>
+    <string name="auth_pw_fair">Média</string>
     <string name="auth_pw_good">Boa</string>
     <string name="auth_pw_strong">Forte</string>
+    <string name="auth_register_terms">Li e aceito os &lt;b>Termos de Uso&lt;/b> e a &lt;b>Política de Privacidade&lt;/b> da VOLTA.</string>
+    <string name="auth_register_sector_hint">Selecione seu setor</string>
+    <string name="auth_register_pw_hint">Mínimo de 8 caracteres</string>
+    <string name="auth_register_terms_required">Aceite os Termos de Uso e Política de Privacidade</string>
+    <string name="auth_register_sector_required">Selecione seu setor</string>
+    <string name="auth_register_pw_min">A senha deve ter no mínimo 8 caracteres</string>
     <string name="auth_pw_mismatch">As senhas não conferem</string>
     <string name="auth_passok_title">Tudo certo!</string>
     <string name="auth_passok_sub">Sua senha foi atualizada com sucesso. Já pode entrar e continuar cuidando do descarte na sua unidade.</string>

@@ -16,6 +16,7 @@ public final class SessionManager {
     private static final String KEY_PASSWORD = "user_password";
     private static final String KEY_TOKEN = "user_jwt_token";
     private static final String KEY_CHAT_SESSION_ID = "chat_session_id";
+    private static final String KEY_SECTOR = "user_sector";
 
     private SessionManager() {
     }
@@ -86,5 +87,15 @@ public final class SessionManager {
 
     public static String name(Context context) {
         return prefs(context).getString(KEY_NAME, "");
+    }
+
+    public static void saveSector(Context context, String sector) {
+        prefs(context).edit()
+                .putString(KEY_SECTOR, sector == null ? "" : sector)
+                .apply();
+    }
+
+    public static String sector(Context context) {
+        return prefs(context).getString(KEY_SECTOR, "");
     }
 }

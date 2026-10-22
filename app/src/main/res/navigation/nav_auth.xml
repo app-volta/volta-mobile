@@ -25,6 +25,10 @@
         <argument
             android:name="name"
             app:argType="string" />
+        <argument
+            android:name="sector"
+            android:defaultValue=""
+            app:argType="string" />
     </fragment>
 
     <fragment
@@ -36,6 +40,10 @@
             app:argType="string" />
         <argument
             android:name="name"
+            app:argType="string" />
+        <argument
+            android:name="sector"
+            android:defaultValue=""
             app:argType="string" />
     </fragment>
 
