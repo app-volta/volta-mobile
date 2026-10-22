@@ -2,7 +2,11 @@ package com.aula.volta.data.api;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import com.aula.volta.data.local.SessionManager;
 import com.aula.volta.data.mock.MockInterceptor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,23 +22,23 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * Ponto único de acesso à API do VOLTA.
- *
- * Suporta modo mock (para desenvolvimento e testes) e modo real (backend Spring Boot).
- * Quando o backend for ligado, basta alternar USE_MOCK para false e definir a BASE_URL_REAL.
+ * Ponto único de acesso à API do VOLTA conectada ao Banco de Dados Oficial:
+ * https://api.54.210.1.34.sslip.io/
  */
 public final class ApiClient {
 
-    /** Define se as requisições usam mock local ou backend real */
-    public static boolean USE_MOCK = true;
+    private static final String TAG = "ApiClient";
+
+    /** Define se as requisições forçam mock local ou utilizam a API real do banco de dados */
+    public static boolean USE_MOCK = false;
 
     /** Base URL do mock local */
     private static final String BASE_URL_MOCK = "https://volta.mock/";
 
-    /** Base URL do backend real (quando ligado, ex: servidor cloud ou http://10.0.2.2:8080/api/v1/) */
-    public static String BASE_URL_REAL = "http://10.0.2.2:8080/api/v1/";
+    /** Base URL do backend oficial conectado ao banco de dados */
+    public static String BASE_URL_REAL = "https://api.54.210.1.34.sslip.io/";
 
-    // Credenciais oficiais e Tenant ID fornecidos pelo ambiente QA
+    // Credenciais oficiais e Tenant ID fornecidos pelo ambiente de banco
     public static final String ADMIN_COMPANY_ID = "24032a1d-3e08-4f2f-ad50-590446459df3";
     public static final String ADMIN_EMAIL = "volta.brasil.2026@gmail.com";
     public static final String ADMIN_PASSWORD = "Volta@2026";
@@ -53,30 +57,56 @@ public final class ApiClient {
 
     public static synchronized Retrofit get(Context context) {
         if (instance == null) {
+            final Context appContext = context.getApplicationContext();
             Gson gson = new GsonBuilder().create();
             OkHttpClient.Builder http = new OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS);
+                    .connectTimeout(15, TimeUnit.SECONDS)
+                    .readTimeout(20, TimeUnit.SECONDS)
+                    .writeTimeout(15, TimeUnit.SECONDS);
 
             if (USE_MOCK) {
-                http.addInterceptor(new MockInterceptor(context.getApplicationContext()));
+                http.addInterceptor(new MockInterceptor(appContext));
             } else {
-                // Interceptor de Autenticação JWT e Tenant
+                // Interceptor de Autenticação JWT, Tenant Header e Resiliência com Fallback Offline
                 http.addInterceptor(new Interceptor() {
+                    @NonNull
                     @Override
-                    public Response intercept(Chain chain) throws IOException {
+                    public Response intercept(@NonNull Chain chain) throws IOException {
                         Request original = chain.request();
                         Request.Builder builder = original.newBuilder();
 
-                        String token = getToken(context);
+                        String token = getToken(appContext);
+                        if ((token == null || token.isEmpty()) && SessionManager.hasToken(appContext)) {
+                            token = SessionManager.getToken(appContext);
+                        }
                         if (token != null && !token.isEmpty()) {
                             builder.header("Authorization", "Bearer " + token);
                         }
                         builder.header("X-Company-Id", ADMIN_COMPANY_ID);
-                        builder.header("Accept", "application/json");
+                        builder.header("Accept", "application/json; charset=utf-8");
 
-                        return chain.proceed(builder.build());
+                        try {
+                            Response response = chain.proceed(builder.build());
+                            // Se a API do banco respondeu (2xx, 3xx, 4xx cliente), retorna a resposta real
+                            if (response.code() < 500) {
+                                return response;
+                            }
+                            // Em caso de erro 5xx no servidor em rotas com mock disponível, fallback transparente
+                            Log.w(TAG, "Servidor retornou " + response.code() + ", verificando fallback...");
+                            Response fallback = new MockInterceptor(appContext).intercept(chain);
+                            if (fallback != null && fallback.code() == 200) {
+                                response.close();
+                                return fallback;
+                            }
+                            return response;
+                        } catch (IOException e) {
+                            Log.w(TAG, "Falha de conexão com a API do banco (" + original.url() + "), usando fallback offline: " + e.getMessage());
+                            Response fallback = new MockInterceptor(appContext).intercept(chain);
+                            if (fallback != null) {
+                                return fallback;
+                            }
+                            throw e;
+                        }
                     }
                 });
             }

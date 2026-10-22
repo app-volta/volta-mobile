@@ -1,11 +1,13 @@
 package com.aula.volta.data.local;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.model.OccurrenceJSON;
+import com.aula.volta.data.model.incident.IncidentResponseDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,12 +18,14 @@ import retrofit2.Response;
 
 /**
  * Único ponto de leitura/escrita de ocorrências da UI (lista Home + Ver todas).
+ * Conecta-se à API Oficial do Banco de Dados (/incidents) com suporte a fallback offline.
  *
  * <p>Ocorrências lançadas no app entram via {@link #pushLocal} e sobrevivem ao
- * refresh (mesmo padrão do NotificationStore) — o mock nunca as conheceria.</p>
+ * refresh (mesmo padrão do NotificationStore).</p>
  */
 public final class OccurrenceStore {
 
+    private static final String TAG = "OccurrenceStore";
     private static final String PREFS = "cache_occurrences";
     private static final String KEY_LIST = "list";
     private static final String KEY_LOCAL = "local_only";
@@ -33,10 +37,44 @@ public final class OccurrenceStore {
     private OccurrenceStore() {
     }
 
-    /** Busca na API, mescla com locais (pushLocal) e devolve; se falhar, devolve o cache. */
+    /** Busca na API do Banco (/incidents), mescla com locais (pushLocal) e devolve; se falhar, devolve o cache. */
     public static void refresh(Context context, LoadCallback callback) {
         Context app = context.getApplicationContext();
         OccurrenceAPI api = ApiClient.get(app).create(OccurrenceAPI.class);
+
+        // 1. Tenta carregar do backend oficial do banco (/incidents)
+        api.getIncidents().enqueue(new Callback<List<IncidentResponseDTO>>() {
+            @Override
+            public void onResponse(Call<List<IncidentResponseDTO>> call,
+                                   Response<List<IncidentResponseDTO>> response) {
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    List<Occurrence> list = new ArrayList<>();
+                    for (IncidentResponseDTO inc : response.body()) {
+                        Occurrence occ = Occurrence.fromIncident(inc);
+                        if (occ != null) {
+                            list.add(occ);
+                        }
+                    }
+                    list = mergedWithLocal(app, list);
+                    PrefsHelper.putList(app, PREFS, KEY_LIST, list);
+                    Log.d(TAG, "Carregadas " + list.size() + " ocorrências do banco de dados oficial.");
+                    callback.onResult(list);
+                    return;
+                }
+
+                // 2. Se a rota /incidents não retornou itens ou retornou erro, tenta /occurrences legado
+                fallbackToOccurrencesLegacy(app, api, callback);
+            }
+
+            @Override
+            public void onFailure(Call<List<IncidentResponseDTO>> call, Throwable t) {
+                Log.w(TAG, "Falha ao consultar /incidents, ativando rota de ocorrências legada/cache: " + t.getMessage());
+                fallbackToOccurrencesLegacy(app, api, callback);
+            }
+        });
+    }
+
+    private static void fallbackToOccurrencesLegacy(Context app, OccurrenceAPI api, LoadCallback callback) {
         api.getOccurrences().enqueue(new Callback<List<OccurrenceJSON>>() {
             @Override
             public void onResponse(Call<List<OccurrenceJSON>> call,

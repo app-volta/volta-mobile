@@ -37,7 +37,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public final class ChatbotAuthClient {
 
     private static final String TAG = "ChatbotAuthClient";
-    public static final String CHATBOT_AUTH_BASE_URL = "https://api.qa.54.210.1.34.sslip.io/";
+    public static final String CHATBOT_AUTH_BASE_URL = "https://api.54.210.1.34.sslip.io/";
 
     private static Retrofit instance;
 

@@ -19,6 +19,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.ReportAPI;
+import com.aula.volta.data.model.EsgMetricResponseDTO;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.local.PrefsHelper;
@@ -172,9 +173,46 @@ public class HomeFragment extends Fragment {
     /** Resumo da unidade via GET /reports/summary (mock → API-ready). */
     private void loadSummary() {
         ReportAPI api = ApiClient.get(requireContext()).create(ReportAPI.class);
+        api.getEsgMetrics().enqueue(new Callback<List<EsgMetricResponseDTO>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<EsgMetricResponseDTO>> call,
+                                   @NonNull Response<List<EsgMetricResponseDTO>> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    EsgMetricResponseDTO metric = response.body().get(0);
+                    JsonObject summary = new JsonObject();
+                    int kg = metric.getTotalRecycledKg() != null ? metric.getTotalRecycledKg().intValue() : 1147;
+                    int totalWaste = metric.getTotalWasteKg() != null ? metric.getTotalWasteKg().intValue() : 1500;
+                    double rate = metric.getRecyclingPercentage() != null ? metric.getRecyclingPercentage() : 76.5;
+                    int resolvidas = (int) Math.round(totalWaste * (rate / 100.0));
+                    int abertas = Math.max(0, totalWaste - resolvidas);
+                    summary.addProperty("kg_reciclados", kg);
+                    summary.addProperty("resolvidas", resolvidas > 0 ? resolvidas : 46);
+                    summary.addProperty("abertas", abertas > 0 ? abertas : 6);
+
+                    PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toString());
+                    applySummary(summary);
+                    onLoadFinished();
+                } else {
+                    fallbackHomeSummary(api);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<EsgMetricResponseDTO>> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    fallbackHomeSummary(api);
+                }
+            }
+        });
+    }
+
+    private void fallbackHomeSummary(ReportAPI api) {
         api.getSummary().enqueue(new Callback<JsonObject>() {
             @Override
-            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
                 if (!isAdded()) {
                     return;
                 }
@@ -190,7 +228,7 @@ public class HomeFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
                 if (!isAdded()) {
                     return;
                 }

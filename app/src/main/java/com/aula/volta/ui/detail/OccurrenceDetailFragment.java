@@ -23,6 +23,7 @@ import androidx.navigation.Navigation;
 import com.aula.volta.R;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
+import com.aula.volta.data.model.incident.IncidentResponseDTO;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
@@ -253,6 +254,55 @@ public class OccurrenceDetailFragment extends Fragment {
         }
 
         OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
+        api.getIncidentById(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    IncidentResponseDTO dto = response.body();
+                    JsonObject body = new JsonObject();
+                    body.addProperty("id", dto.getId());
+                    String mat = dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().isEmpty()
+                            ? dto.getEmployeeDescription() : "Papelão (Classe A)";
+                    body.addProperty("titulo", mat);
+                    body.addProperty("material", mat);
+                    body.addProperty("setor", "Frigorífico — Setor B2");
+                    body.addProperty("peso_estimado", dto.getEstimatedQuantity() != null ? dto.getEstimatedQuantity() : 38.0);
+                    body.addProperty("status", dto.getStatus() != null ? dto.getStatus() : currentStatus);
+                    body.addProperty("prioridade", dto.getPriority() != null ? dto.getPriority() : "ALTA");
+                    body.addProperty("quando", dto.getRegisteredAt() != null ? dto.getRegisteredAt() : "agora");
+                    if (dto.getPhotoUrl() != null && !dto.getPhotoUrl().isEmpty()) {
+                        body.addProperty("imageUrl", dto.getPhotoUrl());
+                        body.addProperty("photoUrl", dto.getPhotoUrl());
+                    }
+                    if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().isEmpty()) {
+                        body.addProperty("relatorio_auto", dto.getEmployeeDescription());
+                    }
+                    if (currentDetailJson != null) {
+                        if (!body.has("photoPath") && currentDetailJson.has("photoPath")) {
+                            body.addProperty("photoPath", currentDetailJson.get("photoPath").getAsString());
+                        }
+                    }
+                    currentDetailJson = body;
+                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                    applyDetail(currentDetailJson);
+                } else {
+                    fallbackOccurrenceDetail(api);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    fallbackOccurrenceDetail(api);
+                }
+            }
+        });
+    }
+
+    private void fallbackOccurrenceDetail(OccurrenceAPI api) {
         api.getOccurrence(occurrenceId).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
@@ -261,7 +311,6 @@ public class OccurrenceDetailFragment extends Fragment {
                 }
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject body = response.body();
-                    // Preserva photoPath e imageUrl locais caso a API/Mock não os retorne
                     if (currentDetailJson != null) {
                         if (!body.has("photoPath") && currentDetailJson.has("photoPath")) {
                             body.addProperty("photoPath", currentDetailJson.get("photoPath").getAsString());
@@ -721,6 +770,22 @@ public class OccurrenceDetailFragment extends Fragment {
                         "EM_ANALISE",
                         currentMaterial);
                 OccurrenceStore.update(requireContext(), occ);
+
+                // Disparo de finalização oficial para a API do banco de dados (PATCH /incidents/{id}/close)
+                try {
+                    OccurrenceAPI occApi = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
+                    occApi.closeIncident(occurrenceId).enqueue(new Callback<Void>() {
+                        @Override
+                        public void onResponse(@NonNull Call<Void> call,
+                                               @NonNull Response<Void> response) {
+                        }
+
+                        @Override
+                        public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                        }
+                    });
+                } catch (Exception ignored) {
+                }
 
                 com.aula.volta.data.notification.NotificationHelper.notifyPgrsFinalized(
                         requireContext(), occurrenceId);

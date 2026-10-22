@@ -85,6 +85,14 @@ public final class SessionManager {
         return prefs(context).getString(KEY_EMAIL, "");
     }
 
+    public static void saveName(Context context, String name) {
+        prefs(context).edit().putString(KEY_NAME, name == null ? "" : name).apply();
+    }
+
+    public static void saveEmail(Context context, String email) {
+        prefs(context).edit().putString(KEY_EMAIL, email == null ? "" : email).apply();
+    }
+
     public static String name(Context context) {
         return prefs(context).getString(KEY_NAME, "");
     }

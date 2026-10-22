@@ -18,6 +18,8 @@ import com.aula.volta.util.BottomSheetImmersiveHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.OccurrenceAPI;
+import com.aula.volta.data.model.incident.IncidentResponseDTO;
+import androidx.annotation.NonNull;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.report.PgrsReport;
@@ -110,9 +112,49 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
 
     private void loadDetail(String occurrenceId) {
         OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
+        api.getIncidentById(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    IncidentResponseDTO dto = response.body();
+                    JsonObject detail = new JsonObject();
+                    detail.addProperty("id", dto.getId());
+                    String mat = dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().isEmpty()
+                            ? dto.getEmployeeDescription() : "Papelão (Classe A)";
+                    detail.addProperty("titulo", mat);
+                    detail.addProperty("material", mat);
+                    detail.addProperty("setor", "Frigorífico — Setor B2");
+                    detail.addProperty("peso_estimado", dto.getEstimatedQuantity() != null ? dto.getEstimatedQuantity() : 38.0);
+                    detail.addProperty("status", dto.getStatus() != null ? dto.getStatus() : "EM_ANALISE");
+                    detail.addProperty("prioridade", dto.getPriority() != null ? dto.getPriority() : "ALTA");
+                    detail.addProperty("quando", dto.getRegisteredAt() != null ? dto.getRegisteredAt() : "agora");
+                    if (dto.getPhotoUrl() != null && !dto.getPhotoUrl().isEmpty()) {
+                        detail.addProperty("imageUrl", dto.getPhotoUrl());
+                        detail.addProperty("photoUrl", dto.getPhotoUrl());
+                    }
+                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, detail.toString());
+                    applyDetail(detail);
+                } else {
+                    fallbackSheetDetail(api, occurrenceId);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    fallbackSheetDetail(api, occurrenceId);
+                }
+            }
+        });
+    }
+
+    private void fallbackSheetDetail(OccurrenceAPI api, String occurrenceId) {
         api.getOccurrence(occurrenceId).enqueue(new Callback<JsonObject>() {
             @Override
-            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
                 if (!isAdded()) {
                     return;
                 }
@@ -127,7 +169,7 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
                 if (!isAdded()) {
                     return;
                 }

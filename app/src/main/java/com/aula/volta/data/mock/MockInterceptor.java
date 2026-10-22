@@ -33,17 +33,17 @@ public class MockInterceptor implements Interceptor {
         String path = request.url().encodedPath();
         String method = request.method();
 
-        // Se for GET /occurrences/{id} e existir detalhe salvo localmente (com foto/Cloudinary URL), retorna o salvo
-        if (path.matches("/occurrences/[^/]+") && method.equals("GET")) {
-            String id = path.substring("/occurrences/".length());
+        // Se for GET /occurrences/{id} ou /incidents/{id} e existir detalhe salvo localmente (com foto/Cloudinary URL), retorna o salvo
+        if ((path.matches("/occurrences/[^/]+") || path.matches("/incidents/[^/]+")) && method.equals("GET")) {
+            String id = path.substring(path.lastIndexOf('/') + 1);
             String cached = PrefsHelper.getJson(context, "cache_occurrence_detail", id);
             if (cached != null && !cached.isEmpty()) {
                 return jsonResponse(request, 200, cached);
             }
         }
 
-        // Se for POST /occurrences, gera um ID único para cada ocorrência criada
-        if (path.equals("/occurrences") && method.equals("POST")) {
+        // Se for POST /occurrences ou /incidents, gera um ID único para cada ocorrência criada
+        if ((path.equals("/occurrences") || path.equals("/incidents")) && method.equals("POST")) {
             String uniqueId = String.valueOf(10000 + (System.currentTimeMillis() % 90000));
             String createdJson = "{\"id\":\"" + uniqueId + "\",\"status\":\"EM_ANALISE\"}";
             return jsonResponse(request, 200, createdJson);
@@ -65,25 +65,25 @@ public class MockInterceptor implements Interceptor {
 
     /** Mapeia método+path aos contratos REST do PLANO (item 3). */
     private String assetFor(String method, String path) {
-        if (path.equals("/occurrences") && method.equals("GET")) {
+        if ((path.equals("/occurrences") || path.equals("/incidents")) && method.equals("GET")) {
             return "occurrences.json";
         }
-        if (path.matches("/occurrences/[^/]+/analysis") && method.equals("POST")) {
+        if ((path.matches("/occurrences/[^/]+/analysis") || path.matches("/incidents/[^/]+/ai-report")) && (method.equals("POST") || method.equals("GET"))) {
             return "ai_analysis.json";
         }
-        if (path.matches("/occurrences/[^/]+") && method.equals("GET")) {
+        if ((path.matches("/occurrences/[^/]+") || path.matches("/incidents/[^/]+")) && method.equals("GET")) {
             return "occurrence_detail.json";
         }
-        if (path.equals("/occurrences") && method.equals("POST")) {
+        if ((path.equals("/occurrences") || path.equals("/incidents")) && method.equals("POST")) {
             return "occurrence_created.json";
         }
         if (path.equals("/notifications") && method.equals("GET")) {
             return "notifications.json";
         }
-        if (path.equals("/cooperatives/recommended") && method.equals("GET")) {
+        if ((path.equals("/cooperatives/recommended") || path.equals("/cooperatives") || path.equals("/collections")) && method.equals("GET")) {
             return "cooperatives.json";
         }
-        if (path.equals("/reports/summary") && method.equals("GET")) {
+        if ((path.equals("/reports/summary") || path.equals("/esg/metrics") || path.equals("/esg/score")) && method.equals("GET")) {
             return "reports.json";
         }
         return null;

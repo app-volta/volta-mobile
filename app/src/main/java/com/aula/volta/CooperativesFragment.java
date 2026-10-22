@@ -19,7 +19,9 @@ import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.CooperativeAPI;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.CooperativeJSON;
+import com.aula.volta.data.model.CooperativeResponseDTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -94,10 +96,41 @@ public class CooperativesFragment extends Fragment {
 
     private void loadCooperatives() {
         CooperativeAPI api = ApiClient.get(requireContext()).create(CooperativeAPI.class);
+        api.getCooperatives().enqueue(new Callback<List<CooperativeResponseDTO>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<CooperativeResponseDTO>> call,
+                                   @NonNull Response<List<CooperativeResponseDTO>> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    List<CooperativeJSON> coops = new ArrayList<>();
+                    for (CooperativeResponseDTO dto : response.body()) {
+                        coops.add(CooperativeJSON.fromDTO(dto));
+                    }
+                    PrefsHelper.putList(requireContext(), PREFS, KEY_LIST, coops);
+                    applyCooperatives(coops);
+                    hideLoading();
+                } else {
+                    fallbackRecommended(api);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<CooperativeResponseDTO>> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                fallbackRecommended(api);
+            }
+        });
+    }
+
+    private void fallbackRecommended(CooperativeAPI api) {
         api.getRecommended(null).enqueue(new Callback<List<CooperativeJSON>>() {
             @Override
-            public void onResponse(Call<List<CooperativeJSON>> call,
-                                   Response<List<CooperativeJSON>> response) {
+            public void onResponse(@NonNull Call<List<CooperativeJSON>> call,
+                                   @NonNull Response<List<CooperativeJSON>> response) {
                 if (!isAdded()) {
                     return;
                 }
@@ -111,7 +144,7 @@ public class CooperativesFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<List<CooperativeJSON>> call, Throwable t) {
+            public void onFailure(@NonNull Call<List<CooperativeJSON>> call, @NonNull Throwable t) {
                 if (!isAdded()) {
                     return;
                 }

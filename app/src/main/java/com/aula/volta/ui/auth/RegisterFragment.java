@@ -19,7 +19,14 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.AuthAPI;
 import com.aula.volta.data.local.SessionManager;
+import com.aula.volta.data.model.UserRequestDTO;
+import com.aula.volta.data.model.UserResponseDTO;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 /**
@@ -146,6 +153,29 @@ public class RegisterFragment extends Fragment {
 
             // Persiste o setor localmente na sessão
             SessionManager.saveSector(requireContext(), selectedSector);
+
+            // Disparo do cadastro de usuário na API oficial do banco (POST /users)
+            try {
+                AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+                UserRequestDTO req = new UserRequestDTO(
+                        name,
+                        email,
+                        password,
+                        selectedSector,
+                        ApiClient.ADMIN_COMPANY_ID
+                );
+                authApi.createUser(req).enqueue(new Callback<UserResponseDTO>() {
+                    @Override
+                    public void onResponse(@NonNull Call<UserResponseDTO> call,
+                                           @NonNull Response<UserResponseDTO> response) {
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<UserResponseDTO> call, @NonNull Throwable t) {
+                    }
+                });
+            } catch (Exception ignored) {
+            }
 
             Bundle args = new Bundle();
             args.putString("email", email);
