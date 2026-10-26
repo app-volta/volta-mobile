@@ -147,6 +147,33 @@ public class LoginFragment extends Fragment {
                         SessionManager.saveToken(appContext, token);
                         ApiClient.saveToken(appContext, token);
                         Log.i(TAG, "Token JWT da API QA obtido com sucesso no login.");
+
+                        // Sincroniza dados do perfil vindos do banco geral (GET /users/me)
+                        try {
+                            authApi.getMe().enqueue(new Callback<com.aula.volta.data.model.UserResponseDTO>() {
+                                @Override
+                                public void onResponse(@NonNull Call<com.aula.volta.data.model.UserResponseDTO> call,
+                                                       @NonNull Response<com.aula.volta.data.model.UserResponseDTO> meResp) {
+                                    if (meResp.isSuccessful() && meResp.body() != null) {
+                                        com.aula.volta.data.model.UserResponseDTO u = meResp.body();
+                                        if (u.getName() != null && !u.getName().trim().isEmpty()) {
+                                            SessionManager.saveName(appContext, u.getName().trim());
+                                        }
+                                        if (u.getPosition() != null && !u.getPosition().trim().isEmpty()) {
+                                            SessionManager.saveSector(appContext, u.getPosition().trim());
+                                        }
+                                        if (u.getPhotoUrl() != null && !u.getPhotoUrl().trim().isEmpty()) {
+                                            SessionManager.saveProfilePhotoUrl(appContext, email, u.getPhotoUrl().trim());
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull Call<com.aula.volta.data.model.UserResponseDTO> call, @NonNull Throwable t) {
+                                }
+                            });
+                        } catch (Exception ignored) {
+                        }
                     } else {
                         Log.w(TAG, "Login QA retornou status: " + response.code());
                     }

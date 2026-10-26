@@ -25,7 +25,10 @@ public class UserResponseDTO {
     @SerializedName("role")
     private String role;
 
-    @SerializedName(value = "photoUrl", alternate = {"avatarUrl", "imageUrl", "foto_url", "photo_url"})
+    @SerializedName(value = "photoUrl", alternate = {
+            "avatarUrl", "imageUrl", "foto_url", "photo_url", "foto", "picture", "pictureUrl",
+            "profile_photo", "profilePhoto", "image_url", "avatar_url", "urlFoto", "url_foto"
+    })
     private String photoUrl;
 
     public UserResponseDTO() {

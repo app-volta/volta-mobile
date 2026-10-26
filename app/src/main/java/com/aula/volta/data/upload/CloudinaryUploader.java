@@ -45,7 +45,21 @@ public final class CloudinaryUploader {
     public static String PROFILE_ASSET_FOLDER = "Perfil/Assets/Image";
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private static Handler mainHandler;
+
+    private static void postToMain(Runnable r) {
+        try {
+            if (mainHandler == null && Looper.getMainLooper() != null) {
+                mainHandler = new Handler(Looper.getMainLooper());
+            }
+        } catch (Throwable ignored) {
+        }
+        if (mainHandler != null) {
+            postToMain(r);
+        } else {
+            r.run();
+        }
+    }
 
     // Cache de URLs já enviadas (filePath -> secureUrl) para evitar upload duplicado da mesma foto
     private static final Map<String, String> uploadedUrlCache = new ConcurrentHashMap<>();
@@ -84,32 +98,70 @@ public final class CloudinaryUploader {
      * Se o mesmo arquivo já estiver subindo ou já tiver subido, reaproveita o resultado.
      */
     /**
+     * Sanitiza o e-mail do usuário para servir como public_id único e consistente no Cloudinary.
+     */
+    public static String sanitizeEmailForPublicId(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return "avatar_guest";
+        }
+        return "avatar_" + email.trim().toLowerCase().replaceAll("[^a-zA-Z0-9]", "_");
+    }
+
+    /**
+     * Retorna a URL pública determinística da foto de perfil do usuário no Cloudinary.
+     */
+    public static String getDeterministicProfileUrl(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
+        }
+        String id = sanitizeEmailForPublicId(email);
+        return "https://res.cloudinary.com/" + CLOUD_NAME + "/image/upload/" + PROFILE_ASSET_FOLDER + "/" + id + ".jpg";
+    }
+
+    /**
      * Faz upload da imagem de ocorrência (preset AI-Analysis, pasta Ocorrencia/Assets/Images).
      */
     public static void uploadImage(Context context, File imageFile, UploadCallback callback) {
-        uploadImage(context, imageFile, UPLOAD_PRESET, ASSET_FOLDER, callback);
+        uploadImage(context, imageFile, UPLOAD_PRESET, ASSET_FOLDER, null, callback);
+    }
+
+    /**
+     * Faz upload da foto de perfil associando ao e-mail do usuário (preset Perfil-Photo, pasta Perfil/Assets/Image).
+     */
+    public static void uploadProfileImage(Context context, File imageFile, String userEmail, UploadCallback callback) {
+        String publicId = sanitizeEmailForPublicId(userEmail);
+        uploadImage(context, imageFile, PROFILE_UPLOAD_PRESET, PROFILE_ASSET_FOLDER, publicId, callback);
     }
 
     /**
      * Faz upload da foto de perfil (preset Perfil-Photo, pasta Perfil/Assets/Image).
      */
     public static void uploadProfileImage(Context context, File imageFile, UploadCallback callback) {
-        uploadImage(context, imageFile, PROFILE_UPLOAD_PRESET, PROFILE_ASSET_FOLDER, callback);
+        String userEmail = com.aula.volta.data.local.SessionManager.email(context);
+        uploadProfileImage(context, imageFile, userEmail, callback);
     }
 
     /**
      * Faz upload da imagem no Cloudinary com preset e pasta especificados.
      */
     public static void uploadImage(Context context, File imageFile, String uploadPreset, String assetFolder, UploadCallback callback) {
+        uploadImage(context, imageFile, uploadPreset, assetFolder, null, callback);
+    }
+
+    /**
+     * Faz upload da imagem no Cloudinary com preset, pasta e public_id especificados.
+     */
+    public static void uploadImage(Context context, File imageFile, String uploadPreset, String assetFolder, String publicId, UploadCallback callback) {
         if (imageFile == null || !imageFile.exists()) {
             if (callback != null) {
-                mainHandler.post(() -> callback.onError(
+                postToMain(() -> callback.onError(
                         new IllegalArgumentException("Arquivo de imagem inválido"), null));
             }
             return;
         }
 
-        final String fileKey = imageFile.getAbsolutePath() + "_" + imageFile.lastModified() + "_" + uploadPreset;
+        final String fileKey = imageFile.getAbsolutePath() + "_" + imageFile.lastModified() + "_" + uploadPreset
+                + "_" + (publicId != null ? publicId : "");
 
         // 1. Se esta foto já foi enviada anteriormente com este preset, reaproveita a URL
         String fromCache = uploadedUrlCache.get(fileKey);
@@ -120,7 +172,7 @@ public final class CloudinaryUploader {
         if (resolvedCachedUrl != null && !resolvedCachedUrl.isEmpty()) {
             final String cachedId = uploadedPublicIdCache.getOrDefault(fileKey, "");
             if (callback != null) {
-                mainHandler.post(() -> callback.onSuccess(resolvedCachedUrl, cachedId));
+                postToMain(() -> callback.onSuccess(resolvedCachedUrl, cachedId));
             }
             return;
         }
@@ -129,7 +181,7 @@ public final class CloudinaryUploader {
         if (CLOUD_NAME == null || CLOUD_NAME.trim().isEmpty()
                 || uploadPreset == null || uploadPreset.trim().isEmpty()) {
             if (callback != null) {
-                mainHandler.post(() -> callback.onError(
+                postToMain(() -> callback.onError(
                         new IllegalStateException("Cloudinary não configurado (usando imagem local)"),
                         imageFile.getAbsolutePath()));
             }
@@ -186,6 +238,14 @@ public final class CloudinaryUploader {
                     writer.append(LINE_FEED).append(assetFolder).append(LINE_FEED);
                 }
 
+                // Campo public_id (opcional - usado para nome determinístico do perfil)
+                if (publicId != null && !publicId.trim().isEmpty()) {
+                    writer.append("--").append(boundary).append(LINE_FEED);
+                    writer.append("Content-Disposition: form-data; name=\"public_id\"").append(LINE_FEED);
+                    writer.append("Content-Type: text/plain; charset=UTF-8").append(LINE_FEED);
+                    writer.append(LINE_FEED).append(publicId.trim()).append(LINE_FEED);
+                }
+
                 // Campo file (arquivo binário)
                 String fileName = imageFile.getName();
                 writer.append("--").append(boundary).append(LINE_FEED);
@@ -213,14 +273,14 @@ public final class CloudinaryUploader {
                     String responseStr = s.hasNext() ? s.next() : "";
                     JsonObject json = JsonParser.parseString(responseStr).getAsJsonObject();
                     String secureUrl = json.get("secure_url").getAsString();
-                    String publicId = json.has("public_id") ? json.get("public_id").getAsString() : "";
+                    String respPublicId = json.has("public_id") ? json.get("public_id").getAsString() : "";
 
                     uploadedUrlCache.put(fileKey, secureUrl);
                     uploadedUrlCache.put(imageFile.getAbsolutePath(), secureUrl);
-                    uploadedPublicIdCache.put(fileKey, publicId);
-                    uploadedPublicIdCache.put(imageFile.getAbsolutePath(), publicId);
+                    uploadedPublicIdCache.put(fileKey, respPublicId);
+                    uploadedPublicIdCache.put(imageFile.getAbsolutePath(), respPublicId);
 
-                    dispatchSuccess(fileKey, secureUrl, publicId);
+                    dispatchSuccess(fileKey, secureUrl, respPublicId);
                 } else {
                     throw new Exception("Cloudinary retornou HTTP " + status);
                 }
@@ -240,7 +300,7 @@ public final class CloudinaryUploader {
             callbacks = inFlightCallbacks.remove(fileKey);
         }
         if (callbacks != null) {
-            mainHandler.post(() -> {
+            postToMain(() -> {
                 for (UploadCallback cb : callbacks) {
                     if (cb != null) {
                         cb.onSuccess(secureUrl, publicId);
@@ -256,7 +316,7 @@ public final class CloudinaryUploader {
             callbacks = inFlightCallbacks.remove(fileKey);
         }
         if (callbacks != null) {
-            mainHandler.post(() -> {
+            postToMain(() -> {
                 for (UploadCallback cb : callbacks) {
                     if (cb != null) {
                         cb.onError(error, fallbackPath);

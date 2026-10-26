@@ -1,5 +1,7 @@
 package com.aula.volta;
 
+import android.content.Context;
+
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -347,11 +349,18 @@ public class HomeFragment extends Fragment {
                     try (java.io.InputStream is = conn.getInputStream()) {
                         Bitmap bmp = BitmapFactory.decodeStream(is);
                         if (bmp != null && isAdded()) {
-                            File f = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+                            Context app = requireContext().getApplicationContext();
+                            File f = new File(app.getFilesDir(), "profile_photo.jpg");
                             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
                                 bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
                             }
-                            SessionManager.saveProfilePhotoLocal(requireContext(), f.getAbsolutePath());
+                            if (!email.isEmpty()) {
+                                File hashedFile = new File(app.getFilesDir(), "profile_photo_" + Math.abs(email.hashCode()) + ".jpg");
+                                try (java.io.FileOutputStream fos2 = new java.io.FileOutputStream(hashedFile)) {
+                                    bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
+                                }
+                            }
+                            SessionManager.saveProfilePhotoLocal(app, email, f.getAbsolutePath());
                             requireActivity().runOnUiThread(() -> {
                                 if (isAdded() && imgAvatar != null) {
                                     RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);

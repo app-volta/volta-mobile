@@ -1,5 +1,7 @@
 package com.aula.volta.ui.profile;
 
+import android.content.Context;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -377,23 +379,32 @@ public class EditProfileFragment extends Fragment {
 
             Toast.makeText(requireContext(), R.string.profile_photo_uploading, Toast.LENGTH_SHORT).show();
 
-            // Dispara upload para o Cloudinary (preset Perfil-Photo / pasta Perfil/Assets/Image)
-            CloudinaryUploader.uploadProfileImage(requireContext(), avatarFile, new CloudinaryUploader.UploadCallback() {
+            final Context appContext = requireContext().getApplicationContext();
+
+            // Dispara upload para o Cloudinary com public_id determinístico baseado no e-mail (preset Perfil-Photo / pasta Perfil/Assets/Image)
+            CloudinaryUploader.uploadProfileImage(appContext, avatarFile, myEmail, new CloudinaryUploader.UploadCallback() {
                 @Override
                 public void onSuccess(String remoteUrl, String publicId) {
-                    if (!isAdded()) return;
-                    SessionManager.saveProfilePhotoUrl(requireContext(), remoteUrl);
+                    SessionManager.saveProfilePhotoUrl(appContext, myEmail, remoteUrl);
+                    SessionManager.saveProfilePhotoLocal(appContext, myEmail, avatarFile.getAbsolutePath());
                     Log.i(TAG, "Foto de perfil enviada ao Cloudinary com sucesso: " + remoteUrl);
 
-                    // 1. Salva no banco de dados oficial via PUT /users/me
+                    // 1. Salva no banco de dados oficial via PUT /users/me (API Geral)
                     try {
-                        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+                        AuthAPI authApi = ApiClient.get(appContext).create(AuthAPI.class);
                         JsonObject body = new JsonObject();
                         String nameToSave = etEditProfileName != null && etEditProfileName.getText() != null
-                                ? etEditProfileName.getText().toString().trim() : SessionManager.name(requireContext());
+                                ? etEditProfileName.getText().toString().trim() : SessionManager.name(appContext);
                         body.addProperty("name", nameToSave);
-                        body.addProperty("position", selectedSector != null ? selectedSector : SessionManager.sector(requireContext()));
+                        body.addProperty("position", selectedSector != null ? selectedSector : SessionManager.sector(appContext));
                         body.addProperty("photoUrl", remoteUrl);
+                        body.addProperty("photo_url", remoteUrl);
+                        body.addProperty("avatarUrl", remoteUrl);
+                        body.addProperty("avatar_url", remoteUrl);
+                        body.addProperty("imageUrl", remoteUrl);
+                        body.addProperty("image_url", remoteUrl);
+                        body.addProperty("foto_url", remoteUrl);
+                        body.addProperty("pictureUrl", remoteUrl);
                         authApi.updateMe(body).enqueue(new Callback<UserResponseDTO>() {
                             @Override
                             public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
@@ -416,26 +427,28 @@ public class EditProfileFragment extends Fragment {
                         uDoc.put("photoUrl", remoteUrl);
                         uDoc.put("avatarUrl", remoteUrl);
                         uDoc.put("name", etEditProfileName != null && etEditProfileName.getText() != null
-                                ? etEditProfileName.getText().toString().trim() : SessionManager.name(requireContext()));
-                        uDoc.put("email", SessionManager.email(requireContext()));
+                                ? etEditProfileName.getText().toString().trim() : SessionManager.name(appContext));
+                        uDoc.put("email", myEmail);
                         uDoc.put("position", selectedSector);
                         uDoc.put("updatedAt", com.google.firebase.Timestamp.now());
-                        String email = SessionManager.email(requireContext());
-                        if (email != null && !email.isEmpty()) {
-                            db.collection("users").document(email).set(uDoc, com.google.firebase.firestore.SetOptions.merge());
+                        if (myEmail != null && !myEmail.isEmpty()) {
+                            db.collection("users").document(myEmail).set(uDoc, com.google.firebase.firestore.SetOptions.merge());
                         }
                     } catch (Exception e) {
                         Log.w(TAG, "Erro ao sincronizar foto no Firestore: " + e.getMessage());
                     }
 
-                    Toast.makeText(requireContext(), R.string.profile_photo_success, Toast.LENGTH_SHORT).show();
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), R.string.profile_photo_success, Toast.LENGTH_SHORT).show();
+                    }
                 }
 
                 @Override
                 public void onError(Exception exception, String fallbackLocalPath) {
-                    if (!isAdded()) return;
                     Log.w(TAG, "Falha no upload da foto de perfil no Cloudinary: " + exception.getMessage());
-                    Toast.makeText(requireContext(), R.string.profile_photo_offline, Toast.LENGTH_SHORT).show();
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), R.string.profile_photo_offline, Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
 
@@ -446,11 +459,19 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void removeProfilePhoto() {
-        File avatarFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+        Context appContext = requireContext().getApplicationContext();
+        String email = SessionManager.email(appContext);
+        File avatarFile = new File(appContext.getFilesDir(), "profile_photo.jpg");
         if (avatarFile.exists()) {
             avatarFile.delete();
         }
-        SessionManager.clearProfilePhoto(requireContext());
+        if (!email.isEmpty()) {
+            File hashedFile = new File(appContext.getFilesDir(), "profile_photo_" + Math.abs(email.hashCode()) + ".jpg");
+            if (hashedFile.exists()) {
+                hashedFile.delete();
+            }
+        }
+        SessionManager.clearProfilePhoto(appContext);
         if (imgEditProfilePhoto != null) {
             imgEditProfilePhoto.setImageDrawable(null);
             imgEditProfilePhoto.setVisibility(View.GONE);
@@ -461,11 +482,18 @@ public class EditProfileFragment extends Fragment {
 
         // Remove do banco oficial via PUT /users/me
         try {
-            AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+            AuthAPI authApi = ApiClient.get(appContext).create(AuthAPI.class);
             JsonObject body = new JsonObject();
-            body.addProperty("name", SessionManager.name(requireContext()));
+            body.addProperty("name", SessionManager.name(appContext));
             body.addProperty("position", selectedSector);
             body.addProperty("photoUrl", "");
+            body.addProperty("photo_url", "");
+            body.addProperty("avatarUrl", "");
+            body.addProperty("avatar_url", "");
+            body.addProperty("imageUrl", "");
+            body.addProperty("image_url", "");
+            body.addProperty("foto_url", "");
+            body.addProperty("pictureUrl", "");
             authApi.updateMe(body).enqueue(new Callback<UserResponseDTO>() {
                 @Override
                 public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
@@ -481,7 +509,6 @@ public class EditProfileFragment extends Fragment {
 
         // Remove do Cloud Firestore
         try {
-            String email = SessionManager.email(requireContext());
             if (email != null && !email.isEmpty()) {
                 java.util.Map<String, Object> update = new java.util.HashMap<>();
                 update.put("photoUrl", null);
@@ -530,6 +557,13 @@ public class EditProfileFragment extends Fragment {
             String photo = SessionManager.getProfilePhotoUrl(requireContext());
             if (photo != null && !photo.isEmpty()) {
                 body.addProperty("photoUrl", photo);
+                body.addProperty("photo_url", photo);
+                body.addProperty("avatarUrl", photo);
+                body.addProperty("avatar_url", photo);
+                body.addProperty("imageUrl", photo);
+                body.addProperty("image_url", photo);
+                body.addProperty("foto_url", photo);
+                body.addProperty("pictureUrl", photo);
             }
             authApi.updateMe(body).enqueue(new Callback<UserResponseDTO>() {
                 @Override
