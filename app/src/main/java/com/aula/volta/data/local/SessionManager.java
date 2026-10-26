@@ -216,8 +216,11 @@ public final class SessionManager {
         String cleanUrl = url == null ? "" : url;
         prefs(context).edit().putString(KEY_PROFILE_PHOTO_URL, cleanUrl).apply();
         if (userEmail != null && !userEmail.isEmpty()) {
+            String cleanEmail = userEmail.trim().toLowerCase(java.util.Locale.ROOT);
             persistentPrefs(context).edit()
+                    .putString("photo_url_" + cleanEmail, cleanUrl)
                     .putString("photo_url_" + userEmail, cleanUrl)
+                    .remove("photo_removed_" + cleanEmail)
                     .remove("photo_removed_" + userEmail)
                     .apply();
         }
@@ -233,13 +236,18 @@ public final class SessionManager {
             return url;
         }
         if (userEmail != null && !userEmail.isEmpty()) {
-            String persistent = persistentPrefs(context).getString("photo_url_" + userEmail, "");
+            String cleanEmail = userEmail.trim().toLowerCase(java.util.Locale.ROOT);
+            String persistent = persistentPrefs(context).getString("photo_url_" + cleanEmail, "");
+            if (persistent == null || persistent.isEmpty()) {
+                persistent = persistentPrefs(context).getString("photo_url_" + userEmail, "");
+            }
             if (persistent != null && !persistent.isEmpty()) {
                 return persistent;
             }
-            boolean removed = persistentPrefs(context).getBoolean("photo_removed_" + userEmail, false);
+            boolean removed = persistentPrefs(context).getBoolean("photo_removed_" + cleanEmail, false)
+                    || persistentPrefs(context).getBoolean("photo_removed_" + userEmail, false);
             if (!removed) {
-                String deterministic = com.aula.volta.data.upload.CloudinaryUploader.getDeterministicProfileUrl(userEmail);
+                String deterministic = com.aula.volta.data.upload.CloudinaryUploader.getDeterministicProfileUrl(cleanEmail);
                 if (deterministic != null && !deterministic.isEmpty()) {
                     return deterministic;
                 }
@@ -256,7 +264,9 @@ public final class SessionManager {
         String cleanPath = localPath == null ? "" : localPath;
         prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, cleanPath).apply();
         if (userEmail != null && !userEmail.isEmpty()) {
+            String cleanEmail = userEmail.trim().toLowerCase(java.util.Locale.ROOT);
             persistentPrefs(context).edit()
+                    .putString("photo_local_" + cleanEmail, cleanPath)
                     .putString("photo_local_" + userEmail, cleanPath)
                     .apply();
         }
@@ -272,6 +282,11 @@ public final class SessionManager {
             return path;
         }
         if (userEmail != null && !userEmail.isEmpty()) {
+            String cleanEmail = userEmail.trim().toLowerCase(java.util.Locale.ROOT);
+            String pPath = persistentPrefs(context).getString("photo_local_" + cleanEmail, "");
+            if (pPath != null && !pPath.isEmpty()) {
+                return pPath;
+            }
             return persistentPrefs(context).getString("photo_local_" + userEmail, "");
         }
         return "";

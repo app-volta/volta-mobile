@@ -81,6 +81,11 @@
         <argument
             android:name="avisar"
             app:argType="boolean" />
+        <action
+            android:id="@+id/action_ai_analysis_to_occurrence_full"
+            app:destination="@id/nav_occurrence_full"
+            app:popUpTo="@id/nav_home"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <!-- Rotas internas (Fase 0): sem item na bottom bar, abertas via navigate() com args -->
@@ -100,6 +105,21 @@
         <argument
             android:name="occurrenceId"
             app:argType="string" />
+        <argument
+            android:name="photoPath"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="photoUrl"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="imageUrl"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
 
     <!-- Destinação contextual — Fase 8: cooperativas da ocorrência, backend ordena -->

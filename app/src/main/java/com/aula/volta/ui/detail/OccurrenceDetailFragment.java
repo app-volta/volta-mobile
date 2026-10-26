@@ -722,27 +722,19 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         }
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
-            new Thread(() -> {
-                try {
-                    java.net.URL url = new java.net.URL(remoteUrl);
-                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                    conn.setConnectTimeout(15000);
-                    conn.setReadTimeout(15000);
-                    conn.setDoInput(true);
-                    conn.connect();
-                    try (java.io.InputStream is = conn.getInputStream()) {
-                        android.graphics.Bitmap bmp = BitmapFactory.decodeStream(is);
-                        if (bmp != null && isAdded()) {
-                            imgOccThumbnail.post(() -> {
-                                if (isAdded() && imgOccThumbnail != null) {
-                                    imgOccThumbnail.setImageBitmap(bmp);
-                                }
-                            });
-                        }
+            com.aula.volta.data.upload.CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new com.aula.volta.data.upload.CloudinaryUploader.BitmapCallback() {
+                @Override
+                public void onBitmapLoaded(android.graphics.Bitmap bmp) {
+                    if (bmp != null && isAdded() && imgOccThumbnail != null) {
+                        imgOccThumbnail.setImageBitmap(bmp);
                     }
-                } catch (Exception ignored) {
                 }
-            }).start();
+
+                @Override
+                public void onError(Exception e) {
+                    android.util.Log.w("OccurrenceDetail", "Falha ao carregar thumbnail remota: " + e.getMessage());
+                }
+            });
         }
     }
 

@@ -68,6 +68,66 @@ public final class CloudinaryUploader {
     // Controle de uploads em andamento (filePath -> lista de callbacks aguardando)
     private static final Map<String, List<UploadCallback>> inFlightCallbacks = new HashMap<>();
 
+    public interface BitmapCallback {
+        void onBitmapLoaded(android.graphics.Bitmap bitmap);
+        void onError(Exception e);
+    }
+
+    /**
+     * Faz download seguro de imagem remota em background com suporte a redirecionamentos
+     * e leitura completa do stream em buffer, retornando o Bitmap na Main Thread.
+     */
+    public static void fetchRemoteBitmap(String remoteUrl, BitmapCallback callback) {
+        if (remoteUrl == null || remoteUrl.trim().isEmpty() || !remoteUrl.startsWith("http")) {
+            if (callback != null) {
+                postToMain(() -> callback.onError(new IllegalArgumentException("URL inválida: " + remoteUrl)));
+            }
+            return;
+        }
+
+        executor.execute(() -> {
+            HttpURLConnection conn = null;
+            try {
+                URL url = new URL(remoteUrl.trim());
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(15000);
+                conn.setInstanceFollowRedirects(true);
+                conn.setRequestProperty("User-Agent", "Volta-Mobile-Android");
+                conn.connect();
+
+                int code = conn.getResponseCode();
+                if (code == HttpURLConnection.HTTP_OK) {
+                    try (java.io.InputStream is = conn.getInputStream();
+                         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream()) {
+                        byte[] buffer = new byte[8192];
+                        int read;
+                        while ((read = is.read(buffer)) != -1) {
+                            baos.write(buffer, 0, read);
+                        }
+                        byte[] bytes = baos.toByteArray();
+                        android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        if (bmp != null) {
+                            if (callback != null) {
+                                postToMain(() -> callback.onBitmapLoaded(bmp));
+                            }
+                            return;
+                        }
+                    }
+                }
+                throw new Exception("HTTP " + code + " ao buscar bitmap: " + remoteUrl);
+            } catch (Exception e) {
+                if (callback != null) {
+                    postToMain(() -> callback.onError(e));
+                }
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
+            }
+        });
+    }
+
     public interface UploadCallback {
         void onSuccess(String remoteUrl, String publicId);
         void onError(Exception exception, String fallbackLocalPath);

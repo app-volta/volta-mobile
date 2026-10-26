@@ -17,7 +17,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.Navigation;
 
 import android.animation.ValueAnimator;
@@ -88,6 +90,7 @@ public class AiAnalysisFragment extends Fragment {
     private LinearLayout cardAiQuantity;
     private ImageView icMiddleStatus;
     private TextView tvMiddleStatusHint;
+    private com.google.android.material.button.MaterialButton btnConfirm;
 
     // Campos do modo de edição (16a)
     private TextView tvEditWeightValue;
@@ -241,7 +244,7 @@ public class AiAnalysisFragment extends Fragment {
         btnEdit.setOnClickListener(v -> switchToEditView());
 
         // Botão Confirmar e gerar relatório (16 / 16b -> 17)
-        MaterialButton btnConfirm = view.findViewById(R.id.btnConfirmAnalysis);
+        btnConfirm = view.findViewById(R.id.btnConfirmAnalysis);
         btnConfirm.setOnClickListener(this::confirmOccurrence);
 
         setupEditControls(view);
@@ -1176,6 +1179,10 @@ public class AiAnalysisFragment extends Fragment {
      * para a tela de Ocorrência (Figma 17 · 851:4196 / R.id.nav_occurrence_full).
      */
     private void confirmOccurrence(View v) {
+        if (btnConfirm != null) {
+            btnConfirm.setEnabled(false);
+            btnConfirm.setText("Registrando ocorrência...");
+        }
         String rawMat = isRevised
                 ? selectedMaterial
                 : (analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
@@ -1439,27 +1446,73 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void navigateToDetail(View v, String occId) {
+        NavController navController = null;
+        try {
+            navController = NavHostFragment.findNavController(this);
+        } catch (Exception ignored) {
+        }
+        if (navController == null && getView() != null) {
+            try {
+                navController = Navigation.findNavController(getView());
+            } catch (Exception ignored) {
+            }
+        }
+        if (navController == null && v != null) {
+            try {
+                navController = Navigation.findNavController(v);
+            } catch (Exception ignored) {
+            }
+        }
+        if (navController == null && getActivity() != null) {
+            try {
+                navController = Navigation.findNavController(requireActivity(), R.id.fragmentContainerView);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (navController == null) {
+            Log.w("AiAnalysisFragment", "NavController não encontrado, voltando para Home");
+            navigateToHome(v);
+            return;
+        }
+
+        Bundle args = new Bundle();
+        args.putString("occurrenceId", occId);
+        if (photoPath != null && !photoPath.isEmpty()) {
+            args.putString("photoPath", photoPath);
+        }
+        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+            args.putString("photoUrl", remoteImageUrl);
+            args.putString("imageUrl", remoteImageUrl);
+        }
+
+        // 1. Tenta navegar via action explícita declarada no nav_graph.xml
+        try {
+            navController.navigate(R.id.action_ai_analysis_to_occurrence_full, args);
+            return;
+        } catch (Exception e1) {
+            Log.w("AiAnalysisFragment", "Falha ao navegar via action explícita: " + e1.getMessage());
+        }
+
+        // 2. Tenta navegar diretamente para nav_occurrence_full com popUpTo nav_home
         try {
             NavOptions navOptions = new NavOptions.Builder()
                     .setPopUpTo(R.id.nav_home, false)
                     .build();
-            View target = getView() != null ? getView() : v;
-            if (target != null) {
-                Bundle args = new Bundle();
-                args.putString("occurrenceId", occId);
-                if (photoPath != null && !photoPath.isEmpty()) {
-                    args.putString("photoPath", photoPath);
-                }
-                if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
-                    args.putString("photoUrl", remoteImageUrl);
-                    args.putString("imageUrl", remoteImageUrl);
-                }
-                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args, navOptions);
-                return;
-            }
-        } catch (Exception e) {
-            Log.w("AiAnalysisFragment", "Falha ao navegar para detalhe da ocorrencia: " + e.getMessage());
+            navController.navigate(R.id.nav_occurrence_full, args, navOptions);
+            return;
+        } catch (Exception e2) {
+            Log.w("AiAnalysisFragment", "Falha ao navegar com navOptions: " + e2.getMessage());
         }
+
+        // 3. Tenta navegar direto para nav_occurrence_full sem popUpTo
+        try {
+            navController.navigate(R.id.nav_occurrence_full, args);
+            return;
+        } catch (Exception e3) {
+            Log.w("AiAnalysisFragment", "Falha ao navegar direto sem navOptions: " + e3.getMessage());
+        }
+
         navigateToHome(v);
     }
 

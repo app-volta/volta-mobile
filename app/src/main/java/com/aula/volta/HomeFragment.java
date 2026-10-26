@@ -337,44 +337,42 @@ public class HomeFragment extends Fragment {
             }
         }
 
+        String cleanEmail = email != null ? email.trim().toLowerCase(java.util.Locale.ROOT) : "";
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
-            new Thread(() -> {
-                try {
-                    java.net.URL url = new java.net.URL(remoteUrl);
-                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                    conn.setConnectTimeout(15000);
-                    conn.setReadTimeout(15000);
-                    conn.connect();
-                    try (java.io.InputStream is = conn.getInputStream()) {
-                        Bitmap bmp = BitmapFactory.decodeStream(is);
-                        if (bmp != null && isAdded()) {
-                            Context app = requireContext().getApplicationContext();
-                            File f = new File(app.getFilesDir(), "profile_photo.jpg");
-                            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
-                                bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-                            }
-                            if (!email.isEmpty()) {
-                                File hashedFile = new File(app.getFilesDir(), "profile_photo_" + Math.abs(email.hashCode()) + ".jpg");
-                                try (java.io.FileOutputStream fos2 = new java.io.FileOutputStream(hashedFile)) {
-                                    bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
-                                }
-                            }
-                            SessionManager.saveProfilePhotoLocal(app, email, f.getAbsolutePath());
-                            requireActivity().runOnUiThread(() -> {
-                                if (isAdded() && imgAvatar != null) {
-                                    RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
-                                    circular.setCircular(true);
-                                    imgAvatar.setImageDrawable(circular);
-                                    imgAvatar.setVisibility(View.VISIBLE);
-                                    if (tvInitials != null) tvInitials.setVisibility(View.GONE);
-                                }
-                            });
+            final Context appContext = requireContext().getApplicationContext();
+            com.aula.volta.data.upload.CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new com.aula.volta.data.upload.CloudinaryUploader.BitmapCallback() {
+                @Override
+                public void onBitmapLoaded(Bitmap bmp) {
+                    if (bmp == null) return;
+                    try {
+                        File f = new File(appContext.getFilesDir(), "profile_photo.jpg");
+                        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(f)) {
+                            bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
                         }
+                        if (!cleanEmail.isEmpty()) {
+                            File hashedFile = new File(appContext.getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
+                            try (java.io.FileOutputStream fos2 = new java.io.FileOutputStream(hashedFile)) {
+                                bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
+                            }
+                        }
+                        SessionManager.saveProfilePhotoLocal(appContext, cleanEmail, f.getAbsolutePath());
+                    } catch (Exception ignored) {
                     }
-                } catch (Exception ignored) {
+                    if (isAdded() && imgAvatar != null) {
+                        RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
+                        circular.setCircular(true);
+                        imgAvatar.setImageDrawable(circular);
+                        imgAvatar.setVisibility(View.VISIBLE);
+                        if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+                    }
                 }
-            }).start();
+
+                @Override
+                public void onError(Exception e) {
+                    android.util.Log.w("HomeFragment", "Falha ao carregar foto remota de perfil: " + e.getMessage());
+                }
+            });
         } else {
             try {
                 if (email != null && !email.isEmpty()) {

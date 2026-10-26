@@ -291,6 +291,7 @@ public class ProfileFragment extends Fragment {
                     if (response.isSuccessful() && response.body() != null) {
                         UserResponseDTO u = response.body();
                         String myEmail = SessionManager.email(requireContext());
+            String cleanEmail = myEmail != null ? myEmail.trim().toLowerCase(Locale.ROOT) : "";
                         if (myEmail.isEmpty() || (u.getEmail() != null && !u.getEmail().trim().isEmpty() && !u.getEmail().equalsIgnoreCase(myEmail))) {
                             return;
                         }
@@ -461,12 +462,13 @@ public class ProfileFragment extends Fragment {
 
             // Salva permanentemente no diretório de arquivos do app
             String myEmail = SessionManager.email(requireContext());
+            String cleanEmail = myEmail != null ? myEmail.trim().toLowerCase(Locale.ROOT) : "";
             File avatarFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
             try (FileOutputStream fos = new FileOutputStream(avatarFile)) {
                 finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos);
             }
             if (!myEmail.isEmpty()) {
-                File hashedFile = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(myEmail.hashCode()) + ".jpg");
+                File hashedFile = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
                 try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
                     finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
                 }
@@ -570,12 +572,13 @@ public class ProfileFragment extends Fragment {
     private void removeProfilePhoto() {
         Context appContext = requireContext().getApplicationContext();
         String email = SessionManager.email(appContext);
+        String cleanEmail = email != null ? email.trim().toLowerCase(Locale.ROOT) : "";
         File avatarFile = new File(appContext.getFilesDir(), "profile_photo.jpg");
         if (avatarFile.exists()) {
             avatarFile.delete();
         }
-        if (!email.isEmpty()) {
-            File hashedFile = new File(appContext.getFilesDir(), "profile_photo_" + Math.abs(email.hashCode()) + ".jpg");
+        if (!cleanEmail.isEmpty()) {
+            File hashedFile = new File(appContext.getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
             if (hashedFile.exists()) {
                 hashedFile.delete();
             }
@@ -644,7 +647,7 @@ public class ProfileFragment extends Fragment {
             if (f.exists()) localFile = f;
         }
         if (localFile == null && !email.isEmpty()) {
-            File userHashed = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(email.hashCode()) + ".jpg");
+            File userHashed = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(email.trim().toLowerCase(Locale.ROOT).hashCode()) + ".jpg");
             if (userHashed.exists()) localFile = userHashed;
         }
         if (localFile == null) {
@@ -660,45 +663,44 @@ public class ProfileFragment extends Fragment {
             }
         }
 
-        // 2. Se houver URL do Cloudinary, faz download em background
+        // 2. Se houver URL do Cloudinary (ou determinística), faz download via CloudinaryUploader.fetchRemoteBitmap
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
-            new Thread(() -> {
-                try {
-                    URL url = new URL(remoteUrl);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setConnectTimeout(15000);
-                    conn.setReadTimeout(15000);
-                    conn.connect();
-                    try (InputStream is = conn.getInputStream()) {
-                        Bitmap bmp = BitmapFactory.decodeStream(is);
-                        if (bmp != null) {
-                            Context app = requireContext().getApplicationContext();
-                            File f = new File(app.getFilesDir(), "profile_photo.jpg");
-                            try (FileOutputStream fos = new FileOutputStream(f)) {
-                                bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-                            }
-                            if (!email.isEmpty()) {
-                                File hashedFile = new File(app.getFilesDir(), "profile_photo_" + Math.abs(email.hashCode()) + ".jpg");
-                                try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
-                                    bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
-                                }
-                            }
-                            SessionManager.saveProfilePhotoLocal(app, email, f.getAbsolutePath());
-                            if (isAdded()) {
-                                requireActivity().runOnUiThread(() -> displayCircularProfileBitmap(bmp));
+            final Context appContext = requireContext().getApplicationContext();
+            CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new CloudinaryUploader.BitmapCallback() {
+                @Override
+                public void onBitmapLoaded(Bitmap bmp) {
+                    if (bmp == null) return;
+                    try {
+                        File f = new File(appContext.getFilesDir(), "profile_photo.jpg");
+                        try (FileOutputStream fos = new FileOutputStream(f)) {
+                            bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+                        }
+                        if (!email.isEmpty()) {
+                            File hashedFile = new File(appContext.getFilesDir(), "profile_photo_" + Math.abs(email.trim().toLowerCase(Locale.ROOT).hashCode()) + ".jpg");
+                            try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
+                                bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
                             }
                         }
+                        SessionManager.saveProfilePhotoLocal(appContext, email, f.getAbsolutePath());
+                    } catch (Exception ignored) {
                     }
-                } catch (Exception ignored) {
+                    if (isAdded()) {
+                        displayCircularProfileBitmap(bmp);
+                    }
                 }
-            }).start();
+
+                @Override
+                public void onError(Exception e) {
+                    Log.w(TAG, "Falha ao carregar foto remota do Cloudinary: " + e.getMessage());
+                }
+            });
         } else {
             try {
                 if (email != null && !email.isEmpty()) {
                     com.google.firebase.firestore.FirebaseFirestore.getInstance()
                             .collection("users")
-                            .document(email)
+                            .document(email.trim().toLowerCase(Locale.ROOT))
                             .get()
                             .addOnSuccessListener(snapshot -> {
                                 if (isAdded() && snapshot != null && snapshot.exists()) {
