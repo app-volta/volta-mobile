@@ -50,6 +50,7 @@ import retrofit2.Response;
 public class HomeFragment extends Fragment {
 
     private static final String PREFS_REPORTS = "cache_reports";
+    private final OccurrenceStore.StoreListener storeListener = this::loadOccurrences;
     private static final String KEY_SUMMARY = "summary";
 
     private TextView tvStatOpenCount;
@@ -202,6 +203,8 @@ public class HomeFragment extends Fragment {
         }
 
         // 3. Atualização em segundo plano via rede
+        OccurrenceStore.setupRealtimeSync(requireContext());
+        OccurrenceStore.addListener(storeListener);
         loadSummary();
         loadOccurrences();
         loadNotificationDot();
@@ -211,6 +214,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        OccurrenceStore.removeListener(storeListener);
         NotificationStore.removeListener(this::loadNotificationDot);
     }
 

@@ -31,6 +31,16 @@ public final class PrefsHelper {
         return prefs.getString(key, null);
     }
 
+    public static void putBoolean(Context context, String prefsName, String key, boolean value) {
+        SharedPreferences prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(key, value).apply();
+    }
+
+    public static boolean getBoolean(Context context, String prefsName, String key, boolean defaultValue) {
+        SharedPreferences prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+        return prefs.getBoolean(key, defaultValue);
+    }
+
     public static <T> void putList(Context context, String prefsName, String key, List<T> list) {
         putJson(context, prefsName, key, GSON.toJson(list));
     }

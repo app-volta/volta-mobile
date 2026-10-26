@@ -476,11 +476,23 @@ public class OccurrenceDetailFragment extends Fragment {
                         String remotePriority = snapshot.getString("prioridade");
                         boolean updated = false;
 
+                        String remoteReport = snapshot.getString("relatorio");
+                        if (remoteReport == null) remoteReport = snapshot.getString("aiReport");
+                        if (remoteReport != null && !remoteReport.isEmpty()) {
+                            if (currentDetailJson == null) currentDetailJson = new JsonObject();
+                            if (!remoteReport.equals(opt(currentDetailJson, "relatorio_auto", ""))) {
+                                currentDetailJson.addProperty("relatorio_auto", remoteReport);
+                                updated = true;
+                            }
+                        }
+
                         if (remoteStatus != null && !remoteStatus.isEmpty() && !remoteStatus.equalsIgnoreCase(currentStatus)) {
                             currentStatus = remoteStatus;
                             if (currentDetailJson != null) currentDetailJson.addProperty("status", remoteStatus);
                             updated = true;
                             if ("APPROVED".equalsIgnoreCase(remoteStatus) || "APROVADO".equalsIgnoreCase(remoteStatus) || "APROVADA".equalsIgnoreCase(remoteStatus)) {
+                                currentStatus = "APROVADA";
+                                com.aula.volta.data.local.OccurrenceStore.updateStatus(requireContext(), occurrenceId, "APROVADA");
                                 NotificationHelper.notifyOccurrenceApproved(requireContext(), occurrenceId, currentMaterial);
                             }
                         }

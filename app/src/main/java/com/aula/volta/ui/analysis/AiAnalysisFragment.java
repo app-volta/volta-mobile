@@ -1396,7 +1396,15 @@ public class AiAnalysisFragment extends Fragment {
             fDoc.put("quantidade", qtd);
             fDoc.put("status", "AGUARDANDO_VALIDACAO");
             fDoc.put("prioridade", calculatedPriority);
+            fDoc.put("unidade", unidade);
             fDoc.put("timestamp", com.google.firebase.Timestamp.now());
+            String relatorioIa = (analysis != null && analysis.getReportText() != null && !analysis.getReportText().isEmpty())
+                    ? analysis.getReportText()
+                    : ((analysis != null && analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty())
+                    ? analysis.getObservacoes()
+                    : "Material identificado e analisado pela IA com sucesso.");
+            fDoc.put("relatorio", relatorioIa);
+            fDoc.put("aiReport", relatorioIa);
             db.collection("incidents").document(id).set(fDoc, com.google.firebase.firestore.SetOptions.merge());
         } catch (Exception ignored) {
         }

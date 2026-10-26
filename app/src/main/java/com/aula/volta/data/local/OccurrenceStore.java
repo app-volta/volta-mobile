@@ -11,6 +11,12 @@ import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.model.OccurrenceJSON;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
+import com.aula.volta.data.notification.NotificationHelper;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import java.util.concurrent.CopyOnWriteArrayList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -47,6 +53,212 @@ public final class OccurrenceStore {
 
     public interface LoadCallback {
         void onResult(List<Occurrence> occurrences);
+    }
+
+    public interface StoreListener {
+        void onStoreUpdated();
+    }
+
+    private static final List<StoreListener> listeners = new CopyOnWriteArrayList<>();
+    private static ListenerRegistration firestoreIncidentsListener;
+
+    public static void addListener(StoreListener listener) {
+        if (listener != null && !listeners.contains(listener)) {
+            listeners.add(listener);
+        }
+    }
+
+    public static void removeListener(StoreListener listener) {
+        if (listener != null) {
+            listeners.remove(listener);
+        }
+    }
+
+    public static void notifyListeners() {
+        for (StoreListener l : listeners) {
+            try {
+                l.onStoreUpdated();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    /**
+     * Registra o listener em tempo real no Cloud Firestore (coleção 'incidents')
+     * para sincronizar imediatamente aprovações e alterações feitas pelo gestor no site Web.
+     */
+    public static void setupRealtimeSync(Context context) {
+        if (context == null || firestoreIncidentsListener != null) {
+            return;
+        }
+        Context app = context.getApplicationContext();
+        try {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            firestoreIncidentsListener = db.collection("incidents")
+                    .addSnapshotListener((snapshots, error) -> {
+                        if (snapshots == null || error != null) {
+                            return;
+                        }
+                        boolean hasChanges = false;
+                        List<Occurrence> cachedList = new ArrayList<>(cached(app));
+                        List<Occurrence> localList = new ArrayList<>(localOnly(app));
+
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            DocumentSnapshot doc = dc.getDocument();
+                            String id = doc.getId();
+                            String remoteStatus = doc.getString("status");
+                            String remotePhoto = doc.getString("photoUrl");
+                            String remoteMaterial = doc.getString("material");
+                            String remoteSector = doc.getString("setor");
+                            String remotePriority = doc.getString("prioridade");
+                            String remoteReport = doc.getString("relatorio");
+                            if (remoteReport == null) remoteReport = doc.getString("aiReport");
+
+                            boolean isApproved = "APPROVED".equalsIgnoreCase(remoteStatus)
+                                    || "APROVADO".equalsIgnoreCase(remoteStatus)
+                                    || "APROVADA".equalsIgnoreCase(remoteStatus);
+                            String normalizedStatus = isApproved ? "APROVADA" : remoteStatus;
+
+                            // Se for uma aprovação detectada da web
+                            if (isApproved) {
+                                String notifKey = "notif_approved_" + id;
+                                if (!PrefsHelper.getBoolean(app, "cache_occurrence_detail", notifKey, false)) {
+                                    PrefsHelper.putBoolean(app, "cache_occurrence_detail", notifKey, true);
+                                    NotificationHelper.notifyOccurrenceApproved(app, id, remoteMaterial);
+                                }
+                            }
+
+                            // Sincroniza detalhes em cache
+                            try {
+                                String detailStr = PrefsHelper.getJson(app, "cache_occurrence_detail", id);
+                                JsonObject detail = (detailStr != null && !detailStr.isEmpty())
+                                        ? JsonParser.parseString(detailStr).getAsJsonObject()
+                                        : new JsonObject();
+                                detail.addProperty("id", id);
+                                if (normalizedStatus != null) detail.addProperty("status", normalizedStatus);
+                                if (remotePhoto != null && !remotePhoto.isEmpty()) {
+                                    detail.addProperty("photoUrl", remotePhoto);
+                                    detail.addProperty("imageUrl", remotePhoto);
+                                }
+                                if (remoteReport != null && !remoteReport.isEmpty()) {
+                                    detail.addProperty("relatorio_auto", remoteReport);
+                                }
+                                if (remoteMaterial != null && !remoteMaterial.isEmpty()) {
+                                    detail.addProperty("material", remoteMaterial);
+                                }
+                                if (remoteSector != null && !remoteSector.isEmpty()) {
+                                    detail.addProperty("setor", remoteSector);
+                                }
+                                if (remotePriority != null && !remotePriority.isEmpty()) {
+                                    detail.addProperty("prioridade", remotePriority);
+                                }
+                                PrefsHelper.putJson(app, "cache_occurrence_detail", id, detail.toString());
+                            } catch (Exception ignored) {}
+
+                            for (int i = 0; i < cachedList.size(); i++) {
+                                Occurrence o = cachedList.get(i);
+                                if (id.equals(o.getId())) {
+                                    String finalStatus = normalizedStatus != null ? normalizedStatus : o.getStatus();
+                                    String finalPhoto = (remotePhoto != null && !remotePhoto.isEmpty()) ? remotePhoto : o.getPhotoUrl();
+                                    String finalMat = (remoteMaterial != null && !remoteMaterial.isEmpty()) ? remoteMaterial : o.getMaterial();
+                                    String finalPrio = (remotePriority != null && !remotePriority.isEmpty()) ? remotePriority : o.getPrioridade();
+                                    cachedList.set(i, new Occurrence(
+                                            o.getId(),
+                                            o.getTitulo(),
+                                            o.getSetor(),
+                                            o.getTempoRelativo(),
+                                            finalPrio,
+                                            finalStatus,
+                                            finalMat,
+                                            finalPhoto,
+                                            o.getPhotoPath()
+                                    ));
+                                    hasChanges = true;
+                                    break;
+                                }
+                            }
+
+                            for (int i = 0; i < localList.size(); i++) {
+                                Occurrence o = localList.get(i);
+                                if (id.equals(o.getId())) {
+                                    String finalStatus = normalizedStatus != null ? normalizedStatus : o.getStatus();
+                                    String finalPhoto = (remotePhoto != null && !remotePhoto.isEmpty()) ? remotePhoto : o.getPhotoUrl();
+                                    String finalMat = (remoteMaterial != null && !remoteMaterial.isEmpty()) ? remoteMaterial : o.getMaterial();
+                                    String finalPrio = (remotePriority != null && !remotePriority.isEmpty()) ? remotePriority : o.getPrioridade();
+                                    localList.set(i, new Occurrence(
+                                            o.getId(),
+                                            o.getTitulo(),
+                                            o.getSetor(),
+                                            o.getTempoRelativo(),
+                                            finalPrio,
+                                            finalStatus,
+                                            finalMat,
+                                            finalPhoto,
+                                            o.getPhotoPath()
+                                    ));
+                                    hasChanges = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (hasChanges) {
+                            PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, cachedList);
+                            PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, localList);
+                            notifyListeners();
+                        }
+                    });
+        } catch (Exception e) {
+            Log.w(TAG, "Falha ao registrar listener em tempo real do Firestore: " + e.getMessage());
+        }
+    }
+
+    public static void updateStatus(Context context, String id, String newStatus) {
+        if (context == null || id == null || newStatus == null) return;
+        Context app = context.getApplicationContext();
+        List<Occurrence> list = new ArrayList<>(cached(app));
+        boolean found = false;
+        for (int i = 0; i < list.size(); i++) {
+            Occurrence o = list.get(i);
+            if (id.equals(o.getId())) {
+                list.set(i, new Occurrence(
+                        o.getId(),
+                        o.getTitulo(),
+                        o.getSetor(),
+                        o.getTempoRelativo(),
+                        o.getPrioridade(),
+                        newStatus,
+                        o.getMaterial(),
+                        o.getPhotoUrl(),
+                        o.getPhotoPath()
+                ));
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
+        }
+        List<Occurrence> local = new ArrayList<>(localOnly(app));
+        for (int i = 0; i < local.size(); i++) {
+            Occurrence o = local.get(i);
+            if (id.equals(o.getId())) {
+                local.set(i, new Occurrence(
+                        o.getId(),
+                        o.getTitulo(),
+                        o.getSetor(),
+                        o.getTempoRelativo(),
+                        o.getPrioridade(),
+                        newStatus,
+                        o.getMaterial(),
+                        o.getPhotoUrl(),
+                        o.getPhotoPath()
+                ));
+                break;
+            }
+        }
+        PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, local);
+        notifyListeners();
     }
 
     private OccurrenceStore() {
@@ -135,6 +347,12 @@ public final class OccurrenceStore {
         List<Occurrence> list = PrefsHelper.getList(app, prefsName, KEY_LIST,
                 PrefsHelper.listType(Occurrence.class));
         if (list == null || list.isEmpty()) {
+            List<Occurrence> local = localOnly(app);
+            if (local != null && !local.isEmpty()) {
+                list = new ArrayList<>(local);
+                PrefsHelper.putList(app, prefsName, KEY_LIST, list);
+                return list;
+            }
             String email = SessionManager.email(app);
             if ("breno@volta.com".equalsIgnoreCase(email) || "demo@volta.com".equalsIgnoreCase(email)) {
                 list = loadInitialOccurrencesFromAssets(app);
@@ -178,6 +396,7 @@ public final class OccurrenceStore {
         List<Occurrence> list = new ArrayList<>(cached(app));
         list.add(0, occurrence);
         PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
+        notifyListeners();
     }
 
     /**
@@ -213,6 +432,7 @@ public final class OccurrenceStore {
             }
         }
         PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
+        notifyListeners();
     }
 
     /** Locais ainda não vindos da API (sobrevivem ao refresh). */
@@ -263,13 +483,26 @@ public final class OccurrenceStore {
                                 ? o.getPhotoPath() : loc.getPhotoPath();
                         String mat = (o.getMaterial() != null && !o.getMaterial().isEmpty() && !o.getMaterial().equals("Resíduo Reciclável"))
                                 ? o.getMaterial() : loc.getMaterial();
+                        String st = o.getStatus();
+                        try {
+                            String cStr = PrefsHelper.getJson(app, "cache_occurrence_detail", o.getId());
+                            if (cStr != null && !cStr.isEmpty()) {
+                                JsonObject cd = JsonParser.parseString(cStr).getAsJsonObject();
+                                if (cd.has("status") && !cd.get("status").isJsonNull()) {
+                                    String cStat = cd.get("status").getAsString();
+                                    if ("APROVADA".equalsIgnoreCase(cStat) || "APPROVED".equalsIgnoreCase(cStat) || "APROVADO".equalsIgnoreCase(cStat)) {
+                                        st = "APROVADA";
+                                    }
+                                }
+                            }
+                        } catch (Exception ignored) {}
                         result.add(new Occurrence(
                                 o.getId(),
                                 o.getTitulo(),
                                 o.getSetor(),
                                 o.getTempoRelativo(),
                                 o.getPrioridade(),
-                                o.getStatus(),
+                                st,
                                 mat,
                                 photo,
                                 path
@@ -277,7 +510,30 @@ public final class OccurrenceStore {
                         continue;
                     }
                 }
-                result.add(o);
+                String st = o.getStatus();
+                try {
+                    String cStr = PrefsHelper.getJson(app, "cache_occurrence_detail", o.getId());
+                    if (cStr != null && !cStr.isEmpty()) {
+                        JsonObject cd = JsonParser.parseString(cStr).getAsJsonObject();
+                        if (cd.has("status") && !cd.get("status").isJsonNull()) {
+                            String cStat = cd.get("status").getAsString();
+                            if ("APROVADA".equalsIgnoreCase(cStat) || "APPROVED".equalsIgnoreCase(cStat) || "APROVADO".equalsIgnoreCase(cStat)) {
+                                st = "APROVADA";
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {}
+                result.add(new Occurrence(
+                        o.getId(),
+                        o.getTitulo(),
+                        o.getSetor(),
+                        o.getTempoRelativo(),
+                        o.getPrioridade(),
+                        st,
+                        o.getMaterial(),
+                        o.getPhotoUrl(),
+                        o.getPhotoPath()
+                ));
             }
         }
         return result;

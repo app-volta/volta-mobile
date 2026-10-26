@@ -43,6 +43,7 @@ public class OccurrencesFragment extends Fragment {
     private ImageView btnClearSearch;
 
     private OccurrenceAdapter adapter;
+    private final OccurrenceStore.StoreListener storeListener = this::loadOccurrences;
     private final List<Occurrence> allOccurrences = new ArrayList<>();
     private final ArrayList<String> filterMaterials = new ArrayList<>();
     private final ArrayList<String> filterStatuses = new ArrayList<>();
@@ -92,8 +93,16 @@ public class OccurrencesFragment extends Fragment {
         rvOccurrences.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvOccurrences.setAdapter(adapter);
 
+        OccurrenceStore.setupRealtimeSync(requireContext());
+        OccurrenceStore.addListener(storeListener);
         setupSearchAndFilters();
         loadOccurrences();
+    }
+
+    @Override
+    public void onDestroyView() {
+        OccurrenceStore.removeListener(storeListener);
+        super.onDestroyView();
     }
 
     private void setupSearchAndFilters() {
