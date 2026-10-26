@@ -153,6 +153,7 @@ public class EditProfileFragment extends Fragment {
         tvEditProfileSector.setText(selectedSector);
 
         loadAvatar();
+        fetchUserProfileFromDatabase();
 
         // Trocar foto
         View.OnClickListener photoClick = v -> openPhotoSheet();
@@ -233,25 +234,6 @@ public class EditProfileFragment extends Fragment {
                 }
             });
         } else {
-            // 3. Fallback: Consulta foto persistida no Cloud Firestore
-            try {
-                if (!cleanEmail.isEmpty()) {
-                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                            .collection("users")
-                            .document(cleanEmail)
-                            .get()
-                            .addOnSuccessListener(snapshot -> {
-                                if (isAdded() && snapshot != null && snapshot.exists()) {
-                                    String firestorePhoto = snapshot.getString("photoUrl");
-                                    if (firestorePhoto != null && !firestorePhoto.isEmpty()) {
-                                        SessionManager.saveProfilePhotoUrl(requireContext(), firestorePhoto);
-                                        loadAvatar();
-                                    }
-                                }
-                            });
-                }
-            } catch (Exception ignored) {
-            }
 
             if (imgEditProfilePhoto != null) imgEditProfilePhoto.setVisibility(View.GONE);
             if (tvEditProfileInitials != null) tvEditProfileInitials.setVisibility(View.VISIBLE);
@@ -430,24 +412,6 @@ public class EditProfileFragment extends Fragment {
                         Log.w(TAG, "Erro ao chamar updateMe: " + e.getMessage());
                     }
 
-                    // 2. Replica no Cloud Firestore (coleção users)
-                    try {
-                        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-                        java.util.Map<String, Object> uDoc = new java.util.HashMap<>();
-                        uDoc.put("photoUrl", remoteUrl);
-                        uDoc.put("avatarUrl", remoteUrl);
-                        uDoc.put("name", etEditProfileName != null && etEditProfileName.getText() != null
-                                ? etEditProfileName.getText().toString().trim() : SessionManager.name(appContext));
-                        uDoc.put("email", myEmail);
-                        uDoc.put("position", selectedSector);
-                        uDoc.put("updatedAt", com.google.firebase.Timestamp.now());
-                        if (myEmail != null && !myEmail.isEmpty()) {
-                            db.collection("users").document(myEmail).set(uDoc, com.google.firebase.firestore.SetOptions.merge());
-                        }
-                    } catch (Exception e) {
-                        Log.w(TAG, "Erro ao sincronizar foto no Firestore: " + e.getMessage());
-                    }
-
                     if (isAdded()) {
                         Toast.makeText(requireContext(), R.string.profile_photo_success, Toast.LENGTH_SHORT).show();
                     }
@@ -518,19 +482,6 @@ public class EditProfileFragment extends Fragment {
         } catch (Exception ignored) {
         }
 
-        // Remove do Cloud Firestore
-        try {
-            if (email != null && !email.isEmpty()) {
-                java.util.Map<String, Object> update = new java.util.HashMap<>();
-                update.put("photoUrl", null);
-                update.put("avatarUrl", null);
-                com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                        .collection("users").document(email)
-                        .set(update, com.google.firebase.firestore.SetOptions.merge());
-            }
-        } catch (Exception ignored) {
-        }
-
         Toast.makeText(requireContext(), R.string.profile_photo_removed, Toast.LENGTH_SHORT).show();
     }
 
@@ -590,26 +541,6 @@ public class EditProfileFragment extends Fragment {
         } catch (Exception ignored) {
         }
 
-        // Replica no Cloud Firestore
-        try {
-            String email = SessionManager.email(requireContext());
-            if (email != null && !email.isEmpty()) {
-                java.util.Map<String, Object> update = new java.util.HashMap<>();
-                update.put("name", newName);
-                update.put("position", selectedSector);
-                String photo = SessionManager.getProfilePhotoUrl(requireContext());
-                if (photo != null && !photo.isEmpty()) {
-                    update.put("photoUrl", photo);
-                    update.put("avatarUrl", photo);
-                }
-                update.put("updatedAt", com.google.firebase.Timestamp.now());
-                com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                        .collection("users").document(email)
-                        .set(update, com.google.firebase.firestore.SetOptions.merge());
-            }
-        } catch (Exception ignored) {
-        }
-
         if (getView() != null) {
             Bundle result = new Bundle();
             result.putBoolean("profileSaved", true);
@@ -617,4 +548,50 @@ public class EditProfileFragment extends Fragment {
             Navigation.findNavController(getView()).navigateUp();
         }
     }
+    private void fetchUserProfileFromDatabase() {
+        if (!isAdded()) return;
+        final Context app = requireContext().getApplicationContext();
+        try {
+            AuthAPI api = ApiClient.get(app).create(AuthAPI.class);
+            api.getMe().enqueue(new Callback<UserResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        UserResponseDTO user = response.body();
+                        boolean changed = false;
+                        if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
+                            String currentPhoto = SessionManager.getProfilePhotoUrl(app);
+                            if (!user.getPhotoUrl().equals(currentPhoto)) {
+                                SessionManager.saveProfilePhotoUrl(app, user.getPhotoUrl());
+                                changed = true;
+                            }
+                        }
+                        if (user.getName() != null && !user.getName().isEmpty()) {
+                            SessionManager.saveName(app, user.getName());
+                            if (etEditProfileName != null && isAdded()) {
+                                etEditProfileName.setText(user.getName());
+                                updateInitials(user.getName());
+                            }
+                        }
+                        if (user.getPosition() != null && !user.getPosition().isEmpty()) {
+                            SessionManager.saveSector(app, user.getPosition());
+                            selectedSector = user.getPosition();
+                            if (tvEditProfileSector != null && isAdded()) {
+                                tvEditProfileSector.setText(selectedSector);
+                            }
+                        }
+                        if (isAdded() && changed) {
+                            loadAvatar();
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<UserResponseDTO> call, @NonNull Throwable t) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
 }

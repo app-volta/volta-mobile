@@ -203,12 +203,12 @@ public class HomeFragment extends Fragment {
         }
 
         // 3. Atualização em segundo plano via rede
-        OccurrenceStore.setupRealtimeSync(requireContext());
         OccurrenceStore.addListener(storeListener);
         loadSummary();
         loadOccurrences();
         loadNotificationDot();
         NotificationStore.addListener(this::loadNotificationDot);
+        fetchUserProfileFromDatabase();
     }
 
     @Override
@@ -378,24 +378,6 @@ public class HomeFragment extends Fragment {
                 }
             });
         } else {
-            try {
-                if (email != null && !email.isEmpty()) {
-                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                            .collection("users")
-                            .document(email)
-                            .get()
-                            .addOnSuccessListener(snapshot -> {
-                                if (isAdded() && snapshot != null && snapshot.exists()) {
-                                    String firestorePhoto = snapshot.getString("photoUrl");
-                                    if (firestorePhoto != null && !firestorePhoto.isEmpty()) {
-                                        SessionManager.saveProfilePhotoUrl(requireContext(), firestorePhoto);
-                                        loadAvatarPhoto();
-                                    }
-                                }
-                            });
-                }
-            } catch (Exception ignored) {
-            }
             imgAvatar.setVisibility(View.GONE);
             if (tvInitials != null) tvInitials.setVisibility(View.VISIBLE);
         }
@@ -573,4 +555,43 @@ public class HomeFragment extends Fragment {
             loadingHome.setVisibility(View.GONE);
         }
     }
+    private void fetchUserProfileFromDatabase() {
+        if (!isAdded()) return;
+        final Context app = requireContext().getApplicationContext();
+        try {
+            AuthAPI api = ApiClient.get(app).create(AuthAPI.class);
+            api.getMe().enqueue(new Callback<UserResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        UserResponseDTO user = response.body();
+                        boolean changed = false;
+                        if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
+                            String currentPhoto = SessionManager.getProfilePhotoUrl(app);
+                            if (!user.getPhotoUrl().equals(currentPhoto)) {
+                                SessionManager.saveProfilePhotoUrl(app, user.getPhotoUrl());
+                                changed = true;
+                            }
+                        }
+                        if (user.getName() != null && !user.getName().isEmpty()) {
+                            SessionManager.saveName(app, user.getName());
+                            changed = true;
+                        }
+                        if (isAdded()) {
+                            updateGreetingAndUser();
+                            if (changed) {
+                                loadAvatarPhoto();
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<UserResponseDTO> call, @NonNull Throwable t) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
 }

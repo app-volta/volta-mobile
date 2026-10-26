@@ -1703,34 +1703,6 @@ public class AiAnalysisFragment extends Fragment {
 
     private void handleOccurrenceCreatedSuccess(View v, String id, String material, double qtd,
                                                 String unidade, @Nullable String photoUrl, String calculatedPriority) {
-        // 1. Replica no Cloud Firestore para sincronização em tempo real com o Dashboard Web
-        try {
-            com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-            java.util.Map<String, Object> fDoc = new java.util.HashMap<>();
-            fDoc.put("id", id);
-            if (photoUrl != null && !photoUrl.isEmpty()) {
-                fDoc.put("photoUrl", photoUrl);
-            }
-            fDoc.put("setor", setor != null ? setor : "Linha de Produção A");
-            fDoc.put("material", material);
-            String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily(selectedMaterial != null ? selectedMaterial : material);
-            fDoc.put("material_principal", primaryFamily);
-            fDoc.put("item_especifico", (analysis != null && analysis.getSpecificItem() != null) ? analysis.getSpecificItem() : primaryFamily);
-            fDoc.put("quantidade", qtd);
-            fDoc.put("status", "AGUARDANDO_VALIDACAO");
-            fDoc.put("prioridade", calculatedPriority);
-            fDoc.put("unidade", unidade);
-            fDoc.put("timestamp", com.google.firebase.Timestamp.now());
-            String relatorioIa = (analysis != null && analysis.getReportText() != null && !analysis.getReportText().isEmpty())
-                    ? analysis.getReportText()
-                    : ((analysis != null && analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty())
-                    ? analysis.getObservacoes()
-                    : "Material identificado e analisado pela IA com sucesso.");
-            fDoc.put("relatorio", relatorioIa);
-            fDoc.put("aiReport", relatorioIa);
-            db.collection("incidents").document(id).set(fDoc, com.google.firebase.firestore.SetOptions.merge());
-        } catch (Exception ignored) {
-        }
 
         // 2. Persiste detalhes completos (foto, material, peso, relatório da IA) no cache local
         persistOccurrenceDetail(id, material, qtd, unidade, calculatedPriority, photoUrl);

@@ -276,8 +276,6 @@ public class ReportsFragment extends Fragment {
                     Navigation.findNavController(v).navigate(R.id.nav_occurrences));
         }
 
-        // Listener reativo em tempo real para sincronização com Web
-        OccurrenceStore.setupRealtimeSync(requireContext());
         OccurrenceStore.addListener(storeListener);
 
         loadSummary();

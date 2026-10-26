@@ -12,10 +12,6 @@ import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.model.OccurrenceJSON;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
 import com.aula.volta.data.notification.NotificationHelper;
-import com.google.firebase.firestore.DocumentChange;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 import java.util.concurrent.CopyOnWriteArrayList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -60,7 +56,6 @@ public final class OccurrenceStore {
     }
 
     private static final List<StoreListener> listeners = new CopyOnWriteArrayList<>();
-    private static ListenerRegistration firestoreIncidentsListener;
 
     public static void addListener(StoreListener listener) {
         if (listener != null && !listeners.contains(listener)) {
@@ -83,134 +78,8 @@ public final class OccurrenceStore {
         }
     }
 
-    /**
-     * Registra o listener em tempo real no Cloud Firestore (coleção 'incidents')
-     * para sincronizar imediatamente aprovações e alterações feitas pelo gestor no site Web.
-     */
     public static void setupRealtimeSync(Context context) {
-        if (context == null || firestoreIncidentsListener != null) {
-            return;
-        }
-        Context app = context.getApplicationContext();
-        try {
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            firestoreIncidentsListener = db.collection("incidents")
-                    .addSnapshotListener((snapshots, error) -> {
-                        if (snapshots == null || error != null) {
-                            return;
-                        }
-                        boolean hasChanges = false;
-                        List<Occurrence> cachedList = new ArrayList<>(cached(app));
-                        List<Occurrence> localList = new ArrayList<>(localOnly(app));
-
-                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                            DocumentSnapshot doc = dc.getDocument();
-                            String id = doc.getId();
-                            String remoteStatus = doc.getString("status");
-                            String remotePhoto = doc.getString("photoUrl");
-                            String remoteMaterial = doc.getString("material");
-                            String remoteSector = doc.getString("setor");
-                            String remotePriority = doc.getString("prioridade");
-                            String remoteReport = doc.getString("relatorio");
-                            if (remoteReport == null) remoteReport = doc.getString("aiReport");
-
-                            boolean isApproved = "APPROVED".equalsIgnoreCase(remoteStatus)
-                                    || "APROVADO".equalsIgnoreCase(remoteStatus)
-                                    || "APROVADA".equalsIgnoreCase(remoteStatus);
-                            String normalizedStatus = isApproved ? "APROVADA" : remoteStatus;
-
-                            // Se for uma aprovação detectada da web
-                            if (isApproved) {
-                                String notifKey = "notif_approved_" + id;
-                                if (!PrefsHelper.getBoolean(app, "cache_occurrence_detail", notifKey, false)) {
-                                    PrefsHelper.putBoolean(app, "cache_occurrence_detail", notifKey, true);
-                                    NotificationHelper.notifyOccurrenceApproved(app, id, remoteMaterial);
-                                }
-                            }
-
-                            // Sincroniza detalhes em cache
-                            try {
-                                String detailStr = PrefsHelper.getJson(app, "cache_occurrence_detail", id);
-                                JsonObject detail = (detailStr != null && !detailStr.isEmpty())
-                                        ? JsonParser.parseString(detailStr).getAsJsonObject()
-                                        : new JsonObject();
-                                detail.addProperty("id", id);
-                                if (normalizedStatus != null) detail.addProperty("status", normalizedStatus);
-                                if (remotePhoto != null && !remotePhoto.isEmpty()) {
-                                    detail.addProperty("photoUrl", remotePhoto);
-                                    detail.addProperty("imageUrl", remotePhoto);
-                                }
-                                if (remoteReport != null && !remoteReport.isEmpty()) {
-                                    detail.addProperty("relatorio_auto", remoteReport);
-                                }
-                                if (remoteMaterial != null && !remoteMaterial.isEmpty()) {
-                                    detail.addProperty("material", remoteMaterial);
-                                }
-                                if (remoteSector != null && !remoteSector.isEmpty()) {
-                                    detail.addProperty("setor", remoteSector);
-                                }
-                                if (remotePriority != null && !remotePriority.isEmpty()) {
-                                    detail.addProperty("prioridade", remotePriority);
-                                }
-                                PrefsHelper.putJson(app, "cache_occurrence_detail", id, detail.toString());
-                            } catch (Exception ignored) {}
-
-                            for (int i = 0; i < cachedList.size(); i++) {
-                                Occurrence o = cachedList.get(i);
-                                if (id.equals(o.getId())) {
-                                    String finalStatus = normalizedStatus != null ? normalizedStatus : o.getStatus();
-                                    String finalPhoto = (remotePhoto != null && !remotePhoto.isEmpty()) ? remotePhoto : o.getPhotoUrl();
-                                    String finalMat = (remoteMaterial != null && !remoteMaterial.isEmpty()) ? remoteMaterial : o.getMaterial();
-                                    String finalPrio = (remotePriority != null && !remotePriority.isEmpty()) ? remotePriority : o.getPrioridade();
-                                    cachedList.set(i, new Occurrence(
-                                            o.getId(),
-                                            o.getTitulo(),
-                                            o.getSetor(),
-                                            o.getTempoRelativo(),
-                                            finalPrio,
-                                            finalStatus,
-                                            finalMat,
-                                            finalPhoto,
-                                            o.getPhotoPath()
-                                    ));
-                                    hasChanges = true;
-                                    break;
-                                }
-                            }
-
-                            for (int i = 0; i < localList.size(); i++) {
-                                Occurrence o = localList.get(i);
-                                if (id.equals(o.getId())) {
-                                    String finalStatus = normalizedStatus != null ? normalizedStatus : o.getStatus();
-                                    String finalPhoto = (remotePhoto != null && !remotePhoto.isEmpty()) ? remotePhoto : o.getPhotoUrl();
-                                    String finalMat = (remoteMaterial != null && !remoteMaterial.isEmpty()) ? remoteMaterial : o.getMaterial();
-                                    String finalPrio = (remotePriority != null && !remotePriority.isEmpty()) ? remotePriority : o.getPrioridade();
-                                    localList.set(i, new Occurrence(
-                                            o.getId(),
-                                            o.getTitulo(),
-                                            o.getSetor(),
-                                            o.getTempoRelativo(),
-                                            finalPrio,
-                                            finalStatus,
-                                            finalMat,
-                                            finalPhoto,
-                                            o.getPhotoPath()
-                                    ));
-                                    hasChanges = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (hasChanges) {
-                            PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, cachedList);
-                            PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, localList);
-                            notifyListeners();
-                        }
-                    });
-        } catch (Exception e) {
-            Log.w(TAG, "Falha ao registrar listener em tempo real do Firestore: " + e.getMessage());
-        }
+        // Não utilizado - backend oficial REST API ativo
     }
 
     public static void updateStatus(Context context, String id, String newStatus) {

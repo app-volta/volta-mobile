@@ -33,8 +33,6 @@ import com.aula.volta.data.model.incident.IncidentResponseDTO;
 import com.aula.volta.data.model.incident.AiReportResponseDTO;
 import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.notification.NotificationHelper;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
@@ -105,7 +103,6 @@ public class OccurrenceDetailFragment extends Fragment {
     private TextView stepLabel2;
 
     private String occurrenceId;
-    private ListenerRegistration incidentFirestoreListener;
     private String currentStatus = "EM_ANALISE";
     private JsonObject currentDetailJson;
     private String currentMaterial = "Papelão (Classe A)";
@@ -289,10 +286,6 @@ public class OccurrenceDetailFragment extends Fragment {
     @Override
     public void onDestroyView() {
         pollHandler.removeCallbacks(pollStatusRunnable);
-        if (incidentFirestoreListener != null) {
-            incidentFirestoreListener.remove();
-            incidentFirestoreListener = null;
-        }
         if (toastFinalized != null) {
             toastFinalized.removeCallbacks(hideBannerToastRunnable);
             toastFinalized.animate().cancel();
@@ -388,8 +381,6 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         });
 
-        // 3. Listener em tempo real do Cloud Firestore para sincronizar aprovação na Web
-        setupFirestoreRealtimeListener();
 
         // 4. Consulta a API de Rascunhos para validar se foi aprovado pela gestão web
         checkDraftApprovalStatus();
@@ -460,63 +451,7 @@ public class OccurrenceDetailFragment extends Fragment {
         }
     }
 
-    private void setupFirestoreRealtimeListener() {
-        if (occurrenceId == null || occurrenceId.isEmpty()) return;
-        try {
-            if (incidentFirestoreListener != null) {
-                incidentFirestoreListener.remove();
-            }
-            incidentFirestoreListener = FirebaseFirestore.getInstance()
-                    .collection("incidents")
-                    .document(occurrenceId)
-                    .addSnapshotListener((snapshot, e) -> {
-                        if (!isAdded() || snapshot == null || !snapshot.exists()) return;
-                        String remoteStatus = snapshot.getString("status");
-                        String remotePhoto = snapshot.getString("photoUrl");
-                        String remotePriority = snapshot.getString("prioridade");
-                        boolean updated = false;
 
-                        String remoteReport = snapshot.getString("relatorio");
-                        if (remoteReport == null) remoteReport = snapshot.getString("aiReport");
-                        if (remoteReport != null && !remoteReport.isEmpty()) {
-                            if (currentDetailJson == null) currentDetailJson = new JsonObject();
-                            if (!remoteReport.equals(opt(currentDetailJson, "relatorio_auto", ""))) {
-                                currentDetailJson.addProperty("relatorio_auto", remoteReport);
-                                updated = true;
-                            }
-                        }
-
-                        if (remoteStatus != null && !remoteStatus.isEmpty() && !remoteStatus.equalsIgnoreCase(currentStatus)) {
-                            currentStatus = remoteStatus;
-                            if (currentDetailJson != null) currentDetailJson.addProperty("status", remoteStatus);
-                            updated = true;
-                            if ("APPROVED".equalsIgnoreCase(remoteStatus) || "APROVADO".equalsIgnoreCase(remoteStatus) || "APROVADA".equalsIgnoreCase(remoteStatus)) {
-                                currentStatus = "APROVADA";
-                                com.aula.volta.data.local.OccurrenceStore.updateStatus(requireContext(), occurrenceId, "APROVADA");
-                                NotificationHelper.notifyOccurrenceApproved(requireContext(), occurrenceId, currentMaterial);
-                            }
-                        }
-                        if (remotePhoto != null && !remotePhoto.isEmpty()) {
-                            if (currentDetailJson == null || !remotePhoto.equals(opt(currentDetailJson, "photoUrl", ""))) {
-                                if (currentDetailJson == null) currentDetailJson = new JsonObject();
-                                currentDetailJson.addProperty("photoUrl", remotePhoto);
-                                currentDetailJson.addProperty("imageUrl", remotePhoto);
-                                updated = true;
-                            }
-                        }
-                        if (remotePriority != null && !remotePriority.isEmpty() && !remotePriority.equalsIgnoreCase(currentPriority)) {
-                            currentPriority = remotePriority;
-                            if (currentDetailJson != null) currentDetailJson.addProperty("prioridade", remotePriority);
-                            updated = true;
-                        }
-                        if (updated) {
-                            PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
-                            applyDetail(currentDetailJson);
-                        }
-                    });
-        } catch (Exception ignored) {
-        }
-    }
 
     private void fallbackOccurrenceDetail(OccurrenceAPI api) {
         api.getOccurrence(occurrenceId).enqueue(new Callback<JsonObject>() {

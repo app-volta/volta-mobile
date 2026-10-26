@@ -104,34 +104,6 @@ public class LoginFragment extends Fragment {
         com.aula.volta.data.api.ApiClient.reset();
         com.aula.volta.data.api.ChatbotAuthClient.reset();
 
-        // 1.1. Restaura perfil remoto e foto salvos na nuvem Firestore para o usuário ativo
-        try {
-            com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                    .collection("users")
-                    .document(email)
-                    .get()
-                    .addOnSuccessListener(snapshot -> {
-                        if (snapshot != null && snapshot.exists()) {
-                            String pUrl = snapshot.getString("photoUrl");
-                            if (pUrl == null || pUrl.isEmpty()) {
-                                pUrl = snapshot.getString("avatarUrl");
-                            }
-                            if (pUrl != null && !pUrl.isEmpty()) {
-                                SessionManager.saveProfilePhotoUrl(appContext, pUrl);
-                            }
-                            String remoteName = snapshot.getString("name");
-                            if (remoteName != null && !remoteName.isEmpty()) {
-                                SessionManager.saveName(appContext, remoteName);
-                            }
-                            String pos = snapshot.getString("position");
-                            if (pos != null && !pos.isEmpty()) {
-                                SessionManager.saveSector(appContext, pos);
-                            }
-                        }
-                    });
-        } catch (Exception ignored) {
-        }
-
         // 2. Dispara autenticação em background com a API QA (POST /auth/login) para obter o JWT
         final String qaEmail = "breno@volta.com".equalsIgnoreCase(email) ? ApiClient.EMPLOYEE_EMAIL : email;
         final String qaPass = ("breno@volta.com".equalsIgnoreCase(email) || "1234".equals(password))

@@ -93,7 +93,6 @@ public class OccurrencesFragment extends Fragment {
         rvOccurrences.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvOccurrences.setAdapter(adapter);
 
-        OccurrenceStore.setupRealtimeSync(requireContext());
         OccurrenceStore.addListener(storeListener);
         setupSearchAndFilters();
         loadOccurrences();
