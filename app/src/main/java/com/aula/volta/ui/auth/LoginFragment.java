@@ -101,6 +101,8 @@ public class LoginFragment extends Fragment {
 
         // 1. Salva a sessão local do usuário e permite entrada imediata no app
         SessionManager.login(appContext, email, password, name, "");
+        com.aula.volta.data.api.ApiClient.reset();
+        com.aula.volta.data.api.ChatbotAuthClient.reset();
 
         // 2. Dispara autenticação em background com a API QA (POST /auth/login) para obter o JWT
         final String qaEmail = "breno@volta.com".equalsIgnoreCase(email) ? ApiClient.EMPLOYEE_EMAIL : email;
