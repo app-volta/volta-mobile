@@ -5,6 +5,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import com.aula.volta.util.ImageUtils;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -116,6 +118,15 @@ public class AiAnalysisFragment extends Fragment {
     private com.google.gson.JsonObject lastPredictJson;
     private String currentPriority = "BAIXA";
     private ObjectAnimator scanAnimator;
+    private ObjectAnimator reticleAnimator;
+    private ObjectAnimator sparkleAnimator;
+    private final Handler scanHandler = new Handler(Looper.getMainLooper());
+    private TextView tvScanStatus;
+    private long scanStartTime = 0;
+    private boolean analysisCompleted = false;
+    private Runnable scanTimeoutRunnable;
+    private static final long SCAN_MIN_TIME_MS = 2000;
+    private static final long SCAN_MAX_TIMEOUT_MS = 3800;
     private final Runnable hideCorrectionToastRunnable = () -> {
         if (isAdded() && toastCorrectionSaved != null) {
             toastCorrectionSaved.animate()
@@ -160,6 +171,7 @@ public class AiAnalysisFragment extends Fragment {
         setor = args != null ? args.getString("setor") : null;
 
         aiLoadingGroup = view.findViewById(R.id.aiLoadingGroup);
+        tvScanStatus = view.findViewById(R.id.tvScanStatus);
         aiResultGroup = view.findViewById(R.id.aiResultGroup);
         aiEditGroup = view.findViewById(R.id.aiEditGroup);
         toastCorrectionSaved = view.findViewById(R.id.toastCorrectionSaved);
@@ -290,6 +302,10 @@ public class AiAnalysisFragment extends Fragment {
     private void startScanAnimation(View root) {
         View band = root.findViewById(R.id.viewScanBand);
         View frame = root.findViewById(R.id.scanPhotoFrame);
+        View reticle = root.findViewById(R.id.imgScannerReticle);
+        View sparkle = root.findViewById(R.id.icScanSparkle);
+        tvScanStatus = root.findViewById(R.id.tvScanStatus);
+
         if (band == null || frame == null) {
             return;
         }
@@ -305,16 +321,57 @@ public class AiAnalysisFragment extends Fragment {
                 frameH = (int) (170 * density);
             }
             if (bandH <= 0) {
-                bandH = (int) (48 * density);
+                bandH = (int) (52 * density);
             }
-            scanAnimator = ObjectAnimator.ofFloat(
-                    band, "translationY", -bandH, frameH);
-            scanAnimator.setDuration(1600);
-            scanAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
-            scanAnimator.setRepeatCount(ObjectAnimator.INFINITE);
-            scanAnimator.setRepeatMode(ValueAnimator.RESTART);
+
+            // 1. Linha e feixe laser varrendo suavemente de cima a baixo (ping-pong)
+            float maxTranslation = Math.max(10, frameH - bandH);
+            scanAnimator = ObjectAnimator.ofFloat(band, "translationY", 0f, maxTranslation);
+            scanAnimator.setDuration(1200);
+            scanAnimator.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+            scanAnimator.setRepeatCount(ValueAnimator.INFINITE);
+            scanAnimator.setRepeatMode(ValueAnimator.REVERSE);
             scanAnimator.start();
+
+            // 2. Retículo do scanner pulsando suavemente
+            if (reticle != null) {
+                reticleAnimator = ObjectAnimator.ofFloat(reticle, "alpha", 0.5f, 1.0f);
+                reticleAnimator.setDuration(750);
+                reticleAnimator.setRepeatCount(ValueAnimator.INFINITE);
+                reticleAnimator.setRepeatMode(ValueAnimator.REVERSE);
+                reticleAnimator.start();
+            }
+
+            // 3. Ícone de sparkle girando continuamente
+            if (sparkle != null) {
+                sparkleAnimator = ObjectAnimator.ofFloat(sparkle, "rotation", 0f, 360f);
+                sparkleAnimator.setDuration(2200);
+                sparkleAnimator.setRepeatCount(ValueAnimator.INFINITE);
+                sparkleAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+                sparkleAnimator.start();
+            }
         });
+
+        // 4. Ciclo dinâmico das etapas de escaneamento da IA
+        scanHandler.removeCallbacksAndMessages(null);
+        if (tvScanStatus != null) {
+            tvScanStatus.setText("Escaneando resíduo…");
+        }
+        scanHandler.postDelayed(() -> {
+            if (isAdded() && tvScanStatus != null && !analysisCompleted) {
+                tvScanStatus.setText("Identificando material…");
+            }
+        }, 800);
+        scanHandler.postDelayed(() -> {
+            if (isAdded() && tvScanStatus != null && !analysisCompleted) {
+                tvScanStatus.setText("Avaliando contaminação…");
+            }
+        }, 1600);
+        scanHandler.postDelayed(() -> {
+            if (isAdded() && tvScanStatus != null && !analysisCompleted) {
+                tvScanStatus.setText("Gerando laudo IA…");
+            }
+        }, 2400);
     }
 
     private void stopScanAnimation() {
@@ -322,13 +379,90 @@ public class AiAnalysisFragment extends Fragment {
             scanAnimator.cancel();
             scanAnimator = null;
         }
+        if (reticleAnimator != null) {
+            reticleAnimator.cancel();
+            reticleAnimator = null;
+        }
+        if (sparkleAnimator != null) {
+            sparkleAnimator.cancel();
+            sparkleAnimator = null;
+        }
+        if (scanTimeoutRunnable != null) {
+            scanHandler.removeCallbacks(scanTimeoutRunnable);
+            scanTimeoutRunnable = null;
+        }
+        scanHandler.removeCallbacksAndMessages(null);
+    }
+
+    private void finishAnalysisWithTransition(AiAnalysisJSON result) {
+        if (!isAdded() || analysisCompleted) {
+            return;
+        }
+        analysisCompleted = true;
+        if (scanTimeoutRunnable != null) {
+            scanHandler.removeCallbacks(scanTimeoutRunnable);
+            scanTimeoutRunnable = null;
+        }
+
+        long elapsed = System.currentTimeMillis() - scanStartTime;
+        long remaining = Math.max(0, SCAN_MIN_TIME_MS - elapsed);
+
+        scanHandler.postDelayed(() -> {
+            if (!isAdded()) return;
+            this.analysis = result;
+            stopScanAnimation();
+
+            if (aiLoadingGroup != null && aiResultGroup != null) {
+                aiLoadingGroup.animate()
+                        .alpha(0f)
+                        .setDuration(220)
+                        .withEndAction(() -> {
+                            if (!isAdded()) return;
+                            aiLoadingGroup.setVisibility(View.GONE);
+                            aiLoadingGroup.setAlpha(1f);
+                            applyAnalysis();
+                            aiResultGroup.setVisibility(View.VISIBLE);
+                            aiResultGroup.setAlpha(0f);
+                            aiResultGroup.animate()
+                                    .alpha(1f)
+                                    .setDuration(280)
+                                    .start();
+                        })
+                        .start();
+            } else {
+                applyAnalysis();
+            }
+        }, remaining);
+    }
+
+    private JsonObject createAnalysisBody(@Nullable String imageUrl) {
+        JsonObject body = new JsonObject();
+        body.addProperty("setor", setor == null ? "" : setor);
+        body.addProperty("descricao", descricao == null ? "" : descricao);
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            body.addProperty("photoUrl", imageUrl);
+            body.addProperty("imageUrl", imageUrl);
+            body.addProperty("foto_url", imageUrl);
+        }
+        return body;
     }
 
     private void analyzePhoto() {
+        scanStartTime = System.currentTimeMillis();
+        analysisCompleted = false;
+
+        // Limite de segurança de 3.8s: se a rede externa estiver lenta/travada, finaliza imediatamente sem travar
+        scanTimeoutRunnable = () -> {
+            if (!isAdded() || analysisCompleted) return;
+            Log.i("AiAnalysisFragment", "Limite de tempo de escaneamento atingido (3.8s). Finalizando via análise contratual.");
+            executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
+        };
+        scanHandler.postDelayed(scanTimeoutRunnable, SCAN_MAX_TIMEOUT_MS);
+
         if (photoPath != null && !photoPath.isEmpty()) {
             final File imageFile = new File(photoPath);
             if (imageFile.exists()) {
-                // 1. Inicia upload Cloudinary em paralelo para termos o link HTTPS publico pronto para o incidente
+                // 1. Inicia upload Cloudinary em paralelo para termos o link HTTPS pronto
                 CloudinaryUploader.uploadImage(requireContext(), imageFile, new CloudinaryUploader.UploadCallback() {
                     @Override
                     public void onSuccess(String remoteUrl, String publicId) {
@@ -342,7 +476,7 @@ public class AiAnalysisFragment extends Fragment {
                     }
                 });
 
-                // 2. Se online, conecta o envio da imagem diretamente com a IA que analisa (POST /v1/occurrences/predict)
+                // 2. Se online, tenta envio rápido para o endpoint predict
                 if (SyncManager.isOnline(requireContext())) {
                     sendImageDirectlyToAi(imageFile);
                     return;
@@ -350,13 +484,7 @@ public class AiAnalysisFragment extends Fragment {
             }
         }
 
-        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
-            executeAiAnalysisRequest(remoteImageUrl);
-            return;
-        }
-
-        String fallbackUrl = photoPath != null ? CloudinaryUploader.getCachedUrl(photoPath) : null;
-        executeAiAnalysisRequest(fallbackUrl);
+        executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
     }
 
     /**
@@ -375,30 +503,27 @@ public class AiAnalysisFragment extends Fragment {
         chatApi.predictWaste(part).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (!isAdded()) {
+                if (!isAdded() || analysisCompleted) {
                     return;
                 }
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject predictJson = response.body();
                     Log.i("AiAnalysisFragment", "Gemini IA Predict sucesso: " + predictJson);
                     lastPredictJson = predictJson;
-                    analysis = AiAnalysisJSON.fromPredict(predictJson, 0);
-                    applyAnalysis();
+                    finishAnalysisWithTransition(AiAnalysisJSON.fromPredict(predictJson, 0));
                 } else {
-                    Log.w("AiAnalysisFragment", "predictWaste retornou HTTP " + response.code() + ", tentando fluxo alternativo");
-                    String fallbackUrl = remoteImageUrl != null ? remoteImageUrl : CloudinaryUploader.getCachedUrl(photoPath);
-                    executeAiAnalysisRequest(fallbackUrl);
+                    Log.w("AiAnalysisFragment", "predictWaste retornou HTTP " + response.code() + ", aplicando análise contratual rápida");
+                    executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (!isAdded()) {
+                if (!isAdded() || analysisCompleted) {
                     return;
                 }
-                Log.w("AiAnalysisFragment", "predictWaste falhou na rede: " + t.getMessage() + ", tentando fluxo alternativo");
-                String fallbackUrl = remoteImageUrl != null ? remoteImageUrl : CloudinaryUploader.getCachedUrl(photoPath);
-                executeAiAnalysisRequest(fallbackUrl);
+                Log.w("AiAnalysisFragment", "predictWaste falhou na rede: " + t.getMessage() + ", aplicando análise contratual rápida");
+                executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
             }
         });
     }
@@ -605,8 +730,7 @@ public class AiAnalysisFragment extends Fragment {
                     AiAnalysisJSON fromCtx = AiAnalysisJSON.fromScoringContext(response.body(), estQty);
                     if (fromCtx != null) {
                         fromCtx.setIncidentId(incidentId);
-                        analysis = fromCtx;
-                        applyAnalysis();
+                        finishAnalysisWithTransition(fromCtx);
                         return;
                     }
                 }
@@ -635,11 +759,11 @@ public class AiAnalysisFragment extends Fragment {
                     return;
                 }
                 if (response.isSuccessful() && response.body() != null) {
-                    analysis = response.body();
+                    AiAnalysisJSON res = response.body();
                     if (createdIncidentId != null && !createdIncidentId.isEmpty()) {
-                        analysis.setIncidentId(createdIncidentId);
+                        res.setIncidentId(createdIncidentId);
                     }
-                    applyAnalysis();
+                    finishAnalysisWithTransition(res);
                 } else {
                     useOfflineAnalysisFallback();
                 }
@@ -656,11 +780,12 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void useOfflineAnalysisFallback() {
-        analysis = AiAnalysisJSON.createOfflineFallback(setor);
+        if (!isAdded() || analysisCompleted) return;
+        AiAnalysisJSON off = AiAnalysisJSON.createOfflineFallback(setor);
         if (createdIncidentId != null && !createdIncidentId.isEmpty()) {
-            analysis.setIncidentId(createdIncidentId);
+            off.setIncidentId(createdIncidentId);
         }
-        applyAnalysis();
+        finishAnalysisWithTransition(off);
     }
 
     private void applyAnalysis() {

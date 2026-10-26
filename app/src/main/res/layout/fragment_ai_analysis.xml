@@ -130,14 +130,35 @@
                             android:scaleType="centerCrop"
                             android:src="@drawable/img_caixas_papelao" />
 
-                        <!-- Linha/faixa laser animada (Figma 851:4017) -->
-                        <View
+                        <!-- Retículo de Câmera / Escaneamento IA VOLTA (Viewfinder) -->
+                        <ImageView
+                            android:id="@+id/imgScannerReticle"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/bg_scanner_reticle" />
+
+                        <!-- Linha/faixa laser animada com brilho difuso e linha neon (Figma 851:4017) -->
+                        <FrameLayout
                             android:id="@+id/viewScanBand"
                             android:layout_width="match_parent"
-                            android:layout_height="48dp"
-                            android:background="@drawable/bg_scan_band" />
+                            android:layout_height="52dp">
 
-                        <!-- Pill superior esquerdo: "Analisando..." (Figma 851:4027) -->
+                            <!-- Brilho difuso em degradê -->
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/bg_scan_band" />
+
+                            <!-- Linha central brilhante do laser -->
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="2.5dp"
+                                android:layout_gravity="center"
+                                android:background="#16C784" />
+                        </FrameLayout>
+
+                        <!-- Pill superior esquerdo: Status do Escaneamento (Figma 851:4027) -->
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="30dp"
@@ -150,17 +171,19 @@
                             android:paddingEnd="12dp">
 
                             <ImageView
+                                android:id="@+id/icScanSparkle"
                                 android:layout_width="14dp"
                                 android:layout_height="14dp"
                                 android:src="@drawable/ic_sparkle"
                                 app:tint="@color/white" />
 
                             <TextView
+                                android:id="@+id/tvScanStatus"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="6dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Analisando…"
+                                android:text="Escaneando resíduo…"
                                 android:textColor="@color/white"
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
