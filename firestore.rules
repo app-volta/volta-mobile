@@ -4,7 +4,7 @@ rules_version = '2';
 // VOLTA — Cloud Firestore Security Rules
 // =============================================================================
 // Security architecture designed for the VOLTA Waste Management & Circular Economy
-// mobile application (Android / Firebase Firestore).
+// mobile application and web management dashboard (Android / Firebase Firestore).
 // =============================================================================
 
 service cloud.firestore {
@@ -16,7 +16,6 @@ service cloud.firestore {
     //
     // Collection: notifications
     // Document ID: auto-generated or string ID (e.g., n1, n2, or Firestore UUID)
-    //
     // Fields:
     //   - id: string (optional, 1..128 chars) - Client or local notification identifier
     //   - tipo: string (required, enum) - Notification category:
@@ -31,6 +30,29 @@ service cloud.firestore {
     //   - occurrence_id: string (optional/nullable, 0..100 chars) - Associated occurrence ID
     //   - user_id: string (required, 1..128 chars) - Target recipient ('all' for broadcast or user UID)
     //   - tempo_relativo: string (optional, 0..100 chars) - Formatted time label (e.g. 'há 5 min')
+    //
+    // Collection: users
+    // Document ID: user email (e.g., breno@volta.com or sanitized) or auth UID
+    // Fields:
+    //   - name: string (optional, 1..200 chars) - User display name
+    //   - email: string (optional, 3..128 chars) - User email address
+    //   - photoUrl: string (optional/nullable, 0..500 chars) - Remote profile photo URL (e.g., Cloudinary)
+    //   - avatarUrl: string (optional/nullable, 0..500 chars) - Mirrored avatar URL
+    //   - position: string (optional, 0..100 chars) - Sector / operational position
+    //   - updatedAt: timestamp (optional) - Profile modification timestamp
+    //
+    // Collection: incidents
+    // Document ID: incident/occurrence identifier (e.g., inc_123 or UUID)
+    // Fields:
+    //   - id: string (optional, 1..128 chars) - Unique incident ID
+    //   - photoUrl: string (optional/nullable, 0..500 chars) - Remote photo of the waste occurrence
+    //   - setor: string (optional, 0..100 chars) - Operational facility sector
+    //   - material: string (optional, 0..100 chars) - Waste material classification
+    //   - quantidade: number (optional, >= 0) - Estimated weight / volume
+    //   - status: string (optional, 1..50 chars) - Status lifecycle (e.g. 'EM_ANALISE', 'AGUARDANDO_VALIDACAO', 'APPROVED', 'APROVADO', 'APROVADA', 'FINALIZADA', 'RESOLVIDO')
+    //   - prioridade: string (optional, 1..50 chars) - Operational priority (e.g. 'BAIXA', 'MEDIA', 'ALTA', 'MEDIUM', 'HIGH')
+    //   - timestamp: timestamp (optional) - Incident registration timestamp
+    //   - updatedAt: timestamp (optional) - Real-time sync / review timestamp
     //
     // =========================================================================
 
@@ -71,10 +93,13 @@ service cloud.firestore {
     }
 
     /**
-     * Check if user is owner of the given user ID.
+     * Check if user is owner of the given user ID (by UID or email).
      */
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAuthenticated() && (
+        request.auth.uid == userId ||
+        (request.auth.token.email != null && request.auth.token.email == userId)
+      );
     }
 
     /**
@@ -93,6 +118,10 @@ service cloud.firestore {
         'SISTEMA'
       ];
     }
+
+    // =========================================================================
+    // Domain Validators (Validator Function Pattern)
+    // =========================================================================
 
     /**
      * Strict Domain Validator for Notification documents.
@@ -121,6 +150,48 @@ service cloud.firestore {
              data.user_id is string && data.user_id.size() >= 1 && data.user_id.size() <= 128 &&
              (!('id' in data) || (data.id is string && data.id.size() >= 1 && data.id.size() <= 128)) &&
              (!('tempo_relativo' in data) || (data.tempo_relativo is string && data.tempo_relativo.size() <= 100));
+    }
+
+    /**
+     * Strict Domain Validator for User profile documents.
+     * Enforced on BOTH create and update operations to prevent the Update Bypass vulnerability.
+     */
+    function isValidUser(data) {
+      let allowedFields = [
+        'name', 'email', 'photoUrl', 'avatarUrl', 'position', 'updatedAt'
+      ];
+
+      return data.keys().size() > 0 &&
+             data.keys().hasOnly(allowedFields) &&
+             (!('name' in data) || (data.name is string && data.name.size() >= 1 && data.name.size() <= 200)) &&
+             (!('email' in data) || (data.email is string && data.email.size() >= 3 && data.email.size() <= 128)) &&
+             (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 500)) &&
+             (!('avatarUrl' in data) || data.avatarUrl == null || (data.avatarUrl is string && data.avatarUrl.size() <= 500)) &&
+             (!('position' in data) || (data.position is string && data.position.size() <= 100)) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    /**
+     * Strict Domain Validator for Incident documents.
+     * Enforced on BOTH create and update operations to prevent the Update Bypass vulnerability.
+     */
+    function isValidIncident(data) {
+      let allowedFields = [
+        'id', 'photoUrl', 'setor', 'material', 'quantidade',
+        'status', 'prioridade', 'timestamp', 'updatedAt'
+      ];
+
+      return data.keys().size() > 0 &&
+             data.keys().hasOnly(allowedFields) &&
+             (!('id' in data) || (data.id is string && data.id.size() >= 1 && data.id.size() <= 128)) &&
+             (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 500)) &&
+             (!('setor' in data) || (data.setor is string && data.setor.size() <= 100)) &&
+             (!('material' in data) || (data.material is string && data.material.size() <= 100)) &&
+             (!('quantidade' in data) || (data.quantidade is number && data.quantidade >= 0)) &&
+             (!('status' in data) || (data.status is string && data.status.size() >= 1 && data.status.size() <= 50)) &&
+             (!('prioridade' in data) || (data.prioridade is string && data.prioridade.size() >= 1 && data.prioridade.size() <= 50)) &&
+             (!('timestamp' in data) || data.timestamp is timestamp) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
     // =========================================================================
@@ -165,6 +236,83 @@ service cloud.firestore {
        * Restricted strictly to administrators or document owners.
        */
       allow delete: if (isAuthenticated() && (resource.data.user_id == request.auth.uid || isAdmin()))
+                    || (isDevelopmentTestMode() && isAdmin());
+    }
+
+    // =========================================================================
+    // Rules: users Collection
+    // =========================================================================
+
+    match /users/{userId} {
+
+      /**
+       * READ:
+       * Allows authenticated users (or anyone during development test mode) to read user profiles.
+       */
+      allow read: if isAuthenticated() || isDevelopmentTestMode();
+
+      /**
+       * CREATE:
+       * Allowed if authenticated or during development test mode.
+       * In production mode, users can only create their own profile document (or admin).
+       * Must strictly satisfy schema type bounds and size limits.
+       */
+      allow create: if (isAuthenticated() || isDevelopmentTestMode())
+                    && isValidUser(request.resource.data)
+                    && (isDevelopmentTestMode() || isAdmin() || isOwner(userId));
+
+      /**
+       * UPDATE:
+       * Allowed if authenticated or during development test mode.
+       * In production mode, users can only update their own profile document (or admin).
+       * Must satisfy isValidUser (Validator Function Pattern) on post-write state.
+       */
+      allow update: if (isAuthenticated() || isDevelopmentTestMode())
+                    && isValidUser(request.resource.data)
+                    && (isDevelopmentTestMode() || isAdmin() || isOwner(userId));
+
+      /**
+       * DELETE:
+       * Restricted strictly to administrators or document owners.
+       */
+      allow delete: if (isAuthenticated() && (isOwner(userId) || isAdmin()))
+                    || (isDevelopmentTestMode() && isAdmin());
+    }
+
+    // =========================================================================
+    // Rules: incidents Collection
+    // =========================================================================
+
+    match /incidents/{incidentId} {
+
+      /**
+       * READ:
+       * Allows authenticated users (or anyone during development test mode) to read incidents
+       * for real-time synchronization between mobile app and web dashboard.
+       */
+      allow read: if isAuthenticated() || isDevelopmentTestMode();
+
+      /**
+       * CREATE:
+       * Allows authenticated users or development test mode to register an incident.
+       * Must strictly satisfy schema type bounds and size limits.
+       */
+      allow create: if (isAuthenticated() || isDevelopmentTestMode())
+                    && isValidIncident(request.resource.data);
+
+      /**
+       * UPDATE:
+       * Allows authenticated users or development test mode to update incident status or details.
+       * Must strictly satisfy schema type bounds and size limits via isValidIncident.
+       */
+      allow update: if (isAuthenticated() || isDevelopmentTestMode())
+                    && isValidIncident(request.resource.data);
+
+      /**
+       * DELETE:
+       * Restricted strictly to administrators.
+       */
+      allow delete: if (isAuthenticated() && isAdmin())
                     || (isDevelopmentTestMode() && isAdmin());
     }
 

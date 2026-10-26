@@ -1,6 +1,10 @@
 package com.aula.volta.data.model;
 
+import android.content.Context;
+import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Modelo de domínio da ocorrência (utilizado em toda a UI da Home, Lista e Detalhe).
@@ -54,6 +58,10 @@ public class Occurrence {
     }
 
     public static Occurrence fromIncident(IncidentResponseDTO inc) {
+        return fromIncident(inc, null);
+    }
+
+    public static Occurrence fromIncident(IncidentResponseDTO inc, Context context) {
         if (inc == null) {
             return null;
         }
@@ -61,9 +69,11 @@ public class Occurrence {
         String desc = (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().isEmpty())
                 ? inc.getEmployeeDescription() : "Incidente " + (id.length() > 8 ? id.substring(0, 8) : id);
         String sector = "Frigorífico — Setor B2";
-        String prio = inc.getPriority() != null ? inc.getPriority() : "MEDIA";
-        String stat = inc.getStatus() != null ? inc.getStatus() : "EM_ANALISE";
         String mat = resolveMaterial(inc);
+        String prio = (inc.getPriority() != null && !inc.getPriority().isEmpty())
+                ? inc.getPriority()
+                : AiAnalysisJSON.calculatePriority(mat, inc.getContaminationLevel(), desc);
+        String stat = inc.getStatus() != null ? inc.getStatus() : "EM_ANALISE";
         String time = "Hoje";
         if (inc.getRegisteredAt() != null && !inc.getRegisteredAt().isEmpty()) {
             time = inc.getRegisteredAt().replace("T", " ");
@@ -72,12 +82,42 @@ public class Occurrence {
             }
         }
         String photoUrl = inc.getPhotoUrl();
-        return new Occurrence(id, desc, sector, time, prio, stat, mat, photoUrl, null);
+        String photoPath = null;
+        if (context != null && (photoUrl == null || photoUrl.isEmpty())) {
+            try {
+                String cachedStr = PrefsHelper.getJson(context, "cache_occurrence_detail", id);
+                if (cachedStr != null && !cachedStr.isEmpty()) {
+                    JsonObject d = JsonParser.parseString(cachedStr).getAsJsonObject();
+                    if (d.has("photoUrl") && !d.get("photoUrl").isJsonNull()) {
+                        photoUrl = d.get("photoUrl").getAsString();
+                    } else if (d.has("imageUrl") && !d.get("imageUrl").isJsonNull()) {
+                        photoUrl = d.get("imageUrl").getAsString();
+                    }
+                    if (d.has("photoPath") && !d.get("photoPath").isJsonNull()) {
+                        photoPath = d.get("photoPath").getAsString();
+                    }
+                    if (d.has("prioridade") && !d.get("prioridade").isJsonNull()) {
+                        prio = d.get("prioridade").getAsString();
+                    }
+                    if (d.has("material") && !d.get("material").isJsonNull()) {
+                        mat = d.get("material").getAsString();
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return new Occurrence(id, desc, sector, time, prio, stat, mat, photoUrl, photoPath);
     }
 
     private static String resolveMaterial(IncidentResponseDTO inc) {
         String desc = inc.getEmployeeDescription() != null ? inc.getEmployeeDescription().toLowerCase(java.util.Locale.ROOT) : "";
         String wId = inc.getWasteTypeId() != null ? inc.getWasteTypeId().toLowerCase(java.util.Locale.ROOT) : "";
+        if (desc.contains("cadeir") || desc.contains("mesa") || desc.contains("móvel") || desc.contains("movel") || desc.contains("mobili")) {
+            return "Mobiliário / Madeira";
+        }
+        if (desc.contains("madeira") || desc.contains("pallet") || desc.contains("palete")) {
+            return "Madeira / Palete";
+        }
         if (wId.contains("4e73b22b") || desc.contains("papel") || desc.contains("papelão") || desc.contains("cartão")) {
             return "Aparas de Papelão";
         }

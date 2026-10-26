@@ -660,6 +660,27 @@ public class ProfileFragment extends Fragment {
                 }
             }).start();
         } else {
+            try {
+                if (email != null && !email.isEmpty()) {
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(email)
+                            .get()
+                            .addOnSuccessListener(snapshot -> {
+                                if (isAdded() && snapshot != null && snapshot.exists()) {
+                                    String firestorePhoto = snapshot.getString("photoUrl");
+                                    if (firestorePhoto == null || firestorePhoto.isEmpty()) {
+                                        firestorePhoto = snapshot.getString("avatarUrl");
+                                    }
+                                    if (firestorePhoto != null && firestorePhoto.startsWith("http")) {
+                                        SessionManager.saveProfilePhotoUrl(requireContext(), firestorePhoto);
+                                        loadProfilePhoto();
+                                    }
+                                }
+                            });
+                }
+            } catch (Exception ignored) {
+            }
             if (imgProfilePhoto != null) {
                 imgProfilePhoto.setVisibility(View.GONE);
             }

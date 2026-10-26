@@ -218,6 +218,7 @@ public class HomeFragment extends Fragment {
         updateGreetingAndUser();
         loadNotificationDot();
         loadAvatarPhoto();
+        loadOccurrences();
     }
 
     /**
@@ -267,6 +268,10 @@ public class HomeFragment extends Fragment {
                         if (u.getName() != null && !u.getName().trim().isEmpty()) {
                             SessionManager.saveName(requireContext(), u.getName().trim());
                             applyUserNameAndInitials(u.getName().trim());
+                        }
+                        if (u.getPhotoUrl() != null && !u.getPhotoUrl().isEmpty()) {
+                            SessionManager.saveProfilePhotoUrl(requireContext(), u.getPhotoUrl());
+                            loadAvatarPhoto();
                         }
                     }
                 }

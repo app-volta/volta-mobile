@@ -21,9 +21,19 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import android.os.Handler;
+import android.os.Looper;
 import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.ChatbotAPI;
+import com.aula.volta.data.api.ChatbotClient;
 import com.aula.volta.data.api.OccurrenceAPI;
+import com.google.gson.JsonArray;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
+import com.aula.volta.data.model.incident.AiReportResponseDTO;
+import com.aula.volta.data.model.AiAnalysisJSON;
+import com.aula.volta.data.notification.NotificationHelper;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
@@ -94,6 +104,7 @@ public class OccurrenceDetailFragment extends Fragment {
     private TextView stepLabel2;
 
     private String occurrenceId;
+    private ListenerRegistration incidentFirestoreListener;
     private String currentStatus = "EM_ANALISE";
     private JsonObject currentDetailJson;
     private String currentMaterial = "Papelão (Classe A)";
@@ -103,6 +114,16 @@ public class OccurrenceDetailFragment extends Fragment {
     private String currentContamination = "baixa";
     private String currentSector = "Frigorífico — Setor B2";
     private String currentWeight = "38 kg";
+    private final Handler pollHandler = new Handler(Looper.getMainLooper());
+    private final Runnable pollStatusRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isAdded() && !"APROVADA".equalsIgnoreCase(currentStatus)) {
+                checkDraftApprovalStatus();
+                pollHandler.postDelayed(this, 5000);
+            }
+        }
+    };
     private final Runnable hideBannerToastRunnable = () -> {
         if (isAdded() && toastFinalized != null) {
             toastFinalized.animate()
@@ -250,7 +271,27 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        loadDetail();
+        checkDraftApprovalStatus();
+        pollHandler.removeCallbacks(pollStatusRunnable);
+        pollHandler.postDelayed(pollStatusRunnable, 5000);
+    }
+
+    @Override
+    public void onPause() {
+        pollHandler.removeCallbacks(pollStatusRunnable);
+        super.onPause();
+    }
+
+    @Override
     public void onDestroyView() {
+        pollHandler.removeCallbacks(pollStatusRunnable);
+        if (incidentFirestoreListener != null) {
+            incidentFirestoreListener.remove();
+            incidentFirestoreListener = null;
+        }
         if (toastFinalized != null) {
             toastFinalized.removeCallbacks(hideBannerToastRunnable);
             toastFinalized.animate().cancel();
@@ -259,7 +300,7 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void loadDetail() {
-        // Carrega imediatamente do cache local se existir para exibir foto e dados sem atraso
+        // 1. Carrega imediatamente do cache local para exibir foto, relatório e dados sem atraso
         String cachedStr = PrefsHelper.getJson(requireContext(), PREFS, occurrenceId);
         if (cachedStr != null && !cachedStr.isEmpty()) {
             try {
@@ -269,6 +310,7 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         }
 
+        // 2. Consulta API oficial do backend (/incidents/{id})
         OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
         api.getIncidentById(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
             @Override
@@ -280,30 +322,58 @@ public class OccurrenceDetailFragment extends Fragment {
                     IncidentResponseDTO dto = response.body();
                     JsonObject body = new JsonObject();
                     body.addProperty("id", dto.getId());
-                    String mat = dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().isEmpty()
-                            ? dto.getEmployeeDescription() : "Papelão (Classe A)";
+                    String mat = (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().isEmpty())
+                            ? dto.getEmployeeDescription()
+                            : (currentDetailJson != null && currentDetailJson.has("material") ? currentDetailJson.get("material").getAsString() : "Papelão (Classe A)");
                     body.addProperty("titulo", mat);
                     body.addProperty("material", mat);
-                    body.addProperty("setor", "Frigorífico — Setor B2");
-                    body.addProperty("peso_estimado", dto.getEstimatedQuantity() != null ? dto.getEstimatedQuantity() : 38.0);
-                    body.addProperty("status", dto.getStatus() != null ? dto.getStatus() : currentStatus);
-                    body.addProperty("prioridade", dto.getPriority() != null ? dto.getPriority() : "ALTA");
-                    body.addProperty("quando", dto.getRegisteredAt() != null ? dto.getRegisteredAt() : "agora");
-                    if (dto.getPhotoUrl() != null && !dto.getPhotoUrl().isEmpty()) {
-                        body.addProperty("imageUrl", dto.getPhotoUrl());
-                        body.addProperty("photoUrl", dto.getPhotoUrl());
+                    String sector = (currentDetailJson != null && currentDetailJson.has("setor"))
+                            ? currentDetailJson.get("setor").getAsString() : "Frigorífico — Setor B2";
+                    body.addProperty("setor", sector);
+                    double peso = (dto.getEstimatedQuantity() != null && dto.getEstimatedQuantity() > 0)
+                            ? dto.getEstimatedQuantity()
+                            : (currentDetailJson != null && currentDetailJson.has("peso_estimado") ? currentDetailJson.get("peso_estimado").getAsDouble() : 5.0);
+                    body.addProperty("peso_estimado", peso);
+
+                    String stat = (dto.getStatus() != null && !dto.getStatus().isEmpty()) ? dto.getStatus() : currentStatus;
+                    body.addProperty("status", stat);
+
+                    String prio = (dto.getPriority() != null && !dto.getPriority().isEmpty())
+                            ? dto.getPriority()
+                            : (currentDetailJson != null && currentDetailJson.has("prioridade") ? currentDetailJson.get("prioridade").getAsString() : AiAnalysisJSON.calculatePriority(mat, "LOW", dto.getEmployeeDescription()));
+                    body.addProperty("prioridade", prio);
+
+                    body.addProperty("quando", dto.getRegisteredAt() != null ? dto.getRegisteredAt() : (currentDetailJson != null && currentDetailJson.has("quando") ? currentDetailJson.get("quando").getAsString() : "agora"));
+
+                    // Preserva foto remota ou local sem sobrescrever com null
+                    String photoUrl = dto.getPhotoUrl();
+                    if ((photoUrl == null || photoUrl.isEmpty()) && currentDetailJson != null) {
+                        if (currentDetailJson.has("photoUrl")) photoUrl = currentDetailJson.get("photoUrl").getAsString();
+                        else if (currentDetailJson.has("imageUrl")) photoUrl = currentDetailJson.get("imageUrl").getAsString();
                     }
-                    if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().isEmpty()) {
-                        body.addProperty("relatorio_auto", dto.getEmployeeDescription());
+                    if (photoUrl != null && !photoUrl.isEmpty()) {
+                        body.addProperty("imageUrl", photoUrl);
+                        body.addProperty("photoUrl", photoUrl);
                     }
-                    if (currentDetailJson != null) {
-                        if (!body.has("photoPath") && currentDetailJson.has("photoPath")) {
-                            body.addProperty("photoPath", currentDetailJson.get("photoPath").getAsString());
-                        }
+
+                    if (currentDetailJson != null && currentDetailJson.has("photoPath")) {
+                        body.addProperty("photoPath", currentDetailJson.get("photoPath").getAsString());
                     }
+
+                    // Preserva relatório automático detalhado da IA sem sobrescrever com descrição simples
+                    String relatorio = (currentDetailJson != null && currentDetailJson.has("relatorio_auto") && !currentDetailJson.get("relatorio_auto").getAsString().isEmpty())
+                            ? currentDetailJson.get("relatorio_auto").getAsString()
+                            : (dto.getEmployeeDescription() != null ? dto.getEmployeeDescription() : "");
+                    if (!relatorio.isEmpty()) {
+                        body.addProperty("relatorio_auto", relatorio);
+                    }
+
                     currentDetailJson = body;
                     PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
                     applyDetail(currentDetailJson);
+
+                    // Busca relatório oficial de IA se ainda não estiver completo
+                    fetchAiReportIfMissing(api, body);
                 } else {
                     fallbackOccurrenceDetail(api);
                 }
@@ -316,6 +386,123 @@ public class OccurrenceDetailFragment extends Fragment {
                 }
             }
         });
+
+        // 3. Listener em tempo real do Cloud Firestore para sincronizar aprovação na Web
+        setupFirestoreRealtimeListener();
+
+        // 4. Consulta a API de Rascunhos para validar se foi aprovado pela gestão web
+        checkDraftApprovalStatus();
+    }
+
+    private void fetchAiReportIfMissing(OccurrenceAPI api, JsonObject body) {
+        if (occurrenceId == null || occurrenceId.isEmpty()) return;
+        api.getIncidentAiReport(occurrenceId).enqueue(new Callback<AiReportResponseDTO>() {
+            @Override
+            public void onResponse(@NonNull Call<AiReportResponseDTO> call, @NonNull Response<AiReportResponseDTO> repResp) {
+                if (!isAdded() || repResp.body() == null) return;
+                AiReportResponseDTO rep = repResp.body();
+                String repText = rep.getReportText() != null && !rep.getReportText().isEmpty()
+                        ? rep.getReportText() : rep.getRecommendations();
+                if (repText != null && !repText.isEmpty()) {
+                    body.addProperty("relatorio_auto", repText);
+                    currentDetailJson = body;
+                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                    if (tvOccAutoReport != null) {
+                        tvOccAutoReport.setText(repText);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<AiReportResponseDTO> call, @NonNull Throwable t) {
+            }
+        });
+    }
+
+    private void checkDraftApprovalStatus() {
+        if (occurrenceId == null || occurrenceId.isEmpty() || !isAdded()) return;
+        try {
+            ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+            chatApi.listOccurrenceDrafts().enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                    if (!isAdded() || !response.isSuccessful() || response.body() == null) return;
+                    JsonObject res = response.body();
+                    if (res.has("data") && res.get("data").isJsonArray()) {
+                        JsonArray arr = res.getAsJsonArray("data");
+                        for (int i = 0; i < arr.size(); i++) {
+                            JsonObject draft = arr.get(i).getAsJsonObject();
+                            if (draft.has("id") && occurrenceId.equals(draft.get("id").getAsString())) {
+                                String st = draft.has("status") ? draft.get("status").getAsString() : "";
+                                if ("APROVADO".equalsIgnoreCase(st) || "APPROVED".equalsIgnoreCase(st) || "CONCLUIDO".equalsIgnoreCase(st)) {
+                                    if (!"APROVADA".equalsIgnoreCase(currentStatus)) {
+                                        currentStatus = "APROVADA";
+                                        if (currentDetailJson != null) {
+                                            currentDetailJson.addProperty("status", "APROVADA");
+                                            PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                                        }
+                                        syncFinalizedUi();
+                                        NotificationHelper.notifyOccurrenceApproved(requireContext(), occurrenceId, currentMaterial);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void setupFirestoreRealtimeListener() {
+        if (occurrenceId == null || occurrenceId.isEmpty()) return;
+        try {
+            if (incidentFirestoreListener != null) {
+                incidentFirestoreListener.remove();
+            }
+            incidentFirestoreListener = FirebaseFirestore.getInstance()
+                    .collection("incidents")
+                    .document(occurrenceId)
+                    .addSnapshotListener((snapshot, e) -> {
+                        if (!isAdded() || snapshot == null || !snapshot.exists()) return;
+                        String remoteStatus = snapshot.getString("status");
+                        String remotePhoto = snapshot.getString("photoUrl");
+                        String remotePriority = snapshot.getString("prioridade");
+                        boolean updated = false;
+
+                        if (remoteStatus != null && !remoteStatus.isEmpty() && !remoteStatus.equalsIgnoreCase(currentStatus)) {
+                            currentStatus = remoteStatus;
+                            if (currentDetailJson != null) currentDetailJson.addProperty("status", remoteStatus);
+                            updated = true;
+                            if ("APPROVED".equalsIgnoreCase(remoteStatus) || "APROVADO".equalsIgnoreCase(remoteStatus) || "APROVADA".equalsIgnoreCase(remoteStatus)) {
+                                NotificationHelper.notifyOccurrenceApproved(requireContext(), occurrenceId, currentMaterial);
+                            }
+                        }
+                        if (remotePhoto != null && !remotePhoto.isEmpty()) {
+                            if (currentDetailJson == null || !remotePhoto.equals(opt(currentDetailJson, "photoUrl", ""))) {
+                                if (currentDetailJson == null) currentDetailJson = new JsonObject();
+                                currentDetailJson.addProperty("photoUrl", remotePhoto);
+                                currentDetailJson.addProperty("imageUrl", remotePhoto);
+                                updated = true;
+                            }
+                        }
+                        if (remotePriority != null && !remotePriority.isEmpty() && !remotePriority.equalsIgnoreCase(currentPriority)) {
+                            currentPriority = remotePriority;
+                            if (currentDetailJson != null) currentDetailJson.addProperty("prioridade", remotePriority);
+                            updated = true;
+                        }
+                        if (updated) {
+                            PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                            applyDetail(currentDetailJson);
+                        }
+                    });
+        } catch (Exception ignored) {
+        }
     }
 
     private void fallbackOccurrenceDetail(OccurrenceAPI api) {
@@ -565,10 +752,15 @@ public class OccurrenceDetailFragment extends Fragment {
     private void syncFinalizedUi() {
         if (!isAdded()) return;
 
-        boolean isDone = "APROVADA".equalsIgnoreCase(currentStatus)
+        boolean isDone = "APPROVED".equalsIgnoreCase(currentStatus)
+                || "APROVADO".equalsIgnoreCase(currentStatus)
+                || "APROVADA".equalsIgnoreCase(currentStatus)
                 || "RESOLVIDO".equalsIgnoreCase(currentStatus)
+                || "RESOLVIDA".equalsIgnoreCase(currentStatus)
                 || "FINALIZADA".equalsIgnoreCase(currentStatus)
-                || "CONCLUIDA".equalsIgnoreCase(currentStatus);
+                || "FINALIZADO".equalsIgnoreCase(currentStatus)
+                || "CONCLUIDA".equalsIgnoreCase(currentStatus)
+                || "CONCLUIDO".equalsIgnoreCase(currentStatus);
 
         // Tracker de 3 passos
         if (stepCircle0 != null) {
@@ -800,17 +992,22 @@ public class OccurrenceDetailFragment extends Fragment {
                 } catch (Exception ignored) {
                 }
 
-                com.aula.volta.data.notification.NotificationHelper.notifyPgrsFinalized(
-                        requireContext(), occurrenceId);
+                com.aula.volta.data.notification.NotificationHelper.notifyOccurrenceSent(
+                        requireContext(), occurrenceId, currentMaterial, currentSector);
 
+                currentStatus = "AGUARDANDO_VALIDACAO";
+                if (currentDetailJson != null) {
+                    currentDetailJson.addProperty("status", currentStatus);
+                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                }
                 syncFinalizedUi();
 
-                // Exibe Toast Flutuante de Ocorrência Finalizada (Figma 19 · 851:4403)
+                // Exibe Toast Flutuante de Ocorrência Enviada para Análise
                 showTopBannerToast(
-                        getString(R.string.toast_finalized_title),
-                        getString(R.string.toast_finalized_sub),
-                        true,
-                        false
+                        "Ocorrência enviada",
+                        "Encaminhada para a central de gestão e análise técnica",
+                        false,
+                        true
                 );
             });
         }

@@ -201,19 +201,28 @@ public class AiAnalysisJSON {
         }
         res.material = rawType.trim();
 
-        double weight = fallbackKg > 0 ? fallbackKg : 38.0;
+        boolean hasExplicitKg = false;
+        double weight = fallbackKg > 0 ? fallbackKg : 0.0;
         if (json.has("estimated_quantity_kg") && !json.get("estimated_quantity_kg").isJsonNull()) {
             try {
                 double val = json.get("estimated_quantity_kg").getAsDouble();
                 if (val > 0) {
                     weight = val;
+                    hasExplicitKg = true;
                 }
             } catch (Exception ignored) {
             }
         }
-        res.quantidadeEstimada = weight;
-        res.unidade = "kg";
-        res.confianca = 0.94;
+        if (!hasExplicitKg && json.has("quantity_kg") && !json.get("quantity_kg").isJsonNull()) {
+            try {
+                double val = json.get("quantity_kg").getAsDouble();
+                if (val > 0) {
+                    weight = val;
+                    hasExplicitKg = true;
+                }
+            } catch (Exception ignored) {
+            }
+        }
 
         String rawContam = json.has("ai_contamination_level") && !json.get("ai_contamination_level").isJsonNull()
                 ? json.get("ai_contamination_level").getAsString() : "BAIXO";
@@ -242,23 +251,71 @@ public class AiAnalysisJSON {
 
         Unidades u = new Unidades();
         String lower = rawType.toLowerCase(Locale.ROOT);
-        if (lower.contains("plást") || lower.contains("plast")) {
+        if (lower.contains("cadeira") || lower.contains("mesa") || lower.contains("móvel")
+                || lower.contains("movel") || lower.contains("mobili")) {
+            u.tipo = "Unidades";
+            u.quantidade = 1;
+            if (!hasExplicitKg && weight <= 0) weight = 5.0;
+        } else if (lower.contains("madeira") || lower.contains("pallet") || lower.contains("palete")) {
+            u.tipo = "Paletes";
+            u.quantidade = 2;
+            if (!hasExplicitKg && weight <= 0) weight = 18.0;
+        } else if (lower.contains("plást") || lower.contains("plast")) {
             u.tipo = "Fardos";
-            u.quantidade = 6;
-        } else if (lower.contains("metal") || lower.contains("alumin") || lower.contains("ferr")) {
+            u.quantidade = 2;
+            if (!hasExplicitKg && weight <= 0) weight = 8.0;
+        } else if (lower.contains("metal") || lower.contains("alumin") || lower.contains("ferr")
+                || lower.contains("aço") || lower.contains("aco")) {
             u.tipo = "Tambores";
-            u.quantidade = 4;
+            u.quantidade = 2;
+            if (!hasExplicitKg && weight <= 0) weight = 25.0;
         } else if (lower.contains("vidro")) {
             u.tipo = "Engradados";
-            u.quantidade = 12;
+            u.quantidade = 2;
+            if (!hasExplicitKg && weight <= 0) weight = 12.0;
         } else if (lower.contains("orgân") || lower.contains("organ")) {
             u.tipo = "Sacos";
-            u.quantidade = 8;
-        } else {
+            u.quantidade = 2;
+            if (!hasExplicitKg && weight <= 0) weight = 8.0;
+        } else if (lower.contains("papel") || lower.contains("papelão") || lower.contains("cartao") || lower.contains("cartão")) {
             u.tipo = "Caixas";
-            u.quantidade = 11;
+            u.quantidade = 4;
+            if (!hasExplicitKg && weight <= 0) weight = 15.0;
+        } else {
+            u.tipo = "Unidades";
+            u.quantidade = 1;
+            if (!hasExplicitKg && weight <= 0) weight = 6.0;
         }
+
+        if (json.has("units_count") && !json.get("units_count").isJsonNull()) {
+            try {
+                int count = json.get("units_count").getAsInt();
+                if (count > 0) u.quantidade = count;
+            } catch (Exception ignored) {
+            }
+        }
+        if (json.has("unit_type") && !json.get("unit_type").isJsonNull()) {
+            String ut = json.get("unit_type").getAsString();
+            if (!ut.trim().isEmpty()) u.tipo = ut.trim();
+        }
+
+        res.quantidadeEstimada = weight > 0 ? weight : 5.0;
+        res.unidade = "kg";
+        res.confianca = 0.94;
         res.unidades = u;
+
+        // Extrai classe de qualidade explícita caso fornecida pelo Gemini Vision
+        if (json.has("quality_class") && !json.get("quality_class").isJsonNull()) {
+            String qClass = json.get("quality_class").getAsString().trim();
+            if (!qClass.isEmpty()) {
+                res.material = formatMaterialWithClass(res.material, qClass);
+            }
+        } else if (json.has("classe") && !json.get("classe").isJsonNull()) {
+            String qClass = json.get("classe").getAsString().trim();
+            if (!qClass.isEmpty()) {
+                res.material = formatMaterialWithClass(res.material, qClass);
+            }
+        }
 
         return res;
     }
@@ -314,6 +371,43 @@ public class AiAnalysisJSON {
             return "Baixa";
         }
         return rawLevel.trim();
+    }
+
+    /**
+     * Calcula dinamicamente a prioridade/urgência (BAIXA, MEDIA ou ALTA)
+     * com base no tipo de resíduo, nível de contaminação e descrição.
+     * Móveis (ex.: cadeiras, mesas), madeira, paletes e resíduos inertes secos
+     * com contaminação baixa recebem prioridade BAIXA.
+     */
+    public static String calculatePriority(String wasteType, String contaminationLevel, String description) {
+        String text = ((wasteType != null ? wasteType : "") + " "
+                + (description != null ? description : "")).toLowerCase(Locale.ROOT);
+        String contam = contaminationLevel != null
+                ? contaminationLevel.toUpperCase(Locale.ROOT)
+                : "LOW";
+
+        // 1. Alta urgência: resíduos perigosos, químicos, inflamáveis, contaminação alta ou risco à operação
+        if (contam.contains("HIGH") || contam.contains("ALTA") || contam.contains("CRITICAL")
+                || text.contains("perig") || text.contains("químic") || text.contains("quimic")
+                || text.contains("óleo") || text.contains("oleo") || text.contains("graxa")
+                || text.contains("inflam") || text.contains("bateria") || text.contains("pilha")
+                || text.contains("lâmpada") || text.contains("lampada") || text.contains("tóxic")
+                || text.contains("toxic") || text.contains("contaminado com óleo")) {
+            return "ALTA";
+        }
+
+        // 2. Baixa urgência: mobiliário (cadeira, mesa, armário), móveis, madeira, paletes, sucata seca,
+        // entulho inerte ou materiais recicláveis com contaminação baixa/inexistente
+        if (text.contains("cadeira") || text.contains("mesa") || text.contains("móvel")
+                || text.contains("movel") || text.contains("mobili") || text.contains("madeira")
+                || text.contains("pallet") || text.contains("palete") || text.contains("entulho")
+                || text.contains("sucata seca") || contam.contains("LOW") || contam.contains("BAIX")
+                || contam.contains("NENHUM")) {
+            return "BAIXA";
+        }
+
+        // 3. Média urgência: contaminação média, materiais orgânicos perecíveis ou acúmulo em área de passagem
+        return "MEDIA";
     }
 
     public static AiAnalysisJSON createOfflineFallback(String setor) {

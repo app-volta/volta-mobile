@@ -140,6 +140,71 @@ public final class NotificationHelper {
     }
 
     /**
+     * Emite notificação de ocorrência enviada para análise técnica e replica no Firestore.
+     */
+    public static void notifyOccurrenceSent(Context context, String occurrenceId,
+                                            String material, String setor) {
+        String title = "Ocorrência #" + occurrenceId + " enviada";
+        String body = (material != null && !material.isEmpty())
+                ? material + " · Enviada para análise técnica"
+                : "Enviada para análise · Aguardando validação técnica";
+        String singularId = "sent_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
+                title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                singularId,
+                "NOVA_OCORRENCIA",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "bell",
+                "#12A05E",
+                "#E2F7EC",
+                false,
+                occurrenceId
+        ));
+
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                singularId, title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#12A05E", "#E2F7EC", myEmail);
+    }
+
+    /**
+     * Emite notificação de ocorrência aprovada pela gestão web e replica no Firestore.
+     */
+    public static void notifyOccurrenceApproved(Context context, String occurrenceId, String material) {
+        String title = "Ocorrência #" + occurrenceId + " aprovada";
+        String body = (material != null && !material.isEmpty())
+                ? material + " · Aprovada e homologada no PGRS"
+                : "Aprovada pela gestão técnica e contabilizada no PGRS";
+        String singularId = "appr_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
+                title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                singularId,
+                "APROVACAO",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "check",
+                "#12A05E",
+                "#E2F7EC",
+                false,
+                occurrenceId
+        ));
+
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                singularId, title, body, "APROVACAO", occurrenceId, "check", "#12A05E", "#E2F7EC", myEmail);
+    }
+
+    /**
      * Emite notificação de coleta agendada com a cooperativa e replica no Firestore.
      */
     public static void notifyPickupScheduled(Context context, String coopName, String horario) {

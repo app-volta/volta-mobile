@@ -76,6 +76,15 @@ public interface ChatbotAPI {
     Call<JsonObject> createOccurrenceDraft(@Body JsonObject request);
 
     /**
+     * Lista os rascunhos de ocorrencia cadastrados no banco para acompanhamento e auditoria.
+     */
+    @Headers({
+            "Accept: application/json; charset=utf-8"
+    })
+    @GET("v1/occurrences/drafts")
+    Call<JsonObject> listOccurrenceDrafts();
+
+    /**
      * Homologa/aprova rascunho no banco transacional.
      */
     @Headers({

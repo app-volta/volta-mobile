@@ -109,6 +109,8 @@ public class AiAnalysisFragment extends Fragment {
     private String snapshotContamination = "Baixa";
 
     private AiAnalysisJSON analysis;
+    private com.google.gson.JsonObject lastPredictJson;
+    private String currentPriority = "BAIXA";
     private ObjectAnimator scanAnimator;
     private final Runnable hideCorrectionToastRunnable = () -> {
         if (isAdded() && toastCorrectionSaved != null) {
@@ -375,9 +377,9 @@ public class AiAnalysisFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject predictJson = response.body();
                     Log.i("AiAnalysisFragment", "Gemini IA Predict sucesso: " + predictJson);
-                    analysis = AiAnalysisJSON.fromPredict(predictJson, 38.0);
+                    lastPredictJson = predictJson;
+                    analysis = AiAnalysisJSON.fromPredict(predictJson, 0);
                     applyAnalysis();
-                    createBackgroundDraft(predictJson);
                 } else {
                     Log.w("AiAnalysisFragment", "predictWaste retornou HTTP " + response.code() + ", tentando fluxo alternativo");
                     String fallbackUrl = remoteImageUrl != null ? remoteImageUrl : CloudinaryUploader.getCachedUrl(photoPath);
@@ -724,6 +726,8 @@ public class AiAnalysisFragment extends Fragment {
                     && analysis.getContaminacao().getNivel() != null)
                     ? AiAnalysisJSON.mapContaminationLabel(analysis.getContaminacao().getNivel())
                     : "Baixa";
+
+            currentPriority = AiAnalysisJSON.calculatePriority(selectedMaterial, selectedContamination, descricao);
 
             if (analysis.getQuantidadeEstimada() > 0) {
                 initialEstimatedWeight = (int) Math.round(analysis.getQuantidadeEstimada());
@@ -1176,11 +1180,12 @@ public class AiAnalysisFragment extends Fragment {
                 ? selectedMaterial
                 : (analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
         String material = AiAnalysisJSON.formatMaterialWithClass(rawMat, selectedClass);
-        double qtd = isRevised ? currentWeight : (analysis != null ? analysis.getQuantidadeEstimada() : 38.0);
+        double qtd = isRevised ? currentWeight : (analysis != null ? analysis.getQuantidadeEstimada() : 5.0);
         String unidade = "kg";
+        String calculatedPriority = AiAnalysisJSON.calculatePriority(material, selectedContamination, descricao);
 
         if (!SyncManager.isOnline(requireContext())) {
-            saveOfflineAndNavigateToDetail(v, material, qtd, unidade);
+            saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
             return;
         }
 
@@ -1190,7 +1195,7 @@ public class AiAnalysisFragment extends Fragment {
                 String cached = CloudinaryUploader.getCachedUrl(photoPath);
                 if (cached != null && !cached.isEmpty()) {
                     remoteImageUrl = cached;
-                    sendIncidentToBackend(v, material, qtd, unidade, cached);
+                    submitOccurrenceDraftToBackend(v, material, qtd, unidade, cached, calculatedPriority);
                     return;
                 }
                 File imageFile = new File(photoPath);
@@ -1200,13 +1205,13 @@ public class AiAnalysisFragment extends Fragment {
                         public void onSuccess(String remoteUrl, String publicId) {
                             if (!isAdded()) return;
                             remoteImageUrl = remoteUrl;
-                            sendIncidentToBackend(v, material, qtd, unidade, remoteUrl);
+                            submitOccurrenceDraftToBackend(v, material, qtd, unidade, remoteUrl, calculatedPriority);
                         }
 
                         @Override
                         public void onError(Exception exception, String fallbackLocalPath) {
                             if (!isAdded()) return;
-                            sendIncidentToBackend(v, material, qtd, unidade, null);
+                            submitOccurrenceDraftToBackend(v, material, qtd, unidade, null, calculatedPriority);
                         }
                     });
                     return;
@@ -1214,27 +1219,97 @@ public class AiAnalysisFragment extends Fragment {
             }
         }
 
-        sendIncidentToBackend(v, material, qtd, unidade, remoteImageUrl);
+        submitOccurrenceDraftToBackend(v, material, qtd, unidade, remoteImageUrl, calculatedPriority);
     }
 
-    private void sendIncidentToBackend(View v, String material, double qtd, String unidade, @Nullable String photoUrl) {
+    private void submitOccurrenceDraftToBackend(View v, String material, double qtd, String unidade,
+                                                @Nullable String photoUrl, String calculatedPriority) {
         if (!isAdded() || getContext() == null) {
             return;
         }
 
-        String areaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+        final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
+        qaApi.getMyAreas().enqueue(new Callback<JsonArray>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> areaResp) {
+                if (!isAdded()) return;
+                String resolvedAreaId = AiAnalysisJSON.resolveAreaId(areaResp.body(), setor);
+                if (resolvedAreaId == null) {
+                    resolvedAreaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+                }
+                executeDraftCreation(v, material, qtd, unidade, photoUrl, calculatedPriority, resolvedAreaId);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                executeDraftCreation(v, material, qtd, unidade, photoUrl, calculatedPriority, "3059a21a-a46d-4e88-a1be-bf69c240ae0c");
+            }
+        });
+    }
+
+    private void executeDraftCreation(View v, String material, double qtd, String unidade,
+                                      @Nullable String photoUrl, String calculatedPriority, String areaId) {
+        String empDesc = (descricao != null && !descricao.isEmpty())
+                ? descricao
+                : "Resíduo registrado via app mobile no setor " + (setor != null ? setor : "Operacional");
+
+        JsonObject draftReq = new JsonObject();
+        draftReq.addProperty("area_id", areaId);
+        draftReq.addProperty("employee_description", empDesc);
+        draftReq.addProperty("priority", calculatedPriority);
+        if (photoUrl != null && !photoUrl.isEmpty()) {
+            draftReq.addProperty("photo_url", photoUrl);
+            draftReq.addProperty("photoUrl", photoUrl);
+            draftReq.addProperty("imageUrl", photoUrl);
+        }
+        draftReq.addProperty("estimated_quantity", qtd);
+
+        if (lastPredictJson != null) {
+            draftReq.add("ai_data", lastPredictJson);
+        } else if (analysis != null && analysis.getRawAiData() != null) {
+            draftReq.add("ai_data", analysis.getRawAiData());
+        }
+
+        ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+        chatApi.createOccurrenceDraft(draftReq).enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> resp) {
+                if (!isAdded()) return;
+                if (resp.isSuccessful() && resp.body() != null && resp.body().has("draft_id")) {
+                    String draftId = resp.body().get("draft_id").getAsString();
+                    createdIncidentId = draftId;
+                    handleOccurrenceCreatedSuccess(v, draftId, material, qtd, unidade, photoUrl, calculatedPriority);
+                } else {
+                    Log.w("AiAnalysisFragment", "createOccurrenceDraft falhou (" + resp.code() + "), tentando fallback de incidente");
+                    fallbackToCoreIncident(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, empDesc);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                Log.w("AiAnalysisFragment", "createOccurrenceDraft erro de rede: " + t.getMessage() + ", tentando fallback");
+                fallbackToCoreIncident(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, empDesc);
+            }
+        });
+    }
+
+    private void fallbackToCoreIncident(View v, String material, double qtd, String unidade,
+                                        @Nullable String photoUrl, String calculatedPriority,
+                                        String areaId, String empDesc) {
         String wasteTypeId = "bd985415-4b25-4c07-beca-cc086dce9b13";
         String lowerMat = material.toLowerCase(Locale.ROOT);
         if (lowerMat.contains("papel")) {
-            wasteTypeId = "4e73b22b-586b-4e12-82dc-98df718d09aa"; // CARDBOARD
+            wasteTypeId = "4e73b22b-586b-4e12-82dc-98df718d09aa";
         } else if (lowerMat.contains("metal")) {
-            wasteTypeId = "7020bc8b-fba0-4ecb-9975-aaeb7428f522"; // METAL
+            wasteTypeId = "7020bc8b-fba0-4ecb-9975-aaeb7428f522";
         } else if (lowerMat.contains("vidro")) {
-            wasteTypeId = "976a4df6-1fc6-407b-b353-8d9e68c1c456"; // GLASS
+            wasteTypeId = "976a4df6-1fc6-407b-b353-8d9e68c1c456";
         } else if (lowerMat.contains("orgânico") || lowerMat.contains("organico")) {
-            wasteTypeId = "bc7f6c3c-8c08-4100-84cf-29d3809088ba"; // ORGANIC
+            wasteTypeId = "bc7f6c3c-8c08-4100-84cf-29d3809088ba";
         } else if (lowerMat.contains("perigoso")) {
-            wasteTypeId = "e999c0ec-a841-4547-a877-33e070e171b3"; // HAZARDOUS
+            wasteTypeId = "e999c0ec-a841-4547-a877-33e070e171b3";
         }
 
         String contaminationLevel = "LOW";
@@ -1247,10 +1322,6 @@ public class AiAnalysisFragment extends Fragment {
             }
         }
 
-        String empDesc = (descricao != null && !descricao.isEmpty())
-                ? descricao
-                : "Resíduo registrado via app mobile no setor " + (setor != null ? setor : "Operacional");
-
         IncidentRequestDTO req = new IncidentRequestDTO(
                 areaId,
                 wasteTypeId,
@@ -1258,56 +1329,83 @@ public class AiAnalysisFragment extends Fragment {
                 empDesc,
                 contaminationLevel,
                 qtd,
-                "MEDIUM"
+                calculatedPriority
         );
 
         OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
         api.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
             @Override
             public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
-                if (!isAdded()) {
-                    return;
-                }
+                if (!isAdded()) return;
                 if (response.isSuccessful() && response.body() != null && response.body().getId() != null) {
                     IncidentResponseDTO inc = response.body();
                     String id = inc.getId();
                     String savedPhotoUrl = inc.getPhotoUrl() != null ? inc.getPhotoUrl() : photoUrl;
-
-                    // Replica no Cloud Firestore para sincronização em tempo real
-                    try {
-                        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-                        java.util.Map<String, Object> fDoc = new java.util.HashMap<>();
-                        fDoc.put("id", id);
-                        fDoc.put("photoUrl", savedPhotoUrl);
-                        fDoc.put("setor", setor != null ? setor : "Linha de Produção A");
-                        fDoc.put("material", material);
-                        fDoc.put("quantidade", qtd);
-                        fDoc.put("status", "EM_ANALISE");
-                        fDoc.put("timestamp", com.google.firebase.Timestamp.now());
-                        db.collection("incidents").document(id).set(fDoc, com.google.firebase.firestore.SetOptions.merge());
-                    } catch (Exception ignored) {
-                    }
-
-                    Occurrence occ = Occurrence.fromIncident(inc);
-                    OccurrenceStore.pushLocal(requireContext(), occ);
-
-                    registerAndNavigate(v, id, material, qtd, unidade);
+                    handleOccurrenceCreatedSuccess(v, id, material, qtd, unidade, savedPhotoUrl, calculatedPriority);
                 } else {
-                    saveOfflineAndNavigateToDetail(v, material, qtd, unidade);
+                    saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                saveOfflineAndNavigateToDetail(v, material, qtd, unidade);
+                if (!isAdded()) return;
+                saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
             }
         });
     }
 
-    private void persistOccurrenceDetail(String id, String material, double qtd, String unidade) {
+    private void handleOccurrenceCreatedSuccess(View v, String id, String material, double qtd,
+                                                String unidade, @Nullable String photoUrl, String calculatedPriority) {
+        // 1. Replica no Cloud Firestore para sincronização em tempo real com o Dashboard Web
+        try {
+            com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+            java.util.Map<String, Object> fDoc = new java.util.HashMap<>();
+            fDoc.put("id", id);
+            if (photoUrl != null && !photoUrl.isEmpty()) {
+                fDoc.put("photoUrl", photoUrl);
+            }
+            fDoc.put("setor", setor != null ? setor : "Linha de Produção A");
+            fDoc.put("material", material);
+            fDoc.put("quantidade", qtd);
+            fDoc.put("status", "AGUARDANDO_VALIDACAO");
+            fDoc.put("prioridade", calculatedPriority);
+            fDoc.put("timestamp", com.google.firebase.Timestamp.now());
+            db.collection("incidents").document(id).set(fDoc, com.google.firebase.firestore.SetOptions.merge());
+        } catch (Exception ignored) {
+        }
+
+        // 2. Persiste detalhes completos (foto, material, peso, relatório da IA) no cache local
+        persistOccurrenceDetail(id, material, qtd, unidade, calculatedPriority, photoUrl);
+
+        // 3. Adiciona na lista da Home
+        String title = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        Occurrence occ = new Occurrence(
+                id,
+                title,
+                setor == null ? "Frigorífico — Setor B2" : setor,
+                "Hoje",
+                calculatedPriority,
+                "AGUARDANDO_VALIDACAO",
+                material,
+                photoUrl,
+                photoPath
+        );
+        OccurrenceStore.pushLocal(requireContext(), occ);
+
+        // 4. Auditoria e notificação determinística "Ocorrência #ID enviada"
+        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR",
+                "ocorrencia", id, null, "NOVO");
+        pushOccurrenceNotification(id, material);
+
+        Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
+
+        // 5. Retorna diretamente à Home
+        navigateToHome(v);
+    }
+
+    private void persistOccurrenceDetail(String id, String material, double qtd, String unidade,
+                                         String priority, @Nullable String photoUrl) {
         JsonObject detail = new JsonObject();
         detail.addProperty("id", id);
         String formattedMat = AiAnalysisJSON.formatMaterialWithClass(material, selectedClass);
@@ -1317,16 +1415,17 @@ public class AiAnalysisFragment extends Fragment {
         detail.addProperty("setor", (setor != null && !setor.isEmpty()) ? setor : "Frigorífico — Setor B2");
         detail.addProperty("peso_estimado", qtd);
         detail.addProperty("unidade", unidade);
-        detail.addProperty("status", "EM_ANALISE");
-        detail.addProperty("prioridade", "ALTA");
+        detail.addProperty("status", "AGUARDANDO_VALIDACAO");
+        detail.addProperty("prioridade", priority);
         detail.addProperty("quando", "agora");
         if (photoPath != null && !photoPath.isEmpty()) {
             detail.addProperty("photoPath", photoPath);
         }
-        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
-            detail.addProperty("photoUrl", remoteImageUrl);
-            detail.addProperty("imageUrl", remoteImageUrl);
-            detail.addProperty("foto_url", remoteImageUrl);
+        String resolvedPhoto = photoUrl != null && !photoUrl.isEmpty() ? photoUrl : remoteImageUrl;
+        if (resolvedPhoto != null && !resolvedPhoto.isEmpty()) {
+            detail.addProperty("photoUrl", resolvedPhoto);
+            detail.addProperty("imageUrl", resolvedPhoto);
+            detail.addProperty("foto_url", resolvedPhoto);
         }
         String relatorio = (analysis != null && analysis.getReportText() != null && !analysis.getReportText().isEmpty())
                 ? analysis.getReportText()
@@ -1339,18 +1438,7 @@ public class AiAnalysisFragment extends Fragment {
         PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", "latest_photo", detail.toString());
     }
 
-    private void registerAndNavigate(View v, String id, String material, double qtd, String unidade) {
-        if (!isAdded() || getContext() == null) {
-            return;
-        }
-        persistOccurrenceDetail(id, material, qtd, unidade);
-        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR",
-                "ocorrencia", id, null, "NOVO");
-        pushOccurrenceNotification(id, material);
-
-        Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
-
-        // Retorna direto para a tela inicial (nav_home) limpando a pilha de registro (requisito oficial)
+    private void navigateToHome(View v) {
         try {
             NavOptions navOptions = new NavOptions.Builder()
                     .setPopUpTo(R.id.nav_home, false)
@@ -1366,52 +1454,48 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
-    private void saveOfflineAndNavigateToDetail(View v, String material, double qtd, String unidade) {
+    private void saveOfflineAndNavigateToDetail(View v, String material, double qtd, String unidade, String priority) {
         if (!isAdded() || getContext() == null) {
             return;
         }
-        String localId = String.valueOf(10000 + (System.currentTimeMillis() % 90000));
-        persistOccurrenceDetail(localId, material, qtd, unidade);
+        String offlineId = "off_" + System.currentTimeMillis();
+        persistOccurrenceDetail(offlineId, material, qtd, unidade, priority, null);
+        pushOccurrenceToList(offlineId, material, priority);
+        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR_OFFLINE",
+                "ocorrencia", offlineId, null, "OFFLINE");
+        pushOccurrenceNotification(offlineId, material);
+
         PendingOccurrence pending = new PendingOccurrence(
-                localId, photoPath, descricao, setor, material, qtd, unidade, System.currentTimeMillis());
+                offlineId,
+                material,
+                (descricao != null && !descricao.isEmpty()) ? descricao : material,
+                setor == null ? "Frigorífico — Setor B2" : setor,
+                "LOW",
+                qtd,
+                photoPath,
+                System.currentTimeMillis()
+        );
         SyncQueue.enqueue(requireContext(), pending);
 
-        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR_OFFLINE",
-                "ocorrencia", localId, null, "PENDENTE_SYNC");
-        pushOccurrenceNotification(localId, material);
-        pushOccurrenceToList(localId, material);
+        Toast.makeText(requireContext(), "Ocorrência salva offline", Toast.LENGTH_SHORT).show();
 
-        Toast.makeText(requireContext(), R.string.sync_saved_offline, Toast.LENGTH_SHORT).show();
-
-        try {
-            NavOptions navOptions = new NavOptions.Builder()
-                    .setPopUpTo(R.id.nav_home, false)
-                    .build();
-            View target = getView() != null ? getView() : v;
-            if (target != null) {
-                Navigation.findNavController(target).navigate(R.id.nav_home, null, navOptions);
-            }
-        } catch (Exception e) {
-            if (getView() != null) {
-                Navigation.findNavController(getView()).popBackStack(R.id.nav_home, false);
-            }
-        }
+        navigateToHome(v);
     }
 
     private void pushOccurrenceNotification(String occurrenceId, String material) {
-        com.aula.volta.data.notification.NotificationHelper.notifyOccurrenceCreated(
+        com.aula.volta.data.notification.NotificationHelper.notifyOccurrenceSent(
                 requireContext(), occurrenceId, material, setor != null ? setor : "");
     }
 
-    private void pushOccurrenceToList(String occurrenceId, String material) {
+    private void pushOccurrenceToList(String occurrenceId, String material, String priority) {
         String title = (descricao != null && !descricao.isEmpty()) ? descricao : material;
         OccurrenceStore.pushLocal(requireContext(), new Occurrence(
                 occurrenceId,
                 title,
                 setor == null ? "Frigorífico — Setor B2" : setor,
                 getString(R.string.notif_now),
-                "ALTA",
-                "NOVO",
+                priority,
+                "AGUARDANDO_VALIDACAO",
                 material,
                 remoteImageUrl,
                 photoPath));
