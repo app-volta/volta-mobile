@@ -974,6 +974,20 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/chipMatMadeira"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_chip_white_stroke"
+                        android:gravity="center"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="Madeira"
+                        android:textColor="@color/vf_text_secondary"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
                         android:id="@+id/chipMatOrganico"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"

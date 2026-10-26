@@ -112,8 +112,64 @@ public final class OccurrenceFilter {
             return false;
         }
         String material = normalize(occurrence.getMaterial());
+        String titulo = occurrence.getTitulo() != null ? normalize(occurrence.getTitulo()) : "";
+
         for (String filter : filterMaterials) {
-            if (filter != null && material.contains(normalize(filter))) {
+            if (filter == null || filter.trim().isEmpty()) {
+                continue;
+            }
+            String normFilter = normalize(filter);
+
+            // 1. Match direto no campo de material
+            if (material.contains(normFilter)) {
+                return true;
+            }
+
+            // 2. Mapeamentos semânticos no campo material
+            if (normFilter.contains("madeira") && (material.contains("pallet") || material.contains("palete")
+                    || material.contains("estrado") || material.contains("caixote") || material.contains("tabua")
+                    || material.contains("pbr"))) {
+                return true;
+            }
+            if (normFilter.contains("plast") && (material.contains("pet") || material.contains("isopor")
+                    || material.contains("eps") || material.contains("cadeira") || material.contains("filme stretch")
+                    || material.contains("bombona") || material.contains("copo"))) {
+                return true;
+            }
+            if (normFilter.contains("metal") && (material.contains("alumin") || material.contains("ferro")
+                    || material.contains("aco") || material.contains("lata") || material.contains("sucata"))) {
+                return true;
+            }
+            if (normFilter.contains("papel") && (material.contains("cartao") || material.contains("kraft")
+                    || material.contains("papelao"))) {
+                return true;
+            }
+            if (normFilter.contains("vidro") && (material.contains("garrafa") || material.contains("frasco")
+                    || material.contains("caco") || material.contains("pote"))) {
+                return true;
+            }
+            if (normFilter.contains("organ") && (material.contains("alimento") || material.contains("comida")
+                    || material.contains("refeicao") || material.contains("resto"))) {
+                return true;
+            }
+
+            // 3. Match no título apenas se o título especificar explicitamente a família do material
+            if (normFilter.contains("madeira") && titulo.contains("madeira")) {
+                return true;
+            }
+            if (normFilter.contains("plast") && (titulo.contains("plast") || titulo.contains("isopor") || titulo.contains("eps"))) {
+                return true;
+            }
+            if (normFilter.contains("metal") && (titulo.contains("metal") || titulo.contains("alumin") || titulo.contains("ferro") || titulo.contains("aco"))) {
+                return true;
+            }
+            if (normFilter.contains("papel") && (titulo.contains("papel") || titulo.contains("papelao") || titulo.contains("kraft"))) {
+                return true;
+            }
+            if (normFilter.contains("vidro") && titulo.contains("vidro")) {
+                return true;
+            }
+            if (normFilter.contains("organ") && (titulo.contains("organ") || titulo.contains("alimento") || titulo.contains("comida"))) {
                 return true;
             }
         }

@@ -110,7 +110,7 @@ public class OccurrenceDetailFragment extends Fragment {
     private String currentMaterial = "Papelão (Classe A)";
     private String currentMaterialName = "Papelão";
     private String currentQualityClass = "A";
-    private String currentPriority = "ALTA";
+    private String currentPriority = "BAIXA";
     private String currentContamination = "baixa";
     private String currentSector = "Frigorífico — Setor B2";
     private String currentWeight = "38 kg";
@@ -560,7 +560,7 @@ public class OccurrenceDetailFragment extends Fragment {
         currentDetailJson.addProperty("setor", "Frigorífico — Setor B2");
         currentDetailJson.addProperty("peso_estimado", 38.0);
         currentDetailJson.addProperty("status", currentStatus);
-        currentDetailJson.addProperty("prioridade", "ALTA");
+        currentDetailJson.addProperty("prioridade", "BAIXA");
         currentDetailJson.addProperty("quando", "hoje, 09:12");
         currentDetailJson.addProperty("relatorio_auto",
                 "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta.");
@@ -597,7 +597,7 @@ public class OccurrenceDetailFragment extends Fragment {
             contam = "baixa";
         }
         currentContamination = contam.toLowerCase(java.util.Locale.forLanguageTag("pt-BR"));
-        currentPriority = opt(json, "prioridade", "ALTA");
+        currentPriority = opt(json, "prioridade", "BAIXA");
         applyPriorityBadge(currentPriority);
 
         currentSector = opt(json, "setor", "Frigorífico — Setor B2");
@@ -605,7 +605,12 @@ public class OccurrenceDetailFragment extends Fragment {
         currentStatus = opt(json, "status", "EM_ANALISE");
 
         if (tvOccTitle != null) {
-            tvOccTitle.setText(getString(R.string.occ_title));
+            String customTitle = opt(json, "titulo", "");
+            if (!customTitle.isEmpty() && !customTitle.startsWith("Ocorrência")) {
+                tvOccTitle.setText(customTitle);
+            } else {
+                tvOccTitle.setText(getString(R.string.occ_title));
+            }
         }
         if (tvOccSubtitle != null) {
             tvOccSubtitle.setText("Registrada por " + com.aula.volta.data.local.SessionManager.name(requireContext()) + " • " + quando);

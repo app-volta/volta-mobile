@@ -83,6 +83,8 @@ public class OccurrencesFilterSheet extends BottomSheetDialogFragment {
         Chip plastico = view.findViewById(R.id.chipMatPlastico);
         Chip metal = view.findViewById(R.id.chipMatMetal);
         Chip vidro = view.findViewById(R.id.chipMatVidro);
+        Chip madeira = view.findViewById(R.id.chipMatMadeira);
+        Chip organico = view.findViewById(R.id.chipMatOrganico);
         Chip aberta = view.findViewById(R.id.chipStatusAberta);
         Chip analise = view.findViewById(R.id.chipStatusAnalise);
         Chip coletada = view.findViewById(R.id.chipStatusColetada);
@@ -91,6 +93,12 @@ public class OccurrencesFilterSheet extends BottomSheetDialogFragment {
         setupMaterialChip(plastico, "plast", "#3B82F6", "#E4EFFF", materials);
         setupMaterialChip(metal, "metal", "#8B6FE0", "#EFEAFB", materials);
         setupMaterialChip(vidro, "vidro", "#6B7280", "#F1F2F6", materials);
+        if (madeira != null) {
+            setupMaterialChip(madeira, "madeira", "#B45309", "#FEF3C7", materials);
+        }
+        if (organico != null) {
+            setupMaterialChip(organico, "organ", "#12A05E", "#E6F7EF", materials);
+        }
 
         setupStatusChip(aberta, "NOVO", statuses);
         setupStatusChip(analise, "EM_ANALISE", statuses);
@@ -104,6 +112,8 @@ public class OccurrencesFilterSheet extends BottomSheetDialogFragment {
             plastico.setChecked(false);
             metal.setChecked(false);
             vidro.setChecked(false);
+            if (madeira != null) madeira.setChecked(false);
+            if (organico != null) organico.setChecked(false);
             aberta.setChecked(false);
             analise.setChecked(false);
             coletada.setChecked(false);

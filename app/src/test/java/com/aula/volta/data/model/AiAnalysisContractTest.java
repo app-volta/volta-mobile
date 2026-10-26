@@ -183,4 +183,62 @@ public class AiAnalysisContractTest {
         AiAnalysisJSON aiMetal = AiAnalysisJSON.fromPredict(metal, 50.0);
         assertEquals("Tambores", aiMetal.getUnidades().getTipo());
     }
+
+    @Test
+    public void classifyPrimaryMaterial_mapsSpecificItemsToEcoCategoriesCorrectly() {
+        assertEquals("Plástico", AiAnalysisJSON.classifyPrimaryMaterial("Cadeira de escritório", "", ""));
+        assertEquals("Plástico", AiAnalysisJSON.classifyPrimaryMaterial("Bandejas de isopor EPS", "", ""));
+        assertEquals("Madeira", AiAnalysisJSON.classifyPrimaryMaterial("Palete de madeira PBR", "", ""));
+        assertEquals("Papelão", AiAnalysisJSON.classifyPrimaryMaterial("Caixas de papelão ondulado", "", ""));
+        assertEquals("Metal", AiAnalysisJSON.classifyPrimaryMaterial("Sucata de ferro e perfis metálicos", "", ""));
+        assertEquals("Vidro", AiAnalysisJSON.classifyPrimaryMaterial("Garrafas de vidro âmbar", "", ""));
+        assertEquals("Orgânico", AiAnalysisJSON.classifyPrimaryMaterial("Restos de comida do refeitório", "", ""));
+        assertEquals("Perigoso", AiAnalysisJSON.classifyPrimaryMaterial("Estopas contaminadas com óleo e graxa", "", ""));
+    }
+
+    @Test
+    public void calculatePriority_chairsAndFurnitureAlwaysLowPriorityUnlessHazardous() {
+        // Cadeiras e móveis inertes secos com contaminação baixa recebem prioridade BAIXA determinística
+        assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Cadeira de escritório", "Baixa", "Cadeira quebrada"));
+        assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Plástico — Cadeira de escritório (Classe A)", "LOW", ""));
+        assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Palete PBR de madeira", "Baixa", ""));
+        assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Papelão A", "LOW", ""));
+
+        // Alimentos e materiais perecíveis recebem prioridade MEDIA
+        assertEquals("MEDIA", AiAnalysisJSON.calculatePriority("Restos de alimentos", "Baixa", ""));
+        assertEquals("MEDIA", AiAnalysisJSON.calculatePriority("Papelão molhado", "MÉDIA", ""));
+
+        // Materiais perigosos e contaminados com óleo recebem prioridade ALTA
+        assertEquals("ALTA", AiAnalysisJSON.calculatePriority("Óleo lubrificante usado", "Baixa", ""));
+        assertEquals("ALTA", AiAnalysisJSON.calculatePriority("Sucata com graxa", "HIGH", ""));
+    }
+
+    @Test
+    public void formatMaterialWithClass_primaryAndSpecificItemComposition() {
+        assertEquals("Plástico — Cadeira de escritório (Classe A)",
+                AiAnalysisJSON.formatMaterialWithClass("Plástico", "Cadeira de escritório", "A"));
+        assertEquals("Madeira — Palete PBR (Classe B)",
+                AiAnalysisJSON.formatMaterialWithClass("Madeira", "Palete PBR", "B"));
+        assertEquals("Papelão (Classe A)",
+                AiAnalysisJSON.formatMaterialWithClass("Papelão", "Papelão", "A"));
+
+        // Extração reversa de primary e specific item
+        assertEquals("Plástico", AiAnalysisJSON.extractPrimaryMaterial("Plástico — Cadeira de escritório (Classe A)"));
+        assertEquals("Cadeira de escritório", AiAnalysisJSON.extractSpecificItem("Plástico — Cadeira de escritório (Classe A)"));
+    }
+
+    @Test
+    public void fromPredict_chairsAssignedRealisticUnitsAndWeight() {
+        com.google.gson.JsonObject chairJson = new com.google.gson.JsonObject();
+        chairJson.addProperty("detected_waste_type", "Cadeira de escritório");
+        chairJson.addProperty("ai_contamination_level", "BAIXO");
+
+        AiAnalysisJSON aiChair = AiAnalysisJSON.fromPredict(chairJson, 0);
+        assertEquals("Plástico", aiChair.getPrimaryMaterial());
+        assertEquals("Cadeira de escritório", aiChair.getSpecificItem());
+        assertNotNull(aiChair.getUnidades());
+        assertEquals("Unidades", aiChair.getUnidades().getTipo());
+        assertEquals(1, aiChair.getUnidades().getQuantidade());
+        assertEquals(5.0, aiChair.getQuantidadeEstimada(), 0.001);
+    }
 }

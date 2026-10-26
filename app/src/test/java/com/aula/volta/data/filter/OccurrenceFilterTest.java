@@ -122,4 +122,27 @@ public class OccurrenceFilterTest {
         assertTrue(OccurrenceFilter.hasActiveFilters(null, Collections.singletonList("papel"), null));
         assertTrue(OccurrenceFilter.hasActiveFilters(null, null, Collections.singletonList("NOVO")));
     }
+
+    @Test
+    public void testFilterByPrimaryMaterialAndSpecificItem() {
+        List<Occurrence> extended = new ArrayList<>(sampleOccurrences);
+        extended.add(new Occurrence("48295", "Cadeira de escritório", "Almoxarifado", "há 3 horas", "BAIXA", "NOVO", "Plástico — Cadeira de escritório (Classe A)"));
+        extended.add(new Occurrence("48296", "Palete PBR Quebrado", "Expedição", "há 4 horas", "BAIXA", "NOVO", "Madeira — Palete PBR (Classe B)"));
+
+        // Filtro por "madeira" deve encontrar o Palete PBR
+        List<String> woodFilter = Collections.singletonList("madeira");
+        List<Occurrence> woodResult = OccurrenceFilter.filter(extended, null, woodFilter, null);
+        assertEquals(1, woodResult.size());
+        assertEquals("48296", woodResult.get(0).getId());
+
+        // Filtro por "plast" deve encontrar tanto Plástico Filme quanto Cadeira de escritório classificada como Plástico
+        List<String> plasticFilter = Collections.singletonList("plast");
+        List<Occurrence> plasticResult = OccurrenceFilter.filter(extended, null, plasticFilter, null);
+        assertEquals(2, plasticResult.size());
+
+        // Busca textual por "cadeira" encontra a cadeira
+        List<Occurrence> chairResult = OccurrenceFilter.filter(extended, "cadeira", null, null);
+        assertEquals(1, chairResult.size());
+        assertEquals("48295", chairResult.get(0).getId());
+    }
 }

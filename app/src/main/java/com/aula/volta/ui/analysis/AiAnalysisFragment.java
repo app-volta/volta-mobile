@@ -427,7 +427,8 @@ public class AiAnalysisFragment extends Fragment {
                 JsonObject draftReq = new JsonObject();
                 draftReq.addProperty("area_id", areaId);
                 draftReq.addProperty("employee_description", empDesc);
-                draftReq.addProperty("priority", "MEDIA");
+                String bgPriority = AiAnalysisJSON.calculatePriority(empDesc, "LOW", empDesc);
+                draftReq.addProperty("priority", bgPriority);
                 draftReq.add("ai_data", aiData);
 
                 ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
@@ -682,7 +683,9 @@ public class AiAnalysisFragment extends Fragment {
 
         if (isRevised) {
             String classLetter = selectedClass != null ? selectedClass.replace("Classe ", "").trim() : "A";
-            tvAiMaterial.setText(selectedMaterial + (classLetter.isEmpty() ? "" : " " + classLetter));
+            String specific = (analysis != null && analysis.getSpecificItem() != null)
+                    ? analysis.getSpecificItem() : "";
+            tvAiMaterial.setText(AiAnalysisJSON.formatMaterialWithClass(selectedMaterial, specific, selectedClass));
             tvAiContamination.setText(selectedContamination);
             tvAiQuantity.setText("≈ " + currentWeight + " kg");
 
@@ -723,14 +726,16 @@ public class AiAnalysisFragment extends Fragment {
             String rawMat = analysis.getMaterial() != null ? analysis.getMaterial().trim() : "Papelão A";
             String classLetter = AiAnalysisJSON.extractQualityClassLetter(rawMat, null);
             selectedClass = "Classe " + classLetter;
-            selectedMaterial = AiAnalysisJSON.extractMaterialName(rawMat);
+            String primary = analysis.getPrimaryMaterial();
+            String specific = analysis.getSpecificItem();
+            selectedMaterial = primary;
 
             selectedContamination = (analysis.getContaminacao() != null
                     && analysis.getContaminacao().getNivel() != null)
                     ? AiAnalysisJSON.mapContaminationLabel(analysis.getContaminacao().getNivel())
                     : "Baixa";
 
-            currentPriority = AiAnalysisJSON.calculatePriority(selectedMaterial, selectedContamination, descricao);
+            currentPriority = AiAnalysisJSON.calculatePriority(rawMat, selectedContamination, descricao);
 
             if (analysis.getQuantidadeEstimada() > 0) {
                 initialEstimatedWeight = (int) Math.round(analysis.getQuantidadeEstimada());
@@ -747,7 +752,8 @@ public class AiAnalysisFragment extends Fragment {
                 tvEditUnitsValue.setText(String.valueOf(currentUnits));
             }
 
-            tvAiMaterial.setText(rawMat);
+            String formattedDisplayMat = AiAnalysisJSON.formatMaterialWithClass(primary, specific, selectedClass);
+            tvAiMaterial.setText(formattedDisplayMat);
             tvAiContamination.setText(selectedContamination);
             String quantidade = "≈ " + trimNumber(analysis.getQuantidadeEstimada()) + " " + analysis.getUnidade();
             tvAiQuantity.setText(quantidade);
@@ -872,10 +878,11 @@ public class AiAnalysisFragment extends Fragment {
         TextView chipPlastico = root.findViewById(R.id.chipMatPlastico);
         TextView chipMetal = root.findViewById(R.id.chipMatMetal);
         TextView chipVidro = root.findViewById(R.id.chipMatVidro);
+        TextView chipMadeira = root.findViewById(R.id.chipMatMadeira);
         TextView chipOrganico = root.findViewById(R.id.chipMatOrganico);
         TextView chipOutro = root.findViewById(R.id.chipMatOutro);
 
-        TextView[] chips = {chipPapelao, chipPlastico, chipMetal, chipVidro, chipOrganico, chipOutro};
+        TextView[] chips = {chipPapelao, chipPlastico, chipMetal, chipVidro, chipMadeira, chipOrganico, chipOutro};
         for (TextView chip : chips) {
             if (chip == null) continue;
             chip.setOnClickListener(v -> {
@@ -892,10 +899,11 @@ public class AiAnalysisFragment extends Fragment {
         TextView chipPlastico = root.findViewById(R.id.chipMatPlastico);
         TextView chipMetal = root.findViewById(R.id.chipMatMetal);
         TextView chipVidro = root.findViewById(R.id.chipMatVidro);
+        TextView chipMadeira = root.findViewById(R.id.chipMatMadeira);
         TextView chipOrganico = root.findViewById(R.id.chipMatOrganico);
         TextView chipOutro = root.findViewById(R.id.chipMatOutro);
 
-        TextView[] chips = {chipPapelao, chipPlastico, chipMetal, chipVidro, chipOrganico, chipOutro};
+        TextView[] chips = {chipPapelao, chipPlastico, chipMetal, chipVidro, chipMadeira, chipOrganico, chipOutro};
         for (TextView c : chips) {
             if (c == null) continue;
             c.setBackgroundResource(R.drawable.bg_chip_white_stroke);
@@ -921,6 +929,10 @@ public class AiAnalysisFragment extends Fragment {
             chipVidro.setBackgroundResource(R.drawable.bg_chip_gray_selected);
             chipVidro.setTextColor(Color.parseColor("#6B7280"));
             chipVidro.setText("✓ " + chipVidro.getText().toString().replace("✓ ", ""));
+        } else if (lower.contains("madeira") && chipMadeira != null) {
+            chipMadeira.setBackgroundResource(R.drawable.bg_chip_amber_selected);
+            chipMadeira.setTextColor(Color.parseColor("#B45309"));
+            chipMadeira.setText("✓ " + chipMadeira.getText().toString().replace("✓ ", ""));
         } else if (lower.contains("org") && chipOrganico != null) {
             chipOrganico.setBackgroundResource(R.drawable.bg_chip_green_selected);
             chipOrganico.setTextColor(Color.parseColor("#12A05E"));
@@ -1186,9 +1198,15 @@ public class AiAnalysisFragment extends Fragment {
         String rawMat = isRevised
                 ? selectedMaterial
                 : (analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
-        String material = AiAnalysisJSON.formatMaterialWithClass(rawMat, selectedClass);
+        String primary = isRevised
+                ? selectedMaterial
+                : (analysis != null ? analysis.getPrimaryMaterial() : AiAnalysisJSON.extractPrimaryMaterial(rawMat));
+        String specific = (analysis != null && analysis.getSpecificItem() != null)
+                ? analysis.getSpecificItem()
+                : AiAnalysisJSON.extractSpecificItem(rawMat);
+        String material = AiAnalysisJSON.formatMaterialWithClass(primary, specific, selectedClass);
         double qtd = isRevised ? currentWeight : (analysis != null ? analysis.getQuantidadeEstimada() : 5.0);
-        String unidade = "kg";
+        String unidade = (analysis != null && analysis.getUnidade() != null) ? analysis.getUnidade() : "kg";
         String calculatedPriority = AiAnalysisJSON.calculatePriority(material, selectedContamination, descricao);
 
         if (!SyncManager.isOnline(requireContext())) {
@@ -1416,8 +1434,16 @@ public class AiAnalysisFragment extends Fragment {
         JsonObject detail = new JsonObject();
         detail.addProperty("id", id);
         String formattedMat = AiAnalysisJSON.formatMaterialWithClass(material, selectedClass);
-        detail.addProperty("titulo", (descricao != null && !descricao.isEmpty()) ? descricao : formattedMat);
+        String specific = (analysis != null && analysis.getSpecificItem() != null)
+                ? analysis.getSpecificItem()
+                : AiAnalysisJSON.extractSpecificItem(material);
+        String primary = (analysis != null && analysis.getPrimaryMaterial() != null)
+                ? analysis.getPrimaryMaterial()
+                : AiAnalysisJSON.extractPrimaryMaterial(material);
+        detail.addProperty("titulo", (descricao != null && !descricao.isEmpty()) ? descricao : specific);
         detail.addProperty("material", formattedMat);
+        detail.addProperty("material_principal", primary);
+        detail.addProperty("item_especifico", specific);
         detail.addProperty("contaminacao", selectedContamination != null ? selectedContamination : "Baixa");
         detail.addProperty("setor", (setor != null && !setor.isEmpty()) ? setor : "Frigorífico — Setor B2");
         detail.addProperty("peso_estimado", qtd);
