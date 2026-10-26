@@ -125,6 +125,23 @@ public class FirestoreNotificationRepository {
                         } catch (Exception e) {
                             Log.e(TAG, "Falha ao processar notificação do Firestore", e);
                         }
+                    } else if (dc.getType() == DocumentChange.Type.REMOVED) {
+                        try {
+                            String docId = dc.getDocument().getId();
+                            NotificationStore.delete(appContext, docId);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Falha ao processar remoção no Firestore", e);
+                        }
+                    } else if (dc.getType() == DocumentChange.Type.MODIFIED) {
+                        try {
+                            String docId = dc.getDocument().getId();
+                            Map<String, Object> docData = dc.getDocument().getData();
+                            if (docData != null && Boolean.TRUE.equals(docData.get("lida"))) {
+                                NotificationStore.markRead(appContext, docId);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Falha ao processar modificação no Firestore", e);
+                        }
                     }
                 }
             });
@@ -200,6 +217,25 @@ public class FirestoreNotificationRepository {
     public void sendNotification(String titulo, String descricao, String tipo,
                                  String occurrenceId, String icone, String tint, String bg) {
         sendNotification(null, titulo, descricao, tipo, occurrenceId, icone, tint, bg);
+    }
+
+    /**
+     * Exclui uma notificação do Cloud Firestore.
+     */
+    public void deleteNotification(String docId) {
+        if (docId == null || docId.trim().isEmpty()) {
+            return;
+        }
+        try {
+            FirebaseFirestore.getInstance()
+                    .collection(COLLECTION_NOTIFICATIONS)
+                    .document(docId)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> Log.d(TAG, "Notificação " + docId + " excluída do Firestore"))
+                    .addOnFailureListener(e -> Log.w(TAG, "Erro ao excluir notificação do Firestore", e));
+        } catch (Exception e) {
+            Log.e(TAG, "Exceção ao excluir notificação no Firestore", e);
+        }
     }
 
     /**

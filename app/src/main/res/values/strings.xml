@@ -69,6 +69,17 @@
     <string name="notifications_new">%1$d novas</string>
     <string name="notifications_mark_all">Marcar todas como lidas</string>
     <string name="notifications_badge_new">NOVA</string>
+    <string name="notifications_clear_read">Limpar lidas</string>
+    <string name="notifications_filter_all">Todas</string>
+    <string name="notifications_filter_unread">Não lidas</string>
+    <string name="notifications_filter_occurrences">Ocorrências</string>
+    <string name="notifications_filter_goals">Metas &amp; Coletas</string>
+    <string name="notifications_empty_title">Tudo em dia!</string>
+    <string name="notifications_empty_desc">Você não possui notificações pendentes no momento.</string>
+    <string name="notifications_empty_filter_desc">Nenhuma notificação encontrada para este filtro.</string>
+    <string name="notifications_deleted">Notificação removida</string>
+    <string name="notifications_undo">Desfazer</string>
+    <string name="notifications_settings_title">Configurações de Notificação</string>
     <!-- Nova ocorrência → notificação local (Fase 8b) -->
     <string name="notif_occurrence_title">Ocorrência #%1$s registrada</string>
     <string name="notif_occurrence_desc">%1$s · %2$s</string>

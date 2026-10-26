@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Bottom sheet Notificações — Figma (790:1854): alça + título + pill + X circular + marcar lidas + divisor + lista. -->
+<!-- Bottom sheet Notificações — Central de Notificações VOLTA (Figma 790:1854) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -18,10 +18,11 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_panel_handle" />
 
+    <!-- Cabeçalho: Título + Badge + Botões de Ação (Configurações e Fechar) -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="6dp">
+        android:layout_marginBottom="10dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -56,36 +57,155 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Botão fechar circular 38x38dp #F2F4F8 (Figma 790:1859) -->
-        <FrameLayout
-            android:id="@+id/btnCloseNotifications"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:background="@drawable/bg_notif_close_circle"
-            android:clickable="true"
-            android:contentDescription="@string/notifications_title"
-            android:focusable="true">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_close" />
-        </FrameLayout>
+            <!-- Botão Configurações de Notificações 38x38dp -->
+            <FrameLayout
+                android:id="@+id/btnNotificationSettings"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_notif_close_circle"
+                android:clickable="true"
+                android:contentDescription="@string/notifications_settings_title"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_settings" />
+            </FrameLayout>
+
+            <!-- Botão fechar circular 38x38dp #F2F4F8 (Figma 790:1859) -->
+            <FrameLayout
+                android:id="@+id/btnCloseNotifications"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_notif_close_circle"
+                android:clickable="true"
+                android:contentDescription="@string/notifications_title"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_close" />
+            </FrameLayout>
+        </LinearLayout>
     </RelativeLayout>
 
-    <TextView
-        android:id="@+id/tvMarkAllRead"
-        android:layout_width="wrap_content"
+    <!-- Linha de Ações: Marcar todas como lidas e Limpar lidas -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
-        android:fontFamily="@font/font_inter"
-        android:text="@string/notifications_mark_all"
-        android:textColor="@color/nav_item_selected"
-        android:textSize="13.5sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvMarkAllRead"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/font_inter"
+            android:text="@string/notifications_mark_all"
+            android:textColor="@color/nav_item_selected"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/tvClearRead"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/font_inter"
+            android:text="@string/notifications_clear_read"
+            android:textColor="@color/volta_text_secondary_light"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <!-- Chips de Filtro (Todas / Não lidas / Ocorrências / Metas & Coletas) -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:fadeScrollbars="false"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/chipFilterAll"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_chip_selected"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="@string/notifications_filter_all"
+                android:textColor="@color/white"
+                android:textSize="12.5sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/chipFilterUnread"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_chip_unselected"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="@string/notifications_filter_unread"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="12.5sp" />
+
+            <TextView
+                android:id="@+id/chipFilterOccurrences"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_chip_unselected"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="@string/notifications_filter_occurrences"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="12.5sp" />
+
+            <TextView
+                android:id="@+id/chipFilterGoals"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_chip_unselected"
+                android:fontFamily="@font/font_inter"
+                android:gravity="center"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:text="@string/notifications_filter_goals"
+                android:textColor="@color/volta_text_primary_light"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <!-- Divisor 1dp #EEF0F5 (Figma 790:1863) -->
     <View
@@ -94,20 +214,53 @@
         android:layout_marginBottom="14dp"
         android:background="#EEF0F5" />
 
+    <!-- Lista de Notificações -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvNotifications"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        android:nestedScrollingEnabled="true" />
 
-    <TextView
-        android:id="@+id/tvEmptyNotifications"
+    <!-- Estado Vazio Amigável com Mascote VOLTA -->
+    <LinearLayout
+        android:id="@+id/layoutEmptyNotifications"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="@dimen/spacing_large"
-        android:text="@string/empty_list"
-        android:textColor="@color/volta_text_secondary_light"
-        android:textSize="@dimen/text_size_body_small"
-        android:visibility="gone" />
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingTop="32dp"
+        android:paddingBottom="36dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="72dp"
+            android:layout_height="88dp"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@null"
+            android:src="@drawable/mascote_volta" />
+
+        <TextView
+            android:id="@+id/tvEmptyNotificationsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/font_poppins"
+            android:text="@string/notifications_empty_title"
+            android:textColor="@color/volta_text_primary_light"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvEmptyNotifications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="@font/font_inter"
+            android:gravity="center"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:text="@string/notifications_empty_desc"
+            android:textColor="@color/volta_text_secondary_light"
+            android:textSize="13sp" />
+    </LinearLayout>
 </LinearLayout>

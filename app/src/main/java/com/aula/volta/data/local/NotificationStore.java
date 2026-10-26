@@ -55,15 +55,24 @@ public final class NotificationStore {
         changeListeners.remove(listener);
     }
 
-    private static void notifyChange() {
-        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+    public static void notifyChange() {
+        Runnable runnable = () -> {
             for (ChangeListener l : new ArrayList<>(changeListeners)) {
                 try {
                     l.onChange();
                 } catch (Exception ignored) {
                 }
             }
-        });
+        };
+        try {
+            if (android.os.Looper.getMainLooper() != null && android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(runnable);
+            } else {
+                runnable.run();
+            }
+        } catch (Throwable t) {
+            runnable.run();
+        }
     }
 
     private NotificationStore() {
@@ -324,5 +333,62 @@ public final class NotificationStore {
 
         saveReadIds(app, readSet);
         notifyChange();
+    }
+
+    public static void delete(Context context, String id) {
+        if (id == null) {
+            return;
+        }
+        Context app = context.getApplicationContext();
+        List<Notification> list = new ArrayList<>(cached(app));
+        boolean removedFromList = false;
+        for (int i = list.size() - 1; i >= 0; i--) {
+            if (id.equals(list.get(i).getId())) {
+                list.remove(i);
+                removedFromList = true;
+            }
+        }
+
+        List<Notification> local = new ArrayList<>(localOnly(app));
+        boolean removedFromLocal = false;
+        for (int i = local.size() - 1; i >= 0; i--) {
+            if (id.equals(local.get(i).getId())) {
+                local.remove(i);
+                removedFromLocal = true;
+            }
+        }
+
+        if (removedFromList || removedFromLocal) {
+            PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
+            PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, local);
+            notifyChange();
+        }
+    }
+
+    public static void clearRead(Context context) {
+        Context app = context.getApplicationContext();
+        List<Notification> list = new ArrayList<>(cached(app));
+        boolean removedFromList = false;
+        for (int i = list.size() - 1; i >= 0; i--) {
+            if (list.get(i).isLida()) {
+                list.remove(i);
+                removedFromList = true;
+            }
+        }
+
+        List<Notification> local = new ArrayList<>(localOnly(app));
+        boolean removedFromLocal = false;
+        for (int i = local.size() - 1; i >= 0; i--) {
+            if (local.get(i).isLida()) {
+                local.remove(i);
+                removedFromLocal = true;
+            }
+        }
+
+        if (removedFromList || removedFromLocal) {
+            PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
+            PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, local);
+            notifyChange();
+        }
     }
 }
