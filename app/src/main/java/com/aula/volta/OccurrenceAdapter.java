@@ -86,7 +86,7 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
         holder.subtitle.setText(occurrence.getSetor() + " · " + occurrence.getTempoRelativo());
 
         applyPriorityStyle(holder);
-        applyVisualMediaOrMaterial(holder, occurrence);
+        applyMaterialIcon(holder, occurrence);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -193,9 +193,17 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
         holder.iconContainer.setBackground(null);
     }
 
-    private void applyMaterialFallback(ViewHolder holder, Occurrence occurrence) {
-        holder.thumbnail.setVisibility(View.GONE);
-        holder.icon.setVisibility(View.VISIBLE);
+    /**
+     * Exibe o icone tematico oficial do tipo de residuo (Figma 790:1706),
+     * garantindo que nas ocorrencias recentes seja sempre usado o icone e nao a foto da ocorrencia.
+     */
+    private void applyMaterialIcon(ViewHolder holder, Occurrence occurrence) {
+        if (holder.thumbnail != null) {
+            holder.thumbnail.setVisibility(View.GONE);
+        }
+        if (holder.icon != null) {
+            holder.icon.setVisibility(View.VISIBLE);
+        }
 
         String titulo = (occurrence.getTitulo() != null ? occurrence.getTitulo() : "")
                 + " " + (occurrence.getMaterial() != null ? occurrence.getMaterial() : "");
@@ -205,13 +213,17 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
             holder.iconContainer.setBackgroundResource(R.drawable.bg_occurrence_icon_blue);
             holder.icon.setImageResource(R.drawable.ic_occurrence_waste_blue);
         } else if (titulo.contains("metal") || titulo.contains("sucata")
-                || titulo.contains("ferro") || titulo.contains("alum")) {
+                || titulo.contains("ferro") || titulo.contains("alum") || titulo.contains("aco") || titulo.contains("ço")) {
             holder.iconContainer.setBackgroundResource(R.drawable.bg_occurrence_icon_purple);
             holder.icon.setImageResource(R.drawable.ic_occurrence_waste_purple);
         } else {
             holder.iconContainer.setBackgroundResource(R.drawable.bg_occurrence_icon);
             holder.icon.setImageResource(R.drawable.ic_occurrence_waste);
         }
+    }
+
+    private void applyMaterialFallback(ViewHolder holder, Occurrence occurrence) {
+        applyMaterialIcon(holder, occurrence);
     }
 
     private static Bitmap decodeSampledBitmap(String path, int reqWidth, int reqHeight) {
