@@ -22,14 +22,14 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * Cliente HTTP dedicado para o Chatbot VOLTA no ambiente QA (https://chat.qa.54.210.1.34.sslip.io).
+ * Cliente HTTP dedicado para o Chatbot VOLTA e Servico de Visao por IA no ambiente QA (https://chat.qa.54.210.1.34.sslip.io).
  *
  * Características:
  * - Cliente separado da API principal de backend
  * - Injeção automática do header "Authorization: Bearer <TOKEN>"
  * - Renovação automática transparente de token JWT via POST {api}/auth/login ao receber HTTP 401
- * - Força charset UTF-8 e Content-Type JSON
- * - Timeouts calibrados para chamadas generativas de IA
+ * - Força charset UTF-8 e Accept JSON
+ * - Timeouts calibrados para chamadas generativas e análise de visão de IA (Gemini Vision)
  */
 public final class ChatbotClient {
 
@@ -48,15 +48,16 @@ public final class ChatbotClient {
 
             OkHttpClient.Builder http = new OkHttpClient.Builder()
                     .connectTimeout(15, TimeUnit.SECONDS)
-                    .readTimeout(35, TimeUnit.SECONDS)
-                    .writeTimeout(20, TimeUnit.SECONDS)
-                    // Interceptor para injeção de Headers (Bearer Token + UTF-8)
+                    .readTimeout(45, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    // Interceptor para injeção de Headers (Host + Bearer Token + UTF-8)
                     .addInterceptor(new Interceptor() {
                         @NonNull
                         @Override
                         public Response intercept(@NonNull Chain chain) throws IOException {
                             Request original = chain.request();
                             Request.Builder builder = original.newBuilder()
+                                    .header("Host", "chat.qa.54.210.1.34.sslip.io")
                                     .header("Accept", "application/json; charset=utf-8");
 
                             String token = ChatbotAuthClient.resolveToken(appContext);

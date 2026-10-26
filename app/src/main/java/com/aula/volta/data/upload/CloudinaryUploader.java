@@ -67,7 +67,16 @@ public final class CloudinaryUploader {
      */
     public static String getCachedUrl(String localFilePath) {
         if (localFilePath == null) return null;
-        return uploadedUrlCache.get(localFilePath);
+        String direct = uploadedUrlCache.get(localFilePath);
+        if (direct != null && !direct.isEmpty()) {
+            return direct;
+        }
+        for (Map.Entry<String, String> entry : uploadedUrlCache.entrySet()) {
+            if (entry.getKey().startsWith(localFilePath)) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     /**
@@ -103,11 +112,15 @@ public final class CloudinaryUploader {
         final String fileKey = imageFile.getAbsolutePath() + "_" + imageFile.lastModified() + "_" + uploadPreset;
 
         // 1. Se esta foto já foi enviada anteriormente com este preset, reaproveita a URL
-        String cachedUrl = uploadedUrlCache.get(fileKey);
-        if (cachedUrl != null && !cachedUrl.isEmpty()) {
+        String fromCache = uploadedUrlCache.get(fileKey);
+        if (fromCache == null || fromCache.isEmpty()) {
+            fromCache = getCachedUrl(imageFile.getAbsolutePath());
+        }
+        final String resolvedCachedUrl = fromCache;
+        if (resolvedCachedUrl != null && !resolvedCachedUrl.isEmpty()) {
             final String cachedId = uploadedPublicIdCache.getOrDefault(fileKey, "");
             if (callback != null) {
-                mainHandler.post(() -> callback.onSuccess(cachedUrl, cachedId));
+                mainHandler.post(() -> callback.onSuccess(resolvedCachedUrl, cachedId));
             }
             return;
         }
@@ -203,7 +216,9 @@ public final class CloudinaryUploader {
                     String publicId = json.has("public_id") ? json.get("public_id").getAsString() : "";
 
                     uploadedUrlCache.put(fileKey, secureUrl);
+                    uploadedUrlCache.put(imageFile.getAbsolutePath(), secureUrl);
                     uploadedPublicIdCache.put(fileKey, publicId);
+                    uploadedPublicIdCache.put(imageFile.getAbsolutePath(), publicId);
 
                     dispatchSuccess(fileKey, secureUrl, publicId);
                 } else {

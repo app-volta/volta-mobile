@@ -40,6 +40,17 @@ public class AiAnalysisJSON {
     @SerializedName("incidentId")
     private String incidentId;
 
+    @SerializedName("mobile_summary")
+    private String mobileSummary;
+
+    @SerializedName("analysis_id")
+    private String analysisId;
+
+    @SerializedName("provenance_token")
+    private String provenanceToken;
+
+    private transient JsonObject rawAiData;
+
     public String getMaterial() {
         return material;
     }
@@ -133,6 +144,125 @@ public class AiAnalysisJSON {
         this.incidentId = incidentId;
     }
 
+    public String getMobileSummary() {
+        return mobileSummary;
+    }
+
+    public void setMobileSummary(String mobileSummary) {
+        this.mobileSummary = mobileSummary;
+    }
+
+    public String getAnalysisId() {
+        return analysisId;
+    }
+
+    public void setAnalysisId(String analysisId) {
+        this.analysisId = analysisId;
+    }
+
+    public String getProvenanceToken() {
+        return provenanceToken;
+    }
+
+    public void setProvenanceToken(String provenanceToken) {
+        this.provenanceToken = provenanceToken;
+    }
+
+    public JsonObject getRawAiData() {
+        return rawAiData;
+    }
+
+    public void setRawAiData(JsonObject rawAiData) {
+        this.rawAiData = rawAiData;
+    }
+
+    /**
+     * Converte a resposta do endpoint de visao de IA (POST /v1/occurrences/predict) para AiAnalysisJSON.
+     */
+    public static AiAnalysisJSON fromPredict(JsonObject json, double fallbackKg) {
+        if (json == null) {
+            return createOfflineFallback(null);
+        }
+        AiAnalysisJSON res = new AiAnalysisJSON();
+        res.rawAiData = json;
+
+        if (json.has("analysis_id") && !json.get("analysis_id").isJsonNull()) {
+            res.analysisId = json.get("analysis_id").getAsString();
+            res.incidentId = res.analysisId;
+        }
+        if (json.has("provenance_token") && !json.get("provenance_token").isJsonNull()) {
+            res.provenanceToken = json.get("provenance_token").getAsString();
+        }
+
+        String rawType = json.has("detected_waste_type") && !json.get("detected_waste_type").isJsonNull()
+                ? json.get("detected_waste_type").getAsString() : "Papelão A";
+        if (rawType.toLowerCase(Locale.ROOT).contains("não confirmado") || rawType.trim().isEmpty()) {
+            rawType = "Papelão A";
+        }
+        res.material = rawType.trim();
+
+        double weight = fallbackKg > 0 ? fallbackKg : 38.0;
+        if (json.has("estimated_quantity_kg") && !json.get("estimated_quantity_kg").isJsonNull()) {
+            try {
+                double val = json.get("estimated_quantity_kg").getAsDouble();
+                if (val > 0) {
+                    weight = val;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        res.quantidadeEstimada = weight;
+        res.unidade = "kg";
+        res.confianca = 0.94;
+
+        String rawContam = json.has("ai_contamination_level") && !json.get("ai_contamination_level").isJsonNull()
+                ? json.get("ai_contamination_level").getAsString() : "BAIXO";
+        res.aiContaminationLevel = rawContam;
+
+        Contaminacao c = new Contaminacao();
+        c.nivel = mapContaminationLabel(rawContam);
+        c.presente = !"Baixa".equalsIgnoreCase(c.nivel);
+        res.contaminacao = c;
+
+        if (json.has("recommendations") && !json.get("recommendations").isJsonNull()) {
+            res.observacoes = json.get("recommendations").getAsString().trim();
+        } else {
+            res.observacoes = "Guarde num lugar seco e coberto. Coleta em até 24h mantém o material valioso.";
+        }
+
+        if (json.has("report_text") && !json.get("report_text").isJsonNull()) {
+            res.reportText = json.get("report_text").getAsString().trim();
+        } else {
+            res.reportText = res.observacoes;
+        }
+
+        if (json.has("mobile_summary") && !json.get("mobile_summary").isJsonNull()) {
+            res.mobileSummary = json.get("mobile_summary").getAsString().trim();
+        }
+
+        Unidades u = new Unidades();
+        String lower = rawType.toLowerCase(Locale.ROOT);
+        if (lower.contains("plást") || lower.contains("plast")) {
+            u.tipo = "Fardos";
+            u.quantidade = 6;
+        } else if (lower.contains("metal") || lower.contains("alumin") || lower.contains("ferr")) {
+            u.tipo = "Tambores";
+            u.quantidade = 4;
+        } else if (lower.contains("vidro")) {
+            u.tipo = "Engradados";
+            u.quantidade = 12;
+        } else if (lower.contains("orgân") || lower.contains("organ")) {
+            u.tipo = "Sacos";
+            u.quantidade = 8;
+        } else {
+            u.tipo = "Caixas";
+            u.quantidade = 11;
+        }
+        res.unidades = u;
+
+        return res;
+    }
+
     /**
      * Converte um AiReportResponseDTO da API QA (GET /incidents/{id}/ai-report) para AiAnalysisJSON.
      */
@@ -173,14 +303,14 @@ public class AiAnalysisJSON {
         if (rawLevel == null || rawLevel.trim().isEmpty()) {
             return "Baixa";
         }
-        String upper = rawLevel.trim().toUpperCase();
-        if ("HIGH".equals(upper) || "ALTA".equals(upper) || "CRITICAL".equals(upper)) {
+        String upper = rawLevel.trim().toUpperCase(Locale.ROOT);
+        if ("HIGH".equals(upper) || "ALTA".equals(upper) || "ALTO".equals(upper) || "CRITICAL".equals(upper)) {
             return "Alta";
         }
-        if ("MEDIUM".equals(upper) || "MEDIA".equals(upper) || "MÉDIA".equals(upper)) {
+        if ("MEDIUM".equals(upper) || "MEDIA".equals(upper) || "MÉDIA".equals(upper) || "MEDIO".equals(upper) || "MÉDIO".equals(upper)) {
             return "Média";
         }
-        if ("LOW".equals(upper) || "BAIXA".equals(upper)) {
+        if ("LOW".equals(upper) || "BAIXA".equals(upper) || "BAIXO".equals(upper) || "NENHUMA".equals(upper) || "NENHUM".equals(upper)) {
             return "Baixa";
         }
         return rawLevel.trim();

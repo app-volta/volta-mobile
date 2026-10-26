@@ -138,4 +138,49 @@ public class AiAnalysisContractTest {
         assertEquals("Plástico (Classe C)", AiAnalysisJSON.formatMaterialWithClass("Plástico (Classe A)", "C"));
         assertEquals("Papelão (Classe A)", AiAnalysisJSON.formatMaterialWithClass("Papelão", "Classe A"));
     }
+
+    @Test
+    public void fromPredict_parsesGeminiVisionResponseCorrectly() {
+        com.google.gson.JsonObject predict = com.google.gson.JsonParser.parseString("{\n"
+                + "  \"detected_waste_type\": \"Papelão contaminado\",\n"
+                + "  \"ai_contamination_level\": \"MEDIO\",\n"
+                + "  \"estimated_quantity_kg\": 42.0,\n"
+                + "  \"recommendations\": \"Segregar em recipientes herméticos\",\n"
+                + "  \"report_text\": \"Presença de três caixas de papelão no setor B2\",\n"
+                + "  \"mobile_summary\": \"Papelão com contaminação média\",\n"
+                + "  \"requires_human_validation\": true,\n"
+                + "  \"analysis_id\": \"632555cc-b451-450a-8ae4-ea6cf9e3784d\",\n"
+                + "  \"provenance_token\": \"d64fe8b8d5e28ae0ee0365b49a6d816bda132c688df67e15d56dce7d8ab04558\"\n"
+                + "}").getAsJsonObject();
+
+        AiAnalysisJSON ai = AiAnalysisJSON.fromPredict(predict, 38.0);
+        assertNotNull(ai);
+        assertEquals("Papelão contaminado", ai.getMaterial());
+        assertEquals("Média", ai.getContaminacao().getNivel());
+        assertTrue(ai.getContaminacao().isPresente());
+        assertEquals(42.0, ai.getQuantidadeEstimada(), 0.001);
+        assertEquals("Segregar em recipientes herméticos", ai.getObservacoes());
+        assertEquals("Presença de três caixas de papelão no setor B2", ai.getReportText());
+        assertEquals("Papelão com contaminação média", ai.getMobileSummary());
+        assertEquals("632555cc-b451-450a-8ae4-ea6cf9e3784d", ai.getAnalysisId());
+        assertEquals("d64fe8b8d5e28ae0ee0365b49a6d816bda132c688df67e15d56dce7d8ab04558", ai.getProvenanceToken());
+        assertNotNull(ai.getUnidades());
+        assertEquals("Caixas", ai.getUnidades().getTipo());
+        assertNotNull(ai.getRawAiData());
+    }
+
+    @Test
+    public void fromPredict_adaptsUnitsBasedOnWasteType() {
+        com.google.gson.JsonObject plastic = new com.google.gson.JsonObject();
+        plastic.addProperty("detected_waste_type", "Plástico Filme Stretch");
+        plastic.addProperty("ai_contamination_level", "BAIXO");
+        AiAnalysisJSON aiPlastic = AiAnalysisJSON.fromPredict(plastic, 20.0);
+        assertEquals("Fardos", aiPlastic.getUnidades().getTipo());
+
+        com.google.gson.JsonObject metal = new com.google.gson.JsonObject();
+        metal.addProperty("detected_waste_type", "Sucata de Metal / Alumínio");
+        metal.addProperty("ai_contamination_level", "BAIXO");
+        AiAnalysisJSON aiMetal = AiAnalysisJSON.fromPredict(metal, 50.0);
+        assertEquals("Tambores", aiMetal.getUnidades().getTipo());
+    }
 }

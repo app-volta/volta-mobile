@@ -20,8 +20,14 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 
+import android.animation.ValueAnimator;
 import com.aula.volta.R;
 import com.aula.volta.data.api.AiAnalysisAPI;
+import com.aula.volta.data.api.ChatbotAPI;
+import com.aula.volta.data.api.ChatbotClient;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.OccurrenceAPI;
@@ -286,10 +292,21 @@ public class AiAnalysisFragment extends Fragment {
                 return;
             }
             stopScanAnimation();
+            int frameH = frame.getHeight();
+            int bandH = band.getHeight();
+            float density = getResources().getDisplayMetrics().density;
+            if (frameH <= 0) {
+                frameH = (int) (170 * density);
+            }
+            if (bandH <= 0) {
+                bandH = (int) (48 * density);
+            }
             scanAnimator = ObjectAnimator.ofFloat(
-                    band, "translationY", -band.getHeight(), frame.getHeight());
+                    band, "translationY", -bandH, frameH);
             scanAnimator.setDuration(1600);
+            scanAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
             scanAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+            scanAnimator.setRepeatMode(ValueAnimator.RESTART);
             scanAnimator.start();
         });
     }
@@ -302,37 +319,138 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void analyzePhoto() {
-        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
-            executeAiAnalysisRequest(remoteImageUrl);
-            return;
-        }
         if (photoPath != null && !photoPath.isEmpty()) {
-            String cachedUrl = CloudinaryUploader.getCachedUrl(photoPath);
-            if (cachedUrl != null && !cachedUrl.isEmpty()) {
-                remoteImageUrl = cachedUrl;
-                executeAiAnalysisRequest(cachedUrl);
-                return;
-            }
-            File imageFile = new File(photoPath);
+            final File imageFile = new File(photoPath);
             if (imageFile.exists()) {
+                // 1. Inicia upload Cloudinary em paralelo para termos o link HTTPS publico pronto para o incidente
                 CloudinaryUploader.uploadImage(requireContext(), imageFile, new CloudinaryUploader.UploadCallback() {
                     @Override
                     public void onSuccess(String remoteUrl, String publicId) {
                         remoteImageUrl = remoteUrl;
                         Log.i("AiAnalysisFragment", "Cloudinary secure_url gerada: " + remoteUrl);
-                        executeAiAnalysisRequest(remoteUrl);
                     }
 
                     @Override
                     public void onError(Exception exception, String fallbackLocalPath) {
-                        Log.w("AiAnalysisFragment", "Upload Cloudinary falhou, seguindo com caminho local: " + exception.getMessage());
-                        executeAiAnalysisRequest(fallbackLocalPath);
+                        Log.w("AiAnalysisFragment", "Upload Cloudinary falhou: " + exception.getMessage());
                     }
                 });
-                return;
+
+                // 2. Se online, conecta o envio da imagem diretamente com a IA que analisa (POST /v1/occurrences/predict)
+                if (SyncManager.isOnline(requireContext())) {
+                    sendImageDirectlyToAi(imageFile);
+                    return;
+                }
             }
         }
-        executeAiAnalysisRequest(null);
+
+        if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+            executeAiAnalysisRequest(remoteImageUrl);
+            return;
+        }
+
+        String fallbackUrl = photoPath != null ? CloudinaryUploader.getCachedUrl(photoPath) : null;
+        executeAiAnalysisRequest(fallbackUrl);
+    }
+
+    /**
+     * Conecta o envio da foto capturada pelo usuario diretamente com a IA do Gemini Vision (POST /v1/occurrences/predict).
+     * O retorno e validado pelo juiz LLM e já popula os cards e recomendacoes em tempo real.
+     */
+    private void sendImageDirectlyToAi(File imageFile) {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+
+        RequestBody reqFile = RequestBody.create(MediaType.parse("image/jpeg"), imageFile);
+        MultipartBody.Part part = MultipartBody.Part.createFormData("file", imageFile.getName(), reqFile);
+
+        ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+        chatApi.predictWaste(part).enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                if (!isAdded()) {
+                    return;
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject predictJson = response.body();
+                    Log.i("AiAnalysisFragment", "Gemini IA Predict sucesso: " + predictJson);
+                    analysis = AiAnalysisJSON.fromPredict(predictJson, 38.0);
+                    applyAnalysis();
+                    createBackgroundDraft(predictJson);
+                } else {
+                    Log.w("AiAnalysisFragment", "predictWaste retornou HTTP " + response.code() + ", tentando fluxo alternativo");
+                    String fallbackUrl = remoteImageUrl != null ? remoteImageUrl : CloudinaryUploader.getCachedUrl(photoPath);
+                    executeAiAnalysisRequest(fallbackUrl);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
+                Log.w("AiAnalysisFragment", "predictWaste falhou na rede: " + t.getMessage() + ", tentando fluxo alternativo");
+                String fallbackUrl = remoteImageUrl != null ? remoteImageUrl : CloudinaryUploader.getCachedUrl(photoPath);
+                executeAiAnalysisRequest(fallbackUrl);
+            }
+        });
+    }
+
+    /**
+     * Registra o rascunho de ocorrencia auditado no banco com a proveniencia da IA (POST /v1/occurrences/drafts).
+     */
+    private void createBackgroundDraft(final JsonObject aiData) {
+        if (!isAdded() || getContext() == null || aiData == null) {
+            return;
+        }
+        final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
+        qaApi.getMyAreas().enqueue(new Callback<JsonArray>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> areaResp) {
+                if (!isAdded()) return;
+                String resolvedAreaId = AiAnalysisJSON.resolveAreaId(areaResp.body(), setor);
+                if (resolvedAreaId == null) {
+                    resolvedAreaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+                }
+                final String areaId = resolvedAreaId;
+
+                String empDesc = (descricao != null && !descricao.isEmpty())
+                        ? descricao
+                        : "Residuo registrado via app mobile no setor " + (setor != null ? setor : "Operacional");
+
+                JsonObject draftReq = new JsonObject();
+                draftReq.addProperty("area_id", areaId);
+                draftReq.addProperty("employee_description", empDesc);
+                draftReq.addProperty("priority", "MEDIA");
+                draftReq.add("ai_data", aiData);
+
+                ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+                chatApi.createOccurrenceDraft(draftReq).enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> resp) {
+                        if (resp.isSuccessful() && resp.body() != null && resp.body().has("draft_id")) {
+                            String draftId = resp.body().get("draft_id").getAsString();
+                            createdIncidentId = draftId;
+                            Log.i("AiAnalysisFragment", "Draft criado com sucesso no banco: " + draftId);
+                            if (analysis != null) {
+                                analysis.setIncidentId(draftId);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                        Log.w("AiAnalysisFragment", "Erro ao criar draft: " + t.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
+                Log.w("AiAnalysisFragment", "Erro ao obter areas para draft: " + t.getMessage());
+            }
+        });
     }
 
     private void executeAiAnalysisRequest(@Nullable String imageUrl) {

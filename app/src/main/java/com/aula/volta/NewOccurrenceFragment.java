@@ -247,6 +247,14 @@ public class NewOccurrenceFragment extends Fragment {
         updatePhotoState();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (btnSendAnalysis != null) {
+            btnSendAnalysis.setEnabled(photoFile != null && photoFile.exists());
+        }
+    }
+
     /**
      * Verifica permissão de câmera antes de abrir o visor.
      */
