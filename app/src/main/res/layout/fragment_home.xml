@@ -99,7 +99,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
-                        android:text="Breno Gomes"
+                        tools:text="Colaborador"
                         android:textColor="@color/volta_text_primary_light"
                         android:textSize="17sp"
                         android:textStyle="bold" />

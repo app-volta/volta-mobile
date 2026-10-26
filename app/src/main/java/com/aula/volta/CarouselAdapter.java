@@ -67,21 +67,29 @@ public class CarouselAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             WeekHolder week = (WeekHolder) holder;
             if (week.bars != null && week.bars.getChildCount() == 0) {
                 float density = week.bars.getResources().getDisplayMetrics().density;
-                int trackHeightPx = Math.round(90 * density);
+                int trackHeightPx = Math.round(82 * density);
                 int gapPx = Math.round(10 * density);
+                String[] dayLabels = {"S", "T", "Q", "Q", "S", "S", "D"};
 
                 for (int i = 0; i < WEEK_FILL_HEIGHTS_DP.length; i++) {
+                    LinearLayout col = new LinearLayout(week.bars.getContext());
+                    col.setOrientation(LinearLayout.VERTICAL);
+                    col.setGravity(Gravity.CENTER_HORIZONTAL);
+                    LinearLayout.LayoutParams colParams = new LinearLayout.LayoutParams(
+                            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                    if (i < WEEK_FILL_HEIGHTS_DP.length - 1) {
+                        colParams.setMarginEnd(gapPx);
+                    }
+                    col.setLayoutParams(colParams);
+
                     FrameLayout track = new FrameLayout(week.bars.getContext());
                     LinearLayout.LayoutParams trackParams = new LinearLayout.LayoutParams(
-                            0, trackHeightPx, 1f);
-                    if (i < WEEK_FILL_HEIGHTS_DP.length - 1) {
-                        trackParams.setMarginEnd(gapPx);
-                    }
+                            ViewGroup.LayoutParams.MATCH_PARENT, trackHeightPx);
                     track.setLayoutParams(trackParams);
                     track.setBackgroundResource(R.drawable.bg_chart_bar_track);
 
                     View fillBar = new View(week.bars.getContext());
-                    int fillHeightPx = Math.round(WEEK_FILL_HEIGHTS_DP[i] * density);
+                    int fillHeightPx = Math.round(WEEK_FILL_HEIGHTS_DP[i] * 0.9f * density);
                     FrameLayout.LayoutParams fillParams = new FrameLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             fillHeightPx,
@@ -93,7 +101,17 @@ public class CarouselAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                             : R.drawable.bg_chart_bar_fill);
 
                     track.addView(fillBar);
-                    week.bars.addView(track);
+                    col.addView(track);
+
+                    android.widget.TextView tvDay = new android.widget.TextView(week.bars.getContext());
+                    tvDay.setText(dayLabels[i]);
+                    tvDay.setTextColor(isLast ? 0xFFFFFFFF : 0xB3FFFFFF);
+                    tvDay.setTextSize(10f);
+                    tvDay.setGravity(Gravity.CENTER);
+                    tvDay.setPadding(0, Math.round(4 * density), 0, 0);
+                    col.addView(tvDay);
+
+                    week.bars.addView(col);
                 }
             }
         }

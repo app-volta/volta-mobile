@@ -581,7 +581,7 @@ public class AiAnalysisFragment extends Fragment {
             }
             if (cardUnits != null) {
                 cardUnits.setBackgroundResource(unitsChanged
-                        ? R.drawable.bg_card_quantity_edited
+                        ? R.drawable.bg_card_units_edited
                         : R.drawable.bg_card_stat_purple);
             }
 
@@ -926,7 +926,7 @@ public class AiAnalysisFragment extends Fragment {
 
         boolean unitsChanged = (currentUnits != initialEstimatedUnits);
         if (stepperUnits != null) {
-            stepperUnits.setBackgroundResource(unitsChanged ? R.drawable.bg_stepper_blue : R.drawable.bg_stepper_card_normal);
+            stepperUnits.setBackgroundResource(unitsChanged ? R.drawable.bg_stepper_purple : R.drawable.bg_stepper_card_normal);
         }
         if (badgeUnits != null) {
             badgeUnits.setVisibility(unitsChanged ? View.VISIBLE : View.GONE);

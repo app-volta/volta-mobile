@@ -37,7 +37,7 @@
         <LinearLayout
             android:id="@+id/weekBars"
             android:layout_width="match_parent"
-            android:layout_height="90dp"
+            android:layout_height="106dp"
             android:gravity="bottom"
             android:orientation="horizontal" />
     </LinearLayout>
