@@ -241,4 +241,30 @@ public class AiAnalysisContractTest {
         assertEquals(1, aiChair.getUnidades().getQuantidade());
         assertEquals(5.0, aiChair.getQuantidadeEstimada(), 0.001);
     }
+
+    @Test
+    public void resolveMaterialFamily_mapsAllVariationsToCanonicalSixFamilies() {
+        // As 6 famílias canônicas que alimentam filtros e PGRS
+        assertEquals("Papelão", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Caixas de papelão onduladas com umidade"));
+        assertEquals("Papelão", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Cartão kraft"));
+        assertEquals("Papelão", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily(null));
+
+        assertEquals("Plástico", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Frascos PET transparentes"));
+        assertEquals("Plástico", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Filme stretch"));
+        assertEquals("Plástico", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Plástico duro"));
+
+        assertEquals("Metal", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Latas de alumínio"));
+        assertEquals("Metal", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Sucata de ferro"));
+        assertEquals("Metal", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Aparas de aço"));
+
+        assertEquals("Vidro", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Garrafas de vidro âmbar"));
+        assertEquals("Vidro", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Cacos de vidro"));
+
+        assertEquals("Madeira", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Paletes PBR de madeira"));
+        assertEquals("Madeira", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Pallet quebrado"));
+        assertEquals("Madeira", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Mobiliário de madeira"));
+
+        assertEquals("Orgânico", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Restos de alimentos orgânicos"));
+        assertEquals("Orgânico", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Resíduo organico perecível"));
+    }
 }

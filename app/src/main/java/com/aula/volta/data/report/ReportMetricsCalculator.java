@@ -257,22 +257,22 @@ public final class ReportMetricsCalculator {
     public static String resolveMaterialFamily(String raw) {
         if (raw == null) return "Papelão";
         String lower = raw.toLowerCase(Locale.ROOT);
-        if (lower.contains("papel") || lower.contains("cartão") || lower.contains("cartao")) {
+        if (lower.contains("papel") || lower.contains("cartão") || lower.contains("cartao") || lower.contains("kraft")) {
             return "Papelão";
         }
-        if (lower.contains("plást") || lower.contains("plast") || lower.contains("pet") || lower.contains("filme")) {
+        if (lower.contains("plást") || lower.contains("plast") || lower.contains("pet") || lower.contains("filme") || lower.contains("isopor") || lower.contains("eps")) {
             return "Plástico";
         }
-        if (lower.contains("metal") || lower.contains("alum") || lower.contains("aço") || lower.contains("aco") || lower.contains("lata") || lower.contains("ferro")) {
-            return "Metal";
-        }
-        if (lower.contains("vidro") || lower.contains("garrafa")) {
+        if (lower.contains("vidro") || lower.contains("caco")) {
             return "Vidro";
+        }
+        if (lower.contains("metal") || lower.contains("alum") || lower.contains("aço") || lower.contains("ferro") || lower.contains("lata") || lower.contains("sucata") || lower.contains(" aco") || lower.contains("aco ") || lower.equals("aco")) {
+            return "Metal";
         }
         if (lower.contains("madeira") || lower.contains("palete") || lower.contains("pallet") || lower.contains("mobili")) {
             return "Madeira";
         }
-        if (lower.contains("orgân") || lower.contains("organ")) {
+        if (lower.contains("orgân") || lower.contains("organ") || lower.contains("alimento") || lower.contains("comida")) {
             return "Orgânico";
         }
         return "Papelão";

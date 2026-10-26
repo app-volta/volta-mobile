@@ -99,7 +99,9 @@ public class Occurrence {
                     if (d.has("prioridade") && !d.get("prioridade").isJsonNull()) {
                         prio = d.get("prioridade").getAsString();
                     }
-                    if (d.has("material") && !d.get("material").isJsonNull()) {
+                    if (d.has("material_principal") && !d.get("material_principal").isJsonNull()) {
+                        mat = d.get("material_principal").getAsString();
+                    } else if (d.has("material") && !d.get("material").isJsonNull()) {
                         mat = d.get("material").getAsString();
                     }
                 }

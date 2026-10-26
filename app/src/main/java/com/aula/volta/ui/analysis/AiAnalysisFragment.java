@@ -43,6 +43,7 @@ import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
+import com.aula.volta.data.report.ReportMetricsCalculator;
 import com.aula.volta.data.model.incident.AiReportResponseDTO;
 import com.aula.volta.data.model.incident.IncidentRequestDTO;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
@@ -94,6 +95,17 @@ public class AiAnalysisFragment extends Fragment {
     private ImageView icMiddleStatus;
     private TextView tvMiddleStatusHint;
     private com.google.android.material.button.MaterialButton btnConfirm;
+
+    // Seletor de Material Principal na Análise IA
+    private LinearLayout cardAiType;
+    private TextView tvAiTypeLabel;
+    private TextView badgeAiPriority;
+    private TextView chipResultPapelao;
+    private TextView chipResultPlastico;
+    private TextView chipResultMetal;
+    private TextView chipResultVidro;
+    private TextView chipResultMadeira;
+    private TextView chipResultOrganico;
 
     // Campos do modo de edição (16a)
     private TextView tvEditWeightValue;
@@ -197,6 +209,9 @@ public class AiAnalysisFragment extends Fragment {
         icAiStatusPill = view.findViewById(R.id.icAiStatusPill);
         badgeQuantityEdited = view.findViewById(R.id.badgeQuantityEdited);
         cardAiQuantity = view.findViewById(R.id.cardAiQuantity);
+        cardAiType = view.findViewById(R.id.cardAiType);
+        tvAiTypeLabel = view.findViewById(R.id.tvAiTypeLabel);
+        badgeAiPriority = view.findViewById(R.id.badgeAiPriority);
         icMiddleStatus = view.findViewById(R.id.icMiddleStatus);
         tvMiddleStatusHint = view.findViewById(R.id.tvMiddleStatusHint);
 
@@ -261,6 +276,7 @@ public class AiAnalysisFragment extends Fragment {
         btnConfirm.setOnClickListener(this::confirmOccurrence);
 
         setupEditControls(view);
+        setupResultMaterialChips(view);
 
         if (toastCorrectionSaved != null) {
             com.aula.volta.util.ToastSwipeHelper.attach(toastCorrectionSaved, hideCorrectionToastRunnable,
@@ -811,7 +827,7 @@ public class AiAnalysisFragment extends Fragment {
             String classLetter = selectedClass != null ? selectedClass.replace("Classe ", "").trim() : "A";
             String specific = (analysis != null && analysis.getSpecificItem() != null)
                     ? analysis.getSpecificItem() : "";
-            tvAiMaterial.setText(AiAnalysisJSON.formatMaterialWithClass(selectedMaterial, specific, selectedClass));
+            selectPrimaryMaterialFamily(selectedMaterial, false);
             tvAiContamination.setText(selectedContamination);
             tvAiQuantity.setText("≈ " + currentWeight + " kg");
 
@@ -854,7 +870,8 @@ public class AiAnalysisFragment extends Fragment {
             selectedClass = "Classe " + classLetter;
             String primary = analysis.getPrimaryMaterial();
             String specific = analysis.getSpecificItem();
-            selectedMaterial = primary;
+            String resolvedFamily = ReportMetricsCalculator.resolveMaterialFamily(primary != null ? primary : rawMat);
+            selectedMaterial = resolvedFamily;
 
             selectedContamination = (analysis.getContaminacao() != null
                     && analysis.getContaminacao().getNivel() != null)
@@ -862,6 +879,7 @@ public class AiAnalysisFragment extends Fragment {
                     : "Baixa";
 
             currentPriority = AiAnalysisJSON.calculatePriority(rawMat, selectedContamination, descricao);
+            updatePriorityBadge(currentPriority);
 
             if (analysis.getQuantidadeEstimada() > 0) {
                 initialEstimatedWeight = (int) Math.round(analysis.getQuantidadeEstimada());
@@ -878,8 +896,7 @@ public class AiAnalysisFragment extends Fragment {
                 tvEditUnitsValue.setText(String.valueOf(currentUnits));
             }
 
-            String formattedDisplayMat = AiAnalysisJSON.formatMaterialWithClass(primary, specific, selectedClass);
-            tvAiMaterial.setText(formattedDisplayMat);
+            selectPrimaryMaterialFamily(resolvedFamily, false);
             tvAiContamination.setText(selectedContamination);
             String quantidade = "≈ " + trimNumber(analysis.getQuantidadeEstimada()) + " " + analysis.getUnidade();
             tvAiQuantity.setText(quantidade);
@@ -910,6 +927,187 @@ public class AiAnalysisFragment extends Fragment {
 
         if (analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty()) {
             tvAiRecommendation.setText(analysis.getObservacoes());
+        }
+    }
+
+    private void setupResultMaterialChips(View root) {
+        chipResultPapelao = root.findViewById(R.id.chipResultMatPapelao);
+        chipResultPlastico = root.findViewById(R.id.chipResultMatPlastico);
+        chipResultMetal = root.findViewById(R.id.chipResultMatMetal);
+        chipResultVidro = root.findViewById(R.id.chipResultMatVidro);
+        chipResultMadeira = root.findViewById(R.id.chipResultMatMadeira);
+        chipResultOrganico = root.findViewById(R.id.chipResultMatOrganico);
+
+        if (chipResultPapelao != null) {
+            chipResultPapelao.setOnClickListener(v -> selectPrimaryMaterialFamily("Papelão", true));
+        }
+        if (chipResultPlastico != null) {
+            chipResultPlastico.setOnClickListener(v -> selectPrimaryMaterialFamily("Plástico", true));
+        }
+        if (chipResultMetal != null) {
+            chipResultMetal.setOnClickListener(v -> selectPrimaryMaterialFamily("Metal", true));
+        }
+        if (chipResultVidro != null) {
+            chipResultVidro.setOnClickListener(v -> selectPrimaryMaterialFamily("Vidro", true));
+        }
+        if (chipResultMadeira != null) {
+            chipResultMadeira.setOnClickListener(v -> selectPrimaryMaterialFamily("Madeira", true));
+        }
+        if (chipResultOrganico != null) {
+            chipResultOrganico.setOnClickListener(v -> selectPrimaryMaterialFamily("Orgânico", true));
+        }
+    }
+
+    private void selectPrimaryMaterialFamily(String rawFamily, boolean userInitiated) {
+        String family = ReportMetricsCalculator.resolveMaterialFamily(rawFamily);
+        selectedMaterial = family;
+
+        // 1. Atualiza visual dos chips de resultado
+        updateResultMaterialChipsUi(family);
+
+        // 2. Atualiza Card 1 (Tipo de Material)
+        updateTypeCardUi(family);
+
+        // 3. Atualiza Prioridade dinamicamente
+        String specific = (analysis != null && analysis.getSpecificItem() != null)
+                ? analysis.getSpecificItem() : "";
+        String formattedMat = AiAnalysisJSON.formatMaterialWithClass(family, specific, selectedClass);
+        currentPriority = AiAnalysisJSON.calculatePriority(formattedMat, selectedContamination, descricao);
+        updatePriorityBadge(currentPriority);
+
+        // 4. Se o usuário tocou diretamente, atualiza a recomendação do Mascote VOLTA para o material
+        if (userInitiated) {
+            updateRecommendationForMaterial(family);
+        }
+
+        // 5. Mantém sincronizado com os chips do modo de edição caso o usuário entre em Editar depois
+        if (getView() != null) {
+            updateMaterialChipsUi(getView());
+        }
+    }
+
+    private void updateResultMaterialChipsUi(String selectedFamily) {
+        TextView[] chips = {chipResultPapelao, chipResultPlastico, chipResultMetal,
+                chipResultVidro, chipResultMadeira, chipResultOrganico};
+        String[] labels = {"Papelão", "Plástico", "Metal", "Vidro", "Madeira", "Orgânico"};
+
+        for (int i = 0; i < chips.length; i++) {
+            TextView c = chips[i];
+            if (c == null) continue;
+            c.setBackgroundResource(R.drawable.bg_chip_white_stroke);
+            if (getContext() != null) {
+                c.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            } else {
+                c.setTextColor(Color.parseColor("#71717A"));
+            }
+            c.setText(labels[i]);
+        }
+
+        String lower = selectedFamily != null ? selectedFamily.toLowerCase(Locale.ROOT) : "";
+        if (lower.contains("papel") && chipResultPapelao != null) {
+            chipResultPapelao.setBackgroundResource(R.drawable.bg_chip_gold_selected);
+            chipResultPapelao.setTextColor(Color.parseColor("#C68A10"));
+            chipResultPapelao.setText("✓ Papelão");
+        } else if ((lower.contains("plást") || lower.contains("plast")) && chipResultPlastico != null) {
+            chipResultPlastico.setBackgroundResource(R.drawable.bg_chip_blue_selected);
+            chipResultPlastico.setTextColor(Color.parseColor("#3B82F6"));
+            chipResultPlastico.setText("✓ Plástico");
+        } else if (lower.contains("metal") && chipResultMetal != null) {
+            chipResultMetal.setBackgroundResource(R.drawable.bg_chip_purple_selected);
+            chipResultMetal.setTextColor(Color.parseColor("#8B6FE0"));
+            chipResultMetal.setText("✓ Metal");
+        } else if (lower.contains("vidro") && chipResultVidro != null) {
+            chipResultVidro.setBackgroundResource(R.drawable.bg_chip_gray_selected);
+            chipResultVidro.setTextColor(Color.parseColor("#6B7280"));
+            chipResultVidro.setText("✓ Vidro");
+        } else if (lower.contains("madeira") && chipResultMadeira != null) {
+            chipResultMadeira.setBackgroundResource(R.drawable.bg_chip_amber_selected);
+            chipResultMadeira.setTextColor(Color.parseColor("#D97706"));
+            chipResultMadeira.setText("✓ Madeira");
+        } else if ((lower.contains("orgân") || lower.contains("organ")) && chipResultOrganico != null) {
+            chipResultOrganico.setBackgroundResource(R.drawable.bg_chip_green_selected);
+            chipResultOrganico.setTextColor(Color.parseColor("#10B981"));
+            chipResultOrganico.setText("✓ Orgânico");
+        }
+    }
+
+    private void updateTypeCardUi(String family) {
+        if (tvAiMaterial == null) return;
+        String specific = (analysis != null && analysis.getSpecificItem() != null)
+                ? analysis.getSpecificItem() : "";
+        String formatted = AiAnalysisJSON.formatMaterialWithClass(family, specific, selectedClass);
+        tvAiMaterial.setText(formatted);
+
+        String lower = family != null ? family.toLowerCase(Locale.ROOT) : "";
+        int textColor;
+        int cardBg;
+
+        if (lower.contains("papel")) {
+            textColor = Color.parseColor("#C68A10");
+            cardBg = R.drawable.bg_card_type_gold;
+        } else if (lower.contains("plást") || lower.contains("plast")) {
+            textColor = Color.parseColor("#3B82F6");
+            cardBg = R.drawable.bg_card_mat_blue;
+        } else if (lower.contains("metal")) {
+            textColor = Color.parseColor("#8B6FE0");
+            cardBg = R.drawable.bg_card_mat_purple;
+        } else if (lower.contains("vidro")) {
+            textColor = Color.parseColor("#6B7280");
+            cardBg = R.drawable.bg_card_mat_gray;
+        } else if (lower.contains("madeira")) {
+            textColor = Color.parseColor("#D97706");
+            cardBg = R.drawable.bg_card_mat_amber;
+        } else if (lower.contains("orgân") || lower.contains("organ")) {
+            textColor = Color.parseColor("#10B981");
+            cardBg = R.drawable.bg_card_mat_green;
+        } else {
+            textColor = Color.parseColor("#C68A10");
+            cardBg = R.drawable.bg_card_type_gold;
+        }
+
+        tvAiMaterial.setTextColor(textColor);
+        if (tvAiTypeLabel != null) {
+            tvAiTypeLabel.setTextColor(textColor);
+        }
+        if (cardAiType != null) {
+            cardAiType.setBackgroundResource(cardBg);
+        }
+    }
+
+    private void updateRecommendationForMaterial(String family) {
+        if (tvAiRecommendation == null) return;
+        String lower = family != null ? family.toLowerCase(Locale.ROOT) : "";
+        if (lower.contains("papel")) {
+            tvAiRecommendation.setText("Armazene em área coberta e seca para preservar a celulose e o valor de reciclagem.");
+        } else if (lower.contains("plást") || lower.contains("plast")) {
+            tvAiRecommendation.setText("Compacte e enfarde para otimizar espaço e facilitar a logística com a cooperativa parceira.");
+        } else if (lower.contains("metal")) {
+            tvAiRecommendation.setText("Separe por liga e proteja recipientes com pontas perfurantes para segurança dos operadores.");
+        } else if (lower.contains("vidro")) {
+            tvAiRecommendation.setText("Acondicione em caixas reforçadas e sinalize para prevenir quebras e acidentes na triagem.");
+        } else if (lower.contains("madeira")) {
+            tvAiRecommendation.setText("Empilhe paletes em área nivelada e seca para viabilizar reuso imediato ou trituração energética.");
+        } else if (lower.contains("orgân") || lower.contains("organ")) {
+            tvAiRecommendation.setText("Encaminhe rapidamente para compostagem ou biogás antes de atrair vetores e odores.");
+        }
+    }
+
+    private void updatePriorityBadge(String priority) {
+        if (badgeAiPriority == null || getContext() == null) return;
+        if (priority == null) priority = "BAIXA";
+        String p = priority.toUpperCase(Locale.ROOT);
+        if (p.contains("ALT") || p.contains("HIGH")) {
+            badgeAiPriority.setText(R.string.priority_alta);
+            badgeAiPriority.setBackgroundResource(R.drawable.bg_badge_alta);
+            badgeAiPriority.setTextColor(requireContext().getColor(R.color.priority_high_text));
+        } else if (p.contains("MÉD") || p.contains("MED") || p.contains("MEDIUM")) {
+            badgeAiPriority.setText(R.string.priority_media);
+            badgeAiPriority.setBackgroundResource(R.drawable.bg_badge_media);
+            badgeAiPriority.setTextColor(requireContext().getColor(R.color.priority_medium_text));
+        } else {
+            badgeAiPriority.setText(R.string.priority_baixa);
+            badgeAiPriority.setBackgroundResource(R.drawable.bg_badge_baixa);
+            badgeAiPriority.setTextColor(requireContext().getColor(R.color.priority_low_text));
         }
     }
 
@@ -1321,15 +1519,12 @@ public class AiAnalysisFragment extends Fragment {
             btnConfirm.setEnabled(false);
             btnConfirm.setText("Registrando ocorrência...");
         }
-        String rawMat = isRevised
-                ? selectedMaterial
-                : (analysis != null && analysis.getMaterial() != null ? analysis.getMaterial() : "Papelão");
-        String primary = isRevised
-                ? selectedMaterial
-                : (analysis != null ? analysis.getPrimaryMaterial() : AiAnalysisJSON.extractPrimaryMaterial(rawMat));
+        String primary = ReportMetricsCalculator.resolveMaterialFamily(
+                selectedMaterial != null ? selectedMaterial :
+                (analysis != null && analysis.getPrimaryMaterial() != null ? analysis.getPrimaryMaterial() : "Papelão"));
         String specific = (analysis != null && analysis.getSpecificItem() != null)
                 ? analysis.getSpecificItem()
-                : AiAnalysisJSON.extractSpecificItem(rawMat);
+                : AiAnalysisJSON.extractSpecificItem(primary);
         String material = AiAnalysisJSON.formatMaterialWithClass(primary, specific, selectedClass);
         double qtd = isRevised ? currentWeight : (analysis != null ? analysis.getQuantidadeEstimada() : 5.0);
         String unidade = (analysis != null && analysis.getUnidade() != null) ? analysis.getUnidade() : "kg";
@@ -1518,6 +1713,9 @@ public class AiAnalysisFragment extends Fragment {
             }
             fDoc.put("setor", setor != null ? setor : "Linha de Produção A");
             fDoc.put("material", material);
+            String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily(selectedMaterial != null ? selectedMaterial : material);
+            fDoc.put("material_principal", primaryFamily);
+            fDoc.put("item_especifico", (analysis != null && analysis.getSpecificItem() != null) ? analysis.getSpecificItem() : primaryFamily);
             fDoc.put("quantidade", qtd);
             fDoc.put("status", "AGUARDANDO_VALIDACAO");
             fDoc.put("prioridade", calculatedPriority);
@@ -1539,6 +1737,7 @@ public class AiAnalysisFragment extends Fragment {
 
         // 3. Adiciona na lista da Home
         String title = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily(selectedMaterial != null ? selectedMaterial : material);
         Occurrence occ = new Occurrence(
                 id,
                 title,
@@ -1546,7 +1745,7 @@ public class AiAnalysisFragment extends Fragment {
                 "Hoje",
                 calculatedPriority,
                 "AGUARDANDO_VALIDACAO",
-                material,
+                primaryFamily,
                 photoUrl,
                 photoPath
         );
@@ -1727,6 +1926,7 @@ public class AiAnalysisFragment extends Fragment {
 
     private void pushOccurrenceToList(String occurrenceId, String material, String priority) {
         String title = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily(selectedMaterial != null ? selectedMaterial : material);
         OccurrenceStore.pushLocal(requireContext(), new Occurrence(
                 occurrenceId,
                 title,
@@ -1734,7 +1934,7 @@ public class AiAnalysisFragment extends Fragment {
                 getString(R.string.notif_now),
                 priority,
                 "AGUARDANDO_VALIDACAO",
-                material,
+                primaryFamily,
                 remoteImageUrl,
                 photoPath));
     }

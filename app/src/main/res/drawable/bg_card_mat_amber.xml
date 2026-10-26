@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Card Tipo Madeira na Análise IA (#FEF3C7 r16) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FEF3C7" />
+    <corners android:radius="16dp" />
+</shape>
