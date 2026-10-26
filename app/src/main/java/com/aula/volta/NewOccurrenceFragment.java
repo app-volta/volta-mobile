@@ -9,6 +9,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
+import android.view.OrientationEventListener;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -37,6 +39,8 @@ import androidx.navigation.Navigation;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
+
+import com.aula.volta.util.ImageUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -69,6 +73,7 @@ public class NewOccurrenceFragment extends Fragment {
     private Camera camera;
     private int lensFacing = CameraSelector.LENS_FACING_BACK;
     private boolean isTorchOn = false;
+    private OrientationEventListener orientationEventListener;
 
     private File photoFile;
     private File cameraTempFile;
@@ -268,16 +273,71 @@ public class NewOccurrenceFragment extends Fragment {
     }
 
     /**
+     * Determina a rotação do display atual para sincronizar o CameraX.
+     */
+    private int getDisplayRotation() {
+        if (cameraPreviewView != null && cameraPreviewView.getDisplay() != null) {
+            return cameraPreviewView.getDisplay().getRotation();
+        }
+        if (getActivity() != null && getActivity().getWindowManager() != null) {
+            return getActivity().getWindowManager().getDefaultDisplay().getRotation();
+        }
+        return Surface.ROTATION_0;
+    }
+
+    /**
+     * Monitora a orientação do sensor físico do aparelho para que a captura
+     * registre a tag EXIF correta mesmo se a tela estiver travada em portrait.
+     */
+    private void setupOrientationListener() {
+        if (orientationEventListener == null && getContext() != null) {
+            orientationEventListener = new OrientationEventListener(requireContext()) {
+                @Override
+                public void onOrientationChanged(int orientation) {
+                    if (orientation == OrientationEventListener.ORIENTATION_UNKNOWN || imageCapture == null) {
+                        return;
+                    }
+                    int rotation;
+                    if (orientation >= 45 && orientation < 135) {
+                        rotation = Surface.ROTATION_270;
+                    } else if (orientation >= 135 && orientation < 225) {
+                        rotation = Surface.ROTATION_180;
+                    } else if (orientation >= 225 && orientation < 315) {
+                        rotation = Surface.ROTATION_90;
+                    } else {
+                        rotation = Surface.ROTATION_0;
+                    }
+                    try {
+                        imageCapture.setTargetRotation(rotation);
+                    } catch (Exception ignored) {
+                    }
+                }
+            };
+        }
+        if (orientationEventListener != null && orientationEventListener.canDetectOrientation()) {
+            orientationEventListener.enable();
+        }
+    }
+
+    private void disableOrientationListener() {
+        if (orientationEventListener != null) {
+            orientationEventListener.disable();
+        }
+    }
+
+    /**
      * Abre o visor de câmera embutido e inicia o CameraX para visualização em tempo real.
      */
     private void openCameraViewfinder() {
         if (cameraViewfinderOverlay != null) {
             cameraViewfinderOverlay.setVisibility(View.VISIBLE);
         }
+        setupOrientationListener();
         startCameraX();
     }
 
     private void closeCameraOverlay() {
+        disableOrientationListener();
         stopCameraX();
         if (cameraViewfinderOverlay != null) {
             cameraViewfinderOverlay.setVisibility(View.GONE);
@@ -321,8 +381,11 @@ public class NewOccurrenceFragment extends Fragment {
             Preview preview = new Preview.Builder().build();
             preview.setSurfaceProvider(cameraPreviewView.getSurfaceProvider());
 
+            int rotation = getDisplayRotation();
+
             imageCapture = new ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                    .setTargetRotation(rotation)
                     .build();
 
             camera = cameraProvider.bindToLifecycle(
@@ -356,8 +419,13 @@ public class NewOccurrenceFragment extends Fragment {
             return;
         }
 
+        try {
+            imageCapture.setTargetRotation(getDisplayRotation());
+        } catch (Exception ignored) {
+        }
+
         File photoOut = new File(requireContext().getCacheDir(),
-                "volta_photo_" + System.currentTimeMillis() + ".jpg");
+                "volta_photo_raw_" + System.currentTimeMillis() + ".jpg");
 
         ImageCapture.OutputFileOptions outputOptions =
                 new ImageCapture.OutputFileOptions.Builder(photoOut).build();
@@ -442,7 +510,7 @@ public class NewOccurrenceFragment extends Fragment {
         photoPreviewGroup.setVisibility(hasPhoto ? View.VISIBLE : View.GONE);
 
         if (hasPhoto) {
-            Bitmap bmp = BitmapFactory.decodeFile(photoFile.getAbsolutePath());
+            Bitmap bmp = ImageUtils.decodeFileWithExifRotation(photoFile.getAbsolutePath(), MAX_PHOTO_DIMEN);
             imgPhotoPreview.setImageBitmap(bmp);
             btnSendAnalysis.setEnabled(true);
             btnSendAnalysis.setBackgroundTintList(null);
@@ -477,62 +545,23 @@ public class NewOccurrenceFragment extends Fragment {
 
     /** Copia conteúdo da galeria para o cache. */
     private File copyToCache(Uri uri) {
-        try {
-            File out = new File(requireContext().getCacheDir(),
-                    "volta_gallery_" + System.currentTimeMillis() + ".jpg");
-            try (InputStream in = requireContext().getContentResolver().openInputStream(uri);
-                 FileOutputStream fos = new FileOutputStream(out)) {
-                byte[] buffer = new byte[8192];
-                int n;
-                while ((n = in.read(buffer)) != -1) {
-                    fos.write(buffer, 0, n);
-                }
-            }
-            return out;
-        } catch (Exception e) {
+        if (!isAdded() || getContext() == null) {
             return null;
         }
+        return ImageUtils.copyUriToCache(requireContext(), uri);
     }
 
-    /** Reduz dimensões para análise performática. */
+    /** Reduz dimensões para análise performática e garante rotação EXIF na orientação correta. */
     private File compressImage(File source) {
-        if (source == null || !source.exists()) {
+        if (source == null || !source.exists() || !isAdded() || getContext() == null) {
             return null;
         }
-        try {
-            BitmapFactory.Options bounds = new BitmapFactory.Options();
-            bounds.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(source.getAbsolutePath(), bounds);
-
-            int sample = 1;
-            while (bounds.outWidth / sample > MAX_PHOTO_DIMEN
-                    || bounds.outHeight / sample > MAX_PHOTO_DIMEN) {
-                sample *= 2;
-            }
-            BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inSampleSize = sample;
-            Bitmap bitmap = BitmapFactory.decodeFile(source.getAbsolutePath(), opts);
-            if (bitmap == null) {
-                return null;
-            }
-
-            File out = new File(requireContext().getFilesDir(),
-                    "volta_photo_" + System.currentTimeMillis() + ".jpg");
-            try (FileOutputStream fos = new FileOutputStream(out)) {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, fos);
-            }
-            bitmap.recycle();
-            if (!source.getName().startsWith("volta_photo_")) {
-                source.delete();
-            }
-            return out;
-        } catch (Exception e) {
-            return null;
-        }
+        return ImageUtils.fixOrientationAndCompress(requireContext(), source, MAX_PHOTO_DIMEN, JPEG_QUALITY);
     }
 
     @Override
     public void onDestroyView() {
+        disableOrientationListener();
         stopCameraX();
         super.onDestroyView();
     }

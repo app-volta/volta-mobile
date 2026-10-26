@@ -20,6 +20,7 @@ import androidx.fragment.app.FragmentManager;
 import com.aula.volta.R;
 import com.aula.volta.ui.widget.ZoomableImageView;
 import com.aula.volta.util.BottomSheetImmersiveHelper;
+import com.aula.volta.util.ImageUtils;
 
 import java.io.File;
 import java.io.InputStream;
@@ -157,7 +158,7 @@ public class ImagePreviewDialog extends DialogFragment {
         if (localPath != null && !localPath.isEmpty()) {
             File file = new File(localPath);
             if (file.exists()) {
-                Bitmap bmp = BitmapFactory.decodeFile(file.getAbsolutePath());
+                Bitmap bmp = ImageUtils.decodeFileWithExifRotation(file.getAbsolutePath(), 1920);
                 if (bmp != null) {
                     imgPreviewZoom.setImageBitmap(bmp);
                     return;

@@ -3,6 +3,7 @@ package com.aula.volta.ui.analysis;
 import android.animation.ObjectAnimator;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import com.aula.volta.util.ImageUtils;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -189,7 +190,7 @@ public class AiAnalysisFragment extends Fragment {
 
         ImageView imgAiPhoto = view.findViewById(R.id.imgAiPhoto);
         if (photoPath != null && imgAiPhoto != null) {
-            imgAiPhoto.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            imgAiPhoto.setImageBitmap(ImageUtils.decodeFileWithExifRotation(photoPath, 1280));
             imgAiPhoto.setOnClickListener(v -> {
                 String title = (tvAiMaterial != null && tvAiMaterial.getText() != null)
                         ? tvAiMaterial.getText().toString() : "Foto do Resíduo";
@@ -204,7 +205,7 @@ public class AiAnalysisFragment extends Fragment {
 
         ImageView imgAiPhotoScan = view.findViewById(R.id.imgAiPhotoScan);
         if (photoPath != null && imgAiPhotoScan != null) {
-            imgAiPhotoScan.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            imgAiPhotoScan.setImageBitmap(ImageUtils.decodeFileWithExifRotation(photoPath, 1280));
             imgAiPhotoScan.setOnClickListener(v -> {
                 com.aula.volta.ui.dialog.ImagePreviewDialog.show(
                         getParentFragmentManager(),
@@ -794,7 +795,7 @@ public class AiAnalysisFragment extends Fragment {
 
         ImageView imgEditPhotoThumb = root.findViewById(R.id.imgEditPhotoThumb);
         if (photoPath != null && imgEditPhotoThumb != null) {
-            imgEditPhotoThumb.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            imgEditPhotoThumb.setImageBitmap(ImageUtils.decodeFileWithExifRotation(photoPath, 512));
             imgEditPhotoThumb.setOnClickListener(v -> {
                 com.aula.volta.ui.dialog.ImagePreviewDialog.show(
                         getParentFragmentManager(),

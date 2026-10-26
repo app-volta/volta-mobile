@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.util.ImageUtils;
 import android.os.Handler;
 import android.os.Looper;
 import com.aula.volta.data.api.ApiClient;
@@ -719,7 +720,7 @@ public class OccurrenceDetailFragment extends Fragment {
         if (localPath != null && !localPath.isEmpty()) {
             File f = new File(localPath);
             if (f.exists()) {
-                android.graphics.Bitmap bmp = BitmapFactory.decodeFile(localPath);
+                android.graphics.Bitmap bmp = ImageUtils.decodeFileWithExifRotation(localPath, 1280);
                 if (bmp != null) {
                     imgOccThumbnail.setImageBitmap(bmp);
                     return;

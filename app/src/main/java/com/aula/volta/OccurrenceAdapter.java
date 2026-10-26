@@ -228,22 +228,8 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
 
     private static Bitmap decodeSampledBitmap(String path, int reqWidth, int reqHeight) {
         try {
-            final BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(path, options);
-
-            int inSampleSize = 1;
-            if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
-                final int halfHeight = options.outHeight / 2;
-                final int halfWidth = options.outWidth / 2;
-                while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                    inSampleSize *= 2;
-                }
-            }
-
-            options.inSampleSize = inSampleSize;
-            options.inJustDecodeBounds = false;
-            return BitmapFactory.decodeFile(path, options);
+            int maxDimen = Math.max(reqWidth, reqHeight);
+            return com.aula.volta.util.ImageUtils.decodeFileWithExifRotation(path, maxDimen > 0 ? maxDimen : 256);
         } catch (Exception e) {
             return null;
         }
