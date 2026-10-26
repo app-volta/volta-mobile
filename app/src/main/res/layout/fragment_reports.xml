@@ -174,6 +174,7 @@
             <!--                         SEÇÃO: NESTE MÊS (Figma 790:3357)                       -->
             <!-- =============================================================================== -->
             <TextView
+                android:id="@+id/tvReportsPeriodTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
@@ -445,6 +446,7 @@
                     android:layout_marginBottom="4dp">
 
                     <TextView
+                        android:id="@+id/tvGoalTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentStart="true"
@@ -553,6 +555,7 @@
 
             <!-- Setor 1: Frigorífico B2 (Figma 790:3408) -->
             <LinearLayout
+                android:id="@+id/rowTopSector1"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginBottom="8dp"
@@ -563,6 +566,7 @@
                 android:paddingEnd="12dp">
 
                 <TextView
+                    android:id="@+id/tvTopSector1Rank"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:background="@drawable/bg_profile_icon_stats"
@@ -581,6 +585,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvTopSector1Name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -590,6 +595,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvTopSector1Kg"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -606,12 +612,14 @@
                     android:orientation="horizontal">
 
                     <View
+                        android:id="@+id/viewTopSector1Bar"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="85"
                         android:background="#C68A10" />
 
                     <View
+                        android:id="@+id/viewTopSector1BarEmpty"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="15" />
@@ -620,6 +628,7 @@
 
             <!-- Setor 2: Expedição (Figma 790:3415) -->
             <LinearLayout
+                android:id="@+id/rowTopSector2"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginBottom="8dp"
@@ -630,6 +639,7 @@
                 android:paddingEnd="12dp">
 
                 <TextView
+                    android:id="@+id/tvTopSector2Rank"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:background="@drawable/bg_profile_icon_email"
@@ -648,6 +658,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvTopSector2Name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -657,6 +668,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvTopSector2Kg"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -673,12 +685,14 @@
                     android:orientation="horizontal">
 
                     <View
+                        android:id="@+id/viewTopSector2Bar"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="55"
                         android:background="#3B82F6" />
 
                     <View
+                        android:id="@+id/viewTopSector2BarEmpty"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="45" />
@@ -687,6 +701,7 @@
 
             <!-- Setor 3: Manutenção (Figma 790:3422) -->
             <LinearLayout
+                android:id="@+id/rowTopSector3"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginBottom="16dp"
@@ -697,6 +712,7 @@
                 android:paddingEnd="12dp">
 
                 <TextView
+                    android:id="@+id/tvTopSector3Rank"
                     android:layout_width="22dp"
                     android:layout_height="22dp"
                     android:background="@drawable/bg_profile_icon_calendar"
@@ -715,6 +731,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvTopSector3Name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -724,6 +741,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvTopSector3Kg"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -740,12 +758,14 @@
                     android:orientation="horizontal">
 
                     <View
+                        android:id="@+id/viewTopSector3Bar"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="47"
                         android:background="#8B6FE0" />
 
                     <View
+                        android:id="@+id/viewTopSector3BarEmpty"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="53" />
@@ -816,11 +836,13 @@
                 android:paddingEnd="12dp">
 
                 <FrameLayout
+                    android:id="@+id/cardRecentHistoryIcon1"
                     android:layout_width="42dp"
                     android:layout_height="42dp"
                     android:background="@drawable/bg_profile_icon_stats">
 
                     <ImageView
+                        android:id="@+id/icRecentHistory1"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
@@ -835,6 +857,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvRecentHistoryTitle1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -844,6 +867,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvRecentHistorySub1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -854,6 +878,7 @@
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/tvRecentHistoryBadge1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_profile_icon_stats"
@@ -883,11 +908,13 @@
                 android:paddingEnd="12dp">
 
                 <FrameLayout
+                    android:id="@+id/cardRecentHistoryIcon2"
                     android:layout_width="42dp"
                     android:layout_height="42dp"
                     android:background="@drawable/bg_profile_icon_email">
 
                     <ImageView
+                        android:id="@+id/icRecentHistory2"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
@@ -902,6 +929,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvRecentHistoryTitle2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -911,6 +939,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvRecentHistorySub2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -921,6 +950,7 @@
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/tvRecentHistoryBadge2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_profile_icon_recycled"
@@ -950,11 +980,13 @@
                 android:paddingEnd="12dp">
 
                 <FrameLayout
+                    android:id="@+id/cardRecentHistoryIcon3"
                     android:layout_width="42dp"
                     android:layout_height="42dp"
                     android:background="@drawable/bg_profile_icon_calendar">
 
                     <ImageView
+                        android:id="@+id/icRecentHistory3"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:layout_gravity="center"
@@ -969,6 +1001,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvRecentHistoryTitle3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
@@ -978,6 +1011,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvRecentHistorySub3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
@@ -988,6 +1022,7 @@
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/tvRecentHistoryBadge3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_profile_icon_recycled"

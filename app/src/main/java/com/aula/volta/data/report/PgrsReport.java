@@ -52,8 +52,8 @@ public final class PgrsReport {
         String summaryJson = PrefsHelper.getJson(app, "cache_reports", "summary");
         List<Occurrence> occurrences = OccurrenceStore.cached(app);
 
-        int abertas = 9;
-        int resolvidas = 43;
+        int abertas = 6;
+        int resolvidas = 46;
         int kg = 1147;
         try {
             if (summaryJson != null) {
@@ -61,6 +61,12 @@ public final class PgrsReport {
                 abertas = intOpt(summary, "abertas");
                 resolvidas = intOpt(summary, "resolvidas");
                 kg = intOpt(summary, "kg_reciclados");
+            } else {
+                ReportMetricsCalculator.ReportSummary calc = ReportMetricsCalculator.calculate(
+                        ReportMetricsCalculator.Period.MONTH, null, occurrences, null, null);
+                abertas = calc.openCount;
+                resolvidas = calc.resolvedCount;
+                kg = calc.totalKg;
             }
         } catch (Exception ignored) {
         }
@@ -217,8 +223,8 @@ public final class PgrsReport {
         Context app = context.getApplicationContext();
         String summaryJson = PrefsHelper.getJson(app, "cache_reports", "summary");
         List<Occurrence> occurrences = OccurrenceStore.cached(app);
-        int abertas = 9;
-        int resolvidas = 43;
+        int abertas = 6;
+        int resolvidas = 46;
         int kg = 1147;
         try {
             if (summaryJson != null) {
@@ -226,6 +232,12 @@ public final class PgrsReport {
                 abertas = intOpt(summary, "abertas");
                 resolvidas = intOpt(summary, "resolvidas");
                 kg = intOpt(summary, "kg_reciclados");
+            } else {
+                ReportMetricsCalculator.ReportSummary calc = ReportMetricsCalculator.calculate(
+                        ReportMetricsCalculator.Period.MONTH, null, occurrences, null, null);
+                abertas = calc.openCount;
+                resolvidas = calc.resolvedCount;
+                kg = calc.totalKg;
             }
         } catch (Exception ignored) {
         }
