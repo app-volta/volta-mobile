@@ -1401,7 +1401,7 @@ public class AiAnalysisFragment extends Fragment {
         Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
 
         // 5. Retorna diretamente à Home
-        navigateToHome(v);
+        navigateToDetail(v, id);
     }
 
     private void persistOccurrenceDetail(String id, String material, double qtd, String unidade,
@@ -1436,6 +1436,31 @@ public class AiAnalysisFragment extends Fragment {
 
         PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", id, detail.toString());
         PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", "latest_photo", detail.toString());
+    }
+
+    private void navigateToDetail(View v, String occId) {
+        try {
+            NavOptions navOptions = new NavOptions.Builder()
+                    .setPopUpTo(R.id.nav_home, false)
+                    .build();
+            View target = getView() != null ? getView() : v;
+            if (target != null) {
+                Bundle args = new Bundle();
+                args.putString("occurrenceId", occId);
+                if (photoPath != null && !photoPath.isEmpty()) {
+                    args.putString("photoPath", photoPath);
+                }
+                if (remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+                    args.putString("photoUrl", remoteImageUrl);
+                    args.putString("imageUrl", remoteImageUrl);
+                }
+                Navigation.findNavController(target).navigate(R.id.nav_occurrence_full, args, navOptions);
+                return;
+            }
+        } catch (Exception e) {
+            Log.w("AiAnalysisFragment", "Falha ao navegar para detalhe da ocorrencia: " + e.getMessage());
+        }
+        navigateToHome(v);
     }
 
     private void navigateToHome(View v) {
@@ -1479,7 +1504,7 @@ public class AiAnalysisFragment extends Fragment {
 
         Toast.makeText(requireContext(), "Ocorrência salva offline", Toast.LENGTH_SHORT).show();
 
-        navigateToHome(v);
+        navigateToDetail(v, offlineId);
     }
 
     private void pushOccurrenceNotification(String occurrenceId, String material) {

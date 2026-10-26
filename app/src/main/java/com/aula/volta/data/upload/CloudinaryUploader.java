@@ -55,7 +55,7 @@ public final class CloudinaryUploader {
         } catch (Throwable ignored) {
         }
         if (mainHandler != null) {
-            postToMain(r);
+            mainHandler.post(r);
         } else {
             r.run();
         }
