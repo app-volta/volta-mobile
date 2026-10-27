@@ -3,35 +3,44 @@ package com.aula.volta.data.upload;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * Serviço de Upload de Imagens no Cloudinary (Fase 13 - Integração em Nuvem).
  *
- * Realiza upload direto (unsigned) de fotos para a nuvem do Cloudinary,
+ * Realiza upload direto (unsigned) de fotos para a nuvem do Cloudinary via OkHttp,
  * retornando a secure_url HTTPS para envio à IA e ao backend.
  *
  * Possui controle de idempotência (cache por arquivo + fila in-flight) para garantir
  * que a mesma foto nunca seja enviada duas vezes ao Cloudinary.
  */
 public final class CloudinaryUploader {
+
+    private static final String TAG = "CloudinaryUploader";
 
     // Configurações oficiais do Cloudinary do projeto VOLTA
     public static String CLOUD_NAME = "kgou1air";
@@ -44,7 +53,28 @@ public final class CloudinaryUploader {
     public static String PROFILE_UPLOAD_PRESET = "Perfil-Photo";
     public static String PROFILE_ASSET_FOLDER = "Perfil/Assets/Image";
 
-    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private static final OkHttpClient httpClient = new OkHttpClient.Builder()
+            .connectTimeout(25, TimeUnit.SECONDS)
+            .readTimeout(45, TimeUnit.SECONDS)
+            .writeTimeout(45, TimeUnit.SECONDS)
+            .build();
+
+    private static void logI(String tag, String msg) {
+        try {
+            Log.i(tag, msg);
+        } catch (Throwable t) {
+            System.out.println("[" + tag + "] " + msg);
+        }
+    }
+
+    private static void logE(String tag, String msg) {
+        try {
+            Log.e(tag, msg);
+        } catch (Throwable t) {
+            System.err.println("[" + tag + "] " + msg);
+        }
+    }
+
     private static Handler mainHandler;
 
     private static void postToMain(Runnable r) {
@@ -85,27 +115,24 @@ public final class CloudinaryUploader {
             return;
         }
 
-        executor.execute(() -> {
-            HttpURLConnection conn = null;
-            try {
-                URL url = new URL(remoteUrl.trim());
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setConnectTimeout(15000);
-                conn.setReadTimeout(15000);
-                conn.setInstanceFollowRedirects(true);
-                conn.setRequestProperty("User-Agent", "Volta-Mobile-Android");
-                conn.connect();
+        Request req = new Request.Builder()
+                .url(remoteUrl.trim())
+                .header("User-Agent", "Volta-Mobile-Android")
+                .build();
 
-                int code = conn.getResponseCode();
-                if (code == HttpURLConnection.HTTP_OK) {
-                    try (java.io.InputStream is = conn.getInputStream();
-                         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream()) {
-                        byte[] buffer = new byte[8192];
-                        int read;
-                        while ((read = is.read(buffer)) != -1) {
-                            baos.write(buffer, 0, read);
-                        }
-                        byte[] bytes = baos.toByteArray();
+        httpClient.newCall(req).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                if (callback != null) {
+                    postToMain(() -> callback.onError(e));
+                }
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                try (ResponseBody body = response.body()) {
+                    if (response.isSuccessful() && body != null) {
+                        byte[] bytes = body.bytes();
                         android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                         if (bmp != null) {
                             if (callback != null) {
@@ -114,15 +141,13 @@ public final class CloudinaryUploader {
                             return;
                         }
                     }
-                }
-                throw new Exception("HTTP " + code + " ao buscar bitmap: " + remoteUrl);
-            } catch (Exception e) {
-                if (callback != null) {
-                    postToMain(() -> callback.onError(e));
-                }
-            } finally {
-                if (conn != null) {
-                    conn.disconnect();
+                    if (callback != null) {
+                        postToMain(() -> callback.onError(new Exception("HTTP " + response.code() + " ao buscar bitmap: " + remoteUrl)));
+                    }
+                } catch (Exception e) {
+                    if (callback != null) {
+                        postToMain(() -> callback.onError(e));
+                    }
                 }
             }
         });
@@ -153,10 +178,6 @@ public final class CloudinaryUploader {
         return null;
     }
 
-    /**
-     * Faz upload da imagem no Cloudinary em background (apenas 1 vez por arquivo).
-     * Se o mesmo arquivo já estiver subindo ou já tiver subido, reaproveita o resultado.
-     */
     /**
      * Sanitiza o e-mail do usuário para servir como public_id único e consistente no Cloudinary.
      */
@@ -248,7 +269,7 @@ public final class CloudinaryUploader {
             return;
         }
 
-        // 3. Se já existe um upload em andamento para este mesmo arquivo, apenas anexa o callback
+        // 3. Se já existe um upload em andamento para este mesmo arquivo, anexa o callback
         synchronized (inFlightCallbacks) {
             List<UploadCallback> waiting = inFlightCallbacks.get(fileKey);
             if (waiting != null) {
@@ -264,91 +285,59 @@ public final class CloudinaryUploader {
             inFlightCallbacks.put(fileKey, newList);
         }
 
-        executor.execute(() -> {
-            HttpURLConnection conn = null;
-            try {
-                String boundary = "===" + System.currentTimeMillis() + "===";
-                String LINE_FEED = "\r\n";
-                URL url = new URL("https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload");
+        // Prepara multipart com OkHttp
+        MultipartBody.Builder form = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("upload_preset", uploadPreset);
 
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setConnectTimeout(20000);
-                conn.setReadTimeout(30000);
-                conn.setDoOutput(true);
-                conn.setDoInput(true);
-                conn.setUseCaches(false);
-                conn.setRequestProperty("Connection", "close");
-                conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+        if (assetFolder != null && !assetFolder.trim().isEmpty()) {
+            form.addFormDataPart("folder", assetFolder.trim());
+        }
+        if (publicId != null && !publicId.trim().isEmpty()) {
+            form.addFormDataPart("public_id", publicId.trim());
+        }
 
-                OutputStream outputStream = conn.getOutputStream();
-                PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"), true);
+        String mediaType = imageFile.getName().toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+        RequestBody fileBody = RequestBody.create(MediaType.parse(mediaType), imageFile);
+        form.addFormDataPart("file", imageFile.getName(), fileBody);
 
-                // Campo upload_preset
-                writer.append("--").append(boundary).append(LINE_FEED);
-                writer.append("Content-Disposition: form-data; name=\"upload_preset\"").append(LINE_FEED);
-                writer.append("Content-Type: text/plain; charset=UTF-8").append(LINE_FEED);
-                writer.append(LINE_FEED).append(uploadPreset).append(LINE_FEED);
+        Request request = new Request.Builder()
+                .url("https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload")
+                .post(form.build())
+                .build();
 
-                // Campo folder
-                if (assetFolder != null && !assetFolder.trim().isEmpty()) {
-                    writer.append("--").append(boundary).append(LINE_FEED);
-                    writer.append("Content-Disposition: form-data; name=\"folder\"").append(LINE_FEED);
-                    writer.append("Content-Type: text/plain; charset=UTF-8").append(LINE_FEED);
-                    writer.append(LINE_FEED).append(assetFolder).append(LINE_FEED);
-                }
+        logI(TAG, "Iniciando upload para Cloudinary (" + uploadPreset + ") do arquivo: " + imageFile.getName());
 
-                // Campo public_id (opcional - usado para nome determinístico do perfil)
-                if (publicId != null && !publicId.trim().isEmpty()) {
-                    writer.append("--").append(boundary).append(LINE_FEED);
-                    writer.append("Content-Disposition: form-data; name=\"public_id\"").append(LINE_FEED);
-                    writer.append("Content-Type: text/plain; charset=UTF-8").append(LINE_FEED);
-                    writer.append(LINE_FEED).append(publicId.trim()).append(LINE_FEED);
-                }
+        httpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                logE(TAG, "Erro de rede no upload Cloudinary: " + e.getMessage());
+                dispatchError(fileKey, e, imageFile.getAbsolutePath());
+            }
 
-                // Campo file (arquivo binário)
-                String fileName = imageFile.getName();
-                writer.append("--").append(boundary).append(LINE_FEED);
-                writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(fileName).append("\"").append(LINE_FEED);
-                writer.append("Content-Type: image/jpeg").append(LINE_FEED);
-                writer.append(LINE_FEED);
-                writer.flush();
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                try (ResponseBody body = response.body()) {
+                    String respStr = body != null ? body.string() : "";
+                    if (response.isSuccessful()) {
+                        JsonObject json = JsonParser.parseString(respStr).getAsJsonObject();
+                        String secureUrl = json.get("secure_url").getAsString();
+                        String respPublicId = json.has("public_id") ? json.get("public_id").getAsString() : "";
 
-                try (FileInputStream inputStream = new FileInputStream(imageFile)) {
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = inputStream.read(buffer)) != -1) {
-                        outputStream.write(buffer, 0, bytesRead);
+                        uploadedUrlCache.put(fileKey, secureUrl);
+                        uploadedUrlCache.put(imageFile.getAbsolutePath(), secureUrl);
+                        uploadedPublicIdCache.put(fileKey, respPublicId);
+                        uploadedPublicIdCache.put(imageFile.getAbsolutePath(), respPublicId);
+
+                        logI(TAG, "Upload concluído com sucesso no Cloudinary! secure_url: " + secureUrl);
+                        dispatchSuccess(fileKey, secureUrl, respPublicId);
+                    } else {
+                        logE(TAG, "Cloudinary retornou HTTP " + response.code() + ": " + respStr);
+                        dispatchError(fileKey, new Exception("Cloudinary retornou HTTP " + response.code() + ": " + respStr), imageFile.getAbsolutePath());
                     }
-                    outputStream.flush();
-                }
-
-                writer.append(LINE_FEED);
-                writer.append("--").append(boundary).append("--").append(LINE_FEED);
-                writer.close();
-
-                int status = conn.getResponseCode();
-                if (status == HttpURLConnection.HTTP_OK) {
-                    java.util.Scanner s = new java.util.Scanner(conn.getInputStream()).useDelimiter("\\A");
-                    String responseStr = s.hasNext() ? s.next() : "";
-                    JsonObject json = JsonParser.parseString(responseStr).getAsJsonObject();
-                    String secureUrl = json.get("secure_url").getAsString();
-                    String respPublicId = json.has("public_id") ? json.get("public_id").getAsString() : "";
-
-                    uploadedUrlCache.put(fileKey, secureUrl);
-                    uploadedUrlCache.put(imageFile.getAbsolutePath(), secureUrl);
-                    uploadedPublicIdCache.put(fileKey, respPublicId);
-                    uploadedPublicIdCache.put(imageFile.getAbsolutePath(), respPublicId);
-
-                    dispatchSuccess(fileKey, secureUrl, respPublicId);
-                } else {
-                    throw new Exception("Cloudinary retornou HTTP " + status);
-                }
-            } catch (Exception e) {
-                dispatchError(fileKey, e, fileKey);
-            } finally {
-                if (conn != null) {
-                    conn.disconnect();
+                } catch (Exception e) {
+                    logE(TAG, "Erro ao processar resposta do Cloudinary: " + e.getMessage());
+                    dispatchError(fileKey, e, imageFile.getAbsolutePath());
                 }
             }
         });

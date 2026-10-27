@@ -1469,11 +1469,19 @@ public class AiAnalysisFragment extends Fragment {
 
     private void submitOccurrenceDraftToBackend(View v, String material, double qtd, String unidade,
                                                 @Nullable String photoUrl, String calculatedPriority) {
+        submitOccurrenceToBackend(v, material, qtd, unidade, photoUrl, calculatedPriority);
+    }
+
+    private void submitOccurrenceToBackend(View v, String material, double qtd, String unidade,
+                                           @Nullable String photoUrl, String calculatedPriority) {
         if (!isAdded() || getContext() == null) {
             return;
         }
 
+        final OccurrenceAPI occurrenceApi = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
         final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
+
+        // Resolve a área oficial atribuída ao usuário ou o setor selecionado
         qaApi.getMyAreas().enqueue(new Callback<JsonArray>() {
             @Override
             public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> areaResp) {
@@ -1482,82 +1490,47 @@ public class AiAnalysisFragment extends Fragment {
                 if (resolvedAreaId == null) {
                     resolvedAreaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
                 }
-                executeDraftCreation(v, material, qtd, unidade, photoUrl, calculatedPriority, resolvedAreaId);
+                final String areaId = resolvedAreaId;
+
+                // Resolve a categoria de resíduo oficial cadastrada no banco de dados
+                qaApi.getWasteTypes().enqueue(new Callback<JsonArray>() {
+                    @Override
+                    public void onResponse(@NonNull Call<JsonArray> call2, @NonNull Response<JsonArray> wasteResp) {
+                        if (!isAdded()) return;
+                        String resolvedWasteTypeId = AiAnalysisJSON.resolveWasteTypeId(wasteResp.body(), material);
+                        if (resolvedWasteTypeId == null) {
+                            resolvedWasteTypeId = mapMaterialToWasteTypeId(material);
+                        }
+                        executeCreateCoreIncident(v, occurrenceApi, areaId, resolvedWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<JsonArray> call2, @NonNull Throwable t) {
+                        if (!isAdded()) return;
+                        String fallbackWasteTypeId = mapMaterialToWasteTypeId(material);
+                        executeCreateCoreIncident(v, occurrenceApi, areaId, fallbackWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
+                    }
+                });
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                executeDraftCreation(v, material, qtd, unidade, photoUrl, calculatedPriority, "3059a21a-a46d-4e88-a1be-bf69c240ae0c");
+                String fallbackAreaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+                String fallbackWasteTypeId = mapMaterialToWasteTypeId(material);
+                executeCreateCoreIncident(v, occurrenceApi, fallbackAreaId, fallbackWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
             }
         });
     }
 
-    private void executeDraftCreation(View v, String material, double qtd, String unidade,
-                                      @Nullable String photoUrl, String calculatedPriority, String areaId) {
+    private void executeCreateCoreIncident(View v, OccurrenceAPI occurrenceApi, String areaId, String wasteTypeId,
+                                           String material, double qtd, String unidade,
+                                           @Nullable String photoUrl, String calculatedPriority) {
         String singleWordTitle = AiAnalysisJSON.generateSingleWordTitle(
                 material,
                 descricao,
                 (analysis != null ? analysis.getMaterial() : null)
         );
-
-        JsonObject draftReq = new JsonObject();
-        draftReq.addProperty("area_id", areaId);
-        draftReq.addProperty("employee_description", singleWordTitle);
-        draftReq.addProperty("priority", calculatedPriority);
-        if (photoUrl != null && !photoUrl.isEmpty()) {
-            draftReq.addProperty("photo_url", photoUrl);
-            draftReq.addProperty("photoUrl", photoUrl);
-            draftReq.addProperty("imageUrl", photoUrl);
-        }
-        draftReq.addProperty("estimated_quantity", qtd);
-
-        if (lastPredictJson != null) {
-            draftReq.add("ai_data", lastPredictJson);
-        } else if (analysis != null && analysis.getRawAiData() != null) {
-            draftReq.add("ai_data", analysis.getRawAiData());
-        }
-
-        ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
-        chatApi.createOccurrenceDraft(draftReq).enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> resp) {
-                if (!isAdded()) return;
-                if (resp.isSuccessful() && resp.body() != null && resp.body().has("draft_id")) {
-                    String draftId = resp.body().get("draft_id").getAsString();
-                    createdIncidentId = draftId;
-                    handleOccurrenceCreatedSuccess(v, draftId, material, qtd, unidade, photoUrl, calculatedPriority);
-                } else {
-                    Log.w("AiAnalysisFragment", "createOccurrenceDraft falhou (" + resp.code() + "), tentando fallback de incidente");
-                    fallbackToCoreIncident(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, singleWordTitle);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
-                Log.w("AiAnalysisFragment", "createOccurrenceDraft erro de rede: " + t.getMessage() + ", tentando fallback");
-                fallbackToCoreIncident(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, singleWordTitle);
-            }
-        });
-    }
-
-    private void fallbackToCoreIncident(View v, String material, double qtd, String unidade,
-                                        @Nullable String photoUrl, String calculatedPriority,
-                                        String areaId, String empDesc) {
-        String wasteTypeId = "bd985415-4b25-4c07-beca-cc086dce9b13";
-        String lowerMat = material.toLowerCase(Locale.ROOT);
-        if (lowerMat.contains("papel")) {
-            wasteTypeId = "4e73b22b-586b-4e12-82dc-98df718d09aa";
-        } else if (lowerMat.contains("metal")) {
-            wasteTypeId = "7020bc8b-fba0-4ecb-9975-aaeb7428f522";
-        } else if (lowerMat.contains("vidro")) {
-            wasteTypeId = "976a4df6-1fc6-407b-b353-8d9e68c1c456";
-        } else if (lowerMat.contains("orgânico") || lowerMat.contains("organico")) {
-            wasteTypeId = "bc7f6c3c-8c08-4100-84cf-29d3809088ba";
-        } else if (lowerMat.contains("perigoso")) {
-            wasteTypeId = "e999c0ec-a841-4547-a877-33e070e171b3";
-        }
 
         String contaminationLevel = "LOW";
         if (selectedContamination != null) {
@@ -1569,37 +1542,152 @@ public class AiAnalysisFragment extends Fragment {
             }
         }
 
+        // Garante que photoUrl seja a URL oficial do Cloudinary caso esteja no cache ou disponível
+        String finalPhotoUrl = photoUrl;
+        if ((finalPhotoUrl == null || finalPhotoUrl.isEmpty()) && photoPath != null) {
+            finalPhotoUrl = CloudinaryUploader.getCachedUrl(photoPath);
+        }
+        if ((finalPhotoUrl == null || finalPhotoUrl.isEmpty()) && remoteImageUrl != null && !remoteImageUrl.isEmpty()) {
+            finalPhotoUrl = remoteImageUrl;
+        }
+
         IncidentRequestDTO req = new IncidentRequestDTO(
                 areaId,
                 wasteTypeId,
-                photoUrl,
-                empDesc,
+                finalPhotoUrl,
+                singleWordTitle,
                 contaminationLevel,
                 qtd,
                 calculatedPriority
         );
 
-        OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
-        api.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
+        final String sentPhotoUrl = finalPhotoUrl;
+        Log.i("AiAnalysisFragment", "Enviando ocorrência diretamente ao banco PostgreSQL (POST /incidents) com photoUrl: " + sentPhotoUrl);
+
+        occurrenceApi.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
             @Override
             public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
                 if (!isAdded()) return;
                 if (response.isSuccessful() && response.body() != null && response.body().getId() != null) {
                     IncidentResponseDTO inc = response.body();
-                    String id = inc.getId();
-                    String savedPhotoUrl = inc.getPhotoUrl() != null ? inc.getPhotoUrl() : photoUrl;
-                    handleOccurrenceCreatedSuccess(v, id, material, qtd, unidade, savedPhotoUrl, calculatedPriority);
+                    String dbIncidentId = inc.getId();
+                    String savedPhotoUrl = inc.getPhotoUrl() != null && !inc.getPhotoUrl().isEmpty()
+                            ? inc.getPhotoUrl() : sentPhotoUrl;
+                    createdIncidentId = dbIncidentId;
+                    Log.i("AiAnalysisFragment", "Incidente salvo no banco oficial com sucesso! ID: " + dbIncidentId + ", Photo: " + savedPhotoUrl);
+
+                    // Cria rascunho de apoio no chatbot para sincronização contextual
+                    createChatbotDraftAsync(areaId, singleWordTitle, calculatedPriority, savedPhotoUrl, qtd);
+
+                    // Salva na lista e abre a tela de detalhes
+                    handleOccurrenceCreatedSuccess(v, dbIncidentId, material, qtd, unidade, savedPhotoUrl, calculatedPriority);
                 } else {
-                    saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
+                    Log.w("AiAnalysisFragment", "POST /incidents falhou com HTTP " + response.code() + ", tentando fallback");
+                    fallbackToDraftAndSave(v, material, qtd, unidade, sentPhotoUrl, calculatedPriority, areaId, singleWordTitle);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
+                Log.w("AiAnalysisFragment", "POST /incidents erro de rede: " + t.getMessage() + ", tentando fallback");
+                fallbackToDraftAndSave(v, material, qtd, unidade, sentPhotoUrl, calculatedPriority, areaId, singleWordTitle);
+            }
+        });
+    }
+
+    private void createChatbotDraftAsync(String areaId, String singleWordTitle, String calculatedPriority,
+                                         @Nullable String photoUrl, double qtd) {
+        try {
+            JsonObject draftReq = new JsonObject();
+            draftReq.addProperty("area_id", areaId);
+            draftReq.addProperty("employee_description", singleWordTitle);
+            draftReq.addProperty("priority", calculatedPriority);
+            if (photoUrl != null && !photoUrl.isEmpty()) {
+                draftReq.addProperty("photo_url", photoUrl);
+                draftReq.addProperty("photoUrl", photoUrl);
+                draftReq.addProperty("imageUrl", photoUrl);
+            }
+            draftReq.addProperty("estimated_quantity", qtd);
+            if (lastPredictJson != null) {
+                draftReq.add("ai_data", lastPredictJson);
+            } else if (analysis != null && analysis.getRawAiData() != null) {
+                draftReq.add("ai_data", analysis.getRawAiData());
+            }
+            ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+            chatApi.createOccurrenceDraft(draftReq).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                    Log.i("AiAnalysisFragment", "Chatbot draft registrado com sucesso.");
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                    Log.w("AiAnalysisFragment", "Falha ao registrar draft no chatbot: " + t.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            Log.w("AiAnalysisFragment", "Erro ao disparar chatbot draft: " + e.getMessage());
+        }
+    }
+
+    private void fallbackToDraftAndSave(View v, String material, double qtd, String unidade,
+                                        @Nullable String photoUrl, String calculatedPriority,
+                                        String areaId, String singleWordTitle) {
+        JsonObject draftReq = new JsonObject();
+        draftReq.addProperty("area_id", areaId);
+        draftReq.addProperty("employee_description", singleWordTitle);
+        draftReq.addProperty("priority", calculatedPriority);
+        if (photoUrl != null && !photoUrl.isEmpty()) {
+            draftReq.addProperty("photo_url", photoUrl);
+            draftReq.addProperty("photoUrl", photoUrl);
+            draftReq.addProperty("imageUrl", photoUrl);
+        }
+        draftReq.addProperty("estimated_quantity", qtd);
+
+        ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
+        chatApi.createOccurrenceDraft(draftReq).enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> resp) {
+                if (!isAdded()) return;
+                if (resp.isSuccessful() && resp.body() != null && resp.body().has("draft_id")) {
+                    String draftId = resp.body().get("draft_id").getAsString();
+                    handleOccurrenceCreatedSuccess(v, draftId, material, qtd, unidade, photoUrl, calculatedPriority);
+                } else {
+                    saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
                 saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
             }
         });
+    }
+
+    private String mapMaterialToWasteTypeId(String material) {
+        String lowerMat = material != null ? material.toLowerCase(Locale.ROOT) : "";
+        if (lowerMat.contains("papel")) {
+            return "bd985415-4b25-4c07-beca-cc086dce9b13"; // PAPEL
+        } else if (lowerMat.contains("plást") || lowerMat.contains("plast")) {
+            return "8b3f6a14-9a27-462f-b414-24329d927af7"; // PLASTICO
+        } else if (lowerMat.contains("metal") || lowerMat.contains("aço") || lowerMat.contains("ferro") || lowerMat.contains("alum") || lowerMat.contains("lata")) {
+            return "5ee946da-2975-45e7-80d7-a5a8e49b4b2d"; // METAL
+        } else if (lowerMat.contains("vidro")) {
+            return "2605dca7-b392-4835-a2a7-99a1aa68a7ab"; // VIDRO
+        } else if (lowerMat.contains("orgân") || lowerMat.contains("organ")) {
+            return "5cb7e3c8-6dac-45e4-870f-92cc64a2a452"; // ORGANICO
+        } else if (lowerMat.contains("eletrôn") || lowerMat.contains("eletron") || lowerMat.contains("bateria") || lowerMat.contains("pilha")) {
+            return "7807fd3c-7c11-42c3-95be-48884968d3c1"; // ELETRONICO
+        } else if (lowerMat.contains("químic") || lowerMat.contains("quimic") || lowerMat.contains("perigo") || lowerMat.contains("óleo") || lowerMat.contains("oleo")) {
+            return "db21c099-511a-4dbc-82dc-2090b4b6d0a5"; // QUIMICO
+        } else if (lowerMat.contains("têxtil") || lowerMat.contains("textil") || lowerMat.contains("tecido") || lowerMat.contains("pano")) {
+            return "9221e10b-b15b-40d8-a798-49f372ab9efb"; // TEXTIL
+        } else if (lowerMat.contains("madeira") || lowerMat.contains("pallet") || lowerMat.contains("palete") || lowerMat.contains("tábua") || lowerMat.contains("tabua") || lowerMat.contains("mobil")) {
+            return "e9e077a8-7464-422d-a3be-44bc770fd5d2"; // MADEIRA
+        }
+        return "dc9b7d17-cd48-475a-a313-d5de98505854"; // MISTO
     }
 
     private void handleOccurrenceCreatedSuccess(View v, String id, String material, double qtd,

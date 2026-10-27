@@ -590,25 +590,27 @@ public class AiAnalysisJSON {
         String normDesc = normalize(description);
         String primary = classifyPrimaryMaterial(description, "", "");
 
-        String targetCategory = "PAPER";
-        if ("Plástico".equalsIgnoreCase(primary)) {
-            targetCategory = "PLASTIC";
-        } else if ("Metal".equalsIgnoreCase(primary)) {
-            targetCategory = "METAL";
-        } else if ("Vidro".equalsIgnoreCase(primary)) {
-            targetCategory = "GLASS";
-        } else if ("Orgânico".equalsIgnoreCase(primary)) {
-            targetCategory = "ORGANIC";
-        } else if ("Madeira".equalsIgnoreCase(primary)) {
-            targetCategory = "WOOD";
-        } else if ("Perigoso".equalsIgnoreCase(primary)) {
-            targetCategory = "CHEMICAL";
+        String[] targetKeywords = new String[]{"papel", "paper"};
+        if (primary != null && primary.toLowerCase(Locale.ROOT).contains("pl")) {
+            targetKeywords = new String[]{"plast", "plastic"};
+        } else if (primary != null && primary.toLowerCase(Locale.ROOT).contains("met")) {
+            targetKeywords = new String[]{"metal", "alumin", "lata"};
+        } else if (primary != null && primary.toLowerCase(Locale.ROOT).contains("vidr")) {
+            targetKeywords = new String[]{"vidro", "glass"};
+        } else if (primary != null && (primary.toLowerCase(Locale.ROOT).contains("org") || normDesc.contains("organ"))) {
+            targetKeywords = new String[]{"organ", "biodegrad"};
+        } else if (primary != null && (primary.toLowerCase(Locale.ROOT).contains("madeir") || normDesc.contains("pallet") || normDesc.contains("palete") || normDesc.contains("mobil"))) {
+            targetKeywords = new String[]{"madeira", "wood"};
+        } else if (primary != null && (primary.toLowerCase(Locale.ROOT).contains("perig") || normDesc.contains("quimic") || normDesc.contains("oleo"))) {
+            targetKeywords = new String[]{"quimic", "chemical", "perigo"};
         } else if (normDesc.contains("eletron") || normDesc.contains("bateria") || normDesc.contains("pilha")) {
-            targetCategory = "ELECTRONIC";
+            targetKeywords = new String[]{"eletron", "electronic"};
+        } else if (normDesc.contains("textil") || normDesc.contains("tecido")) {
+            targetKeywords = new String[]{"textil", "fabric"};
         }
 
         String firstId = null;
-        String paperFallbackId = null;
+        String fallbackId = null;
         for (JsonElement el : array) {
             if (el.isJsonObject()) {
                 JsonObject obj = el.getAsJsonObject();
@@ -619,16 +621,21 @@ public class AiAnalysisJSON {
                     }
                     String cat = obj.has("category") && !obj.get("category").isJsonNull()
                             ? normalize(obj.get("category").getAsString()) : "";
-                    if (cat.contains("paper") || cat.contains("papel")) {
-                        paperFallbackId = id;
+                    String desc = obj.has("description") && !obj.get("description").isJsonNull()
+                            ? normalize(obj.get("description").getAsString()) : "";
+
+                    if (cat.contains("papel") || cat.contains("paper")) {
+                        fallbackId = id;
                     }
-                    if (cat.contains(targetCategory.toLowerCase(Locale.ROOT))) {
-                        return id;
+                    for (String kw : targetKeywords) {
+                        if (cat.contains(kw) || desc.contains(kw)) {
+                            return id;
+                        }
                     }
                 }
             }
         }
-        return paperFallbackId != null ? paperFallbackId : firstId;
+        return fallbackId != null ? fallbackId : firstId;
     }
 
     /**
