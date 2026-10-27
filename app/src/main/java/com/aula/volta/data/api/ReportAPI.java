@@ -34,8 +34,9 @@ public interface ReportAPI {
     @POST("esg/recycling-percentage")
     Call<RecyclingPercentageResponseDTO> calculateRecyclingPercentage(@Body JsonObject body);
 
-    // --- Endpoints de compatibilidade ---
+    // --- Endpoints de compatibilidade e Sumário Executivo Oficial ---
 
-    @GET("reports/summary")
+    @Headers({"Accept: application/json; charset=utf-8"})
+    @GET("summary")
     Call<JsonObject> getSummary();
 }
