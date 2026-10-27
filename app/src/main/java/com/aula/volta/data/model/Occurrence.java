@@ -6,6 +6,8 @@ import com.aula.volta.data.model.incident.IncidentResponseDTO;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.util.Locale;
+
 /**
  * Modelo de domínio da ocorrência (utilizado em toda a UI da Home, Lista e Detalhe).
  * Suporta conversão tanto de OccurrenceJSON legado quanto de IncidentResponseDTO da API Oficial do banco.
@@ -68,7 +70,7 @@ public class Occurrence {
         String id = inc.getId() != null ? inc.getId() : "";
         String desc = (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().isEmpty())
                 ? inc.getEmployeeDescription() : "Incidente " + (id.length() > 8 ? id.substring(0, 8) : id);
-        String sector = "Frigorífico — Setor B2";
+        String sector = resolveSector(inc, context);
         String mat = resolveMaterial(inc);
         String prio = (inc.getPriority() != null && !inc.getPriority().isEmpty())
                 ? inc.getPriority()
@@ -104,6 +106,9 @@ public class Occurrence {
                     } else if (d.has("material") && !d.get("material").isJsonNull()) {
                         mat = d.get("material").getAsString();
                     }
+                    if (d.has("setor") && !d.get("setor").isJsonNull()) {
+                        sector = d.get("setor").getAsString();
+                    }
                 }
             } catch (Exception ignored) {
             }
@@ -111,28 +116,100 @@ public class Occurrence {
         return new Occurrence(id, desc, sector, time, prio, stat, mat, photoUrl, photoPath);
     }
 
+    private static String resolveSector(IncidentResponseDTO inc, Context context) {
+        if (inc == null) {
+            return "Frigorífico — Setor B2";
+        }
+        String areaId = inc.getAreaId();
+        if (areaId != null && !areaId.isEmpty()) {
+            String lower = areaId.toLowerCase(Locale.ROOT);
+            if (lower.contains("3059a21a")) return "Frigorífico — Setor B2";
+            if (lower.contains("9c98cf54")) return "Expedição";
+            if (lower.contains("86901188")) return "Manutenção";
+            if (lower.contains("1f7e4e53")) return "Armazenamento";
+            if (context != null) {
+                String cachedArea = PrefsHelper.getJson(context, "cache_areas", areaId);
+                if (cachedArea != null && !cachedArea.isEmpty()) {
+                    try {
+                        JsonObject obj = JsonParser.parseString(cachedArea).getAsJsonObject();
+                        if (obj.has("sectorName") && !obj.get("sectorName").isJsonNull()) {
+                            return obj.get("sectorName").getAsString();
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }
+        String desc = inc.getEmployeeDescription();
+        if (desc != null) {
+            String lowerDesc = desc.toLowerCase(Locale.ROOT);
+            if (lowerDesc.contains("expedi")) return "Expedição";
+            if (lowerDesc.contains("manuten")) return "Manutenção";
+            if (lowerDesc.contains("armazen")) return "Armazenamento";
+            if (lowerDesc.contains("frigor")) return "Frigorífico — Setor B2";
+        }
+        return "Frigorífico — Setor B2";
+    }
+
     private static String resolveMaterial(IncidentResponseDTO inc) {
-        String desc = inc.getEmployeeDescription() != null ? inc.getEmployeeDescription().toLowerCase(java.util.Locale.ROOT) : "";
-        String wId = inc.getWasteTypeId() != null ? inc.getWasteTypeId().toLowerCase(java.util.Locale.ROOT) : "";
+        if (inc == null) {
+            return "Resíduo Reciclável";
+        }
+        String desc = inc.getEmployeeDescription() != null ? inc.getEmployeeDescription().toLowerCase(Locale.ROOT) : "";
+        String wId = inc.getWasteTypeId() != null ? inc.getWasteTypeId().toLowerCase(Locale.ROOT) : "";
+
+        // 1. Mapeamento por UUID da API QA (tabela waste_types)
+        if (wId.contains("bd985415") || wId.contains("4e73b22b")) {
+            return "Aparas de Papelão";
+        }
+        if (wId.contains("8b3f6a14")) {
+            return "Plástico Filme";
+        }
+        if (wId.contains("2605dca7") || wId.contains("976a4df6")) {
+            return "Vidro Misto";
+        }
+        if (wId.contains("5ee946da") || wId.contains("7020bc8b")) {
+            return "Alumínio Limpo";
+        }
+        if (wId.contains("5cb7e3c8")) {
+            return "Orgânico";
+        }
+        if (wId.contains("e9e077a8")) {
+            return "Madeira / Palete";
+        }
+        if (wId.contains("7807fd3c")) {
+            return "Eletrônico";
+        }
+        if (wId.contains("db21c099")) {
+            return "Químico";
+        }
+        if (wId.contains("9221e10b")) {
+            return "Têxtil";
+        }
+        if (wId.contains("dc9b7d17")) {
+            return "Resíduo Misto";
+        }
+
+        // 2. Classificação semântica por descrição do operador
         if (desc.contains("cadeir") || desc.contains("mesa") || desc.contains("móvel") || desc.contains("movel") || desc.contains("mobili")) {
             return "Mobiliário / Madeira";
         }
         if (desc.contains("madeira") || desc.contains("pallet") || desc.contains("palete")) {
             return "Madeira / Palete";
         }
-        if (wId.contains("4e73b22b") || desc.contains("papel") || desc.contains("papelão") || desc.contains("cartão")) {
+        if (desc.contains("papel") || desc.contains("papelão") || desc.contains("cartão") || desc.contains("caixa")) {
             return "Aparas de Papelão";
         }
-        if (wId.contains("bd985415") || desc.contains("plást") || desc.contains("plast") || desc.contains("pet") || desc.contains("filme")) {
+        if (desc.contains("plást") || desc.contains("plast") || desc.contains("pet") || desc.contains("filme")) {
             return "Plástico Filme";
         }
-        if (wId.contains("7020bc8b") || desc.contains("metal") || desc.contains("alum") || desc.contains("aço") || desc.contains("lata")) {
+        if (desc.contains("metal") || desc.contains("alum") || desc.contains("aço") || desc.contains("lata")) {
             return "Alumínio Limpo";
         }
-        if (wId.contains("976a4df6") || desc.contains("vidro") || desc.contains("garrafa")) {
+        if (desc.contains("vidro") || desc.contains("garrafa")) {
             return "Vidro Misto";
         }
-        if (desc.contains("orgân") || desc.contains("organ")) {
+        if (desc.contains("orgân") || desc.contains("organ") || desc.contains("peotta")) {
             return "Orgânico";
         }
         return "Resíduo Reciclável";

@@ -113,4 +113,80 @@ public class ReportMetricsCalculatorTest {
         assertEquals(7, json.get("abertas").getAsInt());
         assertEquals(47, json.get("resolvidas").getAsInt());
     }
+
+    @Test
+    public void testCalculateLiveDatabase_unmocked() {
+        List<Occurrence> occurrences = new ArrayList<>();
+        // 1 resolvida / closed
+        occurrences.add(new Occurrence("inc-1", "Caixa de Papelão", "Frigorífico B2",
+                "10 min", "BAIXA", "CLOSED", "Papelão"));
+        // 2 abertas / pending
+        occurrences.add(new Occurrence("inc-2", "Bobina plástica", "Expedição",
+                "1h", "MEDIA", "PENDING", "Plástico"));
+        occurrences.add(new Occurrence("inc-3", "Aparas de metal", "Manutenção",
+                "2h", "ALTA", "AGUARDANDO_VALIDACAO", "Metal"));
+
+        Map<String, Double> weights = new HashMap<>();
+        weights.put("inc-1", 40.0);
+        weights.put("inc-2", 20.0);
+        weights.put("inc-3", 15.0);
+
+        JsonObject baseEsg = new JsonObject();
+        baseEsg.addProperty("isLiveDatabase", true);
+
+        ReportMetricsCalculator.ReportSummary summary = ReportMetricsCalculator.calculate(
+                ReportMetricsCalculator.Period.MONTH, baseEsg, occurrences, weights, null);
+
+        assertNotNull(summary);
+        // Exatamente a soma dos pesos do banco (40 + 20 + 15 = 75 kg), sem padding de 1147
+        assertEquals(75, summary.totalKg);
+        // 2 abertas (inc-2 e inc-3), sem padding de 6
+        assertEquals(2, summary.openCount);
+        // 1 resolvida (inc-1), sem padding de 46
+        assertEquals(1, summary.resolvedCount);
+        assertEquals(3, summary.totalCount);
+        // Taxa = 1 / 3 = 33%
+        assertEquals(33, summary.recyclingRate);
+
+        // Materiais puramente das ocorrências (sem 542, 318, etc.)
+        assertEquals(Integer.valueOf(40), summary.materialBreakdown.get("Papelão"));
+        assertEquals(Integer.valueOf(20), summary.materialBreakdown.get("Plástico"));
+        assertEquals(Integer.valueOf(15), summary.materialBreakdown.get("Metal"));
+        assertNull(summary.materialBreakdown.get("Vidro"));
+
+        // Setores puramente das ocorrências
+        assertEquals(3, summary.topSectors.size());
+        assertEquals("Frigorífico B2", summary.topSectors.get(0).name);
+        assertEquals(40, summary.topSectors.get(0).kg);
+    }
+
+    @Test
+    public void testCalculateLiveDatabase_withCorporateTotal() {
+        List<Occurrence> occurrences = new ArrayList<>();
+        occurrences.add(new Occurrence("inc-1", "Papelão", "Frigorífico B2",
+                "10 min", "BAIXA", "CLOSED", "Papelão"));
+        occurrences.add(new Occurrence("inc-2", "Plástico", "Expedição",
+                "1h", "MEDIA", "PENDING", "Plástico"));
+
+        Map<String, Double> weights = new HashMap<>();
+        weights.put("inc-1", 50.0);
+        weights.put("inc-2", 30.0);
+
+        JsonObject baseEsg = new JsonObject();
+        baseEsg.addProperty("isLiveDatabase", true);
+        baseEsg.addProperty("corporateTotalKg", 750);
+        baseEsg.addProperty("corporateRecyclingPercentage", 75);
+
+        ReportMetricsCalculator.ReportSummary summary = ReportMetricsCalculator.calculate(
+                ReportMetricsCalculator.Period.MONTH, baseEsg, occurrences, weights, null);
+
+        assertNotNull(summary);
+        assertEquals(750, summary.totalKg);
+        assertEquals(75, summary.recyclingRate);
+        assertEquals(1, summary.openCount);
+        assertEquals(1, summary.resolvedCount);
+        assertEquals(2, summary.totalCount);
+        assertEquals(Integer.valueOf(50), summary.materialBreakdown.get("Papelão"));
+        assertEquals(Integer.valueOf(30), summary.materialBreakdown.get("Plástico"));
+    }
 }

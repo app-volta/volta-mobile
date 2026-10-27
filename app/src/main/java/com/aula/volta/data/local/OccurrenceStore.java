@@ -149,18 +149,29 @@ public final class OccurrenceStore {
                         Occurrence occ = Occurrence.fromIncident(inc, app);
                         if (occ != null) {
                             list.add(occ);
-                            if (inc.getId() != null && inc.getPhotoUrl() != null && !inc.getPhotoUrl().isEmpty()) {
+                            if (inc.getId() != null) {
                                 try {
                                     String existing = PrefsHelper.getJson(app, "cache_occurrence_detail", inc.getId());
                                     JsonObject d = (existing != null && !existing.isEmpty())
                                             ? JsonParser.parseString(existing).getAsJsonObject()
                                             : new JsonObject();
                                     d.addProperty("id", inc.getId());
-                                    d.addProperty("photoUrl", inc.getPhotoUrl());
-                                    d.addProperty("imageUrl", inc.getPhotoUrl());
+                                    if (inc.getPhotoUrl() != null && !inc.getPhotoUrl().isEmpty()) {
+                                        d.addProperty("photoUrl", inc.getPhotoUrl());
+                                        d.addProperty("imageUrl", inc.getPhotoUrl());
+                                    }
                                     d.addProperty("material", occ.getMaterial());
                                     d.addProperty("setor", occ.getSetor());
                                     d.addProperty("titulo", occ.getTitulo());
+                                    d.addProperty("status", occ.getStatus());
+                                    d.addProperty("prioridade", occ.getPrioridade());
+                                    if (inc.getRegisteredAt() != null) {
+                                        d.addProperty("registeredAt", inc.getRegisteredAt());
+                                    }
+                                    double weight = (inc.getEstimatedQuantity() != null && inc.getEstimatedQuantity() > 0)
+                                            ? inc.getEstimatedQuantity() : 25.0;
+                                    d.addProperty("peso_estimado", weight);
+                                    d.addProperty("quantidade", weight);
                                     PrefsHelper.putJson(app, "cache_occurrence_detail", inc.getId(), d.toString());
                                 } catch (Exception ignored) {
                                 }

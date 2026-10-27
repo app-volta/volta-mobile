@@ -15,6 +15,7 @@ import java.util.Map;
 /**
  * Calculador de métricas e indicadores de relatórios ESG do VOLTA (PGRS).
  * Classe de lógica pura e determinística (coberta por testes unitários).
+ * Suporta modo legado (com baseline Figma para testes) e modo live database (100% desmocado do banco oficial).
  */
 public final class ReportMetricsCalculator {
 
@@ -136,49 +137,29 @@ public final class ReportMetricsCalculator {
         double scale = getPeriodScale(period);
         int goalKg = getGoalKg(period);
 
-        // 1. Métricas corporativas base (Figma 790:3322) escaladas para o período
-        int baseKg = (int) Math.round(1147 * scale);
-        int baseAbertas = Math.max(1, (int) Math.round(6 * scale));
-        int baseResolvidas = Math.max(1, (int) Math.round(46 * scale));
+        boolean isLiveDatabase = baseEsgSummary != null
+                && baseEsgSummary.has("isLiveDatabase")
+                && baseEsgSummary.get("isLiveDatabase").getAsBoolean();
 
-        Map<String, Integer> materials = new LinkedHashMap<>();
-        materials.put("Papelão", (int) Math.round(542 * scale));
-        materials.put("Plástico", (int) Math.round(318 * scale));
-        materials.put("Metal", (int) Math.round(176 * scale));
-        materials.put("Vidro", (int) Math.round(111 * scale));
-
-        // Se houver sumário corporativo da API, extrai seus valores base
-        if (baseEsgSummary != null) {
-            if (baseEsgSummary.has("kg_reciclados") && !baseEsgSummary.get("kg_reciclados").isJsonNull()) {
-                baseKg = (int) Math.round(baseEsgSummary.get("kg_reciclados").getAsInt() * scale);
-            }
-            if (baseEsgSummary.has("abertas") && !baseEsgSummary.get("abertas").isJsonNull()) {
-                baseAbertas = Math.max(1, (int) Math.round(baseEsgSummary.get("abertas").getAsInt() * scale));
-            }
-            if (baseEsgSummary.has("resolvidas") && !baseEsgSummary.get("resolvidas").isJsonNull()) {
-                baseResolvidas = Math.max(1, (int) Math.round(baseEsgSummary.get("resolvidas").getAsInt() * scale));
-            }
-            if (baseEsgSummary.has("por_tipo") && baseEsgSummary.get("por_tipo").isJsonObject()) {
-                JsonObject pt = baseEsgSummary.getAsJsonObject("por_tipo");
-                for (Map.Entry<String, JsonElement> e : pt.entrySet()) {
-                    if (!e.getValue().isJsonNull()) {
-                        int v = (int) Math.round(e.getValue().getAsInt() * scale);
-                        materials.put(e.getKey(), v);
-                    }
-                }
-            }
-        }
-
-        // 2. Setores base escalados
-        Map<String, Integer> sectorKg = new HashMap<>();
-        sectorKg.put("Frigorífico B2", (int) Math.round(342 * scale));
-        sectorKg.put("Expedição", (int) Math.round(218 * scale));
-        sectorKg.put("Manutenção", (int) Math.round(187 * scale));
-
-        // 3. Processa ocorrências reais cadastradas
+        // 1. Processa ocorrências reais cadastradas no banco
         int opAbertas = 0;
         int opResolvidas = 0;
         int opKg = 0;
+
+        Map<String, Integer> materials = new LinkedHashMap<>();
+        Map<String, Integer> sectorKg = new HashMap<>();
+
+        if (!isLiveDatabase) {
+            // Modo legado/mock com padding Figma 790:3322 (para retrocompatibilidade com testes)
+            materials.put("Papelão", (int) Math.round(542 * scale));
+            materials.put("Plástico", (int) Math.round(318 * scale));
+            materials.put("Metal", (int) Math.round(176 * scale));
+            materials.put("Vidro", (int) Math.round(111 * scale));
+
+            sectorKg.put("Frigorífico B2", (int) Math.round(342 * scale));
+            sectorKg.put("Expedição", (int) Math.round(218 * scale));
+            sectorKg.put("Manutenção", (int) Math.round(187 * scale));
+        }
 
         if (occurrences != null) {
             for (Occurrence occ : occurrences) {
@@ -189,7 +170,8 @@ public final class ReportMetricsCalculator {
                 boolean isResolved = status.contains("RESOLVID")
                         || status.contains("FINALIZAD")
                         || status.contains("APROVAD")
-                        || status.contains("COLETAD");
+                        || status.contains("COLETAD")
+                        || status.contains("CLOSED");
 
                 if (isResolved) {
                     opResolvidas++;
@@ -198,7 +180,7 @@ public final class ReportMetricsCalculator {
                 }
 
                 // Determina o peso estimado
-                double weight = 15.0; // Padrão razoável por lote
+                double weight = 25.0; // Padrão razoável por lote no banco
                 if (weightsById != null && id != null && weightsById.containsKey(id) && weightsById.get(id) != null) {
                     weight = weightsById.get(id);
                 }
@@ -225,20 +207,81 @@ public final class ReportMetricsCalculator {
         }
 
         ReportSummary summary = new ReportSummary();
-        summary.totalKg = baseKg + opKg;
-        summary.openCount = baseAbertas + opAbertas;
-        summary.resolvedCount = baseResolvidas + opResolvidas;
-        summary.totalCount = summary.openCount + summary.resolvedCount;
 
-        if (summary.totalCount > 0) {
-            summary.recyclingRate = (int) Math.round(summary.resolvedCount * 100.0 / summary.totalCount);
+        if (isLiveDatabase) {
+            // MODO DESMOCADO — 100% PURO DO BANCO DE DADOS
+            if (baseEsgSummary != null && baseEsgSummary.has("corporateTotalKg") && !baseEsgSummary.get("corporateTotalKg").isJsonNull()) {
+                int corpKg = (int) Math.round(baseEsgSummary.get("corporateTotalKg").getAsInt() * scale);
+                summary.totalKg = corpKg > 0 ? corpKg : opKg;
+            } else {
+                summary.totalKg = opKg;
+            }
+
+            summary.openCount = opAbertas;
+            summary.resolvedCount = opResolvidas;
+            summary.totalCount = opAbertas + opResolvidas;
+
+            if (baseEsgSummary != null && baseEsgSummary.has("corporateRecyclingPercentage") && !baseEsgSummary.get("corporateRecyclingPercentage").isJsonNull()) {
+                summary.recyclingRate = baseEsgSummary.get("corporateRecyclingPercentage").getAsInt();
+            } else if (summary.totalCount > 0) {
+                summary.recyclingRate = (int) Math.round(summary.resolvedCount * 100.0 / summary.totalCount);
+            } else {
+                summary.recyclingRate = 0;
+            }
+
+            // Se houver divisão explícita corporativa por tipo
+            if (baseEsgSummary != null && baseEsgSummary.has("por_tipo") && baseEsgSummary.get("por_tipo").isJsonObject()) {
+                JsonObject pt = baseEsgSummary.getAsJsonObject("por_tipo");
+                for (Map.Entry<String, JsonElement> e : pt.entrySet()) {
+                    if (!e.getValue().isJsonNull()) {
+                        int v = (int) Math.round(e.getValue().getAsInt() * scale);
+                        materials.put(e.getKey(), v);
+                    }
+                }
+            }
+            summary.materialBreakdown = materials;
         } else {
-            summary.recyclingRate = 88;
+            // Modo legado com baseline Figma (garante compatibilidade com testes existentes)
+            int baseKg = (int) Math.round(1147 * scale);
+            int baseAbertas = Math.max(1, (int) Math.round(6 * scale));
+            int baseResolvidas = Math.max(1, (int) Math.round(46 * scale));
+
+            if (baseEsgSummary != null) {
+                if (baseEsgSummary.has("kg_reciclados") && !baseEsgSummary.get("kg_reciclados").isJsonNull()) {
+                    baseKg = (int) Math.round(baseEsgSummary.get("kg_reciclados").getAsInt() * scale);
+                }
+                if (baseEsgSummary.has("abertas") && !baseEsgSummary.get("abertas").isJsonNull()) {
+                    baseAbertas = Math.max(1, (int) Math.round(baseEsgSummary.get("abertas").getAsInt() * scale));
+                }
+                if (baseEsgSummary.has("resolvidas") && !baseEsgSummary.get("resolvidas").isJsonNull()) {
+                    baseResolvidas = Math.max(1, (int) Math.round(baseEsgSummary.get("resolvidas").getAsInt() * scale));
+                }
+                if (baseEsgSummary.has("por_tipo") && baseEsgSummary.get("por_tipo").isJsonObject()) {
+                    JsonObject pt = baseEsgSummary.getAsJsonObject("por_tipo");
+                    for (Map.Entry<String, JsonElement> e : pt.entrySet()) {
+                        if (!e.getValue().isJsonNull()) {
+                            int v = (int) Math.round(e.getValue().getAsInt() * scale);
+                            materials.put(e.getKey(), v);
+                        }
+                    }
+                }
+            }
+
+            summary.totalKg = baseKg + opKg;
+            summary.openCount = baseAbertas + opAbertas;
+            summary.resolvedCount = baseResolvidas + opResolvidas;
+            summary.totalCount = summary.openCount + summary.resolvedCount;
+
+            if (summary.totalCount > 0) {
+                summary.recyclingRate = (int) Math.round(summary.resolvedCount * 100.0 / summary.totalCount);
+            } else {
+                summary.recyclingRate = 88;
+            }
+            summary.materialBreakdown = materials;
         }
 
         summary.goalKg = goalKg;
         summary.goalPercent = Math.min(100, (int) Math.round(summary.totalKg * 100.0 / goalKg));
-        summary.materialBreakdown = materials;
 
         // Processa top 3 setores ordenados por peso
         List<Map.Entry<String, Integer>> sortedSectors = new ArrayList<>(sectorKg.entrySet());
@@ -272,7 +315,7 @@ public final class ReportMetricsCalculator {
         if (lower.contains("madeira") || lower.contains("palete") || lower.contains("pallet") || lower.contains("mobili")) {
             return "Madeira";
         }
-        if (lower.contains("orgân") || lower.contains("organ") || lower.contains("alimento") || lower.contains("comida")) {
+        if (lower.contains("orgân") || lower.contains("organ") || lower.contains("alimento") || lower.contains("comida") || lower.contains("peotta")) {
             return "Orgânico";
         }
         return "Papelão";
