@@ -170,6 +170,18 @@
                     app:tint="@color/white" />
             </RelativeLayout>
 
+            <!-- Skeleton da tela de Relatórios durante carregamento de API -->
+            <include
+                android:id="@+id/skeletonReports"
+                layout="@layout/layout_skeleton_reports"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/layoutReportsDynamicContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
             <!-- =============================================================================== -->
             <!--                         SEÇÃO: NESTE MÊS (Figma 790:3357)                       -->
             <!-- =============================================================================== -->
@@ -1066,6 +1078,8 @@
                     android:textColor="#1BA463"
                     android:textSize="14.5sp"
                     android:textStyle="bold" />
+            </LinearLayout>
+
             </LinearLayout>
 
         </LinearLayout>

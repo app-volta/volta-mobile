@@ -171,7 +171,7 @@
                 android:gravity="center"
                 android:orientation="horizontal" />
 
-            <!-- Loading da Home (Material CircularProgressIndicator verde ativo que gira suavemente) -->
+            <!-- Loading da Home oculto em favor do Skeleton Loading -->
             <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:id="@+id/loadingHome"
                 android:layout_width="wrap_content"
@@ -179,6 +179,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="@dimen/spacing_medium"
                 android:indeterminate="true"
+                android:visibility="gone"
                 app:indicatorColor="#1BA463"
                 app:indicatorSize="36dp"
                 app:trackThickness="3.5dp" />
@@ -200,7 +201,14 @@
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
+            <!-- Skeleton dos 3 Cards de Resumo -->
+            <include
+                android:id="@+id/skeletonHomeSummary"
+                layout="@layout/layout_skeleton_home_summary"
+                android:visibility="gone" />
+
             <LinearLayout
+                android:id="@+id/layoutSummaryCards"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
@@ -407,6 +415,12 @@
             <!-- =================================================================================== -->
             <!--              OCORRÊNCIAS RECENTES — lista dinâmica (Figma 790:1706)                 -->
             <!-- =================================================================================== -->
+
+            <!-- Skeleton de ocorrências recentes -->
+            <include
+                android:id="@+id/skeletonRecentOccurrences"
+                layout="@layout/layout_skeleton_home_occurrences"
+                android:visibility="gone" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvRecentOccurrences"

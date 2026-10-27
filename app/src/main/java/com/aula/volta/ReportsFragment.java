@@ -67,6 +67,9 @@ public class ReportsFragment extends Fragment {
     private View goalProgress;
     private LinearLayout materialContainer;
 
+    private View skeletonReports;
+    private View layoutReportsDynamicContent;
+
     private TextView chipWeek;
     private TextView chipMonth;
     private TextView chipQuarter;
@@ -156,6 +159,9 @@ public class ReportsFragment extends Fragment {
         tvGoalTotal = view.findViewById(R.id.tvGoalTotal);
         goalProgress = view.findViewById(R.id.viewGoalProgress);
         materialContainer = view.findViewById(R.id.materialContainer);
+
+        skeletonReports = view.findViewById(R.id.skeletonReports);
+        layoutReportsDynamicContent = view.findViewById(R.id.layoutReportsDynamicContent);
 
         chipWeek = view.findViewById(R.id.chipWeek);
         chipMonth = view.findViewById(R.id.chipMonth);
@@ -286,6 +292,9 @@ public class ReportsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (skeletonReports != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonReports);
+        }
         OccurrenceStore.removeListener(storeListener);
         toastHandler.removeCallbacks(hideToastRunnable);
     }
@@ -333,6 +342,14 @@ public class ReportsFragment extends Fragment {
 
     private void loadSummary() {
         if (!isAdded() || getContext() == null) return;
+
+        if (skeletonReports != null) {
+            skeletonReports.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonReports);
+        }
+        if (layoutReportsDynamicContent != null) {
+            layoutReportsDynamicContent.setVisibility(View.GONE);
+        }
 
         // 1. Renderiza imediatamente com dados em cache para fluidez de UI
         List<Occurrence> cachedOccurrences = OccurrenceStore.cached(requireContext());
@@ -490,6 +507,16 @@ public class ReportsFragment extends Fragment {
 
     private void processAndDisplaySummary(List<Occurrence> occurrences, @Nullable JsonObject baseEsg) {
         if (!isAdded() || getContext() == null) return;
+
+        if (skeletonReports != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonReports);
+            skeletonReports.setVisibility(View.GONE);
+        }
+        if (layoutReportsDynamicContent != null) {
+            layoutReportsDynamicContent.setVisibility(View.VISIBLE);
+            layoutReportsDynamicContent.setAlpha(0f);
+            layoutReportsDynamicContent.animate().alpha(1f).setDuration(220).start();
+        }
 
         Map<String, Double> weightsById = new HashMap<>();
         Map<String, String> materialsById = new HashMap<>();

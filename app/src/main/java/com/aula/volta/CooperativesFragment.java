@@ -38,6 +38,8 @@ public class CooperativesFragment extends Fragment {
     private static final String KEY_LIST = "list";
 
     private ProgressBar loadingCooperatives;
+    private View skeletonCooperativesList;
+    private androidx.recyclerview.widget.RecyclerView rvCooperatives;
     private TextView tvEmptyCooperatives;
     private CooperativeAdapter adapter;
     private String firstCoopName;
@@ -56,9 +58,10 @@ public class CooperativesFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         loadingCooperatives = view.findViewById(R.id.loadingCooperatives);
+        skeletonCooperativesList = view.findViewById(R.id.skeletonCooperativesList);
         tvEmptyCooperatives = view.findViewById(R.id.tvEmptyCooperatives);
 
-        RecyclerView rvCooperatives = view.findViewById(R.id.rvCooperatives);
+        rvCooperatives = view.findViewById(R.id.rvCooperatives);
         adapter = new CooperativeAdapter();
         adapter.setOnItemClickListener(coop -> openChat(view, coop.getNome()));
         rvCooperatives.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -95,6 +98,16 @@ public class CooperativesFragment extends Fragment {
     }
 
     private void loadCooperatives() {
+        if (skeletonCooperativesList != null) {
+            skeletonCooperativesList.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonCooperativesList);
+        }
+        if (rvCooperatives != null) {
+            rvCooperatives.setVisibility(View.GONE);
+        }
+        if (tvEmptyCooperatives != null) {
+            tvEmptyCooperatives.setVisibility(View.GONE);
+        }
         CooperativeAPI api = ApiClient.get(requireContext()).create(CooperativeAPI.class);
         api.getCooperatives().enqueue(new Callback<List<CooperativeResponseDTO>>() {
             @Override
@@ -177,6 +190,13 @@ public class CooperativesFragment extends Fragment {
     }
 
     private void hideLoading() {
+        if (skeletonCooperativesList != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonCooperativesList);
+            skeletonCooperativesList.setVisibility(View.GONE);
+        }
+        if (rvCooperatives != null) {
+            rvCooperatives.setVisibility(View.VISIBLE);
+        }
         if (loadingCooperatives != null) {
             loadingCooperatives.setVisibility(View.GONE);
         }

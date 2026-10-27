@@ -34,6 +34,8 @@ import java.util.List;
 public class OccurrencesFragment extends Fragment {
 
     private ProgressBar loadingOccurrences;
+    private View skeletonOccurrencesList;
+    private androidx.recyclerview.widget.RecyclerView rvOccurrences;
     private TextView tvEmptyOccurrencesList;
     private TextView tvOccurrencesCount;
     private TextView btnClearFiltersChip;
@@ -64,6 +66,7 @@ public class OccurrencesFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         loadingOccurrences = view.findViewById(R.id.loadingOccurrences);
+        skeletonOccurrencesList = view.findViewById(R.id.skeletonOccurrencesList);
         tvEmptyOccurrencesList = view.findViewById(R.id.tvEmptyOccurrencesList);
         tvOccurrencesCount = view.findViewById(R.id.tvOccurrencesCount);
         btnClearFiltersChip = view.findViewById(R.id.btnClearFiltersChip);
@@ -77,7 +80,7 @@ public class OccurrencesFragment extends Fragment {
             btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         }
 
-        RecyclerView rvOccurrences = view.findViewById(R.id.rvOccurrences);
+        rvOccurrences = view.findViewById(R.id.rvOccurrences);
         adapter = new OccurrenceAdapter(occurrence -> {
             Bundle args = new Bundle();
             args.putString("occurrenceId", occurrence.getId());
@@ -100,6 +103,9 @@ public class OccurrencesFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (skeletonOccurrencesList != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonOccurrencesList);
+        }
         OccurrenceStore.removeListener(storeListener);
         super.onDestroyView();
     }
@@ -175,9 +181,26 @@ public class OccurrencesFragment extends Fragment {
     }
 
     private void loadOccurrences() {
+        if (skeletonOccurrencesList != null) {
+            skeletonOccurrencesList.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonOccurrencesList);
+        }
+        if (rvOccurrences != null) {
+            rvOccurrences.setVisibility(View.GONE);
+        }
+        if (tvEmptyOccurrencesList != null) {
+            tvEmptyOccurrencesList.setVisibility(View.GONE);
+        }
         OccurrenceStore.refresh(requireContext(), occurrences -> {
             if (!isAdded()) {
                 return;
+            }
+            if (skeletonOccurrencesList != null) {
+                com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonOccurrencesList);
+                skeletonOccurrencesList.setVisibility(View.GONE);
+            }
+            if (rvOccurrences != null) {
+                rvOccurrences.setVisibility(View.VISIBLE);
             }
             applyOccurrences(occurrences);
             hideLoading();
@@ -251,6 +274,13 @@ public class OccurrencesFragment extends Fragment {
     }
 
     private void hideLoading() {
+        if (skeletonOccurrencesList != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonOccurrencesList);
+            skeletonOccurrencesList.setVisibility(View.GONE);
+        }
+        if (rvOccurrences != null) {
+            rvOccurrences.setVisibility(View.VISIBLE);
+        }
         if (loadingOccurrences != null) {
             loadingOccurrences.setVisibility(View.GONE);
         }

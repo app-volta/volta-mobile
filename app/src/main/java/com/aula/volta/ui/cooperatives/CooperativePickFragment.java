@@ -51,6 +51,8 @@ public class CooperativePickFragment extends Fragment {
 
     private TextView tvPickContext;
     private ProgressBar loadingPick;
+    private View skeletonCooperativePick;
+    private androidx.recyclerview.widget.RecyclerView rvPickCooperatives;
     private TextView tvEmptyPick;
     private CooperativeAdapter adapter;
     private String occurrenceId;
@@ -77,12 +79,14 @@ public class CooperativePickFragment extends Fragment {
 
         tvPickContext = view.findViewById(R.id.tvPickContext);
         loadingPick = view.findViewById(R.id.loadingPick);
+        skeletonCooperativePick = view.findViewById(R.id.skeletonCooperativePick);
         tvEmptyPick = view.findViewById(R.id.tvEmptyPick);
 
         view.findViewById(R.id.btnBackPick).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
-        RecyclerView rvPick = view.findViewById(R.id.rvPickCooperatives);
+        rvPickCooperatives = view.findViewById(R.id.rvPickCooperatives);
+        RecyclerView rvPick = rvPickCooperatives;
         adapter = new CooperativeAdapter();
         rvPick.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvPick.setNestedScrollingEnabled(false);
@@ -149,6 +153,16 @@ public class CooperativePickFragment extends Fragment {
     }
 
     private void loadCooperatives() {
+        if (skeletonCooperativePick != null) {
+            skeletonCooperativePick.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonCooperativePick);
+        }
+        if (rvPickCooperatives != null) {
+            rvPickCooperatives.setVisibility(View.GONE);
+        }
+        if (tvEmptyPick != null) {
+            tvEmptyPick.setVisibility(View.GONE);
+        }
         CooperativeAPI api = ApiClient.get(requireContext()).create(CooperativeAPI.class);
         api.getCooperatives().enqueue(new Callback<List<CooperativeResponseDTO>>() {
             @Override
@@ -307,6 +321,13 @@ public class CooperativePickFragment extends Fragment {
     }
 
     private void hideLoading() {
+        if (skeletonCooperativePick != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonCooperativePick);
+            skeletonCooperativePick.setVisibility(View.GONE);
+        }
+        if (rvPickCooperatives != null) {
+            rvPickCooperatives.setVisibility(View.VISIBLE);
+        }
         if (loadingPick != null) {
             loadingPick.setVisibility(View.GONE);
         }

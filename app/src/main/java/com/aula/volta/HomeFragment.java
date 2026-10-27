@@ -57,6 +57,10 @@ public class HomeFragment extends Fragment {
     private TextView tvStatResolvedCount;
     private TextView tvStatRecycledCount;
     private View loadingHome;
+    private View skeletonHomeSummary;
+    private View skeletonRecentOccurrences;
+    private View layoutSummaryCards;
+    private androidx.recyclerview.widget.RecyclerView rvRecentOccurrences;
     private TextView tvEmptyOccurrences;
     private TextView tvNotifCount;
     private TextView tvGreeting;
@@ -163,8 +167,12 @@ public class HomeFragment extends Fragment {
         //            LISTA DINÂMICA (Fase 2 — mesmo visual Figma via adapter)
         // _________________________________________________________________________________________
 
-        RecyclerView rvRecent = view.findViewById(R.id.rvRecentOccurrences);
+        rvRecentOccurrences = view.findViewById(R.id.rvRecentOccurrences);
+        RecyclerView rvRecent = rvRecentOccurrences;
         loadingHome = view.findViewById(R.id.loadingHome);
+        skeletonHomeSummary = view.findViewById(R.id.skeletonHomeSummary);
+        skeletonRecentOccurrences = view.findViewById(R.id.skeletonRecentOccurrences);
+        layoutSummaryCards = view.findViewById(R.id.layoutSummaryCards);
         tvEmptyOccurrences = view.findViewById(R.id.tvEmptyOccurrences);
 
         adapter = new OccurrenceAdapter(occurrence -> {
@@ -213,6 +221,12 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        if (skeletonHomeSummary != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonHomeSummary);
+        }
+        if (skeletonRecentOccurrences != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonRecentOccurrences);
+        }
         super.onDestroyView();
         OccurrenceStore.removeListener(storeListener);
         NotificationStore.removeListener(this::loadNotificationDot);
@@ -377,6 +391,13 @@ public class HomeFragment extends Fragment {
 
     /** Resumo da unidade via GET /reports/summary (mock → API-ready). */
     private void loadSummary() {
+        if (skeletonHomeSummary != null) {
+            skeletonHomeSummary.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonHomeSummary);
+        }
+        if (layoutSummaryCards != null) {
+            layoutSummaryCards.setVisibility(View.GONE);
+        }
         ReportAPI api = ApiClient.get(requireContext()).create(ReportAPI.class);
         api.getEsgMetrics().enqueue(new Callback<List<EsgMetricResponseDTO>>() {
             @Override
@@ -481,9 +502,26 @@ public class HomeFragment extends Fragment {
 
     /** Ocorrências recentes via OccurrenceStore (API + locais lançados no app). */
     private void loadOccurrences() {
+        if (skeletonRecentOccurrences != null) {
+            skeletonRecentOccurrences.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonRecentOccurrences);
+        }
+        if (rvRecentOccurrences != null) {
+            rvRecentOccurrences.setVisibility(View.GONE);
+        }
+        if (tvEmptyOccurrences != null) {
+            tvEmptyOccurrences.setVisibility(View.GONE);
+        }
         OccurrenceStore.refresh(requireContext(), occurrences -> {
             if (!isAdded()) {
                 return;
+            }
+            if (skeletonRecentOccurrences != null) {
+                com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonRecentOccurrences);
+                skeletonRecentOccurrences.setVisibility(View.GONE);
+            }
+            if (rvRecentOccurrences != null) {
+                rvRecentOccurrences.setVisibility(View.VISIBLE);
             }
             applyOccurrences(recentOnly(occurrences));
             onLoadFinished();
@@ -543,8 +581,24 @@ public class HomeFragment extends Fragment {
 
     private void onLoadFinished() {
         pendingLoads--;
-        if (pendingLoads <= 0 && loadingHome != null) {
-            loadingHome.setVisibility(View.GONE);
+        if (pendingLoads <= 0) {
+            if (skeletonHomeSummary != null) {
+                com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonHomeSummary);
+                skeletonHomeSummary.setVisibility(View.GONE);
+            }
+            if (layoutSummaryCards != null) {
+                layoutSummaryCards.setVisibility(View.VISIBLE);
+            }
+            if (skeletonRecentOccurrences != null) {
+                com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonRecentOccurrences);
+                skeletonRecentOccurrences.setVisibility(View.GONE);
+            }
+            if (rvRecentOccurrences != null) {
+                rvRecentOccurrences.setVisibility(View.VISIBLE);
+            }
+            if (loadingHome != null) {
+                loadingHome.setVisibility(View.GONE);
+            }
         }
     }
     private void fetchUserProfileFromDatabase() {

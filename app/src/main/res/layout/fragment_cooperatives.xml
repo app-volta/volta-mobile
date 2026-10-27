@@ -84,7 +84,14 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/spacing_medium" />
+            android:layout_marginTop="@dimen/spacing_medium"
+            android:visibility="gone" />
+
+        <!-- Skeleton da lista de cooperativas -->
+        <include
+            android:id="@+id/skeletonCooperativesList"
+            layout="@layout/layout_skeleton_cooperatives"
+            android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvCooperatives"

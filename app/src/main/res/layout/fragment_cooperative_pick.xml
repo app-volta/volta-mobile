@@ -52,7 +52,14 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/spacing_large" />
+            android:layout_marginTop="@dimen/spacing_large"
+            android:visibility="gone" />
+
+        <!-- Skeleton da lista de escolha de cooperativa -->
+        <include
+            android:id="@+id/skeletonCooperativePick"
+            layout="@layout/layout_skeleton_cooperatives"
+            android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvPickCooperatives"

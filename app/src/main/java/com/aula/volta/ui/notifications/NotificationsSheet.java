@@ -51,6 +51,7 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
 
     private NotificationAdapter adapter;
     private TextView tvNewCount;
+    private View skeletonNotifications;
     private View layoutEmptyNotifications;
     private TextView tvEmptyNotificationsTitle;
     private TextView tvEmptyNotifications;
@@ -93,6 +94,7 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
 
         tvNewCount = view.findViewById(R.id.tvNewCount);
+        skeletonNotifications = view.findViewById(R.id.skeletonNotifications);
         layoutEmptyNotifications = view.findViewById(R.id.layoutEmptyNotifications);
         tvEmptyNotificationsTitle = view.findViewById(R.id.tvEmptyNotificationsTitle);
         tvEmptyNotifications = view.findViewById(R.id.tvEmptyNotifications);
@@ -114,6 +116,9 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (skeletonNotifications != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonNotifications);
+        }
         NotificationStore.removeListener(storeListener);
     }
 
@@ -340,12 +345,23 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
     }
 
     private void reload() {
+        if (skeletonNotifications != null) {
+            skeletonNotifications.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonNotifications);
+            rvNotifications.setVisibility(View.GONE);
+            layoutEmptyNotifications.setVisibility(View.GONE);
+        }
         NotificationStore.refresh(requireContext(), this::applyNotifications);
     }
 
     private void applyNotifications(List<Notification> notifications) {
         if (!isAdded()) {
             return;
+        }
+
+        if (skeletonNotifications != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonNotifications);
+            skeletonNotifications.setVisibility(View.GONE);
         }
 
         allNotifications.clear();
