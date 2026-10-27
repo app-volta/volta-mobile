@@ -130,7 +130,7 @@ public class AiAnalysisFragment extends Fragment {
     private boolean analysisCompleted = false;
     private Runnable scanTimeoutRunnable;
     private static final long SCAN_MIN_TIME_MS = 2000;
-    private static final long SCAN_MAX_TIMEOUT_MS = 3800;
+    private static final long SCAN_MAX_TIMEOUT_MS = 60000;
     private final Runnable hideCorrectionToastRunnable = () -> {
         if (isAdded() && toastCorrectionSaved != null) {
             toastCorrectionSaved.animate()
@@ -339,7 +339,7 @@ public class AiAnalysisFragment extends Fragment {
             scanAnimator.start();
         });
 
-        // 4. Ciclo dinâmico das etapas de escaneamento da IA
+        // 4. Ciclo dinâmico das etapas de escaneamento da IA (calibrado para o Gemini Vision)
         scanHandler.removeCallbacksAndMessages(null);
         if (tvScanStatus != null) {
             tvScanStatus.setText("Escaneando resíduo…");
@@ -348,17 +348,27 @@ public class AiAnalysisFragment extends Fragment {
             if (isAdded() && tvScanStatus != null && !analysisCompleted) {
                 tvScanStatus.setText("Identificando material…");
             }
-        }, 800);
+        }, 1800);
         scanHandler.postDelayed(() -> {
             if (isAdded() && tvScanStatus != null && !analysisCompleted) {
-                tvScanStatus.setText("Avaliando contaminação…");
+                tvScanStatus.setText("Consultando IA Gemini Vision…");
             }
-        }, 1600);
+        }, 4500);
         scanHandler.postDelayed(() -> {
             if (isAdded() && tvScanStatus != null && !analysisCompleted) {
-                tvScanStatus.setText("Gerando laudo IA…");
+                tvScanStatus.setText("Avaliando contaminação e volume…");
             }
-        }, 2400);
+        }, 9000);
+        scanHandler.postDelayed(() -> {
+            if (isAdded() && tvScanStatus != null && !analysisCompleted) {
+                tvScanStatus.setText("Validando com juiz LLM…");
+            }
+        }, 14000);
+        scanHandler.postDelayed(() -> {
+            if (isAdded() && tvScanStatus != null && !analysisCompleted) {
+                tvScanStatus.setText("Gerando laudo técnico…");
+            }
+        }, 18000);
     }
 
     private void stopScanAnimation() {

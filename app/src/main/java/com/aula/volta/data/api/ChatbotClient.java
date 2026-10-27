@@ -47,9 +47,9 @@ public final class ChatbotClient {
             final Gson gson = new GsonBuilder().create();
 
             OkHttpClient.Builder http = new OkHttpClient.Builder()
-                    .connectTimeout(3, TimeUnit.SECONDS)
-                    .readTimeout(6, TimeUnit.SECONDS)
-                    .writeTimeout(4, TimeUnit.SECONDS)
+                    .connectTimeout(15, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
                     // Interceptor para injeção de Headers (Host + Bearer Token + UTF-8)
                     .addInterceptor(new Interceptor() {
                         @NonNull

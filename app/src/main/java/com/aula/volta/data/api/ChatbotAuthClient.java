@@ -50,9 +50,9 @@ public final class ChatbotAuthClient {
             final Gson gson = new GsonBuilder().create();
 
             OkHttpClient http = new OkHttpClient.Builder()
-                    .connectTimeout(3500, TimeUnit.MILLISECONDS)
-                    .readTimeout(4000, TimeUnit.MILLISECONDS)
-                    .writeTimeout(4000, TimeUnit.MILLISECONDS)
+                    .connectTimeout(15000, TimeUnit.MILLISECONDS)
+                    .readTimeout(20000, TimeUnit.MILLISECONDS)
+                    .writeTimeout(20000, TimeUnit.MILLISECONDS)
                     .addInterceptor(new Interceptor() {
                         @NonNull
                         @Override
@@ -125,7 +125,7 @@ public final class ChatbotAuthClient {
      * ou as credenciais de QA padrão do ambiente (EMPLOYEE_EMAIL com fallback para ADMIN_EMAIL).
      */
     @Nullable
-    public static String refreshQaTokenBlocking(Context appContext) {
+    public static synchronized String refreshQaTokenBlocking(Context appContext) {
         String email = SessionManager.email(appContext);
         String password = SessionManager.password(appContext);
 
@@ -138,8 +138,8 @@ public final class ChatbotAuthClient {
 
         try {
             OkHttpClient plainHttp = new OkHttpClient.Builder()
-                    .connectTimeout(2500, TimeUnit.MILLISECONDS)
-                    .readTimeout(3000, TimeUnit.MILLISECONDS)
+                    .connectTimeout(15000, TimeUnit.MILLISECONDS)
+                    .readTimeout(20000, TimeUnit.MILLISECONDS)
                     .addInterceptor(chain -> chain.proceed(chain.request().newBuilder()
                             .header("Host", "api.qa.54.210.1.34.sslip.io")
                             .header("Accept", "application/json; charset=utf-8")

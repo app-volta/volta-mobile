@@ -1,5 +1,6 @@
 package com.aula.volta.ui.auth;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,15 +38,30 @@ public class SuccessFragment extends Fragment {
             String name = getArguments() != null ? getArguments().getString("name") : "";
             String sector = getArguments() != null ? getArguments().getString("sector") : "";
             String password = getArguments() != null ? getArguments().getString("password") : "";
-            SessionManager.login(requireContext(),
+            final Context appCtx = requireContext().getApplicationContext();
+            SessionManager.login(appCtx,
                     email == null ? "" : email,
                     password == null ? "" : password,
                     name == null ? "" : name,
                     "");
             if (sector != null && !sector.isEmpty()) {
-                SessionManager.saveSector(requireContext(), sector);
+                SessionManager.saveSector(appCtx, sector);
             }
-            ((AuthActivity) requireActivity()).finishLogin();
+            // Autentica com a API para garantir que o token JWT esteja imediatamente disponível
+            new Thread(() -> {
+                String token = com.aula.volta.data.api.ChatbotAuthClient.refreshQaTokenBlocking(appCtx);
+                if (token != null) {
+                    SessionManager.saveToken(appCtx, token);
+                    com.aula.volta.data.api.ApiClient.saveToken(appCtx, token);
+                }
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (isAdded() && getActivity() != null) {
+                            ((AuthActivity) requireActivity()).finishLogin();
+                        }
+                    });
+                }
+            }).start();
         });
     }
 }

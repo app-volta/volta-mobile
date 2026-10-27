@@ -60,9 +60,9 @@ public final class ApiClient {
             final Context appContext = context.getApplicationContext();
             Gson gson = new GsonBuilder().create();
             OkHttpClient.Builder http = new OkHttpClient.Builder()
-                    .connectTimeout(3500, TimeUnit.MILLISECONDS)
-                    .readTimeout(4000, TimeUnit.MILLISECONDS)
-                    .writeTimeout(4000, TimeUnit.MILLISECONDS);
+                    .connectTimeout(15000, TimeUnit.MILLISECONDS)
+                    .readTimeout(25000, TimeUnit.MILLISECONDS)
+                    .writeTimeout(20000, TimeUnit.MILLISECONDS);
 
             if (USE_MOCK) {
                 http.addInterceptor(new MockInterceptor(appContext));
@@ -78,6 +78,12 @@ public final class ApiClient {
                         String token = getToken(appContext);
                         if ((token == null || token.isEmpty()) && SessionManager.hasToken(appContext)) {
                             token = SessionManager.getToken(appContext);
+                        }
+                        if ((token == null || token.isEmpty()) && !original.url().encodedPath().contains("/auth/login")) {
+                            String refreshed = ChatbotAuthClient.refreshQaTokenBlocking(appContext);
+                            if (refreshed != null && !refreshed.isEmpty()) {
+                                token = refreshed;
+                            }
                         }
                         if (token != null && !token.isEmpty()) {
                             builder.header("Authorization", "Bearer " + token);

@@ -105,8 +105,14 @@ public class LoginFragment extends Fragment {
         com.aula.volta.data.api.ChatbotAuthClient.reset();
 
         // 2. Dispara autenticação em background com a API QA (POST /auth/login) para obter o JWT
-        final String qaEmail = "breno@volta.com".equalsIgnoreCase(email) ? ApiClient.EMPLOYEE_EMAIL : email;
-        final String qaPass = ("breno@volta.com".equalsIgnoreCase(email) || "1234".equals(password))
+        final View btnLogin = v != null ? v.findViewById(R.id.btnLogin) : null;
+        if (btnLogin != null) {
+            btnLogin.setEnabled(false);
+        }
+
+        final String qaEmail = ("breno@volta.com".equalsIgnoreCase(email) || "demo@volta.com".equalsIgnoreCase(email))
+                ? ApiClient.EMPLOYEE_EMAIL : email;
+        final String qaPass = ("breno@volta.com".equalsIgnoreCase(email) || "demo@volta.com".equalsIgnoreCase(email) || "1234".equals(password))
                 ? ApiClient.EMPLOYEE_PASSWORD : password;
 
         try {
@@ -120,7 +126,6 @@ public class LoginFragment extends Fragment {
                         ApiClient.saveToken(appContext, token);
                         Log.i(TAG, "Token JWT da API QA obtido com sucesso no login.");
 
-                        // Sincroniza dados do perfil vindos do banco geral (GET /users/me)
                         try {
                             authApi.getMe().enqueue(new Callback<com.aula.volta.data.model.UserResponseDTO>() {
                                 @Override
@@ -138,29 +143,57 @@ public class LoginFragment extends Fragment {
                                             SessionManager.saveProfilePhotoUrl(appContext, email, u.getPhotoUrl().trim());
                                         }
                                     }
+                                    completeLogin();
                                 }
 
                                 @Override
                                 public void onFailure(@NonNull Call<com.aula.volta.data.model.UserResponseDTO> call, @NonNull Throwable t) {
+                                    completeLogin();
                                 }
                             });
                         } catch (Exception ignored) {
+                            completeLogin();
                         }
                     } else {
-                        Log.w(TAG, "Login QA retornou status: " + response.code());
+                        Log.w(TAG, "Login QA retornou status: " + response.code() + ", tentando credenciais padrão");
+                        // Fallback com credencial de colaborador
+                        authApi.login(new LoginRequest(ApiClient.EMPLOYEE_EMAIL, ApiClient.EMPLOYEE_PASSWORD)).enqueue(new Callback<LoginResponse>() {
+                            @Override
+                            public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> resp2) {
+                                if (resp2.isSuccessful() && resp2.body() != null && resp2.body().hasToken()) {
+                                    String token = resp2.body().getToken().trim();
+                                    SessionManager.saveToken(appContext, token);
+                                    ApiClient.saveToken(appContext, token);
+                                }
+                                completeLogin();
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
+                                completeLogin();
+                            }
+                        });
                     }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                     Log.w(TAG, "API QA offline ou inalcançável no login: " + t.getMessage());
+                    completeLogin();
+                }
+
+                private void completeLogin() {
+                    if (isAdded() && getActivity() != null) {
+                        ((AuthActivity) requireActivity()).finishLogin();
+                    }
                 }
             });
         } catch (Exception e) {
             Log.w(TAG, "Erro ao iniciar autenticação QA em background", e);
+            if (isAdded() && getActivity() != null) {
+                ((AuthActivity) requireActivity()).finishLogin();
+            }
         }
-
-        ((AuthActivity) requireActivity()).finishLogin();
     }
 
     private String displayName(String email) {
