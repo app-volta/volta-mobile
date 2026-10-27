@@ -796,6 +796,99 @@ public class AiAnalysisJSON {
         return baseMat + " (Classe " + letter + ")";
     }
 
+    /**
+     * Gera o nome/título do incidente como uma ÚNICA palavra gerada pela IA
+     * (ex: "cadeiras empilhadas na rua" -> "Mobiliário").
+     */
+    public static String generateSingleWordTitle(String material, String description, String rawText) {
+        String combined = normalize((material != null ? material : "") + " "
+                + (description != null ? description : "") + " "
+                + (rawText != null ? rawText : ""));
+
+        if (combined.isEmpty()) {
+            return "Reciclável";
+        }
+
+        // 1. Mobiliário (cadeiras, mesas, sofás, armários, móveis em geral)
+        if (combined.contains("cadeir") || combined.contains("mesa") || combined.contains("mobilia") || combined.contains("mobiliari") || combined.contains("moveis") || combined.contains("movel")
+                || combined.contains("sofa") || combined.contains("armario") || combined.contains("poltrona")
+                || combined.contains("estante") || combined.contains("banco")) {
+            return "Mobiliário";
+        }
+
+        // 2. Eletrônico (computadores, telas, monitores, periféricos, placas, pilhas)
+        if (combined.contains("computad") || combined.contains("tela") || combined.contains("monitor")
+                || combined.contains("eletron") || combined.contains("placa") || combined.contains("teclado")
+                || combined.contains("mouse") || combined.contains("cabo") || combined.contains("fio")
+                || combined.contains("bateria") || combined.contains("pilha")) {
+            return "Eletrônico";
+        }
+
+        // 3. Químico / Perigoso (óleos, graxas, solventes, tintas)
+        if (combined.contains("oleo") || combined.contains("graxa") || combined.contains("solvent")
+                || combined.contains("tinta") || combined.contains("quimic") || combined.contains("toxic")
+                || combined.contains("perig")) {
+            return "Químico";
+        }
+
+        // 4. Palete / Madeira
+        if (combined.contains("pallet") || combined.contains("palete")) {
+            return "Palete";
+        }
+        if (combined.contains("madeira") || combined.contains("estrado") || combined.contains("tabua")
+                || combined.contains("caixote") || combined.contains("mdf")) {
+            return "Madeira";
+        }
+
+        // 5. Vidro (garrafas, potes, cacos, espelhos)
+        if (combined.contains("vidro") || combined.contains("garrafa") || combined.contains("caco")
+                || combined.contains("espelho") || combined.contains("frasco") || combined.contains("pote")) {
+            return "Vidro";
+        }
+
+        // 6. Metal (latas, sucata, ferro, aço, alumínio)
+        if (combined.contains("metal") || combined.contains("alumin") || combined.contains("ferro")
+                || combined.contains("aco") || combined.contains("lata") || combined.contains("latinha")
+                || combined.contains("sucata") || combined.contains("cobre")) {
+            return "Metal";
+        }
+
+        // 7. Plástico (filme stretch, pet, copos, bombonas, sacolas)
+        if (combined.contains("plast") || combined.contains("pet") || combined.contains("filme")
+                || combined.contains("isopor") || combined.contains("eps") || combined.contains("sacola")
+                || combined.contains("bombona") || combined.contains("copo") || combined.contains("pvc")) {
+            return "Plástico";
+        }
+
+        // 8. Papelão e Papel (caixas, aparas, papelão ondulado, cartões)
+        if (combined.contains("papel") || combined.contains("cartao") || combined.contains("kraft")
+                || combined.contains("caixa") || combined.contains("jornal") || combined.contains("revista")) {
+            return "Papelão";
+        }
+
+        // 9. Orgânico (alimentos, restos, podas, peotta)
+        if (combined.contains("organ") || combined.contains("alimento") || combined.contains("comida")
+                || combined.contains("peotta") || combined.contains("casca") || combined.contains("fruta")
+                || combined.contains("refeic") || combined.contains("refeit")) {
+            return "Orgânico";
+        }
+
+        // 10. Têxtil (uniformes, panos, estopas, tecidos)
+        if (combined.contains("textil") || combined.contains("tecido") || combined.contains("pano")
+                || combined.contains("uniforme") || combined.contains("estopa")) {
+            return "Têxtil";
+        }
+
+        // Fallback seguro: palavra única derivada da classificação primária
+        String primary = classifyPrimaryMaterial(material, rawText, description);
+        if (primary != null && !primary.trim().isEmpty()) {
+            String[] words = primary.trim().split("\\s+");
+            return words[0];
+        }
+
+        return "Reciclável";
+    }
+
     public static String normalize(String text) {
         if (text == null) {
             return "";

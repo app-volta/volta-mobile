@@ -100,12 +100,6 @@ public class AiAnalysisFragment extends Fragment {
     private LinearLayout cardAiType;
     private TextView tvAiTypeLabel;
     private TextView badgeAiPriority;
-    private TextView chipResultPapelao;
-    private TextView chipResultPlastico;
-    private TextView chipResultMetal;
-    private TextView chipResultVidro;
-    private TextView chipResultMadeira;
-    private TextView chipResultOrganico;
 
     // Campos do modo de edição (16a)
     private TextView tvEditWeightValue;
@@ -130,8 +124,6 @@ public class AiAnalysisFragment extends Fragment {
     private com.google.gson.JsonObject lastPredictJson;
     private String currentPriority = "BAIXA";
     private ObjectAnimator scanAnimator;
-    private ObjectAnimator reticleAnimator;
-    private ObjectAnimator sparkleAnimator;
     private final Handler scanHandler = new Handler(Looper.getMainLooper());
     private TextView tvScanStatus;
     private long scanStartTime = 0;
@@ -276,7 +268,6 @@ public class AiAnalysisFragment extends Fragment {
         btnConfirm.setOnClickListener(this::confirmOccurrence);
 
         setupEditControls(view);
-        setupResultMaterialChips(view);
 
         if (toastCorrectionSaved != null) {
             com.aula.volta.util.ToastSwipeHelper.attach(toastCorrectionSaved, hideCorrectionToastRunnable,
@@ -318,8 +309,6 @@ public class AiAnalysisFragment extends Fragment {
     private void startScanAnimation(View root) {
         View band = root.findViewById(R.id.viewScanBand);
         View frame = root.findViewById(R.id.scanPhotoFrame);
-        View reticle = root.findViewById(R.id.imgScannerReticle);
-        View sparkle = root.findViewById(R.id.icScanSparkle);
         tvScanStatus = root.findViewById(R.id.tvScanStatus);
 
         if (band == null || frame == null) {
@@ -340,7 +329,7 @@ public class AiAnalysisFragment extends Fragment {
                 bandH = (int) (52 * density);
             }
 
-            // 1. Linha e feixe laser varrendo suavemente de cima a baixo (ping-pong)
+            // Linha e feixe laser varrendo suavemente de cima a baixo (ping-pong)
             float maxTranslation = Math.max(10, frameH - bandH);
             scanAnimator = ObjectAnimator.ofFloat(band, "translationY", 0f, maxTranslation);
             scanAnimator.setDuration(1200);
@@ -348,24 +337,6 @@ public class AiAnalysisFragment extends Fragment {
             scanAnimator.setRepeatCount(ValueAnimator.INFINITE);
             scanAnimator.setRepeatMode(ValueAnimator.REVERSE);
             scanAnimator.start();
-
-            // 2. Retículo do scanner pulsando suavemente
-            if (reticle != null) {
-                reticleAnimator = ObjectAnimator.ofFloat(reticle, "alpha", 0.5f, 1.0f);
-                reticleAnimator.setDuration(750);
-                reticleAnimator.setRepeatCount(ValueAnimator.INFINITE);
-                reticleAnimator.setRepeatMode(ValueAnimator.REVERSE);
-                reticleAnimator.start();
-            }
-
-            // 3. Ícone de sparkle girando continuamente
-            if (sparkle != null) {
-                sparkleAnimator = ObjectAnimator.ofFloat(sparkle, "rotation", 0f, 360f);
-                sparkleAnimator.setDuration(2200);
-                sparkleAnimator.setRepeatCount(ValueAnimator.INFINITE);
-                sparkleAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
-                sparkleAnimator.start();
-            }
         });
 
         // 4. Ciclo dinâmico das etapas de escaneamento da IA
@@ -394,14 +365,6 @@ public class AiAnalysisFragment extends Fragment {
         if (scanAnimator != null) {
             scanAnimator.cancel();
             scanAnimator = null;
-        }
-        if (reticleAnimator != null) {
-            reticleAnimator.cancel();
-            reticleAnimator = null;
-        }
-        if (sparkleAnimator != null) {
-            sparkleAnimator.cancel();
-            sparkleAnimator = null;
         }
         if (scanTimeoutRunnable != null) {
             scanHandler.removeCallbacks(scanTimeoutRunnable);
@@ -562,14 +525,16 @@ public class AiAnalysisFragment extends Fragment {
                 }
                 final String areaId = resolvedAreaId;
 
-                String empDesc = (descricao != null && !descricao.isEmpty())
-                        ? descricao
-                        : "Residuo registrado via app mobile no setor " + (setor != null ? setor : "Operacional");
+                String singleWordTitle = AiAnalysisJSON.generateSingleWordTitle(
+                        (analysis != null ? analysis.getMaterial() : null),
+                        descricao,
+                        aiData != null ? aiData.toString() : null
+                );
 
                 JsonObject draftReq = new JsonObject();
                 draftReq.addProperty("area_id", areaId);
-                draftReq.addProperty("employee_description", empDesc);
-                String bgPriority = AiAnalysisJSON.calculatePriority(empDesc, "LOW", empDesc);
+                draftReq.addProperty("employee_description", singleWordTitle);
+                String bgPriority = AiAnalysisJSON.calculatePriority(singleWordTitle, "LOW", singleWordTitle);
                 draftReq.addProperty("priority", bgPriority);
                 draftReq.add("ai_data", aiData);
 
@@ -930,104 +895,28 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
-    private void setupResultMaterialChips(View root) {
-        chipResultPapelao = root.findViewById(R.id.chipResultMatPapelao);
-        chipResultPlastico = root.findViewById(R.id.chipResultMatPlastico);
-        chipResultMetal = root.findViewById(R.id.chipResultMatMetal);
-        chipResultVidro = root.findViewById(R.id.chipResultMatVidro);
-        chipResultMadeira = root.findViewById(R.id.chipResultMatMadeira);
-        chipResultOrganico = root.findViewById(R.id.chipResultMatOrganico);
-
-        if (chipResultPapelao != null) {
-            chipResultPapelao.setOnClickListener(v -> selectPrimaryMaterialFamily("Papelão", true));
-        }
-        if (chipResultPlastico != null) {
-            chipResultPlastico.setOnClickListener(v -> selectPrimaryMaterialFamily("Plástico", true));
-        }
-        if (chipResultMetal != null) {
-            chipResultMetal.setOnClickListener(v -> selectPrimaryMaterialFamily("Metal", true));
-        }
-        if (chipResultVidro != null) {
-            chipResultVidro.setOnClickListener(v -> selectPrimaryMaterialFamily("Vidro", true));
-        }
-        if (chipResultMadeira != null) {
-            chipResultMadeira.setOnClickListener(v -> selectPrimaryMaterialFamily("Madeira", true));
-        }
-        if (chipResultOrganico != null) {
-            chipResultOrganico.setOnClickListener(v -> selectPrimaryMaterialFamily("Orgânico", true));
-        }
-    }
-
     private void selectPrimaryMaterialFamily(String rawFamily, boolean userInitiated) {
         String family = ReportMetricsCalculator.resolveMaterialFamily(rawFamily);
         selectedMaterial = family;
 
-        // 1. Atualiza visual dos chips de resultado
-        updateResultMaterialChipsUi(family);
-
-        // 2. Atualiza Card 1 (Tipo de Material)
+        // 1. Atualiza Card 1 (Tipo de Material)
         updateTypeCardUi(family);
 
-        // 3. Atualiza Prioridade dinamicamente
+        // 2. Atualiza Prioridade dinamicamente
         String specific = (analysis != null && analysis.getSpecificItem() != null)
                 ? analysis.getSpecificItem() : "";
         String formattedMat = AiAnalysisJSON.formatMaterialWithClass(family, specific, selectedClass);
         currentPriority = AiAnalysisJSON.calculatePriority(formattedMat, selectedContamination, descricao);
         updatePriorityBadge(currentPriority);
 
-        // 4. Se o usuário tocou diretamente, atualiza a recomendação do Mascote VOLTA para o material
+        // 3. Se o usuário tocou diretamente, atualiza a recomendação do Mascote VOLTA para o material
         if (userInitiated) {
             updateRecommendationForMaterial(family);
         }
 
-        // 5. Mantém sincronizado com os chips do modo de edição caso o usuário entre em Editar depois
+        // 4. Mantém sincronizado com os chips do modo de edição caso o usuário entre em Editar depois
         if (getView() != null) {
             updateMaterialChipsUi(getView());
-        }
-    }
-
-    private void updateResultMaterialChipsUi(String selectedFamily) {
-        TextView[] chips = {chipResultPapelao, chipResultPlastico, chipResultMetal,
-                chipResultVidro, chipResultMadeira, chipResultOrganico};
-        String[] labels = {"Papelão", "Plástico", "Metal", "Vidro", "Madeira", "Orgânico"};
-
-        for (int i = 0; i < chips.length; i++) {
-            TextView c = chips[i];
-            if (c == null) continue;
-            c.setBackgroundResource(R.drawable.bg_chip_white_stroke);
-            if (getContext() != null) {
-                c.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-            } else {
-                c.setTextColor(Color.parseColor("#71717A"));
-            }
-            c.setText(labels[i]);
-        }
-
-        String lower = selectedFamily != null ? selectedFamily.toLowerCase(Locale.ROOT) : "";
-        if (lower.contains("papel") && chipResultPapelao != null) {
-            chipResultPapelao.setBackgroundResource(R.drawable.bg_chip_gold_selected);
-            chipResultPapelao.setTextColor(Color.parseColor("#C68A10"));
-            chipResultPapelao.setText("✓ Papelão");
-        } else if ((lower.contains("plást") || lower.contains("plast")) && chipResultPlastico != null) {
-            chipResultPlastico.setBackgroundResource(R.drawable.bg_chip_blue_selected);
-            chipResultPlastico.setTextColor(Color.parseColor("#3B82F6"));
-            chipResultPlastico.setText("✓ Plástico");
-        } else if (lower.contains("metal") && chipResultMetal != null) {
-            chipResultMetal.setBackgroundResource(R.drawable.bg_chip_purple_selected);
-            chipResultMetal.setTextColor(Color.parseColor("#8B6FE0"));
-            chipResultMetal.setText("✓ Metal");
-        } else if (lower.contains("vidro") && chipResultVidro != null) {
-            chipResultVidro.setBackgroundResource(R.drawable.bg_chip_gray_selected);
-            chipResultVidro.setTextColor(Color.parseColor("#6B7280"));
-            chipResultVidro.setText("✓ Vidro");
-        } else if (lower.contains("madeira") && chipResultMadeira != null) {
-            chipResultMadeira.setBackgroundResource(R.drawable.bg_chip_amber_selected);
-            chipResultMadeira.setTextColor(Color.parseColor("#D97706"));
-            chipResultMadeira.setText("✓ Madeira");
-        } else if ((lower.contains("orgân") || lower.contains("organ")) && chipResultOrganico != null) {
-            chipResultOrganico.setBackgroundResource(R.drawable.bg_chip_green_selected);
-            chipResultOrganico.setTextColor(Color.parseColor("#10B981"));
-            chipResultOrganico.setText("✓ Orgânico");
         }
     }
 
@@ -1596,13 +1485,15 @@ public class AiAnalysisFragment extends Fragment {
 
     private void executeDraftCreation(View v, String material, double qtd, String unidade,
                                       @Nullable String photoUrl, String calculatedPriority, String areaId) {
-        String empDesc = (descricao != null && !descricao.isEmpty())
-                ? descricao
-                : "Resíduo registrado via app mobile no setor " + (setor != null ? setor : "Operacional");
+        String singleWordTitle = AiAnalysisJSON.generateSingleWordTitle(
+                material,
+                descricao,
+                (analysis != null ? analysis.getMaterial() : null)
+        );
 
         JsonObject draftReq = new JsonObject();
         draftReq.addProperty("area_id", areaId);
-        draftReq.addProperty("employee_description", empDesc);
+        draftReq.addProperty("employee_description", singleWordTitle);
         draftReq.addProperty("priority", calculatedPriority);
         if (photoUrl != null && !photoUrl.isEmpty()) {
             draftReq.addProperty("photo_url", photoUrl);
@@ -1628,7 +1519,7 @@ public class AiAnalysisFragment extends Fragment {
                     handleOccurrenceCreatedSuccess(v, draftId, material, qtd, unidade, photoUrl, calculatedPriority);
                 } else {
                     Log.w("AiAnalysisFragment", "createOccurrenceDraft falhou (" + resp.code() + "), tentando fallback de incidente");
-                    fallbackToCoreIncident(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, empDesc);
+                    fallbackToCoreIncident(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, singleWordTitle);
                 }
             }
 
@@ -1636,7 +1527,7 @@ public class AiAnalysisFragment extends Fragment {
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
                 Log.w("AiAnalysisFragment", "createOccurrenceDraft erro de rede: " + t.getMessage() + ", tentando fallback");
-                fallbackToCoreIncident(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, empDesc);
+                fallbackToCoreIncident(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, singleWordTitle);
             }
         });
     }
@@ -1708,7 +1599,11 @@ public class AiAnalysisFragment extends Fragment {
         persistOccurrenceDetail(id, material, qtd, unidade, calculatedPriority, photoUrl);
 
         // 3. Adiciona na lista da Home
-        String title = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        String title = AiAnalysisJSON.generateSingleWordTitle(
+                material,
+                descricao,
+                (analysis != null ? analysis.getMaterial() : null)
+        );
         String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily(selectedMaterial != null ? selectedMaterial : material);
         Occurrence occ = new Occurrence(
                 id,
@@ -1897,7 +1792,11 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void pushOccurrenceToList(String occurrenceId, String material, String priority) {
-        String title = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        String title = AiAnalysisJSON.generateSingleWordTitle(
+                material,
+                descricao,
+                (analysis != null ? analysis.getMaterial() : null)
+        );
         String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily(selectedMaterial != null ? selectedMaterial : material);
         OccurrenceStore.pushLocal(requireContext(), new Occurrence(
                 occurrenceId,

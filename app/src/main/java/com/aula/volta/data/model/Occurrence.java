@@ -47,9 +47,12 @@ public class Occurrence {
         if (json == null) {
             return null;
         }
+        String title = (json.getTitulo() != null && !json.getTitulo().trim().isEmpty())
+                ? json.getTitulo()
+                : AiAnalysisJSON.generateSingleWordTitle(json.getMaterial(), null, null);
         return new Occurrence(
                 json.getId(),
-                json.getTitulo(),
+                title,
                 json.getSetor(),
                 json.getTempoRelativo(),
                 json.getPrioridade(),
@@ -68,13 +71,12 @@ public class Occurrence {
             return null;
         }
         String id = inc.getId() != null ? inc.getId() : "";
-        String desc = (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().isEmpty())
-                ? inc.getEmployeeDescription() : "Incidente " + (id.length() > 8 ? id.substring(0, 8) : id);
         String sector = resolveSector(inc, context);
         String mat = resolveMaterial(inc);
+        String singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, inc.getEmployeeDescription(), inc.getWasteTypeId());
         String prio = (inc.getPriority() != null && !inc.getPriority().isEmpty())
                 ? inc.getPriority()
-                : AiAnalysisJSON.calculatePriority(mat, inc.getContaminationLevel(), desc);
+                : AiAnalysisJSON.calculatePriority(mat, inc.getContaminationLevel(), singleTitle);
         String stat = inc.getStatus() != null ? inc.getStatus() : "EM_ANALISE";
         String time = "Hoje";
         if (inc.getRegisteredAt() != null && !inc.getRegisteredAt().isEmpty()) {
@@ -85,7 +87,7 @@ public class Occurrence {
         }
         String photoUrl = inc.getPhotoUrl();
         String photoPath = null;
-        if (context != null && (photoUrl == null || photoUrl.isEmpty())) {
+        if (context != null) {
             try {
                 String cachedStr = PrefsHelper.getJson(context, "cache_occurrence_detail", id);
                 if (cachedStr != null && !cachedStr.isEmpty()) {
@@ -109,11 +111,14 @@ public class Occurrence {
                     if (d.has("setor") && !d.get("setor").isJsonNull()) {
                         sector = d.get("setor").getAsString();
                     }
+                    if (d.has("titulo") && !d.get("titulo").isJsonNull()) {
+                        singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, d.get("titulo").getAsString(), null);
+                    }
                 }
             } catch (Exception ignored) {
             }
         }
-        return new Occurrence(id, desc, sector, time, prio, stat, mat, photoUrl, photoPath);
+        return new Occurrence(id, singleTitle, sector, time, prio, stat, mat, photoUrl, photoPath);
     }
 
     private static String resolveSector(IncidentResponseDTO inc, Context context) {
