@@ -156,6 +156,11 @@ public class OccurrenceDetailFragment extends Fragment {
         imgOccThumbnail = view.findViewById(R.id.imgOccThumbnail);
         if (imgOccThumbnail != null) {
             imgOccThumbnail.setOnClickListener(v -> {
+                boolean hasPhoto = (currentLocalPhoto != null && !currentLocalPhoto.isEmpty())
+                        || (currentRemoteUrl != null && !currentRemoteUrl.isEmpty());
+                if (!hasPhoto) {
+                    return;
+                }
                 com.aula.volta.ui.dialog.ImagePreviewDialog.show(
                         getParentFragmentManager(),
                         currentLocalPhoto,
@@ -590,17 +595,6 @@ public class OccurrenceDetailFragment extends Fragment {
                                         ? getArguments().getString("photoUrl", getArguments().getString("imageUrl", ""))
                                         : "")));
 
-        if (localPhoto.isEmpty() && remoteUrl.isEmpty()) {
-            String latestStr = PrefsHelper.getJson(requireContext(), PREFS, "latest_photo");
-            if (latestStr != null && !latestStr.isEmpty()) {
-                try {
-                    JsonObject latestObj = JsonParser.parseString(latestStr).getAsJsonObject();
-                    localPhoto = opt(latestObj, "photoPath", "");
-                    remoteUrl = opt(latestObj, "imageUrl", opt(latestObj, "foto_url", ""));
-                } catch (Exception ignored) {
-                }
-            }
-        }
         displayOccurrencePhoto(localPhoto, remoteUrl);
 
         syncFinalizedUi();
@@ -659,22 +653,25 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void displayOccurrencePhoto(@Nullable String localPath, @Nullable String remoteUrl) {
-        this.currentLocalPhoto = localPath;
-        this.currentRemoteUrl = remoteUrl;
+        boolean hasLocal = localPath != null && !localPath.isEmpty() && new File(localPath).exists();
+        boolean hasRemote = remoteUrl != null && !remoteUrl.isEmpty() && remoteUrl.startsWith("http");
+
+        this.currentLocalPhoto = hasLocal ? localPath : null;
+        this.currentRemoteUrl = hasRemote ? remoteUrl : null;
+
         if (imgOccThumbnail == null) {
             return;
         }
-        if (localPath != null && !localPath.isEmpty()) {
-            File f = new File(localPath);
-            if (f.exists()) {
-                android.graphics.Bitmap bmp = ImageUtils.decodeFileWithExifRotation(localPath, 1280);
-                if (bmp != null) {
-                    imgOccThumbnail.setImageBitmap(bmp);
-                    return;
-                }
+
+        if (hasLocal) {
+            android.graphics.Bitmap bmp = ImageUtils.decodeFileWithExifRotation(localPath, 1280);
+            if (bmp != null) {
+                imgOccThumbnail.setImageBitmap(bmp);
+                return;
             }
         }
-        if (remoteUrl != null && remoteUrl.startsWith("http")) {
+
+        if (hasRemote) {
             com.aula.volta.data.upload.CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new com.aula.volta.data.upload.CloudinaryUploader.BitmapCallback() {
                 @Override
                 public void onBitmapLoaded(android.graphics.Bitmap bmp) {
@@ -686,9 +683,15 @@ public class OccurrenceDetailFragment extends Fragment {
                 @Override
                 public void onError(Exception e) {
                     android.util.Log.w("OccurrenceDetail", "Falha ao carregar thumbnail remota: " + e.getMessage());
+                    if (isAdded() && imgOccThumbnail != null) {
+                        imgOccThumbnail.setImageResource(R.drawable.img_caixas_papelao);
+                    }
                 }
             });
+            return;
         }
+
+        imgOccThumbnail.setImageResource(R.drawable.img_caixas_papelao);
     }
 
     /**

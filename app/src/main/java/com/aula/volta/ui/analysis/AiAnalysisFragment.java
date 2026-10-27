@@ -1668,7 +1668,6 @@ public class AiAnalysisFragment extends Fragment {
         detail.addProperty("relatorio_auto", relatorio);
 
         PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", id, detail.toString());
-        PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", "latest_photo", detail.toString());
     }
 
     private void navigateToDetail(View v, String occId) {

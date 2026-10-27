@@ -437,18 +437,14 @@ public class ProfileFragment extends Fragment {
             Bitmap square = Bitmap.createBitmap(bitmap, cropX, cropY, minDim, minDim);
             Bitmap finalAvatar = Bitmap.createScaledBitmap(square, 512, 512, true);
 
-            // Salva permanentemente no diretório de arquivos do app
+            // Salva permanentemente no diretório de arquivos do app com isolamento por usuário
             String myEmail = SessionManager.email(requireContext());
             String cleanEmail = myEmail != null ? myEmail.trim().toLowerCase(Locale.ROOT) : "";
-            File avatarFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+            File avatarFile = !cleanEmail.isEmpty()
+                    ? new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg")
+                    : new File(requireContext().getFilesDir(), "profile_photo.jpg");
             try (FileOutputStream fos = new FileOutputStream(avatarFile)) {
                 finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-            }
-            if (!myEmail.isEmpty()) {
-                File hashedFile = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
-                try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
-                    finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
-                }
             }
 
             // Grava caminho local na sessão
@@ -588,19 +584,16 @@ public class ProfileFragment extends Fragment {
 
         // 1. Prioriza imagem local em cache (associada ao usuário ativo)
         String email = SessionManager.email(requireContext());
+        String cleanEmail = email != null ? email.trim().toLowerCase(Locale.ROOT) : "";
         String localPath = SessionManager.getProfilePhotoLocal(requireContext());
         File localFile = null;
         if (localPath != null && !localPath.isEmpty()) {
             File f = new File(localPath);
             if (f.exists()) localFile = f;
         }
-        if (localFile == null && !email.isEmpty()) {
-            File userHashed = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(email.trim().toLowerCase(Locale.ROOT).hashCode()) + ".jpg");
+        if (localFile == null && !cleanEmail.isEmpty()) {
+            File userHashed = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
             if (userHashed.exists()) localFile = userHashed;
-        }
-        if (localFile == null) {
-            File generalFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
-            if (generalFile.exists()) localFile = generalFile;
         }
 
         if (localFile != null && localFile.exists()) {
@@ -620,17 +613,13 @@ public class ProfileFragment extends Fragment {
                 public void onBitmapLoaded(Bitmap bmp) {
                     if (bmp == null) return;
                     try {
-                        File f = new File(appContext.getFilesDir(), "profile_photo.jpg");
-                        try (FileOutputStream fos = new FileOutputStream(f)) {
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-                        }
-                        if (!email.isEmpty()) {
-                            File hashedFile = new File(appContext.getFilesDir(), "profile_photo_" + Math.abs(email.trim().toLowerCase(Locale.ROOT).hashCode()) + ".jpg");
+                        if (!cleanEmail.isEmpty()) {
+                            File hashedFile = new File(appContext.getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
                             try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
                                 bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
                             }
+                            SessionManager.saveProfilePhotoLocal(appContext, cleanEmail, hashedFile.getAbsolutePath());
                         }
-                        SessionManager.saveProfilePhotoLocal(appContext, email, f.getAbsolutePath());
                     } catch (Exception ignored) {
                     }
                     if (isAdded()) {

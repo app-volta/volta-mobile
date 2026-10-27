@@ -187,21 +187,28 @@ public class EditProfileFragment extends Fragment {
         if (!isAdded()) return;
 
         // 1. Tenta carregar do cache local
+        String email = SessionManager.email(requireContext());
+        String cleanEmail = email != null ? email.trim().toLowerCase(Locale.ROOT) : "";
         String localPath = SessionManager.getProfilePhotoLocal(requireContext());
+        File localFile = null;
         if (localPath != null && !localPath.isEmpty()) {
             File f = new File(localPath);
-            if (f.exists()) {
-                Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
-                if (bmp != null) {
-                    displayCircularPhoto(bmp);
-                    return;
-                }
+            if (f.exists()) localFile = f;
+        }
+        if (localFile == null && !cleanEmail.isEmpty()) {
+            File userHashed = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
+            if (userHashed.exists()) localFile = userHashed;
+        }
+
+        if (localFile != null && localFile.exists()) {
+            Bitmap bmp = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+            if (bmp != null) {
+                displayCircularPhoto(bmp);
+                return;
             }
         }
 
         // 2. Tenta carregar da URL remota do Cloudinary
-        String email = SessionManager.email(requireContext());
-        String cleanEmail = email != null ? email.trim().toLowerCase(Locale.ROOT) : "";
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
             final Context appContext = requireContext().getApplicationContext();
@@ -210,17 +217,13 @@ public class EditProfileFragment extends Fragment {
                 public void onBitmapLoaded(Bitmap bmp) {
                     if (bmp == null) return;
                     try {
-                        File f = new File(appContext.getFilesDir(), "profile_photo.jpg");
-                        try (FileOutputStream fos = new FileOutputStream(f)) {
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-                        }
                         if (!cleanEmail.isEmpty()) {
                             File hashedFile = new File(appContext.getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
                             try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
                                 bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
                             }
+                            SessionManager.saveProfilePhotoLocal(appContext, cleanEmail, hashedFile.getAbsolutePath());
                         }
-                        SessionManager.saveProfilePhotoLocal(appContext, cleanEmail, f.getAbsolutePath());
                     } catch (Exception ignored) {
                     }
                     if (isAdded()) {
@@ -349,18 +352,14 @@ public class EditProfileFragment extends Fragment {
             Bitmap square = Bitmap.createBitmap(bitmap, cropX, cropY, minDim, minDim);
             Bitmap finalAvatar = Bitmap.createScaledBitmap(square, 512, 512, true);
 
-            // Salva permanentemente no diretório de arquivos do app
+            // Salva permanentemente no diretório de arquivos do app com isolamento por usuário
             String myEmail = SessionManager.email(requireContext());
             String cleanEmail = myEmail != null ? myEmail.trim().toLowerCase(Locale.ROOT) : "";
-            File avatarFile = new File(requireContext().getFilesDir(), "profile_photo.jpg");
+            File avatarFile = !cleanEmail.isEmpty()
+                    ? new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg")
+                    : new File(requireContext().getFilesDir(), "profile_photo.jpg");
             try (FileOutputStream fos = new FileOutputStream(avatarFile)) {
                 finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-            }
-            if (!myEmail.isEmpty()) {
-                File hashedFile = new File(requireContext().getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
-                try (FileOutputStream fos2 = new FileOutputStream(hashedFile)) {
-                    finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
-                }
             }
 
             // Grava caminho local na sessão

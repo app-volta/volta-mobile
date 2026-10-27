@@ -677,10 +677,10 @@ public class ReportsFragment extends Fragment {
         row.setOnClickListener(v -> {
             Bundle args = new Bundle();
             args.putString("occurrenceId", occ.getId());
-            if (occ.getPhotoUrl() != null) {
+            if (occ.getPhotoUrl() != null && !occ.getPhotoUrl().isEmpty()) {
                 args.putString("photoUrl", occ.getPhotoUrl());
             }
-            if (occ.getPhotoPath() != null) {
+            if (occ.getPhotoPath() != null && !occ.getPhotoPath().isEmpty()) {
                 args.putString("photoPath", occ.getPhotoPath());
             }
             try {

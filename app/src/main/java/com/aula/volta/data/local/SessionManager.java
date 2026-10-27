@@ -123,7 +123,27 @@ public final class SessionManager {
         try {
             Context app = context.getApplicationContext();
             app.getSharedPreferences("cache_occurrences", Context.MODE_PRIVATE).edit().clear().apply();
+            app.getSharedPreferences("cache_occurrence_detail", Context.MODE_PRIVATE).edit().clear().apply();
+            app.getSharedPreferences("cache_reports", Context.MODE_PRIVATE).edit().clear().apply();
             app.getSharedPreferences("cache_notifications", Context.MODE_PRIVATE).edit().clear().apply();
+            try {
+                java.io.File legacyPhoto = new java.io.File(app.getFilesDir(), "profile_photo.jpg");
+                if (legacyPhoto.exists()) {
+                    legacyPhoto.delete();
+                }
+            } catch (Exception ignored) {
+            }
+            try {
+                java.io.File[] cacheFiles = app.getCacheDir().listFiles();
+                if (cacheFiles != null) {
+                    for (java.io.File cf : cacheFiles) {
+                        if (cf.getName().startsWith("volta_") || cf.getName().startsWith("profile_")) {
+                            cf.delete();
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
             com.aula.volta.data.api.ApiClient.clearToken(app);
             com.aula.volta.data.api.ApiClient.reset();
             com.aula.volta.data.api.ChatbotAuthClient.reset();
