@@ -128,12 +128,8 @@ public final class ChatbotAuthClient {
         String email = SessionManager.email(appContext);
         String password = SessionManager.password(appContext);
 
-        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email)
-                || ApiClient.ADMIN_EMAIL.equalsIgnoreCase(email)) {
-            email = ApiClient.EMPLOYEE_EMAIL;
-            password = ApiClient.EMPLOYEE_PASSWORD;
-        } else if (password.isEmpty() || "1234".equals(password)) {
-            password = ApiClient.EMPLOYEE_PASSWORD;
+        if (email == null || email.trim().isEmpty() || password == null || password.isEmpty()) {
+            return null;
         }
 
         try {
@@ -153,22 +149,17 @@ public final class ChatbotAuthClient {
             AuthAPI authApi = authRetrofit.create(AuthAPI.class);
 
             retrofit2.Response<LoginResponse> loginCall =
-                    authApi.login(new LoginRequest(email, password)).execute();
-
-            if (!loginCall.isSuccessful() || loginCall.body() == null || !loginCall.body().hasToken()) {
-
-                loginCall = authApi.login(new LoginRequest(ApiClient.EMPLOYEE_EMAIL, ApiClient.EMPLOYEE_PASSWORD)).execute();
-            }
+                    authApi.login(new LoginRequest(email.trim(), password)).execute();
 
             if (loginCall.isSuccessful() && loginCall.body() != null && loginCall.body().hasToken()) {
                 String newToken = loginCall.body().getToken().trim();
                 SessionManager.saveToken(appContext, newToken);
                 ApiClient.saveToken(appContext, newToken);
-                Log.i(TAG, "Token QA de colaborador renovado com sucesso.");
+                Log.i(TAG, "Token JWT renovado com sucesso.");
                 return newToken;
             }
         } catch (Exception e) {
-            Log.w(TAG, "Falha ao renovar token QA: " + e.getMessage());
+            Log.w(TAG, "Falha ao renovar token JWT: " + e.getMessage());
         }
         return null;
     }

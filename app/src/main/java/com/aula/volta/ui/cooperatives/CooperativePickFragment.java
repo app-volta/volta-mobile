@@ -22,13 +22,11 @@ import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.CooperativeAPI;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
-import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.CollectionRequestDTO;
 import com.aula.volta.data.model.CollectionResponseDTO;
 import com.aula.volta.data.model.CooperativeJSON;
 import com.aula.volta.data.model.CooperativeResponseDTO;
-import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
 import com.google.gson.JsonObject;
@@ -147,8 +145,6 @@ public class CooperativePickFragment extends Fragment {
                     PrefsHelper.putList(requireContext(), PREFS, occurrenceId, coops);
                     applyCooperatives(coops);
                     hideLoading();
-                } else if (response.code() == 403) {
-                    fetchPickCooperativesAsService();
                 } else {
                     applyCooperatives(cached());
                     hideLoading();
@@ -164,69 +160,6 @@ public class CooperativePickFragment extends Fragment {
                 hideLoading();
             }
         });
-    }
-
-    private void fetchPickCooperativesAsService() {
-        new Thread(() -> {
-            try {
-                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
-                        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-                        .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-                        .build();
-
-                com.google.gson.JsonObject loginBody = new com.google.gson.JsonObject();
-                loginBody.addProperty("email", ApiClient.ADMIN_EMAIL);
-                loginBody.addProperty("password", ApiClient.ADMIN_PASSWORD);
-                okhttp3.Request loginReq = new okhttp3.Request.Builder()
-                        .url(ApiClient.BASE_URL_REAL + "auth/login")
-                        .header("Accept", "application/json")
-                        .post(okhttp3.RequestBody.create(loginBody.toString(), okhttp3.MediaType.parse("application/json")))
-                        .build();
-
-                okhttp3.Response loginResp = client.newCall(loginReq).execute();
-                if (loginResp.isSuccessful() && loginResp.body() != null) {
-                    com.google.gson.JsonObject respObj = com.google.gson.JsonParser.parseString(loginResp.body().string()).getAsJsonObject();
-                    String adminToken = respObj.has("token") ? respObj.get("token").getAsString() : null;
-                    if (adminToken != null) {
-                        okhttp3.Request coopReq = new okhttp3.Request.Builder()
-                                .url(ApiClient.BASE_URL_REAL + "cooperatives")
-                                .header("Authorization", "Bearer " + adminToken)
-                                .header("X-Company-Id", ApiClient.ADMIN_COMPANY_ID)
-                                .header("Accept", "application/json")
-                                .get()
-                                .build();
-                        okhttp3.Response coopResp = client.newCall(coopReq).execute();
-                        if (coopResp.isSuccessful() && coopResp.body() != null) {
-                            java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<CooperativeResponseDTO>>() {}.getType();
-                            List<CooperativeResponseDTO> dtos = new com.google.gson.Gson().fromJson(coopResp.body().string(), listType);
-                            if (dtos != null && !dtos.isEmpty()) {
-                                List<CooperativeJSON> coops = new ArrayList<>();
-                                for (CooperativeResponseDTO dto : dtos) {
-                                    coops.add(CooperativeJSON.fromDTO(dto));
-                                }
-                                if (getActivity() != null) {
-                                    getActivity().runOnUiThread(() -> {
-                                        if (!isAdded()) return;
-                                        PrefsHelper.putList(requireContext(), PREFS, occurrenceId, coops);
-                                        applyCooperatives(coops);
-                                        hideLoading();
-                                    });
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(() -> {
-                    if (!isAdded()) return;
-                    applyCooperatives(cached());
-                    hideLoading();
-                });
-            }
-        }).start();
     }
 
     private List<CooperativeJSON> cached() {

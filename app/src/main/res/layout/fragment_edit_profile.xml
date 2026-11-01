@@ -98,7 +98,7 @@
                         android:textColor="#0E7C48"
                         android:textSize="24sp"
                         android:textStyle="bold"
-                        tools:text="BG" />
+                        tools:text="US" />
                 </FrameLayout>
 
                 <TextView
@@ -163,7 +163,7 @@
                     android:textColor="#1B2430"
                     android:textColorHint="#9AA3B2"
                     android:textSize="15sp"
-                    tools:text="Breno Gomes" />
+                    tools:text="Colaborador" />
             </LinearLayout>
 
             <TextView
@@ -211,7 +211,7 @@
                     android:fontFamily="@font/font_inter"
                     android:textColor="#7C8698"
                     android:textSize="15sp"
-                    tools:text="breno@volta.com" />
+                    tools:text="—" />
             </LinearLayout>
 
             <TextView
@@ -272,7 +272,7 @@
                     android:fontFamily="@font/font_inter"
                     android:textColor="#1B2430"
                     android:textSize="15sp"
-                    tools:text="Frigorífico — Setor B2" />
+                    tools:text="—" />
 
                 <ImageView
                     android:layout_width="18dp"

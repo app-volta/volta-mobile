@@ -14,6 +14,8 @@ public final class SessionManager {
     private static final String KEY_TOKEN = "user_jwt_token";
     private static final String KEY_CHAT_SESSION_ID = "chat_session_id";
     private static final String KEY_SECTOR = "user_sector";
+    private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_COMPANY_ID = "company_id";
     private static final String KEY_PROFILE_PHOTO_URL = "user_profile_photo_url";
     private static final String KEY_PROFILE_PHOTO_LOCAL = "user_profile_photo_local";
 
@@ -220,6 +222,28 @@ public final class SessionManager {
 
     public static String sector(Context context) {
         return prefs(context).getString(KEY_SECTOR, "");
+    }
+
+    public static void saveUserId(Context context, String userId) {
+        if (userId == null || userId.trim().isEmpty()) {
+            return;
+        }
+        prefs(context).edit().putString(KEY_USER_ID, userId.trim()).apply();
+    }
+
+    public static String getUserId(Context context) {
+        return prefs(context).getString(KEY_USER_ID, "");
+    }
+
+    public static void saveCompanyId(Context context, String companyId) {
+        if (companyId == null || companyId.trim().isEmpty()) {
+            return;
+        }
+        prefs(context).edit().putString(KEY_COMPANY_ID, companyId.trim()).apply();
+    }
+
+    public static String getCompanyId(Context context) {
+        return prefs(context).getString(KEY_COMPANY_ID, "");
     }
 
     public static void saveProfilePhotoUrl(Context context, String url) {

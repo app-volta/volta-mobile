@@ -79,7 +79,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:fontFamily="@font/font_inter"
-                        android:text="Registrada por Breno G. · hoje, 09:12"
+                        android:text="Registrada · —"
                         android:textColor="@color/vf_text_secondary"
                         android:textSize="13sp" />
                 </LinearLayout>

@@ -53,30 +53,33 @@ public class ReportMetricsCalculatorTest {
                 ReportMetricsCalculator.Period.MONTH, null, null, null, null);
 
         assertNotNull(summary);
-        assertEquals(1147, summary.totalKg);
-        assertEquals(6, summary.openCount);
-        assertEquals(46, summary.resolvedCount);
-        assertEquals(52, summary.totalCount);
+        assertEquals(0, summary.totalKg);
+        assertEquals(0, summary.openCount);
+        assertEquals(0, summary.resolvedCount);
+        assertEquals(0, summary.totalCount);
         assertEquals(1500, summary.goalKg);
-        assertEquals(76, summary.goalPercent);
-        assertTrue(summary.recyclingRate > 80);
-        assertTrue(summary.materialBreakdown.containsKey("Papelão"));
-        assertEquals(Integer.valueOf(542), summary.materialBreakdown.get("Papelão"));
-        assertEquals(Integer.valueOf(318), summary.materialBreakdown.get("Plástico"));
-        assertFalse(summary.topSectors.isEmpty());
+        assertEquals(0, summary.goalPercent);
+        assertEquals(0, summary.recyclingRate);
+        assertTrue(summary.materialBreakdown.isEmpty());
+        assertTrue(summary.topSectors.isEmpty());
     }
 
     @Test
     public void testCalculateWeek_scalesMetrics() {
+        JsonObject baseEsg = new JsonObject();
+        baseEsg.addProperty("kg_reciclados", 400);
+        baseEsg.addProperty("abertas", 4);
+        baseEsg.addProperty("resolvidas", 16);
+
         ReportMetricsCalculator.ReportSummary summary = ReportMetricsCalculator.calculate(
-                ReportMetricsCalculator.Period.WEEK, null, null, null, null);
+                ReportMetricsCalculator.Period.WEEK, baseEsg, null, null, null);
 
         assertNotNull(summary);
         assertEquals(375, summary.goalKg);
-        assertEquals(287, summary.totalKg);
-        assertEquals(2, summary.openCount);
-        assertEquals(12, summary.resolvedCount);
-        assertEquals(77, summary.goalPercent);
+        assertEquals(100, summary.totalKg);
+        assertEquals(1, summary.openCount);
+        assertEquals(4, summary.resolvedCount);
+        assertEquals(27, summary.goalPercent);
     }
 
     @Test
@@ -95,22 +98,17 @@ public class ReportMetricsCalculatorTest {
                 ReportMetricsCalculator.Period.MONTH, null, occurrences, weights, null);
 
         assertNotNull(summary);
-
-        assertEquals(1227, summary.totalKg);
-
-        assertEquals(7, summary.openCount);
-
-        assertEquals(47, summary.resolvedCount);
-        assertEquals(54, summary.totalCount);
-
-        assertEquals(Integer.valueOf(592), summary.materialBreakdown.get("Papelão"));
-
-        assertEquals(Integer.valueOf(348), summary.materialBreakdown.get("Plástico"));
+        assertEquals(80, summary.totalKg);
+        assertEquals(1, summary.openCount);
+        assertEquals(1, summary.resolvedCount);
+        assertEquals(2, summary.totalCount);
+        assertEquals(Integer.valueOf(50), summary.materialBreakdown.get("Papelão"));
+        assertEquals(Integer.valueOf(30), summary.materialBreakdown.get("Plástico"));
 
         JsonObject json = summary.toJsonObject();
-        assertEquals(1227, json.get("kg_reciclados").getAsInt());
-        assertEquals(7, json.get("abertas").getAsInt());
-        assertEquals(47, json.get("resolvidas").getAsInt());
+        assertEquals(80, json.get("kg_reciclados").getAsInt());
+        assertEquals(1, json.get("abertas").getAsInt());
+        assertEquals(1, json.get("resolvidas").getAsInt());
     }
 
     @Test
@@ -171,14 +169,14 @@ public class ReportMetricsCalculatorTest {
 
         JsonObject baseEsg = new JsonObject();
         baseEsg.addProperty("isLiveDatabase", true);
-        baseEsg.addProperty("corporateTotalKg", 750);
+        baseEsg.addProperty("corporateTotalKg", 500);
         baseEsg.addProperty("corporateRecyclingPercentage", 75);
 
         ReportMetricsCalculator.ReportSummary summary = ReportMetricsCalculator.calculate(
                 ReportMetricsCalculator.Period.MONTH, baseEsg, occurrences, weights, null);
 
         assertNotNull(summary);
-        assertEquals(750, summary.totalKg);
+        assertEquals(500, summary.totalKg);
         assertEquals(75, summary.recyclingRate);
         assertEquals(1, summary.openCount);
         assertEquals(1, summary.resolvedCount);

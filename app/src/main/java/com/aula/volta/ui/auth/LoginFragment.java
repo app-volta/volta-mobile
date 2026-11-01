@@ -122,7 +122,7 @@ public class LoginFragment extends Fragment {
                         String token = response.body().getToken().trim();
                         SessionManager.saveToken(appContext, token);
                         ApiClient.saveToken(appContext, token);
-                        Log.i(TAG, "Token JWT da API QA obtido com sucesso no login.");
+                        Log.i(TAG, "Token JWT da API obtido com sucesso no login.");
 
                         try {
                             authApi.getMyCompany().enqueue(new Callback<com.aula.volta.data.model.CompanyResponseDTO>() {
@@ -131,6 +131,9 @@ public class LoginFragment extends Fragment {
                                                        @NonNull Response<com.aula.volta.data.model.CompanyResponseDTO> compResp) {
                                     if (compResp.isSuccessful() && compResp.body() != null) {
                                         com.aula.volta.data.model.CompanyResponseDTO c = compResp.body();
+                                        if (c.getId() != null && !c.getId().trim().isEmpty()) {
+                                            SessionManager.saveCompanyId(appContext, c.getId().trim());
+                                        }
                                         SessionManager.saveCompany(appContext, c.getName(), c.getFormattedCnpj(), c.getAddress());
                                     }
                                 }
@@ -145,6 +148,12 @@ public class LoginFragment extends Fragment {
                                                        @NonNull Response<com.aula.volta.data.model.UserResponseDTO> meResp) {
                                     if (meResp.isSuccessful() && meResp.body() != null) {
                                         com.aula.volta.data.model.UserResponseDTO u = meResp.body();
+                                        if (u.getId() != null && !u.getId().trim().isEmpty()) {
+                                            SessionManager.saveUserId(appContext, u.getId().trim());
+                                        }
+                                        if (u.getCompanyId() != null && !u.getCompanyId().trim().isEmpty()) {
+                                            SessionManager.saveCompanyId(appContext, u.getCompanyId().trim());
+                                        }
                                         if (u.getName() != null && !u.getName().trim().isEmpty()) {
                                             SessionManager.saveName(appContext, u.getName().trim());
                                         }
@@ -180,7 +189,7 @@ public class LoginFragment extends Fragment {
 
                 @Override
                 public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
-                    Log.w(TAG, "API QA offline ou inalcançável no login: " + t.getMessage());
+                    Log.w(TAG, "API offline ou inalcançável no login: " + t.getMessage());
                     if (btnLogin != null) {
                         btnLogin.setEnabled(true);
                     }

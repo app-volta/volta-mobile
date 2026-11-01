@@ -131,11 +131,6 @@ public class Occurrence {
         }
         String areaId = inc.getAreaId();
         if (areaId != null && !areaId.isEmpty()) {
-            String lower = areaId.toLowerCase(Locale.ROOT);
-            if (lower.contains("3059a21a")) return "Planta Principal";
-            if (lower.contains("9c98cf54")) return "Expedição";
-            if (lower.contains("86901188")) return "Manutenção";
-            if (lower.contains("1f7e4e53")) return "Armazenamento";
             if (context != null) {
                 String cachedArea = PrefsHelper.getJson(context, "cache_areas", areaId);
                 if (cachedArea != null && !cachedArea.isEmpty()) {
@@ -244,6 +239,19 @@ public class Occurrence {
 
     public String getStatus() {
         return status;
+    }
+
+    public boolean isResolved() {
+        if (status == null) {
+            return false;
+        }
+        String s = status.toUpperCase(Locale.ROOT);
+        return s.contains("RESOLVID")
+                || s.contains("FINALIZAD")
+                || s.contains("APROVAD")
+                || s.contains("COLETAD")
+                || s.contains("CONCLUID")
+                || s.contains("CLOSED");
     }
 
     public String getMaterial() {

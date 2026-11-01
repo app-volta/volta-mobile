@@ -144,12 +144,13 @@ public class RegisterFragment extends Fragment {
 
             try {
                 AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+                String companyId = SessionManager.getCompanyId(requireContext());
                 UserRequestDTO req = new UserRequestDTO(
                         name,
                         email,
                         password,
                         selectedSector,
-                        ApiClient.ADMIN_COMPANY_ID
+                        (companyId != null && !companyId.isEmpty()) ? companyId : null
                 );
                 authApi.createUser(req).enqueue(new Callback<UserResponseDTO>() {
                     @Override

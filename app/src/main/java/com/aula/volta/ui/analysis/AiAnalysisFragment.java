@@ -1464,7 +1464,7 @@ public class AiAnalysisFragment extends Fragment {
             }
         } catch (Exception ignored) {
         }
-        return "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+        return null;
     }
 
     private void executeCreateCoreIncident(View v, OccurrenceAPI occurrenceApi, String areaId, String wasteTypeId,

@@ -40,19 +40,10 @@ import com.aula.volta.data.model.CooperativeJSON;
 import com.aula.volta.data.model.CooperativeResponseDTO;
 import com.aula.volta.util.MapNavigator;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -446,15 +437,14 @@ public class CooperativesFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     processAndDisplayDatabaseCooperatives(response.body());
                 } else {
-
-                    fetchCooperativesAsService();
+                    useCachedDatabaseCooperatives();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<List<CooperativeResponseDTO>> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                fetchCooperativesAsService();
+                useCachedDatabaseCooperatives();
             }
         });
     }
@@ -484,64 +474,6 @@ public class CooperativesFragment extends Fragment {
         applyCooperatives(list);
         syncMapMarkers();
         hideLoading();
-    }
-
-    private void fetchCooperativesAsService() {
-        new Thread(() -> {
-            try {
-                OkHttpClient client = new OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(15, TimeUnit.SECONDS)
-                        .build();
-
-                JsonObject loginBody = new JsonObject();
-                loginBody.addProperty("email", ApiClient.ADMIN_EMAIL);
-                loginBody.addProperty("password", ApiClient.ADMIN_PASSWORD);
-                Request loginReq = new Request.Builder()
-                        .url(ApiClient.BASE_URL_REAL + "auth/login")
-                        .header("Accept", "application/json")
-                        .post(RequestBody.create(loginBody.toString(), MediaType.parse("application/json")))
-                        .build();
-
-                okhttp3.Response loginResp = client.newCall(loginReq).execute();
-                if (loginResp.isSuccessful() && loginResp.body() != null) {
-                    JsonObject respObj = JsonParser.parseString(loginResp.body().string()).getAsJsonObject();
-                    String adminToken = respObj.has("token") ? respObj.get("token").getAsString() :
-                            (respObj.has("accessToken") ? respObj.get("accessToken").getAsString() : null);
-                    if (adminToken != null) {
-                        Request coopReq = new Request.Builder()
-                                .url(ApiClient.BASE_URL_REAL + "cooperatives")
-                                .header("Authorization", "Bearer " + adminToken)
-                                .header("X-Company-Id", ApiClient.ADMIN_COMPANY_ID)
-                                .header("Accept", "application/json")
-                                .get()
-                                .build();
-                        okhttp3.Response coopResp = client.newCall(coopReq).execute();
-                        if (coopResp.isSuccessful() && coopResp.body() != null) {
-                            Type listType = new TypeToken<List<CooperativeResponseDTO>>() {}.getType();
-                            List<CooperativeResponseDTO> dtos = gson.fromJson(coopResp.body().string(), listType);
-                            if (dtos != null && !dtos.isEmpty()) {
-                                if (getActivity() != null) {
-                                    getActivity().runOnUiThread(() -> {
-                                        if (!isAdded()) return;
-                                        processAndDisplayDatabaseCooperatives(dtos);
-                                    });
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(() -> {
-                    if (!isAdded()) return;
-                    useCachedDatabaseCooperatives();
-                });
-            }
-        }).start();
     }
 
     private void useCachedDatabaseCooperatives() {

@@ -9,7 +9,6 @@ import android.graphics.RectF;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
@@ -81,16 +80,16 @@ public final class PgrsReport {
         ReportMetricsCalculator.ReportSummary calc = ReportMetricsCalculator.calculate(
                 period, baseEsg, occurrences, null, null);
 
-        int totalOccurrences = calc.totalCount > 0 ? calc.totalCount : 52;
-        int totalKg = calc.totalKg > 0 ? calc.totalKg : 1147;
-        int recyclingRate = calc.recyclingRate > 0 ? calc.recyclingRate : 94;
-        int landfillDiverted = Math.max(85, Math.min(98, (int) Math.round(recyclingRate * 0.95)));
-        int goalKg = calc.goalKg > 0 ? calc.goalKg : 1500;
-        int goalPercent = calc.goalPercent > 0 ? calc.goalPercent : (int) Math.round(totalKg * 100.0 / goalKg);
+        int totalOccurrences = calc.totalCount;
+        int totalKg = calc.totalKg;
+        int recyclingRate = calc.recyclingRate;
+        int landfillDiverted = recyclingRate > 0 ? Math.max(0, Math.min(100, (int) Math.round(recyclingRate * 0.95))) : 0;
+        int goalKg = calc.goalKg;
+        int goalPercent = calc.goalPercent;
 
         String operatorName = SessionManager.name(app);
-        if (operatorName == null || operatorName.trim().isEmpty() || "Colaborador".equalsIgnoreCase(operatorName.trim())) {
-            operatorName = "Davi Liu";
+        if (operatorName == null || operatorName.trim().isEmpty()) {
+            operatorName = "Colaborador";
         }
         String operatorRole = SessionManager.sector(app);
         if (operatorRole == null || operatorRole.trim().isEmpty()) {
@@ -104,7 +103,7 @@ public final class PgrsReport {
         String cachedCompAddr = SessionManager.getCompanyAddress(app);
 
         String unitName = (cachedCompName != null && !cachedCompName.trim().isEmpty())
-                ? cachedCompName.trim() : "Unidade Frigorífico";
+                ? cachedCompName.trim() : "Unidade";
         String cnpj = (cachedCompCnpj != null && !cachedCompCnpj.trim().isEmpty())
                 ? com.aula.volta.data.model.CompanyResponseDTO.formatCnpj(cachedCompCnpj) : "—";
         String address = (cachedCompAddr != null && !cachedCompAddr.trim().isEmpty())
@@ -121,7 +120,7 @@ public final class PgrsReport {
         if (areasCount == 0 && calc.topSectors != null) {
             areasCount = calc.topSectors.size();
         }
-        String numSectors = (areasCount > 0 ? areasCount : 5) + " cadastrados";
+        String numSectors = areasCount + " cadastrados";
 
         String periodFormatted = resolvePeriodDates(period);
         String monthYearFormatted = resolveMonthYear(period);
@@ -237,13 +236,13 @@ public final class PgrsReport {
         paint.setColor(Color.parseColor("#64748B"));
         paint.setTextSize(8f);
         paint.setFakeBoldText(false);
-        canvas.drawText("comparado com o mês anterior", 125, secTop, paint);
+        canvas.drawText("dados consolidados da unidade", 125, secTop, paint);
 
         float kpiTop = 198;
         float kpiW = (535 - 27) / 4f;
-        drawKpiCard(canvas, 30, kpiTop, kpiW, 54, "OCORRÊNCIAS", String.valueOf(totalOccurrences), "↑ +12 vs. anterior");
-        drawKpiCard(canvas, 30 + kpiW + 9, kpiTop, kpiW, 54, "RECUPERADO", String.format(Locale.getDefault(), "%,d kg", totalKg), "↑ +8% vs. anterior");
-        drawKpiCard(canvas, 30 + (kpiW + 9) * 2, kpiTop, kpiW, 54, "TAXA DE APROVAÇÃO", recyclingRate + "%", "↑ +3 pontos");
+        drawKpiCard(canvas, 30, kpiTop, kpiW, 54, "OCORRÊNCIAS", String.valueOf(totalOccurrences), "total no período");
+        drawKpiCard(canvas, 30 + kpiW + 9, kpiTop, kpiW, 54, "RECUPERADO", String.format(Locale.getDefault(), "%,d kg", totalKg), "volume reciclado");
+        drawKpiCard(canvas, 30 + (kpiW + 9) * 2, kpiTop, kpiW, 54, "TAXA DE APROVAÇÃO", recyclingRate + "%", "das ocorrências");
         drawKpiCard(canvas, 30 + (kpiW + 9) * 3, kpiTop, kpiW, 54, "DESVIADO DE ATERRO", landfillDiverted + "%", "do volume registrado");
 
         float metaTop = 260;
@@ -471,12 +470,11 @@ public final class PgrsReport {
         canvas.drawText("Recuperado por material", x + 12, y + 18, p);
 
         String[] mats = new String[]{"Papelão", "Plástico", "Metal", "Vidro"};
-        int[] defaultKg = new int[]{542, 318, 176, 111};
         String[] colors = new String[]{"#C68A10", "#3B82F6", "#8B6FE0", "#1BA463"};
 
         int maxKg = 1;
-        for (int i = 0; i < mats.length; i++) {
-            int val = (materials != null && materials.containsKey(mats[i])) ? materials.get(mats[i]) : defaultKg[i];
+        for (String mat : mats) {
+            int val = (materials != null && materials.containsKey(mat)) ? materials.get(mat) : 0;
             if (val > maxKg) maxKg = val;
         }
 
@@ -487,8 +485,8 @@ public final class PgrsReport {
 
         for (int i = 0; i < mats.length; i++) {
             String mName = mats[i];
-            int mKg = (materials != null && materials.containsKey(mName)) ? materials.get(mName) : defaultKg[i];
-            int pct = (int) Math.round(mKg * 100.0 / Math.max(1, totalKg));
+            int mKg = (materials != null && materials.containsKey(mName)) ? materials.get(mName) : 0;
+            int pct = totalKg > 0 ? (int) Math.round(mKg * 100.0 / totalKg) : 0;
 
             p.setColor(Color.parseColor("#0F172A"));
             p.setTextSize(8f);
@@ -502,8 +500,10 @@ public final class PgrsReport {
             Paint fill = new Paint();
             fill.setAntiAlias(true);
             fill.setColor(Color.parseColor(colors[i]));
-            float filledW = Math.max(4f, barW * (mKg / (float) maxKg));
-            canvas.drawRoundRect(new RectF(barLeft, rowY - 6, barLeft + filledW, rowY), 3, 3, fill);
+            float filledW = mKg > 0 ? Math.max(4f, barW * (mKg / (float) maxKg)) : 0f;
+            if (filledW > 0) {
+                canvas.drawRoundRect(new RectF(barLeft, rowY - 6, barLeft + filledW, rowY), 3, 3, fill);
+            }
 
             p.setColor(Color.parseColor("#0F172A"));
             p.setTextSize(7.5f);
@@ -548,10 +548,13 @@ public final class PgrsReport {
         p.setFakeBoldText(true);
         canvas.drawText("Setores que mais geram resíduo", x + 12, y + 18, p);
 
-        String[] defaultSectors = new String[]{"Frigorífico B2", "Expedição", "Manutenção", "Recebimento", "Refeitório"};
-        int[] defaultKg = new int[]{342, 218, 187, 160, 98};
+        int maxKg = 1;
+        if (sectors != null) {
+            for (ReportMetricsCalculator.SectorStat s : sectors) {
+                if (s != null && s.kg > maxKg) maxKg = s.kg;
+            }
+        }
 
-        int maxKg = 342;
         float rowY = y + 36;
         Paint trackPaint = new Paint();
         trackPaint.setAntiAlias(true);
@@ -561,14 +564,11 @@ public final class PgrsReport {
         fill.setAntiAlias(true);
         fill.setColor(Color.parseColor("#1BA463"));
 
-        for (int i = 0; i < 5; i++) {
-            String sName = defaultSectors[i];
-            int sKg = defaultKg[i];
-            if (sectors != null && i < sectors.size()) {
-                sName = sectors.get(i).name;
-                sKg = sectors.get(i).kg;
-            }
-            int pct = (int) Math.round(sKg * 100.0 / Math.max(1, totalKg));
+        int count = sectors != null ? Math.min(5, sectors.size()) : 0;
+        for (int i = 0; i < count; i++) {
+            String sName = sectors.get(i).name;
+            int sKg = sectors.get(i).kg;
+            int pct = totalKg > 0 ? (int) Math.round(sKg * 100.0 / totalKg) : 0;
 
             p.setColor(Color.parseColor("#0F172A"));
             p.setTextSize(7.5f);
@@ -580,8 +580,10 @@ public final class PgrsReport {
             float barW = 95;
             canvas.drawRoundRect(new RectF(barLeft, rowY - 6, barLeft + barW, rowY), 3, 3, trackPaint);
 
-            float filledW = Math.max(4f, barW * (sKg / (float) maxKg));
-            canvas.drawRoundRect(new RectF(barLeft, rowY - 6, barLeft + filledW, rowY), 3, 3, fill);
+            float filledW = sKg > 0 ? Math.max(4f, barW * (sKg / (float) maxKg)) : 0f;
+            if (filledW > 0) {
+                canvas.drawRoundRect(new RectF(barLeft, rowY - 6, barLeft + filledW, rowY), 3, 3, fill);
+            }
 
             p.setColor(Color.parseColor("#0F172A"));
             p.setTextSize(7.5f);
@@ -783,7 +785,7 @@ public final class PgrsReport {
         p.setFakeBoldText(true);
         canvas.drawText("✦ Recomendações do VOLTA para o próximo período", x + 14, y + 20, p);
 
-        String topSectorName = (sectors != null && !sectors.isEmpty()) ? sectors.get(0).name : "Frigorífico B2";
+        String topSectorName = (sectors != null && !sectors.isEmpty()) ? sectors.get(0).name : "Planta Principal";
         int remainingGoal = Math.max(0, goalKg - totalKg);
 
         String b1 = "• Setor " + topSectorName + " liderou o descarte reciclável. Uma área coberta de triagem preserva o papelão de umidade.";
@@ -957,26 +959,17 @@ public final class PgrsReport {
     private static List<OccurrenceSample> resolveOccurrenceSamples(List<Occurrence> occurrences, String defaultUser) {
         List<OccurrenceSample> list = new ArrayList<>();
         if (occurrences != null) {
-            int seq = 481;
+            int seq = 1;
             for (Occurrence occ : occurrences) {
                 if (list.size() >= 5) break;
-                String code = occ.getId() != null ? "#" + (occ.getId().length() > 4 ? occ.getId().substring(0, 4) : occ.getId()) : "#" + seq--;
+                String code = occ.getId() != null ? "#" + (occ.getId().length() > 4 ? occ.getId().substring(0, 4) : occ.getId()) : "#" + seq++;
                 String title = occ.getTitulo() != null ? occ.getTitulo() : "Material reciclável";
-                String sector = occ.getSetor() != null ? occ.getSetor() : "Manutenção";
+                String sector = occ.getSetor() != null ? occ.getSetor() : "Planta Principal";
                 String mat = occ.getMaterial() != null ? occ.getMaterial() : "Papelão";
-                list.add(new OccurrenceSample(code, title, sector, mat, "≈45 kg", "96%", defaultUser));
+                list.add(new OccurrenceSample(code, title, sector, mat, "—", "—", defaultUser));
             }
         }
-
-        if (list.size() < 5) {
-            list.add(new OccurrenceSample("#0481", "Sucata metálica", "Manutenção", "Metal", "≈61 kg", "97%", "João Pereira"));
-            list.add(new OccurrenceSample("#0480", "Papelão limpo", "Recebimento", "Papelão", "≈45 kg", "95%", "Ana Souza"));
-            list.add(new OccurrenceSample("#0476", "Papelão molhado", "Frigorífico B2", "Papelão", "≈40 kg", "90%", defaultUser));
-            list.add(new OccurrenceSample("#0475", "Metal diverso", "Manutenção", "Metal", "≈33 kg", "93%", "João Pereira"));
-            list.add(new OccurrenceSample("#0474", "Plástico filme", "Expedição", "Plástico", "≈28 kg", "94%", defaultUser));
-        }
-
-        return list.subList(0, Math.min(5, list.size()));
+        return list;
     }
 
     private static String resolvePeriodDates(ReportMetricsCalculator.Period period) {
@@ -1062,9 +1055,9 @@ public final class PgrsReport {
         ReportMetricsCalculator.ReportSummary calc = ReportMetricsCalculator.calculate(
                 period, baseEsg, occurrences, null, null);
 
-        int abertas = calc.openCount > 0 ? calc.openCount : 6;
-        int resolvidas = calc.resolvedCount > 0 ? calc.resolvedCount : 46;
-        int kg = calc.totalKg > 0 ? calc.totalKg : 1147;
+        int abertas = calc.openCount;
+        int resolvidas = calc.resolvedCount;
+        int kg = calc.totalKg;
 
         String date = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date());
         String html = buildHtml(abertas, resolvidas, kg, occurrences, date);
@@ -1112,8 +1105,6 @@ public final class PgrsReport {
         }
         return text.replace("&", "&amp;")
                 .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
+                .replace(">", "&gt;");
     }
 }

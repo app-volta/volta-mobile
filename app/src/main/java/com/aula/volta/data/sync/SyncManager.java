@@ -9,16 +9,11 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.aula.volta.R;
-import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
-import com.aula.volta.data.local.NotificationStore;
-import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.incident.IncidentRequestDTO;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
-import com.google.gson.JsonObject;
 
 import java.util.List;
 
@@ -102,7 +97,7 @@ public final class SyncManager {
             }
         } catch (Exception ignored) {
         }
-        return "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+        return null;
     }
 
     private static String mapMaterialToWasteTypeId(String material) {
@@ -125,6 +120,9 @@ public final class SyncManager {
         List<PendingOccurrence> pendingList = SyncQueue.getAll(app);
         OccurrenceAPI api = ChatbotAuthClient.get(app).create(OccurrenceAPI.class);
         String defaultAreaId = getCachedAreaId(app);
+        if (defaultAreaId == null || defaultAreaId.isEmpty()) {
+            return;
+        }
 
         for (PendingOccurrence item : pendingList) {
             String areaId = defaultAreaId;

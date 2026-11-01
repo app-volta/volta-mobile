@@ -241,7 +241,7 @@ public class HomeFragment extends Fragment {
         }
 
         String currentName = SessionManager.name(requireContext());
-        if (currentName == null || currentName.trim().isEmpty() || "Breno Liu".equalsIgnoreCase(currentName)) {
+        if (currentName == null || currentName.trim().isEmpty()) {
             currentName = "Colaborador";
         }
         applyUserNameAndInitials(currentName);
@@ -254,6 +254,9 @@ public class HomeFragment extends Fragment {
                                        @NonNull Response<com.aula.volta.data.model.CompanyResponseDTO> compResp) {
                     if (isAdded() && compResp.isSuccessful() && compResp.body() != null) {
                         com.aula.volta.data.model.CompanyResponseDTO c = compResp.body();
+                        if (c.getId() != null && !c.getId().trim().isEmpty()) {
+                            SessionManager.saveCompanyId(requireContext(), c.getId().trim());
+                        }
                         SessionManager.saveCompany(requireContext(), c.getName(), c.getFormattedCnpj(), c.getAddress());
                     }
                 }
@@ -270,6 +273,12 @@ public class HomeFragment extends Fragment {
                         String myEmail = SessionManager.email(requireContext());
                         if (myEmail.isEmpty() || (u.getEmail() != null && !u.getEmail().trim().isEmpty() && !u.getEmail().equalsIgnoreCase(myEmail))) {
                             return;
+                        }
+                        if (u.getId() != null && !u.getId().trim().isEmpty()) {
+                            SessionManager.saveUserId(requireContext(), u.getId().trim());
+                        }
+                        if (u.getCompanyId() != null && !u.getCompanyId().trim().isEmpty()) {
+                            SessionManager.saveCompanyId(requireContext(), u.getCompanyId().trim());
                         }
                         if (u.getName() != null && !u.getName().trim().isEmpty()) {
                             SessionManager.saveName(requireContext(), u.getName().trim());
@@ -296,7 +305,7 @@ public class HomeFragment extends Fragment {
             tvUserName.setText(name);
         }
         if (tvAvatarInitials != null) {
-            String initials = "BG";
+            String initials = "US";
             String[] parts = name.trim().split("\\s+");
             if (parts.length >= 2) {
                 initials = ("" + parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase(Locale.ROOT);
@@ -416,7 +425,7 @@ public class HomeFragment extends Fragment {
             return raw;
         }
 
-        int kg = 750;
+        int kg = 0;
         if (raw.has("esgMetrics") && raw.get("esgMetrics").isJsonArray()) {
             com.google.gson.JsonArray esgArr = raw.getAsJsonArray("esgMetrics");
             if (esgArr.size() > 0) {
@@ -477,10 +486,22 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     EsgMetricResponseDTO metric = response.body().get(0);
                     JsonObject summary = new JsonObject();
-                    int kg = metric.getTotalRecycledKg() != null ? metric.getTotalRecycledKg().intValue() : 750;
+                    int kg = metric.getTotalRecycledKg() != null ? metric.getTotalRecycledKg().intValue() : 0;
+                    int openCount = 0;
+                    int resolvedCount = 0;
+                    List<Occurrence> cachedOccs = OccurrenceStore.cached(requireContext());
+                    if (cachedOccs != null) {
+                        for (Occurrence occ : cachedOccs) {
+                            if (occ.isResolved()) {
+                                resolvedCount++;
+                            } else {
+                                openCount++;
+                            }
+                        }
+                    }
                     summary.addProperty("kg_reciclados", kg);
-                    summary.addProperty("resolvidas", 2);
-                    summary.addProperty("abertas", 15);
+                    summary.addProperty("resolvidas", resolvedCount);
+                    summary.addProperty("abertas", openCount);
                     PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toString());
                     applySummary(summary);
                 } else {
@@ -510,14 +531,27 @@ public class HomeFragment extends Fragment {
             }
         }
 
+        int openCount = 0;
+        int resolvedCount = 0;
+        List<Occurrence> cachedOccs = OccurrenceStore.cached(requireContext());
+        if (cachedOccs != null) {
+            for (Occurrence occ : cachedOccs) {
+                if (occ.isResolved()) {
+                    resolvedCount++;
+                } else {
+                    openCount++;
+                }
+            }
+        }
+
         if (tvStatOpenCount != null && (tvStatOpenCount.getText() == null || "—".contentEquals(tvStatOpenCount.getText()))) {
-            tvStatOpenCount.setText("9");
+            tvStatOpenCount.setText(String.valueOf(openCount));
         }
         if (tvStatResolvedCount != null && (tvStatResolvedCount.getText() == null || "—".contentEquals(tvStatResolvedCount.getText()))) {
-            tvStatResolvedCount.setText("43");
+            tvStatResolvedCount.setText(String.valueOf(resolvedCount));
         }
         if (tvStatRecycledCount != null && (tvStatRecycledCount.getText() == null || "—".contentEquals(tvStatRecycledCount.getText()))) {
-            tvStatRecycledCount.setText("1.147");
+            tvStatRecycledCount.setText("0");
         }
     }
 
@@ -643,6 +677,12 @@ public class HomeFragment extends Fragment {
                     if (response.isSuccessful() && response.body() != null) {
                         UserResponseDTO user = response.body();
                         boolean changed = false;
+                        if (user.getId() != null && !user.getId().trim().isEmpty()) {
+                            SessionManager.saveUserId(app, user.getId().trim());
+                        }
+                        if (user.getCompanyId() != null && !user.getCompanyId().trim().isEmpty()) {
+                            SessionManager.saveCompanyId(app, user.getCompanyId().trim());
+                        }
                         if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
                             String currentPhoto = SessionManager.getProfilePhotoUrl(app);
                             if (!user.getPhotoUrl().equals(currentPhoto)) {

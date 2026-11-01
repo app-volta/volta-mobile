@@ -180,13 +180,13 @@
     <string name="reports_share">Compartilhar relatório</string>
     <string name="reports_nothing">Nada para incluir no relatório ainda.</string>
 
-    <string name="profile_name">Breno Gomes</string>
+    <string name="profile_name">Colaborador</string>
     <string name="profile_role">Responsável PGRS</string>
     <string name="profile_unit">Frigorífico · Setor B2</string>
     <string name="profile_about">Sobre Você</string>
     <string name="profile_edit">Editar</string>
     <string name="profile_email">E-mail</string>
-    <string name="profile_email_value">breno@empresa.com</string>
+    <string name="profile_email_value">—</string>
     <string name="profile_since">Cadastro</string>
     <string name="profile_since_value">Março de 2024</string>
     <string name="profile_occ">Ocorrências</string>
@@ -239,7 +239,7 @@
     <string name="chat_now">agora</string>
 
     <string name="assistant_online">Seu assistente de descarte · Online</string>
-    <string name="assistant_hello">Oi, Breno Liu!</string>
+    <string name="assistant_hello">Olá!</string>
     <string name="assistant_hello_sub">Pergunte qualquer coisa sobre resíduos, coletas ou as metas da unidade.</string>
     <string name="assistant_intro">Eu sou o VOLTA, o assistente que ajuda a sua unidade a descartar certo. Escolha uma pergunta abaixo ou escreva do seu jeito.</string>
     <string name="assistant_hint">Pergunte ao VOLTA…</string>
@@ -262,9 +262,6 @@
     <string name="auth_password">Senha</string>
     <string name="auth_forgot">Esqueci minha senha</string>
     <string name="auth_login_btn">Entrar</string>
-    <string name="auth_demo_btn">Entrar como demonstração (Breno)</string>
-    <string name="auth_demo_title">💡 Modo de Demonstração VOLTA</string>
-    <string name="auth_demo_desc">E-mail: breno@volta.com  ·  Senha: 1234\n(Ou use qualquer e-mail e senha de 4+ dígitos)</string>
     <string name="auth_or">ou</string>
     <string name="auth_google">Continuar com Google</string>
     <string name="auth_no_account">Primeira vez aqui?</string>
@@ -285,8 +282,8 @@
     <string name="auth_start">Começar</string>
     <string name="auth_invalid">Verifique e-mail e senha</string>
     <string name="auth_logging_in">Entrando...</string>
-    <string name="auth_error_credentials">E-mail ou senha incorretos no ambiente QA.</string>
-    <string name="auth_error_network">Falha ao conectar com a API QA. Verifique sua conexão.</string>
+    <string name="auth_error_credentials">E-mail ou senha incorretos.</string>
+    <string name="auth_error_network">Falha ao conectar com a API. Verifique sua conexão.</string>
     <string name="auth_error_server">Erro no servidor (%1$d). Tente novamente.</string>
     <string name="chatbot_thinking">Pensando...</string>
     <string name="chatbot_session_created">Sessão iniciada com o Chatbot VOLTA.</string>

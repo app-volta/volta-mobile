@@ -63,7 +63,7 @@
                 android:layout_marginBottom="24dp"
                 android:fontFamily="@font/font_inter"
                 android:lineSpacingExtra="2dp"
-                android:text="Frigorífico · Setor B2 · Av. Industrial, 1200 · SP"
+                android:text="—"
                 android:textColor="@color/vf_text_secondary"
                 android:textSize="14sp" />
 
@@ -119,7 +119,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:fontFamily="@font/font_inter"
-                            android:text="52 no mês"
+                            android:text="0 no mês"
                             android:textColor="@color/vf_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -171,7 +171,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:fontFamily="@font/font_inter"
-                            android:text="1.147 kg"
+                            android:text="0 kg"
                             android:textColor="@color/vf_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -231,7 +231,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:fontFamily="@font/font_inter"
-                            android:text="hoje, 15h30"
+                            android:text="—"
                             android:textColor="@color/vf_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -285,7 +285,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:fontFamily="@font/font_inter"
-                            android:text="Ana Souza"
+                            android:text="Gestor da Unidade"
                             android:textColor="@color/vf_text_primary"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -331,7 +331,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:fontFamily="@font/poppins_bold"
-                            android:text="76%"
+                            android:text="0%"
                             android:textColor="#0E7C48"
                             android:textSize="12sp"
                             android:textStyle="bold" />
@@ -350,7 +350,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/poppins_bold"
-                        android:text="1.147 kg"
+                        android:text="0 kg"
                         android:textColor="@color/vf_text_primary"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -361,7 +361,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
                         android:fontFamily="@font/font_inter"
-                        android:text="de 1.500 kg"
+                        android:text="de 0 kg"
                         android:textColor="@color/vf_text_secondary"
                         android:textSize="14sp" />
                 </LinearLayout>
@@ -373,7 +373,7 @@
                     android:layout_height="9dp"
                     android:layout_marginTop="10dp"
                     android:max="100"
-                    android:progress="76"
+                    android:progress="0"
                     android:progressDrawable="@drawable/bg_progress_goal" />
             </LinearLayout>
 
@@ -414,7 +414,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
                     android:fontFamily="@font/font_inter"
-                    android:text="JBS Ambiental"
+                    android:text="—"
                     android:textColor="@color/vf_text_secondary"
                     android:textSize="13sp" />
 
