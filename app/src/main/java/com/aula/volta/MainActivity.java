@@ -76,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.nav_placeholder) {
                 return false;
             }
+            if (itemId == R.id.nav_register && !com.aula.volta.util.NetworkUtils.isOnline(this)) {
+                navigateToOfflineCameraBlocked(navController);
+                return false;
+            }
             if (navController.getCurrentDestination() != null
                     && navController.getCurrentDestination().getId() == itemId) {
                 return true;
@@ -85,6 +89,10 @@ public class MainActivity extends AppCompatActivity {
         });
         navView.setOnItemReselectedListener(item -> {
             if (item.getItemId() != R.id.nav_placeholder) {
+                if (item.getItemId() == R.id.nav_register && !com.aula.volta.util.NetworkUtils.isOnline(this)) {
+                    navigateToOfflineCameraBlocked(navController);
+                    return;
+                }
                 navigateToTab(navController, item.getItemId());
             }
         });
@@ -127,6 +135,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         fabRegister.setOnClickListener(v -> {
+            if (!com.aula.volta.util.NetworkUtils.isOnline(this)) {
+                navigateToOfflineCameraBlocked(navController);
+                return;
+            }
             if (navController.getCurrentDestination() == null
                     || navController.getCurrentDestination().getId() != R.id.nav_register) {
                 NavOptions fabOptions = new NavOptions.Builder()
@@ -147,9 +159,23 @@ public class MainActivity extends AppCompatActivity {
                         android.util.Log.d("VoltaFCM", "FCM Device Token: " + task.getResult());
                     }
                 });
+    }
 
-        com.aula.volta.data.sync.SyncManager.registerNetworkCallback(this);
-        com.aula.volta.data.sync.SyncManager.syncPending(this);
+    private void navigateToOfflineCameraBlocked(NavController navController) {
+        Bundle errArgs = new Bundle();
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                com.aula.volta.ui.error.OfflineErrorFragment.TYPE_OFFLINE);
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Sem conexão para fotografar");
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                "Você precisa de conexão com a internet para tirar fotos e registrar ocorrências no banco de dados.");
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_TITLE, "Câmera e registro bloqueados offline");
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_BODY,
+                "Todas as ocorrências são enviadas diretamente ao banco oficial da unidade. Conecte-se ao Wi-Fi ou dados móveis para continuar.");
+        try {
+            navController.navigate(R.id.nav_offline_error, errArgs);
+        } catch (Exception ignored) {
+        }
     }
 
     private void navigateToTab(NavController navController, int destId) {

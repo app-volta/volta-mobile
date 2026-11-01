@@ -15,9 +15,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.aula.volta.R;
+import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.util.BottomSheetImmersiveHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -161,6 +163,29 @@ public class SelectSectorSheet extends BottomSheetDialogFragment {
                 }
             }
         } catch (Exception ignored) {
+        }
+
+        if (options.isEmpty()) {
+            try {
+                String sumStr = PrefsHelper.getJson(requireContext(), "cache_reports", "summary");
+                if (sumStr != null && !sumStr.isEmpty()) {
+                    JsonObject sum = JsonParser.parseString(sumStr).getAsJsonObject();
+                    if (sum.has("areas") && sum.get("areas").isJsonArray()) {
+                        for (JsonElement el : sum.getAsJsonArray("areas")) {
+                            if (el.isJsonObject()) {
+                                JsonObject obj = el.getAsJsonObject();
+                                String id = obj.has("id") && !obj.get("id").isJsonNull() ? obj.get("id").getAsString() : null;
+                                String name = obj.has("sectorName") && !obj.get("sectorName").isJsonNull() ? obj.get("sectorName").getAsString() : null;
+                                if (id != null && name != null && !name.trim().isEmpty()) {
+                                    options.add(new SectorOption(id, name.trim()));
+                                    PrefsHelper.putJson(requireContext(), "cache_areas", id, obj.toString());
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
         }
 
         if (!options.isEmpty()) {

@@ -1,25 +1,21 @@
 package com.aula.volta.data.local;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.ChatbotAPI;
-import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.ChatbotClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.model.Occurrence;
-import com.aula.volta.data.model.OccurrenceJSON;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
-import com.aula.volta.data.notification.NotificationHelper;
-import java.util.concurrent.CopyOnWriteArrayList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -129,7 +125,7 @@ public final class OccurrenceStore {
 
     public static void refresh(Context context, LoadCallback callback) {
         Context app = context.getApplicationContext();
-        OccurrenceAPI api = ChatbotAuthClient.get(app).create(OccurrenceAPI.class);
+        OccurrenceAPI api = ApiClient.get(app).create(OccurrenceAPI.class);
 
         api.getIncidents().enqueue(new Callback<List<IncidentResponseDTO>>() {
             @Override
@@ -153,6 +149,9 @@ public final class OccurrenceStore {
                                             ? JsonParser.parseString(existing).getAsJsonObject()
                                             : new JsonObject();
                                     d.addProperty("id", inc.getId());
+                                    if (inc.getAreaId() != null && !inc.getAreaId().isEmpty()) {
+                                        d.addProperty("areaId", inc.getAreaId());
+                                    }
                                     if (inc.getPhotoUrl() != null && !inc.getPhotoUrl().isEmpty()) {
                                         d.addProperty("photoUrl", inc.getPhotoUrl());
                                         d.addProperty("imageUrl", inc.getPhotoUrl());
@@ -204,16 +203,30 @@ public final class OccurrenceStore {
         if (list == null || list.isEmpty()) {
             List<Occurrence> local = localOnly(app);
             if (local != null && !local.isEmpty()) {
-                list = new ArrayList<>(local);
+                list = filterOutOfflineStubs(local);
                 PrefsHelper.putList(app, prefsName, KEY_LIST, list);
                 return list;
             }
             return new ArrayList<>();
         }
-        return list != null ? list : new ArrayList<>();
+        return filterOutOfflineStubs(list);
+    }
+
+    private static List<Occurrence> filterOutOfflineStubs(List<Occurrence> source) {
+        List<Occurrence> clean = new ArrayList<>();
+        if (source == null) return clean;
+        for (Occurrence o : source) {
+            if (o != null && o.getId() != null && !o.getId().startsWith("off_")) {
+                clean.add(o);
+            }
+        }
+        return clean;
     }
 
     public static void pushLocal(Context context, Occurrence occurrence) {
+        if (occurrence == null || occurrence.getId() == null || occurrence.getId().startsWith("off_")) {
+            return;
+        }
         Context app = context.getApplicationContext();
         List<Occurrence> local = new ArrayList<>(localOnly(app));
         local.add(0, occurrence);
@@ -225,7 +238,7 @@ public final class OccurrenceStore {
     }
 
     public static void update(Context context, Occurrence updated) {
-        if (updated == null || updated.getId() == null) {
+        if (updated == null || updated.getId() == null || updated.getId().startsWith("off_")) {
             return;
         }
         Context app = context.getApplicationContext();
@@ -256,8 +269,9 @@ public final class OccurrenceStore {
     }
 
     public static List<Occurrence> localOnly(Context app) {
-        return PrefsHelper.getList(app, getPrefsName(app), KEY_LOCAL,
+        List<Occurrence> raw = PrefsHelper.getList(app, getPrefsName(app), KEY_LOCAL,
                 PrefsHelper.listType(Occurrence.class));
+        return filterOutOfflineStubs(raw);
     }
 
     static List<Occurrence> mergedWithLocal(Context app, List<Occurrence> api) {
@@ -267,7 +281,7 @@ public final class OccurrenceStore {
         java.util.Map<String, Occurrence> localMap = new java.util.HashMap<>();
         if (local != null) {
             for (Occurrence loc : local) {
-                if (loc != null && loc.getId() != null) {
+                if (loc != null && loc.getId() != null && !loc.getId().startsWith("off_")) {
                     localMap.put(loc.getId(), loc);
                 }
             }
@@ -276,7 +290,7 @@ public final class OccurrenceStore {
         List<Occurrence> remainingLocal = new ArrayList<>();
         if (local != null) {
             for (Occurrence loc : local) {
-                if (loc != null && loc.getId() != null && !containsId(api, loc.getId())) {
+                if (loc != null && loc.getId() != null && !loc.getId().startsWith("off_") && !containsId(api, loc.getId())) {
                     remainingLocal.add(loc);
                     result.add(loc);
                 }
