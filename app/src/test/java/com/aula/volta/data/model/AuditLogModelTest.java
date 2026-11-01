@@ -5,9 +5,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Testes unitários para modelo de histórico de auditoria (Fase 15).
- */
 public class AuditLogModelTest {
 
     @Test

@@ -9,9 +9,6 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-/**
- * Cobre o HTML do PGRS (função pura, sem Android).
- */
 public class PgrsReportTest {
 
     @Test

@@ -1,9 +1,5 @@
 package com.aula.volta.data.model;
 
-/**
- * Modelo de identidade (Fase 0). Telas de login vêm na Fase 12;
- * o modelo existe desde a fundação para ocorrências/history o referenciarem.
- */
 public class User {
 
     private String id;

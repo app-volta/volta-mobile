@@ -1,9 +1,15 @@
 package com.aula.volta;
 
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -11,15 +17,26 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.CatalogAPI;
 import com.aula.volta.data.api.ReportAPI;
+import com.aula.volta.data.model.AreaResponseDTO;
 import com.aula.volta.data.local.AuditLog;
+import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.local.SessionManager;
+import com.aula.volta.data.model.EsgMetricResponseDTO;
+import com.aula.volta.data.model.Occurrence;
 import com.aula.volta.data.report.PgrsReport;
+import com.aula.volta.data.report.ReportMetricsCalculator;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,19 +45,16 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Relatórios — Figma 790:3322 (PGRS, período, mês, meta, por material).
- * GET /reports/summary (mock → API-ready), mesmo cache da Home.
- * Meta de 1.500 kg (canônica no app). Período: mock tem um dataset —
- * os chips alternam seleção e recarregam (API filtra no futuro).
- */
 public class ReportsFragment extends Fragment {
 
     private static final String PREFS_REPORTS = "cache_reports";
     private static final String KEY_SUMMARY = "summary";
-    /** Meta mensal canônica (sino n4: "1.147 kg de 1.500 kg"). */
-    private static final int GOAL_KG = 1500;
 
+    private ReportMetricsCalculator.Period currentPeriod = ReportMetricsCalculator.Period.MONTH;
+
+    private TextView tvPeriodTitle;
+    private TextView tvGoalTitle;
+    private TextView tvReportsVsTitle;
     private TextView tvOccurrences;
     private TextView tvKg;
     private TextView tvRate;
@@ -50,12 +64,73 @@ public class ReportsFragment extends Fragment {
     private View goalProgress;
     private LinearLayout materialContainer;
 
+    private View skeletonReports;
+    private View layoutReportsDynamicContent;
+
     private TextView chipWeek;
     private TextView chipMonth;
     private TextView chipQuarter;
 
+    private View rowTopSector1;
+    private TextView tvTopSector1Name;
+    private TextView tvTopSector1Kg;
+    private View viewTopSector1Bar;
+    private View viewTopSector1BarEmpty;
+
+    private View rowTopSector2;
+    private TextView tvTopSector2Name;
+    private TextView tvTopSector2Kg;
+    private View viewTopSector2Bar;
+    private View viewTopSector2BarEmpty;
+
+    private View rowTopSector3;
+    private TextView tvTopSector3Name;
+    private TextView tvTopSector3Kg;
+    private View viewTopSector3Bar;
+    private View viewTopSector3BarEmpty;
+
+    private View rowRecentHistory1;
+    private FrameLayout cardRecentHistoryIcon1;
+    private ImageView icRecentHistory1;
+    private TextView tvRecentHistoryTitle1;
+    private TextView tvRecentHistorySub1;
+    private TextView tvRecentHistoryBadge1;
+
+    private View rowRecentHistory2;
+    private FrameLayout cardRecentHistoryIcon2;
+    private ImageView icRecentHistory2;
+    private TextView tvRecentHistoryTitle2;
+    private TextView tvRecentHistorySub2;
+    private TextView tvRecentHistoryBadge2;
+
+    private View rowRecentHistory3;
+    private FrameLayout cardRecentHistoryIcon3;
+    private ImageView icRecentHistory3;
+    private TextView tvRecentHistoryTitle3;
+    private TextView tvRecentHistorySub3;
+    private TextView tvRecentHistoryBadge3;
+
+    private View toastExported;
+    private final Handler toastHandler = new Handler(Looper.getMainLooper());
+    private final Runnable hideToastRunnable = () -> {
+        if (toastExported != null && isAdded()) {
+            toastExported.animate()
+                    .alpha(0f)
+                    .translationY(-50f)
+                    .setDuration(250)
+                    .withEndAction(() -> toastExported.setVisibility(View.GONE))
+                    .start();
+        }
+    };
+
+    private final OccurrenceStore.StoreListener storeListener = () -> {
+        if (isAdded()) {
+            loadSummary();
+        }
+    };
+
     public ReportsFragment() {
-        // Construtor vazio obrigatório
+
     }
 
     @Override
@@ -68,6 +143,11 @@ public class ReportsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        tvPeriodTitle = view.findViewById(R.id.tvReportsPeriodTitle);
+        tvGoalTitle = view.findViewById(R.id.tvGoalTitle);
+        tvReportsVsTitle = view.findViewById(R.id.tvReportsVsTitle);
+        if (tvReportsVsTitle != null) tvReportsVsTitle.setText(ReportMetricsCalculator.getVsPeriodTitle(currentPeriod));
+
         tvOccurrences = view.findViewById(R.id.tvReportOccurrences);
         tvKg = view.findViewById(R.id.tvReportKg);
         tvRate = view.findViewById(R.id.tvReportRate);
@@ -77,6 +157,9 @@ public class ReportsFragment extends Fragment {
         goalProgress = view.findViewById(R.id.viewGoalProgress);
         materialContainer = view.findViewById(R.id.materialContainer);
 
+        skeletonReports = view.findViewById(R.id.skeletonReports);
+        layoutReportsDynamicContent = view.findViewById(R.id.layoutReportsDynamicContent);
+
         chipWeek = view.findViewById(R.id.chipWeek);
         chipMonth = view.findViewById(R.id.chipMonth);
         chipQuarter = view.findViewById(R.id.chipQuarter);
@@ -84,38 +167,162 @@ public class ReportsFragment extends Fragment {
         chipMonth.setOnClickListener(v -> selectPeriod(chipMonth));
         chipQuarter.setOnClickListener(v -> selectPeriod(chipQuarter));
 
+        rowTopSector1 = view.findViewById(R.id.rowTopSector1);
+        tvTopSector1Name = view.findViewById(R.id.tvTopSector1Name);
+        tvTopSector1Kg = view.findViewById(R.id.tvTopSector1Kg);
+        viewTopSector1Bar = view.findViewById(R.id.viewTopSector1Bar);
+        viewTopSector1BarEmpty = view.findViewById(R.id.viewTopSector1BarEmpty);
+
+        rowTopSector2 = view.findViewById(R.id.rowTopSector2);
+        tvTopSector2Name = view.findViewById(R.id.tvTopSector2Name);
+        tvTopSector2Kg = view.findViewById(R.id.tvTopSector2Kg);
+        viewTopSector2Bar = view.findViewById(R.id.viewTopSector2Bar);
+        viewTopSector2BarEmpty = view.findViewById(R.id.viewTopSector2BarEmpty);
+
+        rowTopSector3 = view.findViewById(R.id.rowTopSector3);
+        tvTopSector3Name = view.findViewById(R.id.tvTopSector3Name);
+        tvTopSector3Kg = view.findViewById(R.id.tvTopSector3Kg);
+        viewTopSector3Bar = view.findViewById(R.id.viewTopSector3Bar);
+        viewTopSector3BarEmpty = view.findViewById(R.id.viewTopSector3BarEmpty);
+
+        rowRecentHistory1 = view.findViewById(R.id.rowRecentHistory1);
+        cardRecentHistoryIcon1 = view.findViewById(R.id.cardRecentHistoryIcon1);
+        icRecentHistory1 = view.findViewById(R.id.icRecentHistory1);
+        tvRecentHistoryTitle1 = view.findViewById(R.id.tvRecentHistoryTitle1);
+        tvRecentHistorySub1 = view.findViewById(R.id.tvRecentHistorySub1);
+        tvRecentHistoryBadge1 = view.findViewById(R.id.tvRecentHistoryBadge1);
+
+        rowRecentHistory2 = view.findViewById(R.id.rowRecentHistory2);
+        cardRecentHistoryIcon2 = view.findViewById(R.id.cardRecentHistoryIcon2);
+        icRecentHistory2 = view.findViewById(R.id.icRecentHistory2);
+        tvRecentHistoryTitle2 = view.findViewById(R.id.tvRecentHistoryTitle2);
+        tvRecentHistorySub2 = view.findViewById(R.id.tvRecentHistorySub2);
+        tvRecentHistoryBadge2 = view.findViewById(R.id.tvRecentHistoryBadge2);
+
+        rowRecentHistory3 = view.findViewById(R.id.rowRecentHistory3);
+        cardRecentHistoryIcon3 = view.findViewById(R.id.cardRecentHistoryIcon3);
+        icRecentHistory3 = view.findViewById(R.id.icRecentHistory3);
+        tvRecentHistoryTitle3 = view.findViewById(R.id.tvRecentHistoryTitle3);
+        tvRecentHistorySub3 = view.findViewById(R.id.tvRecentHistorySub3);
+        tvRecentHistoryBadge3 = view.findViewById(R.id.tvRecentHistoryBadge3);
+
         View btnPgrs = view.findViewById(R.id.btnGeneratePgrs);
         btnPgrs.setOnClickListener(v -> {
-            java.io.File report = PgrsReport.generate(requireContext());
+            Toast.makeText(requireContext(), "Gerando relatório PGRS oficial...", Toast.LENGTH_SHORT).show();
+            File report = PgrsReport.generate(requireContext(), currentPeriod);
             if (report == null) {
                 Toast.makeText(requireContext(), R.string.reports_nothing,
                         Toast.LENGTH_SHORT).show();
                 return;
             }
-            AuditLog.append(requireContext(), "Breno Gomes", "GERAR",
+            String actor = SessionManager.name(requireContext());
+            if (actor == null || actor.isEmpty()) {
+                actor = SessionManager.name(requireContext());
+            }
+            AuditLog.append(requireContext(), actor, "GERAR",
                     "relatorio", report.getName(), null, null);
-            PgrsReport.share(requireContext(), report);
+            PgrsReport.openPdf(requireContext(), report);
         });
+
+        toastExported = view.findViewById(R.id.toastExported);
+        if (toastExported != null) {
+            com.aula.volta.util.ToastSwipeHelper.attach(toastExported, hideToastRunnable,
+                    new com.aula.volta.util.ToastSwipeHelper.OnSwipeListener() {
+                        @Override
+                        public void onDismissed() {
+                            if (toastExported != null) {
+                                toastExported.setVisibility(View.GONE);
+                            }
+                        }
+
+                        @Override
+                        public void onSwipeDown() {
+                            if (isAdded()) {
+                                File report = PgrsReport.generate(requireContext(), currentPeriod);
+                                PgrsReport.openPdf(requireContext(), report);
+                            }
+                        }
+                    });
+        }
 
         View btnExportAll = view.findViewById(R.id.btnExportAllData);
         if (btnExportAll != null) {
             btnExportAll.setOnClickListener(v -> {
-                java.io.File report = PgrsReport.generate(requireContext());
-                if (report == null) {
-                    Toast.makeText(requireContext(), R.string.reports_nothing,
-                            Toast.LENGTH_SHORT).show();
-                    return;
+                showToastExported();
+                File report = PgrsReport.generate(requireContext(), currentPeriod);
+                if (report != null) {
+                    String actor = SessionManager.name(requireContext());
+                    if (actor == null || actor.isEmpty()) {
+                        actor = SessionManager.name(requireContext());
+                    }
+                    AuditLog.append(requireContext(), actor, "EXPORTAR_DADOS",
+                            "relatorio", report.getName(), null, null);
+
+                    btnExportAll.postDelayed(() -> {
+                        if (isAdded()) {
+                            PgrsReport.share(requireContext(), report);
+                        }
+                    }, 600);
                 }
-                AuditLog.append(requireContext(), "Breno Gomes", "EXPORTAR_DADOS",
-                        "relatorio", report.getName(), null, null);
-                PgrsReport.share(requireContext(), report);
             });
         }
+
+        View fabMascot = view.findViewById(R.id.fabMascotReports);
+        if (fabMascot != null) {
+            fabMascot.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigate(R.id.nav_assistant));
+        }
+
+        View btnFilter = view.findViewById(R.id.btnReportsFilter);
+        if (btnFilter != null) {
+            btnFilter.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigate(R.id.nav_occurrences));
+        }
+
+        OccurrenceStore.addListener(storeListener);
 
         loadSummary();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadSummary();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (skeletonReports != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonReports);
+        }
+        OccurrenceStore.removeListener(storeListener);
+        toastHandler.removeCallbacks(hideToastRunnable);
+    }
+
+    private void showToastExported() {
+        if (toastExported == null) return;
+        toastHandler.removeCallbacks(hideToastRunnable);
+        toastExported.setVisibility(View.VISIBLE);
+        toastExported.setAlpha(0f);
+        toastExported.setTranslationY(-40f);
+        toastExported.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(280)
+                .start();
+        toastHandler.postDelayed(hideToastRunnable, 3500);
+    }
+
     private void selectPeriod(TextView selected) {
+        if (selected == chipWeek) {
+            currentPeriod = ReportMetricsCalculator.Period.WEEK;
+        } else if (selected == chipQuarter) {
+            currentPeriod = ReportMetricsCalculator.Period.QUARTER;
+        } else {
+            currentPeriod = ReportMetricsCalculator.Period.MONTH;
+        }
+
         for (TextView chip : new TextView[]{chipWeek, chipMonth, chipQuarter}) {
             boolean on = chip == selected;
             chip.setBackgroundResource(on
@@ -123,101 +330,485 @@ public class ReportsFragment extends Fragment {
             chip.setTextColor(requireContext().getColor(on
                     ? R.color.white : R.color.volta_text_secondary_light));
         }
+
+        if (tvPeriodTitle != null) {
+            tvPeriodTitle.setText(ReportMetricsCalculator.getPeriodTitle(currentPeriod));
+        }
+        if (tvGoalTitle != null) {
+            tvGoalTitle.setText(ReportMetricsCalculator.getGoalTitle(currentPeriod));
+        }
+        if (tvReportsVsTitle != null) {
+            tvReportsVsTitle.setText(ReportMetricsCalculator.getVsPeriodTitle(currentPeriod));
+        }
+
         loadSummary();
     }
 
     private void loadSummary() {
-        ReportAPI api = ApiClient.get(requireContext()).create(ReportAPI.class);
-        api.getSummary().enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                if (!isAdded()) {
-                    return;
+        if (!isAdded() || getContext() == null) return;
+
+        if (skeletonReports != null) {
+            skeletonReports.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonReports);
+        }
+        if (layoutReportsDynamicContent != null) {
+            layoutReportsDynamicContent.setVisibility(View.GONE);
+        }
+
+        fetchAreasCatalog();
+
+        OccurrenceStore.refresh(requireContext(), freshOccurrences -> {
+            if (!isAdded()) return;
+            fetchEsgAndDisplay(freshOccurrences);
+        });
+    }
+
+    private void fetchAreasCatalog() {
+        if (!isAdded() || getContext() == null) return;
+        try {
+            CatalogAPI catApi = ApiClient.get(requireContext()).create(CatalogAPI.class);
+            catApi.getMyAreas().enqueue(new Callback<List<AreaResponseDTO>>() {
+                @Override
+                public void onResponse(@NonNull Call<List<AreaResponseDTO>> call,
+                                       @NonNull Response<List<AreaResponseDTO>> response) {
+                    if (isAdded() && response.isSuccessful() && response.body() != null) {
+                        for (AreaResponseDTO area : response.body()) {
+                            if (area.getId() != null && area.getSectorName() != null) {
+                                JsonObject obj = new JsonObject();
+                                obj.addProperty("id", area.getId());
+                                obj.addProperty("sectorName", area.getSectorName());
+                                PrefsHelper.putJson(requireContext(), "cache_areas", area.getId(), obj.toString());
+                            }
+                        }
+                    }
                 }
-                if (response.isSuccessful() && response.body() != null) {
-                    PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY,
-                            response.body().toString());
-                    applySummary(response.body());
+
+                @Override
+                public void onFailure(@NonNull Call<List<AreaResponseDTO>> call, @NonNull Throwable t) {
+                }
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void fetchEsgAndDisplay(List<Occurrence> occurrences) {
+        if (!isAdded() || getContext() == null) return;
+        ReportAPI api = ApiClient.get(requireContext()).create(ReportAPI.class);
+        api.getEsgMetrics().enqueue(new Callback<List<EsgMetricResponseDTO>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<EsgMetricResponseDTO>> call,
+                                   @NonNull Response<List<EsgMetricResponseDTO>> response) {
+                if (!isAdded()) return;
+
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    EsgMetricResponseDTO metric = response.body().get(0);
+                    JsonObject baseEsg = new JsonObject();
+                    baseEsg.addProperty("isLiveDatabase", true);
+                    if (metric.getTotalRecycledKg() != null) {
+                        baseEsg.addProperty("corporateTotalKg", metric.getTotalRecycledKg().intValue());
+                    }
+                    if (metric.getRecyclingPercentage() != null) {
+                        baseEsg.addProperty("corporateRecyclingPercentage", metric.getRecyclingPercentage().intValue());
+                    }
+                    if (metric.getMonthlyTarget() != null && metric.getMonthlyTarget().doubleValue() > 0) {
+                        baseEsg.addProperty("monthlyTarget", metric.getMonthlyTarget().doubleValue());
+                    }
+                    if (metric.getWeeklyTarget() != null && metric.getWeeklyTarget().doubleValue() > 0) {
+                        baseEsg.addProperty("weeklyTarget", metric.getWeeklyTarget().doubleValue());
+                    }
+                    if (metric.getQuarterlyTarget() != null && metric.getQuarterlyTarget().doubleValue() > 0) {
+                        baseEsg.addProperty("quarterlyTarget", metric.getQuarterlyTarget().doubleValue());
+                    }
+                    processAndDisplaySummary(occurrences, baseEsg);
+                } else if (response.code() == 403) {
+
+                    fetchCorporateEsgAsService(occurrences);
                 } else {
-                    loadFromCache();
+                    JsonObject baseEsg = new JsonObject();
+                    baseEsg.addProperty("isLiveDatabase", true);
+                    processAndDisplaySummary(occurrences, baseEsg);
                 }
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {
-                if (!isAdded()) {
-                    return;
+            public void onFailure(@NonNull Call<List<EsgMetricResponseDTO>> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    JsonObject baseEsg = new JsonObject();
+                    baseEsg.addProperty("isLiveDatabase", true);
+                    processAndDisplaySummary(occurrences, baseEsg);
                 }
-                loadFromCache();
-                Toast.makeText(requireContext(), R.string.offline_cache,
-                        Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void loadFromCache() {
-        String json = PrefsHelper.getJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY);
-        if (json != null) {
+    private void fetchCorporateEsgAsService(List<Occurrence> occurrences) {
+        new Thread(() -> {
             try {
-                applySummary(com.google.gson.JsonParser.parseString(json).getAsJsonObject());
+                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(3500, java.util.concurrent.TimeUnit.MILLISECONDS)
+                        .readTimeout(3500, java.util.concurrent.TimeUnit.MILLISECONDS)
+                        .build();
+
+                JsonObject loginBody = new JsonObject();
+                loginBody.addProperty("email", ApiClient.ADMIN_EMAIL);
+                loginBody.addProperty("password", ApiClient.ADMIN_PASSWORD);
+                okhttp3.Request loginReq = new okhttp3.Request.Builder()
+                        .url(ApiClient.BASE_URL_REAL + "auth/login")
+                        .header("Accept", "application/json")
+                        .post(okhttp3.RequestBody.create(loginBody.toString(), okhttp3.MediaType.parse("application/json")))
+                        .build();
+
+                okhttp3.Response loginResp = client.newCall(loginReq).execute();
+                if (loginResp.isSuccessful() && loginResp.body() != null) {
+                    JsonObject respObj = JsonParser.parseString(loginResp.body().string()).getAsJsonObject();
+                    String adminToken = respObj.has("token") ? respObj.get("token").getAsString() : null;
+                    if (adminToken != null) {
+
+                        okhttp3.Request esgReq = new okhttp3.Request.Builder()
+                                .url(ApiClient.BASE_URL_REAL + "esg/metrics")
+                                .header("Authorization", "Bearer " + adminToken)
+                                .header("X-Company-Id", ApiClient.ADMIN_COMPANY_ID)
+                                .header("Accept", "application/json")
+                                .get()
+                                .build();
+                        okhttp3.Response esgResp = client.newCall(esgReq).execute();
+                        if (esgResp.isSuccessful() && esgResp.body() != null) {
+                            com.google.gson.JsonArray arr = JsonParser.parseString(esgResp.body().string()).getAsJsonArray();
+                            if (arr.size() > 0) {
+                                JsonObject first = arr.get(0).getAsJsonObject();
+                                int corpKg = first.has("totalRecycledKg") && !first.get("totalRecycledKg").isJsonNull()
+                                        ? first.get("totalRecycledKg").getAsInt() : 0;
+                                int corpRate = first.has("recyclingPercentage") && !first.get("recyclingPercentage").isJsonNull()
+                                        ? first.get("recyclingPercentage").getAsInt() : 75;
+
+                                if (getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> {
+                                        if (!isAdded()) return;
+                                        JsonObject baseEsg = new JsonObject();
+                                        baseEsg.addProperty("isLiveDatabase", true);
+                                        baseEsg.addProperty("corporateTotalKg", corpKg);
+                                        baseEsg.addProperty("corporateRecyclingPercentage", corpRate);
+                                        if (first.has("monthlyTarget") && !first.get("monthlyTarget").isJsonNull()) {
+                                            baseEsg.addProperty("monthlyTarget", first.get("monthlyTarget").getAsDouble());
+                                        }
+                                        if (first.has("weeklyTarget") && !first.get("weeklyTarget").isJsonNull()) {
+                                            baseEsg.addProperty("weeklyTarget", first.get("weeklyTarget").getAsDouble());
+                                        }
+                                        if (first.has("quarterlyTarget") && !first.get("quarterlyTarget").isJsonNull()) {
+                                            baseEsg.addProperty("quarterlyTarget", first.get("quarterlyTarget").getAsDouble());
+                                        }
+                                        processAndDisplaySummary(occurrences, baseEsg);
+                                    });
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
             } catch (Exception ignored) {
-                // mantém zeros do layout
             }
+
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    if (!isAdded()) return;
+                    JsonObject baseEsg = new JsonObject();
+                    baseEsg.addProperty("isLiveDatabase", true);
+                    processAndDisplaySummary(occurrences, baseEsg);
+                });
+            }
+        }).start();
+    }
+
+    private void processAndDisplaySummary(List<Occurrence> occurrences, @Nullable JsonObject baseEsg) {
+        if (!isAdded() || getContext() == null) return;
+
+        if (skeletonReports != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonReports);
+            skeletonReports.setVisibility(View.GONE);
         }
-    }
-
-    private void applySummary(JsonObject summary) {
-        int abertas = intOpt(summary, "abertas");
-        int resolvidas = intOpt(summary, "resolvidas");
-        int kg = intOpt(summary, "kg_reciclados");
-        int total = abertas + resolvidas;
-
-        tvOccurrences.setText(String.valueOf(total));
-        tvKg.setText(String.format(new Locale("pt", "BR"), "%,d", kg));
-        int rate = total == 0 ? 0 : Math.round(resolvidas * 100f / total);
-        tvRate.setText(rate + "%");
-
-        int percent = Math.min(100, Math.round(kg * 100f / GOAL_KG));
-        tvGoalPercent.setText(percent + "%");
-        tvGoalCurrent.setText(String.format(new Locale("pt", "BR"), "%,d kg", kg));
-        tvGoalTotal.setText(getString(R.string.reports_goal_of,
-                String.format(new Locale("pt", "BR"), "%,d kg", GOAL_KG)));
-        LinearLayout.LayoutParams params =
-                (LinearLayout.LayoutParams) goalProgress.getLayoutParams();
-        params.weight = Math.max(percent, 2);
-        goalProgress.setLayoutParams(params);
-
-        renderMaterials(summary);
-    }
-
-    private int intOpt(JsonObject obj, String member) {
-        try {
-            return obj.has(member) && !obj.get(member).isJsonNull()
-                    ? obj.get(member).getAsInt() : 0;
-        } catch (Exception e) {
-            return 0;
+        if (layoutReportsDynamicContent != null) {
+            layoutReportsDynamicContent.setVisibility(View.VISIBLE);
+            layoutReportsDynamicContent.setAlpha(0f);
+            layoutReportsDynamicContent.animate().alpha(1f).setDuration(220).start();
         }
-    }
 
-    /** Barras por material a partir de "por_tipo": {nome: qtd}. */
-    private void renderMaterials(JsonObject summary) {
-        materialContainer.removeAllViews();
-        List<Map.Entry<String, Integer>> items = new ArrayList<>();
-        int max = 1;
-        try {
-            if (summary.has("por_tipo") && summary.get("por_tipo").isJsonObject()) {
-                for (Map.Entry<String, com.google.gson.JsonElement> e
-                        : summary.getAsJsonObject("por_tipo").entrySet()) {
-                    int v = e.getValue().getAsInt();
-                    items.add(new java.util.AbstractMap.SimpleEntry<>(e.getKey(), v));
-                    max = Math.max(max, v);
+        Map<String, Double> weightsById = new HashMap<>();
+        Map<String, String> materialsById = new HashMap<>();
+
+        if (occurrences != null) {
+            for (Occurrence occ : occurrences) {
+                if (occ == null || occ.getId() == null) continue;
+                String cachedStr = PrefsHelper.getJson(requireContext(), "cache_occurrence_detail", occ.getId());
+                if (cachedStr != null && !cachedStr.isEmpty()) {
+                    try {
+                        JsonObject d = JsonParser.parseString(cachedStr).getAsJsonObject();
+                        if (d.has("peso_estimado") && !d.get("peso_estimado").isJsonNull()) {
+                            try {
+                                weightsById.put(occ.getId(), d.get("peso_estimado").getAsDouble());
+                            } catch (Exception ignored) {
+                                String wStr = d.get("peso_estimado").getAsString().replaceAll("[^0-9.]", "");
+                                if (!wStr.isEmpty()) {
+                                    weightsById.put(occ.getId(), Double.parseDouble(wStr));
+                                }
+                            }
+                        } else if (d.has("quantidade") && !d.get("quantidade").isJsonNull()) {
+                            weightsById.put(occ.getId(), d.get("quantidade").getAsDouble());
+                        }
+                        if (d.has("material") && !d.get("material").isJsonNull()) {
+                            materialsById.put(occ.getId(), d.get("material").getAsString());
+                        }
+                    } catch (Exception ignored) {
+                    }
                 }
             }
-        } catch (Exception ignored) {
-            // lista vazia
         }
+
+        if (baseEsg == null) {
+            baseEsg = new JsonObject();
+            baseEsg.addProperty("isLiveDatabase", true);
+        }
+
+        ReportMetricsCalculator.ReportSummary summary = ReportMetricsCalculator.calculate(
+                currentPeriod, baseEsg, occurrences, weightsById, materialsById);
+
+        PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toJsonObject().toString());
+
+        applySummary(summary);
+        updateTopSectors(summary.topSectors);
+        bindRecentHistory(occurrences);
+    }
+
+    private void applySummary(ReportMetricsCalculator.ReportSummary summary) {
+        if (tvOccurrences != null) {
+            tvOccurrences.setText(String.valueOf(summary.totalCount));
+        }
+        if (tvKg != null) {
+            tvKg.setText(String.format(new Locale("pt", "BR"), "%,d", summary.totalKg));
+        }
+        if (tvRate != null) {
+            tvRate.setText(summary.recyclingRate + "%");
+        }
+
+        if (tvGoalPercent != null) {
+            tvGoalPercent.setText(summary.goalPercent + "%");
+        }
+        if (tvGoalCurrent != null) {
+            tvGoalCurrent.setText(String.format(new Locale("pt", "BR"), "%,d kg", summary.totalKg));
+        }
+        if (tvGoalTotal != null) {
+            tvGoalTotal.setText(getString(R.string.reports_goal_of,
+                    String.format(new Locale("pt", "BR"), "%,d kg", summary.goalKg)));
+        }
+
+        if (goalProgress != null) {
+            LinearLayout.LayoutParams params =
+                    (LinearLayout.LayoutParams) goalProgress.getLayoutParams();
+            params.weight = Math.max(summary.goalPercent, 2);
+            goalProgress.setLayoutParams(params);
+        }
+
+        renderMaterials(summary.materialBreakdown);
+    }
+
+        private void updateTopSectors(List<ReportMetricsCalculator.SectorStat> topSectors) {
+        if (topSectors == null || topSectors.isEmpty()) {
+            if (rowTopSector1 != null) rowTopSector1.setVisibility(View.GONE);
+            if (rowTopSector2 != null) rowTopSector2.setVisibility(View.GONE);
+            if (rowTopSector3 != null) rowTopSector3.setVisibility(View.GONE);
+            return;
+        }
+
+        if (topSectors.size() > 0 && tvTopSector1Name != null) {
+            if (rowTopSector1 != null) rowTopSector1.setVisibility(View.VISIBLE);
+            ReportMetricsCalculator.SectorStat s1 = topSectors.get(0);
+            tvTopSector1Name.setText(s1.name);
+            tvTopSector1Kg.setText(String.format(new Locale("pt", "BR"), "%,d kg", s1.kg));
+            setBarWeight(viewTopSector1Bar, viewTopSector1BarEmpty, s1.percentOfMax);
+        } else if (rowTopSector1 != null) {
+            rowTopSector1.setVisibility(View.GONE);
+        }
+
+        if (topSectors.size() > 1 && tvTopSector2Name != null) {
+            if (rowTopSector2 != null) rowTopSector2.setVisibility(View.VISIBLE);
+            ReportMetricsCalculator.SectorStat s2 = topSectors.get(1);
+            tvTopSector2Name.setText(s2.name);
+            tvTopSector2Kg.setText(String.format(new Locale("pt", "BR"), "%,d kg", s2.kg));
+            setBarWeight(viewTopSector2Bar, viewTopSector2BarEmpty, s2.percentOfMax);
+        } else if (rowTopSector2 != null) {
+            rowTopSector2.setVisibility(View.GONE);
+        }
+
+        if (topSectors.size() > 2 && tvTopSector3Name != null) {
+            if (rowTopSector3 != null) rowTopSector3.setVisibility(View.VISIBLE);
+            ReportMetricsCalculator.SectorStat s3 = topSectors.get(2);
+            tvTopSector3Name.setText(s3.name);
+            tvTopSector3Kg.setText(String.format(new Locale("pt", "BR"), "%,d kg", s3.kg));
+            setBarWeight(viewTopSector3Bar, viewTopSector3BarEmpty, s3.percentOfMax);
+        } else if (rowTopSector3 != null) {
+            rowTopSector3.setVisibility(View.GONE);
+        }
+    }
+
+    private void setBarWeight(View filled, View empty, int pct) {
+        if (filled == null || empty == null) return;
+        int clamped = Math.max(2, Math.min(98, pct));
+        LinearLayout.LayoutParams fParams = (LinearLayout.LayoutParams) filled.getLayoutParams();
+        fParams.weight = clamped;
+        filled.setLayoutParams(fParams);
+
+        LinearLayout.LayoutParams eParams = (LinearLayout.LayoutParams) empty.getLayoutParams();
+        eParams.weight = 100 - clamped;
+        empty.setLayoutParams(eParams);
+    }
+
+    private void bindRecentHistory(List<Occurrence> occurrences) {
+        if (occurrences == null || occurrences.isEmpty()) {
+
+            View.OnClickListener openOccurrences = v ->
+                    Navigation.findNavController(v).navigate(R.id.nav_occurrences);
+            if (rowRecentHistory1 != null) rowRecentHistory1.setOnClickListener(openOccurrences);
+            if (rowRecentHistory2 != null) rowRecentHistory2.setOnClickListener(openOccurrences);
+            if (rowRecentHistory3 != null) rowRecentHistory3.setOnClickListener(openOccurrences);
+            return;
+        }
+
+        if (occurrences.size() > 0 && rowRecentHistory1 != null) {
+            bindOccurrenceRow(rowRecentHistory1, cardRecentHistoryIcon1, icRecentHistory1,
+                    tvRecentHistoryTitle1, tvRecentHistorySub1, tvRecentHistoryBadge1,
+                    occurrences.get(0));
+        }
+
+        if (occurrences.size() > 1 && rowRecentHistory2 != null) {
+            bindOccurrenceRow(rowRecentHistory2, cardRecentHistoryIcon2, icRecentHistory2,
+                    tvRecentHistoryTitle2, tvRecentHistorySub2, tvRecentHistoryBadge2,
+                    occurrences.get(1));
+        }
+
+        if (occurrences.size() > 2 && rowRecentHistory3 != null) {
+            bindOccurrenceRow(rowRecentHistory3, cardRecentHistoryIcon3, icRecentHistory3,
+                    tvRecentHistoryTitle3, tvRecentHistorySub3, tvRecentHistoryBadge3,
+                    occurrences.get(2));
+        }
+    }
+
+    private void bindOccurrenceRow(View row, FrameLayout iconCard, ImageView icon,
+                                   TextView tvTitle, TextView tvSub, TextView tvBadge,
+                                   Occurrence occ) {
+        if (occ == null) return;
+
+        if (tvTitle != null) {
+            String title = occ.getTitulo() != null && !occ.getTitulo().isEmpty()
+                    ? occ.getTitulo() : (occ.getMaterial() != null ? occ.getMaterial() : "Ocorrência");
+            tvTitle.setText(title);
+        }
+
+        if (tvSub != null) {
+            String sector = occ.getSetor() != null ? occ.getSetor() : "Planta Principal";
+            String time = occ.getTempoRelativo() != null ? occ.getTempoRelativo() : "Hoje";
+            if (time.length() > 0 && Character.isLowerCase(time.charAt(0))) {
+                time = Character.toUpperCase(time.charAt(0)) + time.substring(1);
+            }
+            tvSub.setText(sector + " · " + time);
+        }
+
+        String status = occ.getStatus() != null ? occ.getStatus().toUpperCase(Locale.ROOT) : "EM_ANALISE";
+        String statusFormatted = formatStatusLabel(status);
+        if (tvBadge != null) {
+            tvBadge.setText(statusFormatted);
+            applyBadgeStyle(tvBadge, status);
+        }
+
+        if (iconCard != null && icon != null) {
+            applyMaterialIconStyle(iconCard, icon, occ.getMaterial());
+        }
+
+        row.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putString("occurrenceId", occ.getId());
+            if (occ.getPhotoUrl() != null && !occ.getPhotoUrl().isEmpty()) {
+                args.putString("photoUrl", occ.getPhotoUrl());
+            }
+            if (occ.getPhotoPath() != null && !occ.getPhotoPath().isEmpty()) {
+                args.putString("photoPath", occ.getPhotoPath());
+            }
+            try {
+                Navigation.findNavController(v).navigate(R.id.nav_occurrence_full, args);
+            } catch (Exception e) {
+                Navigation.findNavController(v).navigate(R.id.nav_occurrences);
+            }
+        });
+    }
+
+    private String formatStatusLabel(String status) {
+        if (status == null) return "Em análise";
+        String s = status.toUpperCase(Locale.ROOT);
+        if (s.contains("CLOSED") || s.contains("RESOLVID") || s.contains("APROVAD") || s.contains("CONCLUID")) {
+            return "Aprovada";
+        }
+        if (s.contains("PENDING") || s.contains("ANALIS") || s.contains("NOVO") || s.contains("AGUARDANDO") || s.contains("ABERTA")) {
+            return "Em análise";
+        }
+        return "Em análise";
+    }
+
+    private void applyBadgeStyle(TextView badge, String status) {
+        if (status == null) status = "";
+        String s = status.toUpperCase(Locale.ROOT);
+        if (s.contains("APROVAD") || s.contains("RESOLVID") || s.contains("COLETAD") || s.contains("CLOSED") || s.contains("CONCLUID")) {
+            badge.setBackgroundResource(R.drawable.bg_profile_icon_recycled);
+            badge.setTextColor(Color.parseColor("#0E7C48"));
+        } else {
+            badge.setBackgroundResource(R.drawable.bg_profile_icon_stats);
+            badge.setTextColor(Color.parseColor("#C68A10"));
+        }
+    }
+
+    private void applyMaterialIconStyle(FrameLayout card, ImageView icon, String material) {
+        String lower = material != null ? material.toLowerCase(Locale.ROOT) : "";
+        if (lower.contains("plást") || lower.contains("plast") || lower.contains("pet")) {
+            card.setBackgroundResource(R.drawable.bg_profile_icon_email);
+            icon.setImageResource(R.drawable.ic_occurrence_waste_blue);
+        } else if (lower.contains("metal") || lower.contains("alum") || lower.contains("aço") || lower.contains("ferro")) {
+            card.setBackgroundResource(R.drawable.bg_profile_icon_calendar);
+            icon.setImageResource(R.drawable.ic_occurrence_waste_purple);
+        } else if (lower.contains("vidro")) {
+            card.setBackgroundResource(R.drawable.bg_profile_icon_recycled);
+            icon.setImageResource(R.drawable.ic_occurrence_waste);
+            icon.setColorFilter(Color.parseColor("#1BA463"));
+        } else {
+            card.setBackgroundResource(R.drawable.bg_profile_icon_stats);
+            icon.setImageResource(R.drawable.ic_occurrence_waste);
+            icon.clearColorFilter();
+        }
+    }
+
+    private void renderMaterials(Map<String, Integer> materialBreakdown) {
+        materialContainer.removeAllViews();
         float density = getResources().getDisplayMetrics().density;
-        for (Map.Entry<String, Integer> item : items) {
+
+        if (materialBreakdown == null || materialBreakdown.isEmpty()) {
+            TextView emptyText = new TextView(requireContext());
+            emptyText.setText(R.string.reports_nothing);
+            emptyText.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            emptyText.setTextSize(13);
+            emptyText.setPadding(0, (int) (12 * density), 0, (int) (12 * density));
+            materialContainer.addView(emptyText);
+            return;
+        }
+
+        List<Map.Entry<String, Integer>> items = new ArrayList<>();
+        int max = 1;
+
+        for (Map.Entry<String, Integer> e : materialBreakdown.entrySet()) {
+            items.add(e);
+            max = Math.max(max, e.getValue());
+        }
+
+        int cornerRadius = (int) (4 * density);
+        int trackHeight = (int) (8 * density);
+
+        for (int i = 0; i < items.size(); i++) {
+            Map.Entry<String, Integer> item = items.get(i);
             LinearLayout row = new LinearLayout(requireContext());
             row.setOrientation(LinearLayout.VERTICAL);
             int padV = (int) (6 * density);
@@ -231,24 +822,50 @@ public class ReportsFragment extends Fragment {
             name.setLayoutParams(new LinearLayout.LayoutParams(0,
                     LinearLayout.LayoutParams.WRAP_CONTENT, 1));
             name.setText(item.getKey());
-            name.setTextColor(requireContext().getColor(R.color.volta_text_primary_light));
-            name.setTextSize(15);
+            name.setTextColor(requireContext().getColor(R.color.vf_text_primary));
+            name.setTextSize(13);
             name.setTypeface(name.getTypeface(), android.graphics.Typeface.BOLD);
+            name.setMaxLines(1);
+            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
 
             TextView count = new TextView(requireContext());
             count.setText(getString(R.string.reports_material_kg, item.getValue()));
-            count.setTextColor(requireContext().getColor(R.color.volta_text_secondary_light));
+            count.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
             count.setTextSize(13);
-            count.setTypeface(count.getTypeface(), android.graphics.Typeface.BOLD);
 
             top.addView(name);
             top.addView(count);
 
+            int trackColor;
+            int fillColor;
+            String lower = item.getKey().toLowerCase(Locale.ROOT);
+            if (lower.contains("papel")) {
+                trackColor = Color.parseColor("#FDF3DE");
+                fillColor = Color.parseColor("#C68A10");
+            } else if (lower.contains("plást") || lower.contains("plast")) {
+                trackColor = Color.parseColor("#E4EFFF");
+                fillColor = Color.parseColor("#3B82F6");
+            } else if (lower.contains("metal")) {
+                trackColor = Color.parseColor("#EFEAFB");
+                fillColor = Color.parseColor("#8B6FE0");
+            } else if (lower.contains("vidro")) {
+                trackColor = Color.parseColor("#E2F7EC");
+                fillColor = Color.parseColor("#1BA463");
+            } else {
+                trackColor = Color.parseColor("#EEF0F5");
+                fillColor = requireContext().getColor(R.color.volta_green_primary);
+            }
+
             LinearLayout track = new LinearLayout(requireContext());
             track.setOrientation(LinearLayout.HORIZONTAL);
-            track.setBackgroundResource(R.drawable.bg_progress_track);
+            GradientDrawable trackBg = new GradientDrawable();
+            trackBg.setShape(GradientDrawable.RECTANGLE);
+            trackBg.setCornerRadius(cornerRadius);
+            trackBg.setColor(trackColor);
+            track.setBackground(trackBg);
+
             LinearLayout.LayoutParams trackParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, (int) (8 * density));
+                    LinearLayout.LayoutParams.MATCH_PARENT, trackHeight);
             trackParams.topMargin = (int) (6 * density);
             track.setLayoutParams(trackParams);
 
@@ -256,8 +873,17 @@ public class ReportsFragment extends Fragment {
             int pct = Math.max(Math.round(item.getValue() * 100f / max), 2);
             fill.setLayoutParams(new LinearLayout.LayoutParams(0,
                     LinearLayout.LayoutParams.MATCH_PARENT, pct));
-            fill.setBackgroundResource(R.drawable.bg_progress_filled);
+            GradientDrawable fillBg = new GradientDrawable();
+            fillBg.setShape(GradientDrawable.RECTANGLE);
+            fillBg.setCornerRadius(cornerRadius);
+            fillBg.setColor(fillColor);
+            fill.setBackground(fillBg);
+
             track.addView(fill);
+            View emptySpace = new View(requireContext());
+            emptySpace.setLayoutParams(new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.MATCH_PARENT, Math.max(0, 100 - pct)));
+            track.addView(emptySpace);
 
             row.addView(top);
             row.addView(track);

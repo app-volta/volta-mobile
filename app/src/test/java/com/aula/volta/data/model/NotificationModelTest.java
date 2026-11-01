@@ -5,9 +5,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Testes unitários para modelo de Notificação (Fase 15).
- */
 public class NotificationModelTest {
 
     @Test

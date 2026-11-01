@@ -1,0 +1,313 @@
+package com.aula.volta.data.notification;
+
+import android.content.Context;
+import android.util.Log;
+
+import com.aula.volta.data.local.NotificationStore;
+import com.aula.volta.data.model.Notification;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+public class FirestoreNotificationRepository {
+
+    private static final String TAG = "FirestoreNotifRepo";
+    public static final String COLLECTION_NOTIFICATIONS = "notifications";
+
+    private static volatile FirestoreNotificationRepository instance;
+    private ListenerRegistration listenerRegistration;
+    private boolean isListening = false;
+
+    private final Set<String> localSentDocIds = Collections.synchronizedSet(new HashSet<>());
+    private final Set<String> localSentKeys = Collections.synchronizedSet(new HashSet<>());
+
+    private FirestoreNotificationRepository() {
+    }
+
+    public static FirestoreNotificationRepository getInstance() {
+        if (instance == null) {
+            synchronized (FirestoreNotificationRepository.class) {
+                if (instance == null) {
+                    instance = new FirestoreNotificationRepository();
+                }
+            }
+        }
+        return instance;
+    }
+
+    public synchronized void startListening(Context context) {
+        if (isListening && listenerRegistration != null) {
+            return;
+        }
+
+        Context appContext = context.getApplicationContext();
+        try {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            Query query = db.collection(COLLECTION_NOTIFICATIONS)
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .limit(50);
+
+            listenerRegistration = query.addSnapshotListener((snapshots, error) -> {
+                if (error != null) {
+                    Log.w(TAG, "Erro ao escutar notificações do Firestore", error);
+                    return;
+                }
+
+                if (snapshots == null || snapshots.isEmpty()) {
+                    return;
+                }
+
+                String currentEmail = com.aula.volta.data.local.SessionManager.email(appContext);
+                for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                    if (dc.getType() == DocumentChange.Type.ADDED) {
+                        try {
+                            String docId = dc.getDocument().getId();
+                            Map<String, Object> docData = dc.getDocument().getData();
+                            if (docData != null) {
+                                String targetUser = (String) docData.get("user_id");
+                                if (targetUser != null && !targetUser.isEmpty() && !"all".equalsIgnoreCase(targetUser)) {
+                                    if (!currentEmail.isEmpty() && !targetUser.equalsIgnoreCase(currentEmail)) {
+
+                                        continue;
+                                    }
+                                }
+                            }
+                            Notification notification = parseDocument(docId, docData);
+                            if (notification != null) {
+                                String contentKey = (notification.getOccurrenceId() != null ? notification.getOccurrenceId() : "")
+                                        + "|" + (notification.getTipo() != null ? notification.getTipo() : "")
+                                        + "|" + (notification.getTitulo() != null ? notification.getTitulo() : "");
+
+                                boolean wasSentLocally = localSentDocIds.contains(docId) || localSentKeys.contains(contentKey);
+                                boolean alreadyCached = NotificationStore.hasNotification(appContext, notification);
+
+                                NotificationStore.pushLocal(appContext, notification);
+
+                                if (!wasSentLocally && !alreadyCached && !notification.isLida()) {
+                                    String channelId = NotificationHelper.CHANNEL_OCCURRENCES;
+                                    if ("META".equalsIgnoreCase(notification.getTipo())) {
+                                        channelId = NotificationHelper.CHANNEL_GOALS;
+                                    } else if ("SYNC".equalsIgnoreCase(notification.getTipo())) {
+                                        channelId = NotificationHelper.CHANNEL_SYNC;
+                                    }
+                                    NotificationHelper.notifyRemote(
+                                            appContext,
+                                            channelId,
+                                            notification.getTitulo(),
+                                            notification.getDescricao(),
+                                            notification.getOccurrenceId()
+                                    );
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Falha ao processar notificação do Firestore", e);
+                        }
+                    } else if (dc.getType() == DocumentChange.Type.REMOVED) {
+                        try {
+                            String docId = dc.getDocument().getId();
+                            NotificationStore.delete(appContext, docId);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Falha ao processar remoção no Firestore", e);
+                        }
+                    } else if (dc.getType() == DocumentChange.Type.MODIFIED) {
+                        try {
+                            String docId = dc.getDocument().getId();
+                            Map<String, Object> docData = dc.getDocument().getData();
+                            if (docData != null && Boolean.TRUE.equals(docData.get("lida"))) {
+                                NotificationStore.markRead(appContext, docId);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Falha ao processar modificação no Firestore", e);
+                        }
+                    }
+                }
+            });
+
+            isListening = true;
+            Log.d(TAG, "Listener do Firestore de notificações iniciado com sucesso.");
+        } catch (Exception e) {
+            Log.e(TAG, "Erro ao inicializar listener do Firestore", e);
+        }
+    }
+
+    public synchronized void stopListening() {
+        if (listenerRegistration != null) {
+            listenerRegistration.remove();
+            listenerRegistration = null;
+        }
+        isListening = false;
+    }
+
+    public void sendNotification(String docId, String titulo, String descricao, String tipo,
+                                 String occurrenceId, String icone, String tint, String bg, String userId) {
+        try {
+            if (docId == null || docId.trim().isEmpty()) {
+                String prefix = (occurrenceId != null && !occurrenceId.isEmpty()) ? "occ_" + occurrenceId + "_" : "notif_";
+                docId = prefix + java.util.UUID.randomUUID().toString();
+            }
+
+            localSentDocIds.add(docId);
+            String contentKey = (occurrenceId != null ? occurrenceId : "")
+                    + "|" + (tipo != null ? tipo : "NOVA_OCORRENCIA")
+                    + "|" + (titulo != null ? titulo : "");
+            localSentKeys.add(contentKey);
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            Map<String, Object> data = new HashMap<>();
+            data.put("id", docId);
+            data.put("titulo", titulo);
+            data.put("descricao", descricao);
+            data.put("tipo", tipo != null ? tipo : "NOVA_OCORRENCIA");
+            data.put("occurrence_id", occurrenceId);
+            data.put("icone", icone != null ? icone : "bell");
+            data.put("tint", tint != null ? tint : "#12A05E");
+            data.put("bg", bg != null ? bg : "#E2F7EC");
+            data.put("lida", false);
+            data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            data.put("timestampMillis", System.currentTimeMillis());
+            data.put("user_id", (userId != null && !userId.isEmpty()) ? userId : "all");
+
+            final String finalDocId = docId;
+            db.collection(COLLECTION_NOTIFICATIONS)
+                    .document(finalDocId)
+                    .set(data)
+                    .addOnSuccessListener(aVoid ->
+                            Log.d(TAG, "Notificação enviada ao Firestore com ID singular: " + finalDocId))
+                    .addOnFailureListener(e ->
+                            Log.w(TAG, "Erro ao enviar notificação ao Firestore", e));
+        } catch (Exception e) {
+            Log.e(TAG, "Exceção ao enviar notificação", e);
+        }
+    }
+
+    public void sendNotification(String docId, String titulo, String descricao, String tipo,
+                                 String occurrenceId, String icone, String tint, String bg) {
+        sendNotification(docId, titulo, descricao, tipo, occurrenceId, icone, tint, bg, "all");
+    }
+
+    public void sendNotification(String titulo, String descricao, String tipo,
+                                 String occurrenceId, String icone, String tint, String bg) {
+        sendNotification(null, titulo, descricao, tipo, occurrenceId, icone, tint, bg);
+    }
+
+    public void deleteNotification(String docId) {
+        if (docId == null || docId.trim().isEmpty()) {
+            return;
+        }
+        try {
+            FirebaseFirestore.getInstance()
+                    .collection(COLLECTION_NOTIFICATIONS)
+                    .document(docId)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> Log.d(TAG, "Notificação " + docId + " excluída do Firestore"))
+                    .addOnFailureListener(e -> Log.w(TAG, "Erro ao excluir notificação do Firestore", e));
+        } catch (Exception e) {
+            Log.e(TAG, "Exceção ao excluir notificação no Firestore", e);
+        }
+    }
+
+    public void markAsRead(String docId) {
+        if (docId == null || docId.isEmpty()) {
+            return;
+        }
+        try {
+            FirebaseFirestore.getInstance()
+                    .collection(COLLECTION_NOTIFICATIONS)
+                    .document(docId)
+                    .update("lida", true)
+                    .addOnSuccessListener(aVoid -> Log.d(TAG, "Notificação " + docId + " marcada como lida no Firestore"))
+                    .addOnFailureListener(e -> Log.w(TAG, "Erro ao atualizar status de lida no Firestore", e));
+        } catch (Exception e) {
+            Log.e(TAG, "Exceção ao marcar como lida no Firestore", e);
+        }
+    }
+
+    private Notification parseDocument(String docId, Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+
+        String titulo = (String) data.get("titulo");
+        if (titulo == null) {
+            titulo = (String) data.get("title");
+        }
+        if (titulo == null) {
+            titulo = "VOLTA Notificação";
+        }
+
+        String descricao = (String) data.get("descricao");
+        if (descricao == null) {
+            descricao = (String) data.get("body");
+        }
+        if (descricao == null) {
+            descricao = "";
+        }
+
+        String tipo = (String) data.get("tipo");
+        if (tipo == null) {
+            tipo = "NOVA_OCORRENCIA";
+        }
+
+        long timestampMillis = System.currentTimeMillis();
+        Object tsObj = data.get("timestamp");
+        if (tsObj instanceof Timestamp) {
+            timestampMillis = ((Timestamp) tsObj).toDate().getTime();
+        } else if (tsObj instanceof Long) {
+            timestampMillis = (Long) tsObj;
+        } else if (data.get("timestampMillis") instanceof Long) {
+            timestampMillis = (Long) data.get("timestampMillis");
+        }
+
+        String tempoRelativo = (String) data.get("tempo_relativo");
+        if (tempoRelativo == null || tempoRelativo.equals("Agora")) {
+            tempoRelativo = com.aula.volta.NotificationAdapter.formatRelativeTime(timestampMillis);
+        }
+
+        String icone = (String) data.get("icone");
+        if (icone == null) {
+            icone = "bell";
+        }
+
+        String tint = (String) data.get("tint");
+        if (tint == null) {
+            tint = "#12A05E";
+        }
+
+        String bg = (String) data.get("bg");
+        if (bg == null) {
+            bg = "#E2F7EC";
+        }
+
+        Boolean lida = (Boolean) data.get("lida");
+        if (lida == null) {
+            lida = false;
+        }
+
+        String occurrenceId = (String) data.get("occurrence_id");
+
+        return new Notification(
+                docId,
+                tipo,
+                titulo,
+                descricao,
+                tempoRelativo,
+                icone,
+                tint,
+                bg,
+                lida,
+                occurrenceId,
+                timestampMillis
+        );
+    }
+}

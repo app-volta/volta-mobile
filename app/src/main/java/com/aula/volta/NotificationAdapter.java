@@ -19,10 +19,6 @@ import com.aula.volta.data.model.Notification;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Cards de notificação — Figma Notificações (626:780).
- * Ícone + tint + fundo vêm dos dados (data-driven); badge NOVA só nas não lidas.
- */
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
 
     public interface OnItemClickListener {
@@ -44,6 +40,24 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         notifyDataSetChanged();
     }
 
+    public List<Notification> getItems() {
+        return items;
+    }
+
+    public Notification getItem(int position) {
+        if (position >= 0 && position < items.size()) {
+            return items.get(position);
+        }
+        return null;
+    }
+
+    public void removeItem(int position) {
+        if (position >= 0 && position < items.size()) {
+            items.remove(position);
+            notifyItemRemoved(position);
+        }
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -58,12 +72,28 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         holder.title.setText(notification.getTitulo());
         holder.description.setText(notification.getDescricao());
-        holder.time.setText(notification.getTempoRelativo());
+                if (notification.getTimestamp() > 0) {
+            holder.time.setText(formatRelativeTime(notification.getTimestamp()));
+        } else {
+            String time = notification.getTempoRelativo();
+            if (time != null) {
+                if (time.toLowerCase(java.util.Locale.ROOT).contains("há ontem")) {
+                    time = time.replace("há ontem", "ontem").replace("Há ontem", "Ontem");
+                }
+                if (!time.isEmpty() && Character.isLowerCase(time.charAt(0))) {
+                    time = Character.toUpperCase(time.charAt(0)) + time.substring(1);
+                }
+            }
+            holder.time.setText(time != null ? time : "Agora");
+        }
 
         holder.icon.setImageResource(iconFor(notification.getIcone()));
         applyTintAndBg(holder, notification);
 
-        holder.badge.setVisibility(notification.isLida() ? View.GONE : View.VISIBLE);
+        boolean unread = !notification.isLida();
+        holder.itemView.setBackgroundResource(
+                unread ? R.drawable.bg_notif_card_unread : R.drawable.bg_notif_card_read);
+        holder.badge.setVisibility(unread ? View.VISIBLE : View.GONE);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -91,7 +121,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
     }
 
-    /** Aplica tint do ícone e fundo do círculo vindos da API (hex). */
     private void applyTintAndBg(ViewHolder holder, Notification notification) {
         try {
             if (notification.getTint() != null) {
@@ -108,7 +137,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 holder.iconContainer.setBackground(wrapped);
             }
         } catch (Exception ignored) {
-            // mantém fundo padrão do layout
+
         }
     }
 
@@ -135,4 +164,29 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             badge = itemView.findViewById(R.id.notifBadge);
         }
     }
+    public static String formatRelativeTime(long timestamp) {
+        if (timestamp <= 0) return "Agora";
+        long now = System.currentTimeMillis();
+        long diff = Math.max(0, now - timestamp);
+        long minutes = diff / (60 * 1000);
+        long hours = diff / (60 * 60 * 1000);
+        long days = diff / (24 * 60 * 60 * 1000);
+
+        if (minutes < 1) {
+            return "Agora";
+        } else if (minutes < 60) {
+            return "há " + minutes + " min";
+        } else if (hours < 24) {
+            return "há " + hours + " h";
+        } else if (days == 1) {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
+            return "Ontem às " + sdf.format(new java.util.Date(timestamp));
+        } else if (days < 7) {
+            return "há " + days + " dias";
+        } else {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM", java.util.Locale.getDefault());
+            return sdf.format(new java.util.Date(timestamp));
+        }
+    }
+
 }

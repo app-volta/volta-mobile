@@ -4,10 +4,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Testes unitários para validar o modelo de sincronização offline.
- * Fase 25 — Sincronização Offline Industrial & Resiliência.
- */
 public class SyncQueueModelTest {
 
     @Test

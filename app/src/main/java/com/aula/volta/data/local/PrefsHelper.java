@@ -10,10 +10,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Cache local genérico (Fase 0). Mesmo padrão do CarrinhoDeCompras:
- * salva lista como JSON; lê de volta no offline/falha.
- */
 public final class PrefsHelper {
 
     private static final Gson GSON = new Gson();
@@ -29,6 +25,16 @@ public final class PrefsHelper {
     public static String getJson(Context context, String prefsName, String key) {
         SharedPreferences prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
         return prefs.getString(key, null);
+    }
+
+    public static void putBoolean(Context context, String prefsName, String key, boolean value) {
+        SharedPreferences prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+        prefs.edit().putBoolean(key, value).apply();
+    }
+
+    public static boolean getBoolean(Context context, String prefsName, String key, boolean defaultValue) {
+        SharedPreferences prefs = context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
+        return prefs.getBoolean(key, defaultValue);
     }
 
     public static <T> void putList(Context context, String prefsName, String key, List<T> list) {
@@ -50,7 +56,6 @@ public final class PrefsHelper {
         return result;
     }
 
-    /** Leitura tipada via TypeToken (para listas de models sem array simples). */
     public static <T> List<T> getList(Context context, String prefsName, String key, Type type) {
         String json = getJson(context, prefsName, key);
         if (json == null) {

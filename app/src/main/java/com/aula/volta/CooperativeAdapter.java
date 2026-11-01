@@ -11,7 +11,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.ColorRes;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,11 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Cards de cooperativas — Figma Cooperativas (626:582).
- * Primeiro item em destaque verde; demais alternam dourado/azul/roxo.
- * Sem nada de ocorrências aqui: só cooperativas (conceito do plano).
- */
 public class CooperativeAdapter extends RecyclerView.Adapter<CooperativeAdapter.ViewHolder> {
 
     public interface OnItemClickListener {
@@ -63,24 +57,9 @@ public class CooperativeAdapter extends RecyclerView.Adapter<CooperativeAdapter.
         holder.description.setText(coop.getDescricao() == null ? "" : coop.getDescricao());
 
         String distance = String.format(new Locale("pt", "BR"), "%,.1f km", coop.getDistanciaKm());
-        if (coop.getColeta() != null && !coop.getColeta().isEmpty()) {
-            distance = distance + " · " + coop.getColeta();
-        }
         holder.distance.setText(distance);
 
-        if (coop.getTag() != null && !coop.getTag().isEmpty()) {
-            holder.tag.setVisibility(View.VISIBLE);
-            holder.tag.setText(coop.getTag());
-        } else {
-            holder.tag.setVisibility(View.GONE);
-        }
-
-        if (coop.getAvaliacao() != null) {
-            holder.ratingContainer.setVisibility(View.VISIBLE);
-            holder.rating.setText(String.format(new Locale("pt", "BR"), "%.1f", coop.getAvaliacao()));
-        } else {
-            holder.ratingContainer.setVisibility(View.GONE);
-        }
+        holder.tag.setVisibility(View.GONE);
 
         applyPositionStyle(holder, position);
 
@@ -89,9 +68,15 @@ public class CooperativeAdapter extends RecyclerView.Adapter<CooperativeAdapter.
                 listener.onItemClick(coop);
             }
         });
+        if (holder.btnLocation != null) {
+            holder.btnLocation.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemClick(coop);
+                }
+            });
+        }
     }
 
-    /** Destaque verde no primeiro; dourado/azul/roxo nos demais (Figma). */
     private void applyPositionStyle(ViewHolder holder, int position) {
         int style = position % 4;
         if (style == 0) {
@@ -135,8 +120,7 @@ public class CooperativeAdapter extends RecyclerView.Adapter<CooperativeAdapter.
         final TextView tag;
         final TextView description;
         final TextView distance;
-        final LinearLayout ratingContainer;
-        final TextView rating;
+        final ImageView btnLocation;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -147,8 +131,7 @@ public class CooperativeAdapter extends RecyclerView.Adapter<CooperativeAdapter.
             tag = itemView.findViewById(R.id.coopTag);
             description = itemView.findViewById(R.id.coopDescription);
             distance = itemView.findViewById(R.id.coopDistance);
-            ratingContainer = itemView.findViewById(R.id.coopRatingContainer);
-            rating = itemView.findViewById(R.id.coopRating);
+            btnLocation = itemView.findViewById(R.id.btnCardLocation);
         }
     }
 }

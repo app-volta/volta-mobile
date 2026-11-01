@@ -5,10 +5,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Testes unitários para validar os modelos e contratos de Ocorrência.
- * Fase 15 — Testes.
- */
 public class OccurrenceModelTest {
 
     @Test

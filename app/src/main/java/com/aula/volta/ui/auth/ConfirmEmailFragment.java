@@ -18,11 +18,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * Confirmar e-mail — Figma 790:1055 (Fase 22).
- * 4 caixas com avanço automático + timer regressivo de reenvio de 48s.
- * Mock: aceita qualquer código de 4 números. Args: email, name.
- */
 public class ConfirmEmailFragment extends Fragment {
 
     private static final long RESEND_MILLIS = 48000L;
@@ -48,6 +43,8 @@ public class ConfirmEmailFragment extends Fragment {
 
         String email = getArguments() != null ? getArguments().getString("email") : "";
         String name = getArguments() != null ? getArguments().getString("name") : "";
+        String sector = getArguments() != null ? getArguments().getString("sector") : "";
+        String password = getArguments() != null ? getArguments().getString("password") : "";
 
         TextView tvEmail = view.findViewById(R.id.tvConfirmEmail);
         if (tvEmail != null) {
@@ -123,6 +120,8 @@ public class ConfirmEmailFragment extends Fragment {
             Bundle args = new Bundle();
             args.putString("email", email);
             args.putString("name", name);
+            args.putString("sector", sector);
+            args.putString("password", password);
             Navigation.findNavController(v).navigate(R.id.auth_success, args);
         });
     }
