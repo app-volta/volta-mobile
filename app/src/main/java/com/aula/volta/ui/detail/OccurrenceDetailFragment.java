@@ -189,9 +189,9 @@ public class OccurrenceDetailFragment extends Fragment {
         stepCheck2 = view.findViewById(R.id.stepCheck2);
         stepLabel2 = view.findViewById(R.id.stepLabel2);
 
-        occurrenceId = getArguments() != null ? getArguments().getString("occurrenceId") : "8514";
+        occurrenceId = getArguments() != null ? getArguments().getString("occurrenceId") : null;
         if (occurrenceId == null || occurrenceId.isEmpty()) {
-            occurrenceId = "8514";
+            Navigation.findNavController(view).navigateUp(); return;
         }
 
         String argPhotoPath = getArguments() != null ? getArguments().getString("photoPath") : null;

@@ -26,11 +26,11 @@ public class ChatbotIntegrationContractTest {
 
     @Test
     public void serialize_loginRequest() {
-        LoginRequest req = new LoginRequest("volta.brasil.2026@gmail.com", "Volta@2026");
+        LoginRequest req = new LoginRequest("usuario@empresa.com", "SenhaSegura123");
         String json = gson.toJson(req);
 
-        assertTrue(json.contains("\"email\":\"volta.brasil.2026@gmail.com\""));
-        assertTrue(json.contains("\"password\":\"Volta@2026\""));
+        assertTrue(json.contains("\"email\":\"usuario@empresa.com\""));
+        assertTrue(json.contains("\"password\":\"SenhaSegura123\""));
     }
 
     @Test

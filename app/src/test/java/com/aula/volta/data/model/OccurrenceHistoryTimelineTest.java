@@ -33,7 +33,7 @@ public class OccurrenceHistoryTimelineTest {
     public void occurrenceHistory_handlesOfflineAndSyncActions() {
         OccurrenceHistory offlineEntry = new OccurrenceHistory(
                 "hist_102",
-                "Breno Gomes",
+                "Operador Teste",
                 "CRIAR_OFFLINE",
                 "ocorrencia",
                 "off_9988",

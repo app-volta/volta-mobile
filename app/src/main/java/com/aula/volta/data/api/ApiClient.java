@@ -25,14 +25,6 @@ public final class ApiClient {
 
     public static String BASE_URL_REAL = "https://api.qa.54.210.1.34.sslip.io/";
 
-    public static final String ADMIN_COMPANY_ID = "24032a1d-3e08-4f2f-ad50-590446459df3";
-    public static final String ADMIN_EMAIL = "volta.brasil.2026@gmail.com";
-    public static final String ADMIN_PASSWORD = "Volta@2026";
-    public static final String EMPLOYEE_EMAIL = "breno@volta.com";
-    public static final String EMPLOYEE_PASSWORD = "Volta@2026";
-    public static final String SWAGGER_USERNAME = "volta-dev";
-    public static final String SWAGGER_PASSWORD = "Volta@2026";
-
     private static final String PREF_NAME = "volta_auth";
     private static final String PREF_TOKEN = "jwt_token";
 
@@ -71,12 +63,9 @@ public final class ApiClient {
                         builder.header("Authorization", "Bearer " + token);
                     }
                     builder.header("Host", "api.qa.54.210.1.34.sslip.io");
-                    String userEmail = SessionManager.email(appContext);
-                    boolean isBrenoOrAdmin = userEmail == null || userEmail.isEmpty()
-                            || ADMIN_EMAIL.equalsIgnoreCase(userEmail)
-                            || EMPLOYEE_EMAIL.equalsIgnoreCase(userEmail);
-                    if (isBrenoOrAdmin) {
-                        builder.header("X-Company-Id", ADMIN_COMPANY_ID);
+                    String companyId = SessionManager.getCompanyId(appContext);
+                    if (companyId != null && !companyId.isEmpty()) {
+                        builder.header("X-Company-Id", companyId);
                     }
                     builder.header("Accept", "application/json; charset=utf-8");
 
@@ -89,8 +78,9 @@ public final class ApiClient {
                                     .header("Authorization", "Bearer " + refreshed)
                                     .header("Host", "api.qa.54.210.1.34.sslip.io")
                                     .header("Accept", "application/json; charset=utf-8");
-                            if (isBrenoOrAdmin) {
-                                retryBuilder.header("X-Company-Id", ADMIN_COMPANY_ID);
+                            String retryCompanyId = SessionManager.getCompanyId(appContext);
+                            if (retryCompanyId != null && !retryCompanyId.isEmpty()) {
+                                retryBuilder.header("X-Company-Id", retryCompanyId);
                             }
                             Response retryResp = chain.proceed(retryBuilder.build());
                             if (retryResp.code() < 500) {

@@ -171,15 +171,13 @@ public class AssistantFragment extends Fragment {
         String email = SessionManager.email(requireContext());
         String password = SessionManager.password(requireContext());
 
-        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email)) {
-            email = ApiClient.EMPLOYEE_EMAIL;
-            password = ApiClient.EMPLOYEE_PASSWORD;
-        } else if (password.isEmpty() || "1234".equals(password)) {
-            password = ApiClient.EMPLOYEE_PASSWORD;
+        if (email == null || email.trim().isEmpty() || password == null || password.isEmpty()) {
+            proceedSessionInit();
+            return;
         }
 
         AuthAPI authApi = ChatbotAuthClient.get(requireContext()).create(AuthAPI.class);
-        authApi.login(new LoginRequest(email, password)).enqueue(new Callback<LoginResponse>() {
+        authApi.login(new LoginRequest(email.trim(), password)).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
                 if (!isAdded()) {
@@ -189,7 +187,7 @@ public class AssistantFragment extends Fragment {
                     String token = response.body().getToken().trim();
                     SessionManager.saveToken(requireContext(), token);
                     ApiClient.saveToken(requireContext(), token);
-                    Log.i(TAG, "Chatbot QA autenticado com sucesso.");
+                    Log.i(TAG, "Chatbot autenticado com sucesso.");
                 }
                 proceedSessionInit();
             }
@@ -229,15 +227,15 @@ public class AssistantFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null && response.body().getSessionId() != null) {
                     currentSessionId = response.body().getSessionId();
                     SessionManager.saveChatSessionId(requireContext(), currentSessionId);
-                    Log.i(TAG, "Sessão do Chatbot QA ativa: " + currentSessionId);
+                    Log.i(TAG, "Sessão do Chatbot ativa: " + currentSessionId);
                 } else {
-                    Log.w(TAG, "Chatbot QA createSession status: " + response.code());
+                    Log.w(TAG, "Chatbot createSession status: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<CreateSessionResponse> call, @NonNull Throwable t) {
-                Log.w(TAG, "Chatbot QA createSession offline: " + t.getMessage());
+                Log.w(TAG, "Chatbot createSession offline: " + t.getMessage());
             }
         });
     }
@@ -259,7 +257,7 @@ public class AssistantFragment extends Fragment {
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                Log.w(TAG, "Histórico do Chatbot QA offline: " + t.getMessage());
+                Log.w(TAG, "Histórico do Chatbot offline: " + t.getMessage());
             }
         });
     }
@@ -398,7 +396,7 @@ public class AssistantFragment extends Fragment {
                     }
                     addBot(answer, body.getRecommendedActions(), body.getCitations(), body.isRequiresHumanValidation());
                 } else {
-                    Log.w(TAG, "Chatbot QA /v1/chat retornou HTTP " + response.code() + ", usando fallback.");
+                    Log.w(TAG, "Chatbot /v1/chat retornou HTTP " + response.code() + ", usando fallback.");
                     addBot(answerFor(text));
                 }
             }
@@ -410,7 +408,7 @@ public class AssistantFragment extends Fragment {
                 }
                 isSending = false;
                 hideTypingIndicator();
-                Log.w(TAG, "Chatbot QA indisponível, usando fallback local: " + t.getMessage());
+                Log.w(TAG, "Chatbot indisponível, usando fallback local: " + t.getMessage());
                 addBot(answerFor(text));
             }
         });
@@ -500,7 +498,7 @@ public class AssistantFragment extends Fragment {
         } catch (Exception ignored) {
 
         }
-        return 1147;
+        return 0;
     }
 
     private void addBot(String text) {

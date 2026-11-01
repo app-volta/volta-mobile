@@ -17,7 +17,7 @@ public class OccurrenceOperationsTest {
         String obsText = "Material molhado pela chuva, aguardando nova caçamba.";
         OccurrenceHistory observationEntry = new OccurrenceHistory(
                 "audit-obs-1",
-                "Breno Gomes",
+                "Operador Teste",
                 "ADICIONAR_OBSERVACAO",
                 "ocorrencia",
                 "48291",
@@ -33,7 +33,7 @@ public class OccurrenceOperationsTest {
         String json = gson.toJson(observationEntry);
         OccurrenceHistory parsed = gson.fromJson(json, OccurrenceHistory.class);
         assertEquals(obsText, parsed.getValorNovo());
-        assertEquals("Breno Gomes", parsed.getUsuario());
+        assertEquals("Operador Teste", parsed.getUsuario());
     }
 
     @Test
@@ -42,7 +42,7 @@ public class OccurrenceOperationsTest {
         String novoSetor = "Expedição Central";
         OccurrenceHistory forwardEntry = new OccurrenceHistory(
                 "audit-fwd-2",
-                "Breno Gomes",
+                "Operador Teste",
                 "ENCAMINHAR_SETOR",
                 "ocorrencia",
                 "48291",
@@ -68,7 +68,7 @@ public class OccurrenceOperationsTest {
         String novoMat = "Plástico Filme";
         OccurrenceHistory editClassEntry = new OccurrenceHistory(
                 "audit-cls-3",
-                "Breno Gomes",
+                "Operador Teste",
                 "ALTERAR_CLASSIFICACAO",
                 "ocorrencia",
                 "48291",

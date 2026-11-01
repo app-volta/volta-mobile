@@ -208,7 +208,7 @@
                         android:textSize="21sp"
                         android:textStyle="bold"
                         android:text="—"
-                        tools:text="52" />
+                        tools:text="0" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -240,7 +240,7 @@
                         android:textSize="21sp"
                         android:textStyle="bold"
                         android:text="—"
-                        tools:text="1.147" />
+                        tools:text="0" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -271,7 +271,7 @@
                         android:textSize="21sp"
                         android:textStyle="bold"
                         android:text="—"
-                        tools:text="89%" />
+                        tools:text="0%" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -470,7 +470,7 @@
                         android:textColor="#0E7C48"
                         android:textSize="10sp"
                         android:textStyle="bold"
-                        tools:text="76%" />
+                        tools:text="0%" />
                 </RelativeLayout>
 
                 <LinearLayout
@@ -488,7 +488,7 @@
                         android:textColor="@color/vf_text_primary"
                         android:textSize="21sp"
                         android:textStyle="bold"
-                        tools:text="1.147 kg"
+                        tools:text="0 kg"
                         android:text="—" />
 
                     <TextView
@@ -499,7 +499,7 @@
                         android:fontFamily="@font/font_inter"
                         android:textColor="@color/vf_text_secondary"
                         android:textSize="13sp"
-                        tools:text="de 1.500 kg" />
+                        tools:text="de 0 kg" />
                 </LinearLayout>
 
                 <LinearLayout

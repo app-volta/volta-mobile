@@ -216,9 +216,6 @@ public class ReportsFragment extends Fragment {
                 return;
             }
             String actor = SessionManager.name(requireContext());
-            if (actor == null || actor.isEmpty()) {
-                actor = SessionManager.name(requireContext());
-            }
             AuditLog.append(requireContext(), actor, "GERAR",
                     "relatorio", report.getName(), null, null);
             PgrsReport.openPdf(requireContext(), report);
@@ -252,9 +249,6 @@ public class ReportsFragment extends Fragment {
                 File report = PgrsReport.generate(requireContext(), currentPeriod);
                 if (report != null) {
                     String actor = SessionManager.name(requireContext());
-                    if (actor == null || actor.isEmpty()) {
-                        actor = SessionManager.name(requireContext());
-                    }
                     AuditLog.append(requireContext(), actor, "EXPORTAR_DADOS",
                             "relatorio", report.getName(), null, null);
 
@@ -420,9 +414,6 @@ public class ReportsFragment extends Fragment {
                         baseEsg.addProperty("quarterlyTarget", metric.getQuarterlyTarget().doubleValue());
                     }
                     processAndDisplaySummary(occurrences, baseEsg);
-                } else if (response.code() == 403) {
-
-                    fetchCorporateEsgAsService(occurrences);
                 } else {
                     JsonObject baseEsg = new JsonObject();
                     baseEsg.addProperty("isLiveDatabase", true);
@@ -439,84 +430,6 @@ public class ReportsFragment extends Fragment {
                 }
             }
         });
-    }
-
-    private void fetchCorporateEsgAsService(List<Occurrence> occurrences) {
-        new Thread(() -> {
-            try {
-                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
-                        .connectTimeout(3500, java.util.concurrent.TimeUnit.MILLISECONDS)
-                        .readTimeout(3500, java.util.concurrent.TimeUnit.MILLISECONDS)
-                        .build();
-
-                JsonObject loginBody = new JsonObject();
-                loginBody.addProperty("email", ApiClient.ADMIN_EMAIL);
-                loginBody.addProperty("password", ApiClient.ADMIN_PASSWORD);
-                okhttp3.Request loginReq = new okhttp3.Request.Builder()
-                        .url(ApiClient.BASE_URL_REAL + "auth/login")
-                        .header("Accept", "application/json")
-                        .post(okhttp3.RequestBody.create(loginBody.toString(), okhttp3.MediaType.parse("application/json")))
-                        .build();
-
-                okhttp3.Response loginResp = client.newCall(loginReq).execute();
-                if (loginResp.isSuccessful() && loginResp.body() != null) {
-                    JsonObject respObj = JsonParser.parseString(loginResp.body().string()).getAsJsonObject();
-                    String adminToken = respObj.has("token") ? respObj.get("token").getAsString() : null;
-                    if (adminToken != null) {
-
-                        okhttp3.Request esgReq = new okhttp3.Request.Builder()
-                                .url(ApiClient.BASE_URL_REAL + "esg/metrics")
-                                .header("Authorization", "Bearer " + adminToken)
-                                .header("X-Company-Id", ApiClient.ADMIN_COMPANY_ID)
-                                .header("Accept", "application/json")
-                                .get()
-                                .build();
-                        okhttp3.Response esgResp = client.newCall(esgReq).execute();
-                        if (esgResp.isSuccessful() && esgResp.body() != null) {
-                            com.google.gson.JsonArray arr = JsonParser.parseString(esgResp.body().string()).getAsJsonArray();
-                            if (arr.size() > 0) {
-                                JsonObject first = arr.get(0).getAsJsonObject();
-                                int corpKg = first.has("totalRecycledKg") && !first.get("totalRecycledKg").isJsonNull()
-                                        ? first.get("totalRecycledKg").getAsInt() : 0;
-                                int corpRate = first.has("recyclingPercentage") && !first.get("recyclingPercentage").isJsonNull()
-                                        ? first.get("recyclingPercentage").getAsInt() : 75;
-
-                                if (getActivity() != null) {
-                                    getActivity().runOnUiThread(() -> {
-                                        if (!isAdded()) return;
-                                        JsonObject baseEsg = new JsonObject();
-                                        baseEsg.addProperty("isLiveDatabase", true);
-                                        baseEsg.addProperty("corporateTotalKg", corpKg);
-                                        baseEsg.addProperty("corporateRecyclingPercentage", corpRate);
-                                        if (first.has("monthlyTarget") && !first.get("monthlyTarget").isJsonNull()) {
-                                            baseEsg.addProperty("monthlyTarget", first.get("monthlyTarget").getAsDouble());
-                                        }
-                                        if (first.has("weeklyTarget") && !first.get("weeklyTarget").isJsonNull()) {
-                                            baseEsg.addProperty("weeklyTarget", first.get("weeklyTarget").getAsDouble());
-                                        }
-                                        if (first.has("quarterlyTarget") && !first.get("quarterlyTarget").isJsonNull()) {
-                                            baseEsg.addProperty("quarterlyTarget", first.get("quarterlyTarget").getAsDouble());
-                                        }
-                                        processAndDisplaySummary(occurrences, baseEsg);
-                                    });
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(() -> {
-                    if (!isAdded()) return;
-                    JsonObject baseEsg = new JsonObject();
-                    baseEsg.addProperty("isLiveDatabase", true);
-                    processAndDisplaySummary(occurrences, baseEsg);
-                });
-            }
-        }).start();
     }
 
     private void processAndDisplaySummary(List<Occurrence> occurrences, @Nullable JsonObject baseEsg) {
@@ -610,7 +523,7 @@ public class ReportsFragment extends Fragment {
         renderMaterials(summary.materialBreakdown);
     }
 
-        private void updateTopSectors(List<ReportMetricsCalculator.SectorStat> topSectors) {
+    private void updateTopSectors(List<ReportMetricsCalculator.SectorStat> topSectors) {
         if (topSectors == null || topSectors.isEmpty()) {
             if (rowTopSector1 != null) rowTopSector1.setVisibility(View.GONE);
             if (rowTopSector2 != null) rowTopSector2.setVisibility(View.GONE);
@@ -663,7 +576,6 @@ public class ReportsFragment extends Fragment {
 
     private void bindRecentHistory(List<Occurrence> occurrences) {
         if (occurrences == null || occurrences.isEmpty()) {
-
             View.OnClickListener openOccurrences = v ->
                     Navigation.findNavController(v).navigate(R.id.nav_occurrences);
             if (rowRecentHistory1 != null) rowRecentHistory1.setOnClickListener(openOccurrences);

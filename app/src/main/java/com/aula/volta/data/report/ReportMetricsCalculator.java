@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -153,28 +152,12 @@ public final class ReportMetricsCalculator {
             }
         }
 
-        boolean isLiveDatabase = baseEsgSummary != null
-                && baseEsgSummary.has("isLiveDatabase")
-                && baseEsgSummary.get("isLiveDatabase").getAsBoolean();
-
         int opAbertas = 0;
         int opResolvidas = 0;
         int opKg = 0;
 
         Map<String, Integer> materials = new LinkedHashMap<>();
         Map<String, Integer> sectorKg = new HashMap<>();
-
-        if (!isLiveDatabase) {
-
-            materials.put("Papelão", (int) Math.round(542 * scale));
-            materials.put("Plástico", (int) Math.round(318 * scale));
-            materials.put("Metal", (int) Math.round(176 * scale));
-            materials.put("Vidro", (int) Math.round(111 * scale));
-
-            sectorKg.put("Frigorífico B2", (int) Math.round(342 * scale));
-            sectorKg.put("Expedição", (int) Math.round(218 * scale));
-            sectorKg.put("Manutenção", (int) Math.round(187 * scale));
-        }
 
         if (occurrences != null) {
             for (Occurrence occ : occurrences) {
@@ -195,7 +178,7 @@ public final class ReportMetricsCalculator {
                     opAbertas++;
                 }
 
-                double weight = isLiveDatabase ? 0.0 : 25.0;
+                double weight = 0.0;
                 if (weightsById != null && id != null && weightsById.containsKey(id) && weightsById.get(id) != null) {
                     weight = weightsById.get(id);
                 }
@@ -210,7 +193,7 @@ public final class ReportMetricsCalculator {
                 int currentMatKg = materials.containsKey(family) ? materials.get(family) : 0;
                 materials.put(family, currentMatKg + weightInt);
 
-                String sector = occ.getSetor() != null ? occ.getSetor() : "Frigorífico B2";
+                String sector = occ.getSetor() != null ? occ.getSetor() : "Planta Principal";
                 if (sector.contains("—")) {
                     sector = sector.substring(sector.indexOf("—") + 1).trim();
                 }
@@ -221,28 +204,23 @@ public final class ReportMetricsCalculator {
 
         ReportSummary summary = new ReportSummary();
 
-        if (isLiveDatabase) {
+        int baseKg = 0;
+        int baseAbertas = 0;
+        int baseResolvidas = 0;
 
-            if (baseEsgSummary != null && baseEsgSummary.has("corporateTotalKg") && !baseEsgSummary.get("corporateTotalKg").isJsonNull()) {
-                int corpKg = (int) Math.round(baseEsgSummary.get("corporateTotalKg").getAsInt() * scale);
-                summary.totalKg = corpKg > 0 ? corpKg : opKg;
-            } else {
-                summary.totalKg = opKg;
+        if (baseEsgSummary != null) {
+            if (baseEsgSummary.has("corporateTotalKg") && !baseEsgSummary.get("corporateTotalKg").isJsonNull()) {
+                baseKg = (int) Math.round(baseEsgSummary.get("corporateTotalKg").getAsInt() * scale);
+            } else if (baseEsgSummary.has("kg_reciclados") && !baseEsgSummary.get("kg_reciclados").isJsonNull()) {
+                baseKg = (int) Math.round(baseEsgSummary.get("kg_reciclados").getAsInt() * scale);
             }
-
-            summary.openCount = opAbertas;
-            summary.resolvedCount = opResolvidas;
-            summary.totalCount = opAbertas + opResolvidas;
-
-            if (baseEsgSummary != null && baseEsgSummary.has("corporateRecyclingPercentage") && !baseEsgSummary.get("corporateRecyclingPercentage").isJsonNull()) {
-                summary.recyclingRate = baseEsgSummary.get("corporateRecyclingPercentage").getAsInt();
-            } else if (summary.totalCount > 0) {
-                summary.recyclingRate = (int) Math.round(summary.resolvedCount * 100.0 / summary.totalCount);
-            } else {
-                summary.recyclingRate = 0;
+            if (baseEsgSummary.has("abertas") && !baseEsgSummary.get("abertas").isJsonNull()) {
+                baseAbertas = (int) Math.round(baseEsgSummary.get("abertas").getAsInt() * scale);
             }
-
-            if (baseEsgSummary != null && baseEsgSummary.has("por_tipo") && baseEsgSummary.get("por_tipo").isJsonObject()) {
+            if (baseEsgSummary.has("resolvidas") && !baseEsgSummary.get("resolvidas").isJsonNull()) {
+                baseResolvidas = (int) Math.round(baseEsgSummary.get("resolvidas").getAsInt() * scale);
+            }
+            if (baseEsgSummary.has("por_tipo") && baseEsgSummary.get("por_tipo").isJsonObject()) {
                 JsonObject pt = baseEsgSummary.getAsJsonObject("por_tipo");
                 for (Map.Entry<String, JsonElement> e : pt.entrySet()) {
                     if (!e.getValue().isJsonNull()) {
@@ -251,49 +229,24 @@ public final class ReportMetricsCalculator {
                     }
                 }
             }
-            summary.materialBreakdown = materials;
-        } else {
-
-            int baseKg = (int) Math.round(1147 * scale);
-            int baseAbertas = Math.max(1, (int) Math.round(6 * scale));
-            int baseResolvidas = Math.max(1, (int) Math.round(46 * scale));
-
-            if (baseEsgSummary != null) {
-                if (baseEsgSummary.has("kg_reciclados") && !baseEsgSummary.get("kg_reciclados").isJsonNull()) {
-                    baseKg = (int) Math.round(baseEsgSummary.get("kg_reciclados").getAsInt() * scale);
-                }
-                if (baseEsgSummary.has("abertas") && !baseEsgSummary.get("abertas").isJsonNull()) {
-                    baseAbertas = Math.max(1, (int) Math.round(baseEsgSummary.get("abertas").getAsInt() * scale));
-                }
-                if (baseEsgSummary.has("resolvidas") && !baseEsgSummary.get("resolvidas").isJsonNull()) {
-                    baseResolvidas = Math.max(1, (int) Math.round(baseEsgSummary.get("resolvidas").getAsInt() * scale));
-                }
-                if (baseEsgSummary.has("por_tipo") && baseEsgSummary.get("por_tipo").isJsonObject()) {
-                    JsonObject pt = baseEsgSummary.getAsJsonObject("por_tipo");
-                    for (Map.Entry<String, JsonElement> e : pt.entrySet()) {
-                        if (!e.getValue().isJsonNull()) {
-                            int v = (int) Math.round(e.getValue().getAsInt() * scale);
-                            materials.put(e.getKey(), v);
-                        }
-                    }
-                }
-            }
-
-            summary.totalKg = baseKg + opKg;
-            summary.openCount = baseAbertas + opAbertas;
-            summary.resolvedCount = baseResolvidas + opResolvidas;
-            summary.totalCount = summary.openCount + summary.resolvedCount;
-
-            if (summary.totalCount > 0) {
-                summary.recyclingRate = (int) Math.round(summary.resolvedCount * 100.0 / summary.totalCount);
-            } else {
-                summary.recyclingRate = 88;
-            }
-            summary.materialBreakdown = materials;
         }
 
+        summary.totalKg = baseKg > 0 ? baseKg : opKg;
+        summary.openCount = opAbertas > 0 ? opAbertas : baseAbertas;
+        summary.resolvedCount = opResolvidas > 0 ? opResolvidas : baseResolvidas;
+        summary.totalCount = summary.openCount + summary.resolvedCount;
+
+        if (baseEsgSummary != null && baseEsgSummary.has("corporateRecyclingPercentage") && !baseEsgSummary.get("corporateRecyclingPercentage").isJsonNull()) {
+            summary.recyclingRate = baseEsgSummary.get("corporateRecyclingPercentage").getAsInt();
+        } else if (summary.totalCount > 0) {
+            summary.recyclingRate = (int) Math.round(summary.resolvedCount * 100.0 / summary.totalCount);
+        } else {
+            summary.recyclingRate = 0;
+        }
+
+        summary.materialBreakdown = materials;
         summary.goalKg = goalKg;
-        summary.goalPercent = Math.min(100, (int) Math.round(summary.totalKg * 100.0 / goalKg));
+        summary.goalPercent = goalKg > 0 ? Math.min(100, (int) Math.round(summary.totalKg * 100.0 / goalKg)) : 0;
 
         List<Map.Entry<String, Integer>> sortedSectors = new ArrayList<>(sectorKg.entrySet());
         sortedSectors.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));

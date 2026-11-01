@@ -33,7 +33,7 @@ public class AuthValidationTest {
         assertFalse("E-mail sem @ deve ser inválido",
                 AuthValidator.isValidEmail("userexample.com"));
         assertTrue("E-mail com @ deve ser válido",
-                AuthValidator.isValidEmail("breno@volta.com"));
+                AuthValidator.isValidEmail("usuario@empresa.com"));
     }
 
     @Test

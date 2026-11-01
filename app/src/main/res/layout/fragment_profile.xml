@@ -73,7 +73,7 @@
                         android:textColor="#0E7C48"
                         android:textSize="24sp"
                         android:textStyle="bold"
-                        tools:text="BG" />
+                        tools:text="US" />
 
                     <ImageView
                         android:id="@+id/imgProfileCameraBadge"
@@ -323,7 +323,7 @@
                         android:layout_marginTop="6dp"
                         android:fontFamily="@font/font_inter"
                         android:text="—"
-                        tools:text="52 registradas"
+                        tools:text="0 registradas"
                         android:textColor="@color/vf_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -376,7 +376,7 @@
                         android:layout_marginTop="6dp"
                         android:fontFamily="@font/font_inter"
                         android:text="—"
-                        tools:text="1.147 kg"
+                        tools:text="0 kg"
                         android:textColor="@color/vf_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />

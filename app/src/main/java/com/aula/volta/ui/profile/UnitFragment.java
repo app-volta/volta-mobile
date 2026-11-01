@@ -87,7 +87,7 @@ public class UnitFragment extends Fragment {
 
         String managerName = SessionManager.name(requireContext());
         if (managerName == null || managerName.trim().isEmpty() || "Colaborador".equalsIgnoreCase(managerName.trim())) {
-            managerName = "Davi Liu";
+            managerName = "Gestor da Unidade";
         }
         if (tvUnitManager != null) {
             tvUnitManager.setText(managerName);
@@ -95,7 +95,7 @@ public class UnitFragment extends Fragment {
 
         int totalOcc = 0;
         int kg = 0;
-        int targetKg = 1500;
+        int targetKg = 0;
 
         String summaryJson = PrefsHelper.getJson(requireContext(), "cache_reports", "summary");
         if (summaryJson != null && !summaryJson.isEmpty()) {
@@ -132,7 +132,7 @@ public class UnitFragment extends Fragment {
             tvUnitNextCollection.setText("Sob demanda");
         }
 
-        int percent = Math.min(100, (int) Math.round(kg * 100.0 / Math.max(1, targetKg)));
+        int percent = targetKg > 0 ? Math.min(100, (int) Math.round(kg * 100.0 / targetKg)) : 0;
         if (tvUnitGoalBadge != null) {
             tvUnitGoalBadge.setText(percent + "%");
         }
@@ -190,6 +190,9 @@ public class UnitFragment extends Fragment {
                     if (!isAdded()) return;
                     if (response.isSuccessful() && response.body() != null) {
                         com.aula.volta.data.model.CompanyResponseDTO c = response.body();
+                        if (c.getId() != null && !c.getId().trim().isEmpty()) {
+                            SessionManager.saveCompanyId(requireContext(), c.getId().trim());
+                        }
                         SessionManager.saveCompany(requireContext(), c.getName(), c.getFormattedCnpj(), c.getAddress());
                         updateUnitSubtitle();
                     }

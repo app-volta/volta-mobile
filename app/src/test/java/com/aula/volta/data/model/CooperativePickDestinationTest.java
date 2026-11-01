@@ -18,7 +18,7 @@ public class CooperativePickDestinationTest {
     public void testDestinationAuditLogEntry() {
         OccurrenceHistory entry = new OccurrenceHistory(
                 "audit-dest-1",
-                "Breno Gomes",
+                "Operador Teste",
                 "SOLICITAR_DESTINACAO",
                 "ocorrencia",
                 "48291",
