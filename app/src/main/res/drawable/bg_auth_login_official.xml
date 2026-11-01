@@ -3,7 +3,7 @@
     <item android:drawable="@drawable/bg_auth_green_gradient" />
     <item>
         <bitmap
-            android:gravity="top|fill_horizontal"
+            android:gravity="fill"
             android:src="@drawable/bg_login_fluidos" />
     </item>
 </layer-list>

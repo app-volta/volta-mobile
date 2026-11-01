@@ -2,13 +2,13 @@ package com.aula.volta.data.model.auth;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Resposta de sucesso ou erro da API de autenticação do VOLTA (POST /auth/login).
- */
 public class LoginResponse {
 
     @SerializedName(value = "token", alternate = {"access_token", "jwt", "authToken"})
     private String token;
+
+    @SerializedName("expiresIn")
+    private Long expiresIn;
 
     @SerializedName(value = "name", alternate = {"userName", "user_name"})
     private String name;
@@ -31,6 +31,14 @@ public class LoginResponse {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public Long getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(Long expiresIn) {
+        this.expiresIn = expiresIn;
     }
 
     public String getName() {

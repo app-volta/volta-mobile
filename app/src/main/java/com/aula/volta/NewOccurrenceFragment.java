@@ -1,15 +1,20 @@
 package com.aula.volta;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
+import android.view.OrientationEventListener;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -20,45 +25,81 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.camera.core.Camera;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import com.aula.volta.util.ImageUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-/**
- * Nova ocorrência — Passo 1 de 2 (Fase 3, Figma Registrar Teste A 568:24).
- * Foto OBRIGATÓRIA (sem o texto vermelho "OBRIGATÓRIO"): Câmera/Galeria via Intent,
- * preview + refazer, compressão JPEG 70, botão habilita só com foto. CameraX na Fase 12.
- */
 public class NewOccurrenceFragment extends Fragment {
 
     private static final int MAX_PHOTO_DIMEN = 1280;
-    private static final int JPEG_QUALITY = 70;
+    private static final int JPEG_QUALITY = 75;
 
     private LinearLayout photoEmptyGroup;
-    private LinearLayout photoPreviewGroup;
+    private View photoPreviewGroup;
     private ImageView imgPhotoPreview;
     private MaterialButton btnSendAnalysis;
-    private TextView tvSendHint;
+    private View cardSubmissionError;
     private TextView tvSector;
     private EditText etDescription;
-    private SwitchMaterial switchNotify;
+
+    private FrameLayout cameraViewfinderOverlay;
+    private PreviewView cameraPreviewView;
+    private ImageView cameraPreviewImage;
+
+    private ProcessCameraProvider cameraProvider;
+    private ImageCapture imageCapture;
+    private Camera camera;
+    private int lensFacing = CameraSelector.LENS_FACING_BACK;
+    private boolean isTorchOn = false;
+    private OrientationEventListener orientationEventListener;
 
     private File photoFile;
     private File cameraTempFile;
     private int sectorIndex;
+    private String selectedAreaId;
+    private String selectedSectorName;
 
     private ActivityResultLauncher<Uri> takePictureLauncher;
     private ActivityResultLauncher<String> pickImageLauncher;
+    private ActivityResultLauncher<String> requestCameraPermissionLauncher;
+
+    private void showCancelRegistrationDialog() {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Cancelar ocorrência?")
+                .setMessage("Se você voltar, a ocorrência será excluída. Deseja realmente sair?")
+                .setNegativeButton("Continuar", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton("Sim, excluir", (dialog, which) -> {
+                    dialog.dismiss();
+                    photoFile = null;
+                    if (getView() != null) {
+                        Navigation.findNavController(getView()).popBackStack(R.id.nav_home, false);
+                    }
+                })
+                .show();
+    }
 
     public NewOccurrenceFragment() {
-        // Construtor vazio obrigatório
+
     }
 
     @Override
@@ -67,7 +108,7 @@ public class NewOccurrenceFragment extends Fragment {
 
         takePictureLauncher = registerForActivityResult(
                 new ActivityResultContracts.TakePicture(), success -> {
-                    if (success && cameraTempFile != null) {
+                    if (success && cameraTempFile != null && cameraTempFile.exists()) {
                         photoFile = compressImage(cameraTempFile);
                         updatePhotoState();
                     }
@@ -76,8 +117,22 @@ public class NewOccurrenceFragment extends Fragment {
         pickImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(), uri -> {
                     if (uri != null) {
-                        photoFile = compressImage(copyToCache(uri));
-                        updatePhotoState();
+                        File cached = copyToCache(uri);
+                        if (cached != null) {
+                            photoFile = compressImage(cached);
+                            updatePhotoState();
+                        }
+                    }
+                });
+
+        requestCameraPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(), isGranted -> {
+                    if (isGranted) {
+                        openCameraViewfinder();
+                    } else {
+                        Toast.makeText(requireContext(),
+                                "Permissão de câmera é necessária para fotografar.",
+                                Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -95,26 +150,66 @@ public class NewOccurrenceFragment extends Fragment {
         photoEmptyGroup = view.findViewById(R.id.photoEmptyGroup);
         photoPreviewGroup = view.findViewById(R.id.photoPreviewGroup);
         imgPhotoPreview = view.findViewById(R.id.imgPhotoPreview);
+        if (imgPhotoPreview != null) {
+            imgPhotoPreview.setOnClickListener(v -> {
+                if (photoFile != null && photoFile.exists()) {
+                    String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
+                    String sectorName = (sectorIndex >= 0 && sectorIndex < sectors.length) ? sectors[sectorIndex] : "Setor não definido";
+                    com.aula.volta.ui.dialog.ImagePreviewDialog.show(
+                            getParentFragmentManager(),
+                            photoFile.getAbsolutePath(),
+                            "Foto do Resíduo",
+                            sectorName
+                    );
+                }
+            });
+        }
         btnSendAnalysis = view.findViewById(R.id.btnSendAnalysis);
-        tvSendHint = view.findViewById(R.id.tvSendHint);
+        cardSubmissionError = view.findViewById(R.id.cardSubmissionError);
         tvSector = view.findViewById(R.id.tvSector);
         etDescription = view.findViewById(R.id.etDescription);
-        switchNotify = view.findViewById(R.id.switchNotify);
+
+        cameraViewfinderOverlay = view.findViewById(R.id.cameraViewfinderOverlay);
+        cameraPreviewView = view.findViewById(R.id.cameraPreviewView);
+        cameraPreviewImage = view.findViewById(R.id.cameraPreviewImage);
 
         sectorIndex = 0;
         tvSector.setText(getResources().getStringArray(R.array.occurrence_sector_options)[0]);
 
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(),
+                new androidx.activity.OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        if (cameraViewfinderOverlay != null && cameraViewfinderOverlay.getVisibility() == View.VISIBLE) {
+                            closeCameraOverlay();
+                        } else if (photoFile != null && photoFile.exists()) {
+                            showCancelRegistrationDialog();
+                        } else if (getView() != null) {
+                            Navigation.findNavController(getView()).navigateUp();
+                        } else {
+                            setEnabled(false);
+                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                        }
+                    }
+                });
+
         View btnBack = view.findViewById(R.id.btnBackRegister);
-        btnBack.setOnClickListener(v ->
-                Navigation.findNavController(v).navigateUp());
+        btnBack.setOnClickListener(v -> {
+            if (photoFile != null && photoFile.exists()) {
+                showCancelRegistrationDialog();
+            } else {
+                Navigation.findNavController(v).navigateUp();
+            }
+        });
 
         MaterialButton btnCamera = view.findViewById(R.id.btnCaptureCamera);
-        btnCamera.setOnClickListener(v -> openCamera());
+        btnCamera.setOnClickListener(v -> checkPermissionAndOpenCamera());
 
         MaterialButton btnGallery = view.findViewById(R.id.btnOpenGallery);
         btnGallery.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
 
-        TextView btnRetake = view.findViewById(R.id.btnRetakePhoto);
+        View btnRetake = view.findViewById(R.id.btnRetakePhoto);
         btnRetake.setOnClickListener(v -> {
             photoFile = null;
             updatePhotoState();
@@ -123,64 +218,286 @@ public class NewOccurrenceFragment extends Fragment {
         View btnSector = view.findViewById(R.id.btnSector);
         btnSector.setOnClickListener(v -> showSectorDialog());
 
-        btnSendAnalysis.setOnClickListener(v -> sendToAnalysis(v));
+        btnSendAnalysis.setOnClickListener(this::sendToAnalysis);
+
+        View btnCameraClose = view.findViewById(R.id.btnCameraClose);
+        btnCameraClose.setOnClickListener(v -> closeCameraOverlay());
+
+        View btnCameraShutter = view.findViewById(R.id.btnCameraShutter);
+        btnCameraShutter.setOnClickListener(v -> captureRealPhoto());
+
+        View btnCameraPickGallery = view.findViewById(R.id.btnCameraPickGallery);
+        btnCameraPickGallery.setOnClickListener(v -> {
+            closeCameraOverlay();
+            pickImageLauncher.launch("image/*");
+        });
+
+        View btnCameraFlash = view.findViewById(R.id.btnCameraFlash);
+        btnCameraFlash.setOnClickListener(v -> toggleTorch());
+
+        View btnCameraFlip = view.findViewById(R.id.btnCameraFlip);
+        btnCameraFlip.setOnClickListener(v -> flipCamera());
 
         updatePhotoState();
+
+        getParentFragmentManager().setFragmentResultListener(
+                com.aula.volta.ui.error.OfflineErrorFragment.REQUEST_KEY,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> {
+                    if (result.getBoolean(com.aula.volta.ui.error.OfflineErrorFragment.RESULT_ONLINE, false)
+                            && photoFile != null && photoFile.exists() && btnSendAnalysis != null) {
+                        if (cardSubmissionError != null) {
+                            cardSubmissionError.setVisibility(View.GONE);
+                        }
+                        btnSendAnalysis.setText("Enviar para análise");
+                        sendToAnalysis(btnSendAnalysis);
+                    }
+                });
     }
 
-    private void openCamera() {
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (btnSendAnalysis != null) {
+            btnSendAnalysis.setEnabled(photoFile != null && photoFile.exists());
+        }
+    }
+
+    private void checkPermissionAndOpenCamera() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            openCameraViewfinder();
+        } else {
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
+    }
+
+    private int getDisplayRotation() {
+        if (cameraPreviewView != null && cameraPreviewView.getDisplay() != null) {
+            return cameraPreviewView.getDisplay().getRotation();
+        }
+        if (getActivity() != null && getActivity().getWindowManager() != null) {
+            return getActivity().getWindowManager().getDefaultDisplay().getRotation();
+        }
+        return Surface.ROTATION_0;
+    }
+
+    private void setupOrientationListener() {
+        if (orientationEventListener == null && getContext() != null) {
+            orientationEventListener = new OrientationEventListener(requireContext()) {
+                @Override
+                public void onOrientationChanged(int orientation) {
+                    if (orientation == OrientationEventListener.ORIENTATION_UNKNOWN || imageCapture == null) {
+                        return;
+                    }
+                    int rotation;
+                    if (orientation >= 45 && orientation < 135) {
+                        rotation = Surface.ROTATION_270;
+                    } else if (orientation >= 135 && orientation < 225) {
+                        rotation = Surface.ROTATION_180;
+                    } else if (orientation >= 225 && orientation < 315) {
+                        rotation = Surface.ROTATION_90;
+                    } else {
+                        rotation = Surface.ROTATION_0;
+                    }
+                    try {
+                        imageCapture.setTargetRotation(rotation);
+                    } catch (Exception ignored) {
+                    }
+                }
+            };
+        }
+        if (orientationEventListener != null && orientationEventListener.canDetectOrientation()) {
+            orientationEventListener.enable();
+        }
+    }
+
+    private void disableOrientationListener() {
+        if (orientationEventListener != null) {
+            orientationEventListener.disable();
+        }
+    }
+
+    private void openCameraViewfinder() {
+        if (cameraViewfinderOverlay != null) {
+            cameraViewfinderOverlay.setVisibility(View.VISIBLE);
+        }
+        setupOrientationListener();
+        startCameraX();
+    }
+
+    private void closeCameraOverlay() {
+        disableOrientationListener();
+        stopCameraX();
+        if (cameraViewfinderOverlay != null) {
+            cameraViewfinderOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    private void startCameraX() {
+        if (getContext() == null) {
+            return;
+        }
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
+                ProcessCameraProvider.getInstance(requireContext());
+
+        cameraProviderFuture.addListener(() -> {
+            try {
+                cameraProvider = cameraProviderFuture.get();
+                bindCameraUseCases();
+            } catch (Exception e) {
+
+                closeCameraOverlay();
+                openSystemCamera();
+            }
+        }, ContextCompat.getMainExecutor(requireContext()));
+    }
+
+    private void bindCameraUseCases() {
+        if (cameraProvider == null || cameraPreviewView == null || !isAdded()) {
+            return;
+        }
+
+        try {
+            cameraProvider.unbindAll();
+
+            CameraSelector cameraSelector = new CameraSelector.Builder()
+                    .requireLensFacing(lensFacing)
+                    .build();
+
+            Preview preview = new Preview.Builder().build();
+            preview.setSurfaceProvider(cameraPreviewView.getSurfaceProvider());
+
+            int rotation = getDisplayRotation();
+
+            imageCapture = new ImageCapture.Builder()
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                    .setTargetRotation(rotation)
+                    .build();
+
+            camera = cameraProvider.bindToLifecycle(
+                    getViewLifecycleOwner(), cameraSelector, preview, imageCapture);
+
+            if (cameraPreviewImage != null) {
+                cameraPreviewImage.setVisibility(View.GONE);
+            }
+        } catch (Exception e) {
+
+            if (cameraPreviewImage != null) {
+                cameraPreviewImage.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    private void stopCameraX() {
+        if (cameraProvider != null) {
+            cameraProvider.unbindAll();
+        }
+    }
+
+    private void captureRealPhoto() {
+        if (imageCapture == null) {
+
+            closeCameraOverlay();
+            openSystemCamera();
+            return;
+        }
+
+        try {
+            imageCapture.setTargetRotation(getDisplayRotation());
+        } catch (Exception ignored) {
+        }
+
+        File photoOut = new File(requireContext().getCacheDir(),
+                "volta_photo_raw_" + System.currentTimeMillis() + ".jpg");
+
+        ImageCapture.OutputFileOptions outputOptions =
+                new ImageCapture.OutputFileOptions.Builder(photoOut).build();
+
+        imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(requireContext()),
+                new ImageCapture.OnImageSavedCallback() {
+                    @Override
+                    public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                        if (!isAdded()) {
+                            return;
+                        }
+                        photoFile = compressImage(photoOut);
+                        closeCameraOverlay();
+                        updatePhotoState();
+                        Toast.makeText(requireContext(), "Foto capturada com sucesso!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(@NonNull ImageCaptureException exception) {
+                        if (!isAdded()) {
+                            return;
+                        }
+
+                        closeCameraOverlay();
+                        openSystemCamera();
+                    }
+                });
+    }
+
+    private void toggleTorch() {
+        if (camera != null && camera.getCameraInfo().hasFlashUnit()) {
+            isTorchOn = !isTorchOn;
+            camera.getCameraControl().enableTorch(isTorchOn);
+            Toast.makeText(requireContext(), isTorchOn ? "Flash ligado" : "Flash desligado", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(requireContext(), "Flash não disponível", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void flipCamera() {
+        lensFacing = (lensFacing == CameraSelector.LENS_FACING_BACK)
+                ? CameraSelector.LENS_FACING_FRONT
+                : CameraSelector.LENS_FACING_BACK;
+        bindCameraUseCases();
+    }
+
+    private void openSystemCamera() {
         try {
             cameraTempFile = new File(requireContext().getCacheDir(),
                     "volta_camera_" + System.currentTimeMillis() + ".jpg");
             Uri uri = FileProvider.getUriForFile(requireContext(),
                     requireContext().getPackageName() + ".fileprovider", cameraTempFile);
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            if (intent.resolveActivity(requireContext().getPackageManager()) != null) {
-                takePictureLauncher.launch(uri);
-            } else {
-                Toast.makeText(requireContext(), R.string.error_load, Toast.LENGTH_SHORT).show();
-            }
+            takePictureLauncher.launch(uri);
         } catch (Exception e) {
-            Toast.makeText(requireContext(), R.string.error_load, Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Não foi possível abrir a câmera", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void showSectorDialog() {
-        String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
-        new AlertDialog.Builder(requireContext())
-                .setTitle(R.string.occurrence_location_label)
-                .setSingleChoiceItems(sectors, sectorIndex, (dialog, which) -> {
-                    sectorIndex = which;
-                    tvSector.setText(sectors[which]);
-                    dialog.dismiss();
-                })
-                .show();
+        com.aula.volta.ui.occurrence.SelectSectorSheet sheet =
+                com.aula.volta.ui.occurrence.SelectSectorSheet.newInstance(sectorIndex);
+        sheet.setOnSectorSelectedListener((index, sectorName, areaId) -> {
+            sectorIndex = index;
+            selectedSectorName = sectorName;
+            selectedAreaId = areaId;
+            tvSector.setText(sectorName);
+        });
+        sheet.show(getChildFragmentManager(), "select_sector");
     }
 
-    /** Mostra preview + habilita envio só com foto (Teste A). */
     private void updatePhotoState() {
         boolean hasPhoto = photoFile != null && photoFile.exists();
         photoEmptyGroup.setVisibility(hasPhoto ? View.GONE : View.VISIBLE);
         photoPreviewGroup.setVisibility(hasPhoto ? View.VISIBLE : View.GONE);
+
         if (hasPhoto) {
-            imgPhotoPreview.setImageBitmap(
-                    BitmapFactory.decodeFile(photoFile.getAbsolutePath()));
+            Bitmap bmp = ImageUtils.decodeFileWithExifRotation(photoFile.getAbsolutePath(), MAX_PHOTO_DIMEN);
+            imgPhotoPreview.setImageBitmap(bmp);
+            btnSendAnalysis.setEnabled(true);
+            btnSendAnalysis.setBackgroundTintList(null);
+            btnSendAnalysis.setBackgroundResource(R.drawable.bg_btn_primary_v);
+            btnSendAnalysis.setTextColor(requireContext().getColor(R.color.white));
         } else {
             imgPhotoPreview.setImageDrawable(null);
-        }
-
-        btnSendAnalysis.setEnabled(hasPhoto);
-        if (hasPhoto) {
-            btnSendAnalysis.setBackgroundResource(R.drawable.bg_button_gradient);
-            btnSendAnalysis.setTextColor(getResources().getColor(R.color.white, null));
-            tvSendHint.setVisibility(View.GONE);
-        } else {
-            btnSendAnalysis.setBackgroundResource(R.drawable.bg_button_disabled);
-            btnSendAnalysis.setTextColor(
-                    getResources().getColor(R.color.volta_text_muted_light, null));
-            tvSendHint.setVisibility(View.VISIBLE);
+            btnSendAnalysis.setEnabled(false);
+            btnSendAnalysis.setBackgroundTintList(null);
+            btnSendAnalysis.setBackgroundResource(R.drawable.bg_btn_disabled_v);
+            btnSendAnalysis.setTextColor(requireContext().getColor(R.color.vf_disabled_text));
         }
     }
 
@@ -188,68 +505,64 @@ public class NewOccurrenceFragment extends Fragment {
         if (photoFile == null || !photoFile.exists()) {
             return;
         }
-        String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
+        if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+            if (cardSubmissionError != null) {
+                cardSubmissionError.setVisibility(View.VISIBLE);
+            }
+            if (btnSendAnalysis != null) {
+                btnSendAnalysis.setEnabled(true);
+                btnSendAnalysis.setText("Tentar de novo");
+            }
+            Bundle errArgs = new Bundle();
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                    com.aula.volta.ui.error.OfflineErrorFragment.TYPE_SUBMISSION_FAILED);
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Não conseguimos enviar");
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                    "Sua foto e os dados continuam aqui. Confira a conexão e tente de novo.");
+            try {
+                Navigation.findNavController(v).navigate(R.id.nav_offline_error, errArgs);
+            } catch (Exception ignored) {
+            }
+            return;
+        }
+        if (cardSubmissionError != null) {
+            cardSubmissionError.setVisibility(View.GONE);
+        }
+        btnSendAnalysis.setEnabled(false);
+
+        com.aula.volta.data.upload.CloudinaryUploader.uploadImage(requireContext(), photoFile, null);
+
         Bundle args = new Bundle();
         args.putString("photoPath", photoFile.getAbsolutePath());
         args.putString("descricao", etDescription.getText().toString().trim());
-        args.putString("setor", sectors[sectorIndex]);
-        args.putBoolean("avisar", switchNotify.isChecked());
+        String sector = selectedSectorName != null ? selectedSectorName : tvSector.getText().toString();
+        args.putString("setor", sector);
+        if (selectedAreaId != null && !selectedAreaId.isEmpty()) {
+            args.putString("areaId", selectedAreaId);
+        }
+        args.putBoolean("avisar", false);
         Navigation.findNavController(v).navigate(R.id.nav_ai_analysis, args);
     }
 
-    /** Copia conteúdo da galeria para o cache (para comprimir em arquivo próprio). */
     private File copyToCache(Uri uri) {
-        try {
-            File out = new File(requireContext().getCacheDir(),
-                    "volta_gallery_" + System.currentTimeMillis() + ".jpg");
-            try (InputStream in = requireContext().getContentResolver().openInputStream(uri);
-                 FileOutputStream fos = new FileOutputStream(out)) {
-                byte[] buffer = new byte[8192];
-                int n;
-                while ((n = in.read(buffer)) != -1) {
-                    fos.write(buffer, 0, n);
-                }
-            }
-            return out;
-        } catch (Exception e) {
+        if (!isAdded() || getContext() == null) {
             return null;
         }
+        return ImageUtils.copyUriToCache(requireContext(), uri);
     }
 
-    /** Reduz para máx. 1280px e salva JPEG 70 (Fase 3: preserva qualidade p/ análise). */
     private File compressImage(File source) {
-        if (source == null || !source.exists()) {
+        if (source == null || !source.exists() || !isAdded() || getContext() == null) {
             return null;
         }
-        try {
-            BitmapFactory.Options bounds = new BitmapFactory.Options();
-            bounds.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(source.getAbsolutePath(), bounds);
+        return ImageUtils.fixOrientationAndCompress(requireContext(), source, MAX_PHOTO_DIMEN, JPEG_QUALITY);
+    }
 
-            int sample = 1;
-            while (bounds.outWidth / sample > MAX_PHOTO_DIMEN
-                    || bounds.outHeight / sample > MAX_PHOTO_DIMEN) {
-                sample *= 2;
-            }
-            BitmapFactory.Options opts = new BitmapFactory.Options();
-            opts.inSampleSize = sample;
-            Bitmap bitmap = BitmapFactory.decodeFile(source.getAbsolutePath(), opts);
-            if (bitmap == null) {
-                return null;
-            }
-
-            File out = new File(requireContext().getCacheDir(),
-                    "volta_photo_" + System.currentTimeMillis() + ".jpg");
-            try (FileOutputStream fos = new FileOutputStream(out)) {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, fos);
-            }
-            bitmap.recycle();
-            if (!source.getName().startsWith("volta_photo_")) {
-                source.delete();
-            }
-            return out;
-        } catch (Exception e) {
-            return null;
-        }
+    @Override
+    public void onDestroyView() {
+        disableOrientationListener();
+        stopCameraX();
+        super.onDestroyView();
     }
 }

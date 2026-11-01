@@ -5,10 +5,6 @@ import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Resposta retornada pelo endpoint POST /v1/chat do Chatbot VOLTA.
- * Contém answer, citations, recommended_actions e requires_human_validation.
- */
 public class ChatMessageResponse {
 
     @SerializedName(value = "session_id", alternate = {"sessionId"})
@@ -71,9 +67,6 @@ public class ChatMessageResponse {
         this.requiresHumanValidation = requiresHumanValidation;
     }
 
-    /**
-     * Estrutura interna de dados da resposta de chat (response).
-     */
     public static class ChatAnswerData {
 
         @SerializedName(value = "answer", alternate = {"text", "message", "content"})

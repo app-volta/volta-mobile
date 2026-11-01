@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Login — Figma Oficial 790:955 -->
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_auth_login_official"
-    android:fillViewport="true">
+    android:background="@drawable/bg_auth_green_gradient">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_login_full" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,7 +26,6 @@
         android:paddingTop="36dp"
         android:paddingBottom="24dp">
 
-        <!-- Logo VOLTA Superior (Figma 790:967 - 116x34) -->
         <ImageView
             android:id="@+id/ivLoginTopLogo"
             android:layout_width="116dp"
@@ -25,7 +35,6 @@
             android:scaleType="fitStart"
             android:src="@drawable/logo_volta_white" />
 
-        <!-- Título com Logo integrada (Figma 790:969, 790:970, 790:971) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -60,7 +69,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Subtítulo Oficial (Figma 790:972 - Inter 400 13.5sp, 85% opacidade) -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -72,7 +80,6 @@
             android:textColor="@color/login_subtitle_white"
             android:textSize="13.5sp" />
 
-        <!-- Label E-mail (Figma 790:973 - Poppins SemiBold 14sp) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -83,7 +90,6 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <!-- Input E-mail Translúcido com Ícone (Figma 790:974) -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="54dp"
@@ -96,12 +102,11 @@
                 android:layout_height="match_parent"
                 android:background="@android:color/transparent"
                 android:fontFamily="@font/font_inter"
-                android:hint="breno@empresa.com.br"
+                android:hint="@string/auth_email_hint"
                 android:importantForAutofill="no"
                 android:inputType="textEmailAddress"
                 android:paddingStart="18dp"
                 android:paddingEnd="48dp"
-                android:text="breno@volta.com"
                 android:textColor="@color/white"
                 android:textColorHint="@color/login_hint_white"
                 android:textSize="14sp" />
@@ -116,7 +121,6 @@
                 app:tint="@color/white" />
         </FrameLayout>
 
-        <!-- Label Senha (Figma 790:979 - Poppins SemiBold 14sp) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -127,7 +131,6 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <!-- Input Senha Translúcido com Ícone Toggle (Figma 790:980) -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="54dp"
@@ -145,7 +148,6 @@
                 android:inputType="textPassword"
                 android:paddingStart="18dp"
                 android:paddingEnd="48dp"
-                android:text="1234"
                 android:textColor="@color/white"
                 android:textColorHint="@color/login_hint_white"
                 android:textSize="15sp" />
@@ -163,12 +165,11 @@
                 app:tint="@color/white" />
         </FrameLayout>
 
-        <!-- Link Esqueci minha senha (Figma 790:985 - Inter SemiBold 12.5sp) -->
         <TextView
             android:id="@+id/btnForgotPassword"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
+            android:layout_gravity="start"
             android:layout_marginBottom="24dp"
             android:clickable="true"
             android:focusable="true"
@@ -179,7 +180,6 @@
             android:textSize="12.5sp"
             android:textStyle="bold" />
 
-        <!-- Botão Entrar Oficial Figma (790:986 - Branco Puro, r16, Texto Verde Escuro #1BA463) -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
@@ -194,7 +194,6 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <!-- Divisor "ou" (Figma 790:988, 790:989, 790:990) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -224,7 +223,6 @@
                 android:background="#80FFFFFF" />
         </LinearLayout>
 
-        <!-- Botão Continuar com Google Oficial Figma (790:991 - Fundo Translúcido 6%, borda 75%, r16) -->
         <LinearLayout
             android:id="@+id/btnGoogle"
             android:layout_width="match_parent"
@@ -260,54 +258,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Atalho Rápido para Demonstração (Facilitador de Teste/QA) -->
-        <LinearLayout
-            android:id="@+id/btnDemoLogin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:background="@drawable/bg_pill_dark"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="10dp">
-
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_marginEnd="10dp"
-                android:contentDescription="@null"
-                android:src="@drawable/ic_sparkle"
-                app:tint="@color/sparkle_light" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/font_poppins"
-                    android:text="Acesso Rápido de Teste"
-                    android:textColor="@color/sparkle_light"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/font_inter"
-                    android:text="Toque para preencher breno@volta.com"
-                    android:textColor="#CCFFFFFF"
-                    android:textSize="11sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Rodapé de Cadastro -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -338,4 +288,5 @@
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
+</FrameLayout>

@@ -2,7 +2,6 @@
     <string name="app_name">VOLTA</string>
     <string name="app_tagline">Gestão Inteligente de Ocorrências</string>
 
-    <!-- Navegação Inferior - conforme Figma iconBar.svg -->
     <string name="nav_home">Início</string>
     <string name="nav_coops">Coops</string>
     <string name="nav_occurrences">Ocorrências</string>
@@ -10,28 +9,26 @@
     <string name="nav_reports">Relatórios</string>
     <string name="nav_profile">Perfil</string>
 
-    <!-- Home -->
     <string name="greeting_morning">Bom dia,</string>
     <string name="greeting_afternoon">Boa tarde,</string>
     <string name="greeting_evening">Boa noite,</string>
-    <string name="home_stat_open">abertas</string>
-    <string name="home_stat_resolved">resolvidas</string>
-    <string name="home_stat_recycled">kg reciclados</string>
-    <string name="home_summary_title">Resumo da unidade</string>
+    <string name="home_stat_open">Abertas</string>
+    <string name="home_stat_resolved">Resolvidas</string>
+    <string name="home_stat_recycled">Kg Reciclados</string>
+    <string name="home_summary_title">Resumo da Unidade</string>
     <string name="home_recent_occurrences">Ocorrências recentes</string>
     <string name="home_see_all">Ver todas</string>
     <string name="home_cta_title">Achou resíduo fora\ndo lugar?</string>
     <string name="home_cta_subtitle">Tira uma foto — a gente cuida do\nresto pra você.</string>
     <string name="home_cta_button">Registrar agora</string>
 
-    <!-- Nova Ocorrência -->
     <string name="occurrence_new_title">Nova ocorrência</string>
     <string name="occurrence_step_1">Passo 1 de 2 · Registro</string>
     <string name="occurrence_step_2">Passo 2 de 2 · Revisão</string>
-    <string name="occurrence_take_photo">Tire uma foto do resíduo</string>
+    <string name="occurrence_take_photo">Tira uma foto do resíduo</string>
     <string name="occurrence_photo_hint">Não precisa ficar perfeita — a gente identifica tudo</string>
     <string name="occurrence_send_disabled_hint">Adicione uma foto do resíduo pra habilitar o envio</string>
-    <string name="occurrence_retake">Refazer</string>
+    <string name="occurrence_retake">Trocar</string>
     <string name="occurrence_back">Voltar</string>
     <string name="occurrence_btn_camera">Câmera</string>
     <string name="occurrence_btn_gallery">Galeria</string>
@@ -42,17 +39,14 @@
     <string name="occurrence_notify_switch_desc">A pessoa recebe na hora, sem burocracia</string>
     <string name="occurrence_btn_send_analysis">Enviar para análise</string>
 
-    <!-- Prioridades -->
     <string name="priority_alta">ALTA</string>
     <string name="priority_media">MÉDIA</string>
     <string name="priority_baixa">BAIXA</string>
 
-    <!-- Estados de dados (Fase 0) -->
     <string name="offline_cache">Sem internet - carregando cache</string>
     <string name="error_load">Não foi possível carregar. Toque para tentar de novo.</string>
     <string name="empty_list">Nada por aqui ainda.</string>
 
-    <!-- Setores (mock Fase 3, lista vem da empresa na API) -->
     <string-array name="occurrence_sector_options">
         <item>Frigorífico — Setor B2</item>
         <item>Expedição</item>
@@ -60,16 +54,25 @@
         <item>Armazenamento</item>
     </string-array>
 
-    <!-- Cooperativas (Figma 626:582) -->
     <string name="coops_title">Cooperativas próximas</string>
     <string name="coops_subtitle">As mais pertinho da sua unidade primeiro</string>
 
-    <!-- Notificações (Figma 626:780) -->
     <string name="notifications_title">Notificações</string>
     <string name="notifications_new">%1$d novas</string>
     <string name="notifications_mark_all">Marcar todas como lidas</string>
     <string name="notifications_badge_new">NOVA</string>
-    <!-- Nova ocorrência → notificação local (Fase 8b) -->
+    <string name="notifications_clear_read">Limpar lidas</string>
+    <string name="notifications_filter_all">Todas</string>
+    <string name="notifications_filter_unread">Não lidas</string>
+    <string name="notifications_filter_occurrences">Ocorrências</string>
+    <string name="notifications_filter_goals">Metas &amp; Coletas</string>
+    <string name="notifications_empty_title">Tudo em dia!</string>
+    <string name="notifications_empty_desc">Você não possui notificações pendentes no momento.</string>
+    <string name="notifications_empty_filter_desc">Nenhuma notificação encontrada para este filtro.</string>
+    <string name="notifications_deleted">Notificação removida</string>
+    <string name="notifications_undo">Desfazer</string>
+    <string name="notifications_settings_title">Configurações de Notificação</string>
+
     <string name="notif_occurrence_title">Ocorrência #%1$s registrada</string>
     <string name="notif_occurrence_desc">%1$s · %2$s</string>
     <string name="notif_occurrence_desc_fallback">Toque para acompanhar</string>
@@ -79,7 +82,6 @@
     <string name="notif_pick_title">Coleta solicitada · %1$s</string>
     <string name="notif_pick_desc">Ocorrência #%1$s</string>
 
-    <!-- Filtrar ocorrências (Figma 554:24) -->
     <string name="filter_title">Filtrar ocorrências</string>
     <string name="filter_clear">Limpar</string>
     <string name="filter_material">Material</string>
@@ -94,23 +96,21 @@
     <string name="occurrences_filter_clear_all">Limpar filtros</string>
     <string name="occurrences_no_results">Nenhuma ocorrência encontrada para esta busca.</string>
 
-    <!-- Análise IA (Figma 626:327) -->
     <string name="ai_title">Análise da IA</string>
     <string name="ai_analyzing">Analisando imagem…</string>
     <string name="ai_scanning">Analisando…</string>
-    <string name="ai_loading_recommendation">carregando…</string>
+    <string name="ai_loading_recommendation">carregando...</string>
     <string name="ai_done">Análise concluída</string>
     <string name="ai_found_title">O que a IA encontrou</string>
     <string name="ai_label_type">Tipo</string>
     <string name="ai_label_contamination">Contaminação</string>
     <string name="ai_label_quantity">Quantidade</string>
     <string name="ai_label_confidence">Confiança da IA</string>
-    <string name="ai_label_recommendation">Recomendação</string>
+    <string name="ai_label_recommendation">VOLTA recomenda</string>
     <string name="ai_confirm">Confirmar e gerar relatório</string>
     <string name="ai_edit">Editar</string>
     <string name="ai_registered">Ocorrência registrada</string>
 
-    <!-- Detalhe da ocorrência (Figma 554:27) -->
     <string name="detail_weight">Peso estimado</string>
     <string name="detail_registered_by">Registrado por</string>
     <string name="detail_date">Data</string>
@@ -119,7 +119,6 @@
     <string name="detail_report_soon">Relatório completo chega na Fase 9</string>
     <string name="detail_request_pickup">Solicitar destinação</string>
 
-    <!-- Ocorrência cheia (Figma 790:2725) -->
     <string name="occ_title">Ocorrência</string>
     <string name="occ_step_registered">Registrada</string>
     <string name="occ_step_analysis">Análise IA</string>
@@ -128,18 +127,18 @@
     <string name="occ_action_edit_class">Alterar classificação</string>
     <string name="occ_action_forward">Encaminhar para outro setor</string>
     <string name="occ_action_observe">Adicionar observação</string>
-    <string name="occ_action_finalize">Finalizar ocorrência</string>
+    <string name="occ_action_finalize">Enviar ocorrência</string>
     <string name="occ_pick_coop">Escolher cooperativa para coleta</string>
     <string name="occ_details_title">Detalhes</string>
     <string name="occ_report_auto">Relatório automático</string>
     <string name="occ_history_title">Histórico</string>
     <string name="occ_history_empty">Sem movimentações ainda.</string>
-    <string name="occ_finalize_title">Finalizar ocorrência?</string>
-    <string name="occ_finalize_text">A ocorrência será marcada como concluída e entra no relatório PGRS do mês.</string>
-    <string name="occ_finalize_yes">Sim, finalizar</string>
-    <string name="occ_finalize_done">Ocorrência finalizada</string>
-    <string name="toast_finalized_title">Ocorrência finalizada</string>
-    <string name="toast_finalized_sub">Já entrou no relatório PGRS do mês</string>
+    <string name="occ_finalize_title">Enviar ocorrência?</string>
+    <string name="occ_finalize_text">A ocorrência será encaminhada para a central de gestão e auditada pelo responsável técnico.</string>
+    <string name="occ_finalize_yes">Sim, enviar</string>
+    <string name="occ_finalize_done">Ocorrência enviada com sucesso</string>
+    <string name="toast_finalized_title">Ocorrência enviada</string>
+    <string name="toast_finalized_sub">Encaminhada para a central de gestão PGRS</string>
     <string name="toast_finalized_action">Ver PGRS</string>
     <string name="status_aprovada">APROVADA</string>
     <string name="occ_soon">Disponível em breve</string>
@@ -150,10 +149,8 @@
     <string name="pick_request_sent">Solicitação enviada</string>
     <string name="pick_confirm_msg">Solicitar coleta para %1$s?</string>
 
-    <!-- Home nova (Figma 790:1624) -->
     <string name="home_week_title">Últimos 7 dias</string>
 
-    <!-- Relatórios (Figma 790:3322) -->
     <string name="reports_subtitle">Acompanhe o que sua unidade recuperou</string>
     <string name="reports_period_week">Semana</string>
     <string name="reports_period_month">Mês</string>
@@ -161,49 +158,69 @@
     <string name="reports_pgrs_title">Relatório PGRS trimestral</string>
     <string name="reports_pgrs_sub">Pronto pra baixar e enviar</string>
     <string name="reports_pgrs_button">Gerar relatório</string>
-    <string name="reports_month_title">Neste mês</string>
-    <string name="reports_stat_occurrences">ocorrências</string>
-    <string name="reports_stat_kg">kg recuperados</string>
-    <string name="reports_stat_rate">taxa coleta</string>
-    <string name="reports_goal_title">Meta do mês</string>
+    <string name="reports_month_title">Neste Mês</string>
+    <string name="reports_stat_occurrences">Ocorrências</string>
+    <string name="reports_stat_kg">Kg Recuperados</string>
+    <string name="reports_stat_rate">Taxa de Coleta</string>
+    <string name="reports_goal_title">Meta do Mês</string>
     <string name="reports_goal_of">de %1$s</string>
     <string name="reports_by_material">Por tipo de material</string>
     <string name="reports_material_count">%1$d ocorrências</string>
     <string name="reports_material_kg">%1$d kg</string>
     <string name="reports_vs_last_month">vs. mês passado</string>
-    <string name="reports_vs_occ">+12 ocorrências</string>
-    <string name="reports_vs_kg">+8% recuperado</string>
-    <string name="reports_vs_rate">+3% taxa</string>
+    <string name="reports_vs_occ">+12 Ocorrências</string>
+    <string name="reports_vs_kg">+8% Recuperado</string>
+    <string name="reports_vs_rate">+3% Taxa</string>
     <string name="reports_top_sectors">Top setores da fábrica</string>
-    <string name="reports_export_all">Exportar todos os dados</string>
+    <string name="reports_export_all">Exportar</string>
+    <string name="reports_recent_history">Histórico recente</string>
+    <string name="reports_filter">Filtrar</string>
+    <string name="reports_toast_exported_title">Dados exportados</string>
+    <string name="reports_toast_exported_sub">volta-dados.csv salvo no celular.</string>
     <string name="reports_share">Compartilhar relatório</string>
     <string name="reports_nothing">Nada para incluir no relatório ainda.</string>
 
-    <!-- Perfil (Figma 790:3470) -->
     <string name="profile_name">Breno Gomes</string>
     <string name="profile_role">Responsável PGRS</string>
     <string name="profile_unit">Frigorífico · Setor B2</string>
-    <string name="profile_about">Sobre você</string>
+    <string name="profile_about">Sobre Você</string>
     <string name="profile_edit">Editar</string>
     <string name="profile_email">E-mail</string>
     <string name="profile_email_value">breno@empresa.com</string>
     <string name="profile_since">Cadastro</string>
-    <string name="profile_since_value">março 2024</string>
+    <string name="profile_since_value">Março de 2024</string>
     <string name="profile_occ">Ocorrências</string>
-    <string name="profile_occ_value">%1$d registradas</string>
+    <string name="profile_occ_value">%1$d Registradas</string>
     <string name="profile_recovered">Recuperado</string>
     <string name="profile_recovered_value">%1$s kg</string>
     <string name="profile_settings">Configurações</string>
     <string name="profile_notifications">Notificações</string>
-    <string name="profile_my_unit">Minha unidade</string>
+    <string name="profile_my_unit">Minha Unidade</string>
     <string name="profile_my_unit_value">Frigorífico B2</string>
     <string name="profile_help">Ajuda com o VOLTA</string>
-    <string name="profile_help_hint">assistente IA</string>
-    <string name="profile_logout">Sair da conta</string>
-    <string name="profile_logout_title">Sair da conta?</string>
+    <string name="profile_help_hint">Assistente IA</string>
+    <string name="profile_logout">Sair da Conta</string>
+    <string name="profile_logout_title">Sair da Conta?</string>
     <string name="profile_logout_msg">Você vai precisar entrar de novo.</string>
+    <string name="profile_app_version">VOLTA v1.0.4 · Build 42</string>
 
-    <!-- Chat com a cooperativa (Figma 790:3191, mock Fase 11) -->
+    <string name="cancel">Cancelar</string>
+    <string name="btn_back">Voltar</string>
+    <string name="auth_cd_toggle_password">Alternar visibilidade da senha</string>
+    <string name="profile_photo_title">Foto de perfil</string>
+    <string name="profile_photo_subtitle">Escolha como deseja atualizar sua foto</string>
+    <string name="profile_photo_camera">Tirar foto com a câmera</string>
+    <string name="profile_photo_camera_sub">Use a câmera do seu dispositivo</string>
+    <string name="profile_photo_gallery">Escolher da galeria</string>
+    <string name="profile_photo_gallery_sub">Selecione uma imagem já existente</string>
+    <string name="profile_photo_remove">Remover foto atual</string>
+    <string name="profile_photo_remove_sub">Voltar para o avatar com iniciais</string>
+    <string name="profile_photo_uploading">Enviando foto para a nuvem…</string>
+    <string name="profile_photo_success">Foto de perfil atualizada no Cloudinary!</string>
+    <string name="profile_photo_offline">Foto salva no dispositivo.</string>
+    <string name="profile_photo_removed">Foto de perfil removida.</string>
+    <string name="profile_photo_camera_perm_required">Permissão de câmera é necessária para fotografar.</string>
+
     <string name="chat_online">Parceira J&amp;F · Responde rápido</string>
     <string name="chat_hint">Escrever mensagem…</string>
     <string name="chat_pickup_title">Coleta agendada · hoje, 15h30</string>
@@ -221,11 +238,10 @@
     <string name="chat_talk_generic">Conversar com a cooperativa</string>
     <string name="chat_now">agora</string>
 
-    <!-- Assistente VOLTA (Figma 790:1911, mock Fase 12) -->
-    <string name="assistant_online">seu assistente de descarte · online</string>
+    <string name="assistant_online">Seu assistente de descarte · Online</string>
     <string name="assistant_hello">Oi, Breno Liu!</string>
-    <string name="assistant_hello_sub">Pergunta qualquer coisa sobre resíduos, coletas ou as metas da unidade.</string>
-    <string name="assistant_intro">Eu sou o VOLTA, a setinha que ajuda a sua unidade a descartar certo. Escolhe uma pergunta aí embaixo ou escreve do seu jeito.</string>
+    <string name="assistant_hello_sub">Pergunte qualquer coisa sobre resíduos, coletas ou as metas da unidade.</string>
+    <string name="assistant_intro">Eu sou o VOLTA, o assistente que ajuda a sua unidade a descartar certo. Escolha uma pergunta abaixo ou escreva do seu jeito.</string>
     <string name="assistant_hint">Pergunte ao VOLTA…</string>
     <string name="assistant_chip_register">Registrar isopor</string>
     <string name="assistant_chip_coops">Ver cooperativas</string>
@@ -233,13 +249,12 @@
     <string name="assistant_chip_meta">Como está a meta do mês?</string>
     <string name="assistant_chip_isopor">Onde descarto isopor?</string>
     <string name="assistant_a_isopor">Isopor (EPS) é reciclável, sim! Só precisa estar limpo e seco. A Recicla Vida aceita e fica a 3,1 km da unidade.</string>
-    <string name="assistant_a_papelao">Papelão molhado recicla, mas precisa secar antes. Guarda em área coberta e registra a ocorrência que a gente cuida.</string>
+    <string name="assistant_a_papelao">Papelão molhado recicla, mas precisa secar antes. Guarde em área coberta e registre a ocorrência que a equipe cuida.</string>
     <string name="assistant_a_meta">Vocês recuperaram %1$s de %2$s no mês (%3$d%% da meta). Bora!</string>
     <string name="assistant_a_coop">A JBS Ambiental é a parceira mais perto: 2,4 km, coleta em até 24h. Quer que eu abra a lista?</string>
     <string name="assistant_a_thanks">De nada! Precisou, é só chamar.</string>
-    <string name="assistant_a_fallback">Ainda estou aprendendo… tenta perguntar sobre materiais, coletas ou a meta do mês.</string>
+    <string name="assistant_a_fallback">Ainda estou aprendendo… Tente perguntar sobre materiais, coletas ou a meta do mês.</string>
 
-    <!-- Acesso (Figma 790:955+, mock Fase 13) -->
     <string name="auth_welcome">Bem-vindo de VOLTA!</string>
     <string name="auth_welcome_sub">Entre para continuar cuidando do descarte certo na sua unidade.</string>
     <string name="auth_email">E-mail</string>
@@ -252,8 +267,8 @@
     <string name="auth_demo_desc">E-mail: breno@volta.com  ·  Senha: 1234\n(Ou use qualquer e-mail e senha de 4+ dígitos)</string>
     <string name="auth_or">ou</string>
     <string name="auth_google">Continuar com Google</string>
-    <string name="auth_no_account">Novo por aqui?</string>
-    <string name="auth_create">Criar conta</string>
+    <string name="auth_no_account">Primeira vez aqui?</string>
+    <string name="auth_create">Acesse aqui</string>
     <string name="auth_register_title">Criar conta</string>
     <string name="auth_register_sub">Leva menos de um minuto.</string>
     <string name="auth_name">Nome</string>
@@ -297,20 +312,24 @@
     <string name="auth_confirm_password">Confirmar nova senha</string>
     <string name="auth_save_password">Salvar nova senha</string>
     <string name="auth_pw_weak">Fraca</string>
-    <string name="auth_pw_fair">Razoável</string>
+    <string name="auth_pw_fair">Média</string>
     <string name="auth_pw_good">Boa</string>
     <string name="auth_pw_strong">Forte</string>
+    <string name="auth_register_terms">Li e aceito os &lt;b>Termos de Uso&lt;/b> e a &lt;b>Política de Privacidade&lt;/b> da VOLTA.</string>
+    <string name="auth_register_sector_hint">Selecione seu setor</string>
+    <string name="auth_register_pw_hint">Mínimo de 8 caracteres</string>
+    <string name="auth_register_terms_required">Aceite os Termos de Uso e Política de Privacidade</string>
+    <string name="auth_register_sector_required">Selecione seu setor</string>
+    <string name="auth_register_pw_min">A senha deve ter no mínimo 8 caracteres</string>
     <string name="auth_pw_mismatch">As senhas não conferem</string>
     <string name="auth_passok_title">Tudo certo!</string>
     <string name="auth_passok_sub">Sua senha foi atualizada com sucesso. Já pode entrar e continuar cuidando do descarte na sua unidade.</string>
     <string name="auth_go_login">Ir para o login</string>
 
-    <!-- Sincronização Offline Industrial (Fase 25) -->
     <string name="sync_success_title">Ocorrência #%1$s sincronizada!</string>
     <string name="sync_success_desc">%1$s no setor %2$s foi enviado para a nuvem.</string>
     <string name="sync_saved_offline">Ocorrência salva localmente. Sincronização automática quando houver rede.</string>
 
-    <!-- Canais de Notificação Android (Fase 26) -->
     <string name="channel_occurrences_name">Ocorrências e Coletas</string>
     <string name="channel_occurrences_desc">Alertas de novos registros de resíduos e coletas agendadas com cooperativas</string>
     <string name="channel_goals_name">Metas e Relatórios PGRS</string>

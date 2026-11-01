@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Diálogo Finalizar ocorrência (Figma 851:4885) -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -17,58 +17,83 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_marginBottom="20dp"
-        android:background="@drawable/bg_dialog_check_circle">
+        android:background="@drawable/bg_circle_green_light">
 
         <ImageView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_gravity="center"
-            android:contentDescription="@string/toast_finalized_title"
-            android:src="@drawable/ic_notif_check"
-            app:tint="@color/status_aprovada_text" />
+            android:src="@drawable/ic_check_circle_green" />
     </FrameLayout>
 
     <TextView
+        android:id="@+id/tvFinalizeTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/poppins_bold"
         android:gravity="center"
         android:text="@string/occ_finalize_title"
-        android:textColor="@color/dialog_finalize_title"
+        android:textColor="@color/vf_text_primary"
         android:textSize="20sp"
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/tvFinalizeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="28dp"
+        android:layout_marginBottom="24dp"
+        android:fontFamily="sans-serif"
         android:gravity="center"
         android:lineSpacingExtra="3dp"
         android:text="@string/occ_finalize_text"
-        android:textColor="@color/dialog_finalize_sub"
+        android:textColor="@color/vf_text_secondary"
         android:textSize="14sp" />
+
+    <LinearLayout
+        android:id="@+id/boxDialogSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvDialogSummaryTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tvDialogSummarySector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnFinalizeYes"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:backgroundTint="@color/volta_green_primary"
+        android:layout_height="52dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_btn_primary_v"
+        android:fontFamily="@font/poppins_semibold"
         android:text="@string/occ_finalize_yes"
+        android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="15sp"
         android:textStyle="bold"
-        app:cornerRadius="14dp" />
+        app:backgroundTint="@null"
+        app:cornerRadius="16dp" />
 
     <TextView
         android:id="@+id/btnFinalizeNo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
         android:clickable="true"
         android:focusable="true"
-        android:padding="8dp"
-        android:text="@string/pick_confirm_no"
-        android:textColor="@color/dialog_finalize_sub"
+        android:fontFamily="sans-serif-medium"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:text="Voltar"
+        android:textColor="@color/vf_text_secondary"
         android:textSize="14sp"
         android:textStyle="bold" />
 </LinearLayout>

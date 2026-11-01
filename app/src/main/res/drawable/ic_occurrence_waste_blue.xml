@@ -4,7 +4,7 @@
     android:height="20dp"
     android:viewportWidth="20"
     android:viewportHeight="20">
-    <!-- Plástico de embalagem - garrafa/bottle 20x20, ocupa 15px como lixeira Figma -->
+
     <path
         android:pathData="M7,3 H13 V6 H15 V18 H5 V6 H7 V3 Z"
         android:strokeWidth="1.6"

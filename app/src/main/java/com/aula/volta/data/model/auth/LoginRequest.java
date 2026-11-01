@@ -2,9 +2,6 @@ package com.aula.volta.data.model.auth;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Payload de login para a API de autenticação do VOLTA (POST /auth/login).
- */
 public class LoginRequest {
 
     @SerializedName("email")

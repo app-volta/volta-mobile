@@ -1,11 +1,15 @@
 package com.aula.volta.data.api;
 
+import com.aula.volta.data.model.AiAnalysisJSON;
 import com.aula.volta.data.model.auth.LoginRequest;
 import com.aula.volta.data.model.auth.LoginResponse;
 import com.aula.volta.data.model.chat.ChatHistoryItem;
 import com.aula.volta.data.model.chat.ChatMessageRequest;
 import com.aula.volta.data.model.chat.ChatMessageResponse;
 import com.aula.volta.data.model.chat.CreateSessionResponse;
+import com.aula.volta.data.model.incident.AiReportResponseDTO;
+import com.aula.volta.data.model.incident.IncidentRequestDTO;
+import com.aula.volta.data.model.incident.IncidentResponseDTO;
 import com.google.gson.Gson;
 
 import org.junit.Test;
@@ -13,32 +17,31 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Testes unitários dos contratos de API de Login e Chatbot QA.
- */
 public class ChatbotIntegrationContractTest {
 
     private final Gson gson = new Gson();
 
     @Test
     public void serialize_loginRequest() {
-        LoginRequest req = new LoginRequest("qa_user@volta.com", "segredoQA123");
+        LoginRequest req = new LoginRequest("volta.brasil.2026@gmail.com", "Volta@2026");
         String json = gson.toJson(req);
 
-        assertTrue(json.contains("\"email\":\"qa_user@volta.com\""));
-        assertTrue(json.contains("\"password\":\"segredoQA123\""));
+        assertTrue(json.contains("\"email\":\"volta.brasil.2026@gmail.com\""));
+        assertTrue(json.contains("\"password\":\"Volta@2026\""));
     }
 
     @Test
-    public void deserialize_loginResponseWithToken() {
-        String json = "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummyPayload\",\"name\":\"Operador QA\",\"email\":\"qa@volta.com\"}";
+    public void deserialize_loginResponseWithTokenAndExpiresIn() {
+        String json = "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummyPayload\",\"expiresIn\":86400000,\"name\":\"Operador QA\",\"email\":\"qa@volta.com\"}";
         LoginResponse res = gson.fromJson(json, LoginResponse.class);
 
         assertNotNull(res);
         assertTrue(res.hasToken());
         assertEquals("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummyPayload", res.getToken());
+        assertEquals(Long.valueOf(86400000L), res.getExpiresIn());
         assertEquals("Operador QA", res.getName());
         assertEquals("qa@volta.com", res.getEmail());
     }
@@ -125,5 +128,102 @@ public class ChatbotIntegrationContractTest {
         assertNotNull(botMsg);
         assertFalse(botMsg.isUser());
         assertEquals("Devem ser separadas dos fardos secos.", botMsg.getContent());
+    }
+
+    @Test
+    public void serializeAndDeserialize_incidentAndAiReportWithCloudinaryUrl() {
+        String cloudinaryUrl = "https://res.cloudinary.com/kgou1air/image/upload/v1729500000/Ocorrencia/Assets/Images/volta_photo_1.jpg";
+        IncidentRequestDTO req = new IncidentRequestDTO(
+                "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "8ba85f64-5717-4562-b3fc-2c963f66afa9",
+                cloudinaryUrl,
+                "Caixas de papelão acumuladas ao lado da câmara fria",
+                "LOW",
+                42.0,
+                "HIGH"
+        );
+        String reqJson = gson.toJson(req);
+        assertTrue(reqJson.contains("\"photoUrl\":\"" + cloudinaryUrl + "\""));
+        assertTrue(reqJson.contains("\"areaId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\""));
+
+        String incRespJson = "{"
+                + "\"id\":\"inc-uuid-001\","
+                + "\"photoUrl\":\"" + cloudinaryUrl + "\","
+                + "\"contaminationLevel\":\"MEDIUM\","
+                + "\"estimatedQuantity\":42.0,"
+                + "\"priority\":\"HIGH\","
+                + "\"status\":\"PENDING\""
+                + "}";
+        IncidentResponseDTO incResp = gson.fromJson(incRespJson, IncidentResponseDTO.class);
+        assertNotNull(incResp);
+        assertEquals("inc-uuid-001", incResp.getId());
+        assertEquals(cloudinaryUrl, incResp.getPhotoUrl());
+
+        String aiReportJson = "{"
+                + "\"id\":\"rep-uuid-001\","
+                + "\"incidentId\":\"inc-uuid-001\","
+                + "\"detectedWasteType\":\"Papelão ondulado\","
+                + "\"aiContaminationLevel\":\"MEDIUM\","
+                + "\"recommendations\":\"Manter em local coberto e acionar coleta em 24h\","
+                + "\"reportText\":\"Identificado lote de caixas de papelão com leve umidade superficial.\","
+                + "\"generatedAt\":\"2026-10-21T19:00:00\""
+                + "}";
+        AiReportResponseDTO report = gson.fromJson(aiReportJson, AiReportResponseDTO.class);
+        assertNotNull(report);
+        assertEquals("Papelão ondulado", report.getDetectedWasteType());
+        assertEquals("MEDIUM", report.getAiContaminationLevel());
+
+        AiAnalysisJSON mapped = AiAnalysisJSON.fromAiReport(report, 42.0);
+        assertNotNull(mapped);
+        assertEquals("inc-uuid-001", mapped.getIncidentId());
+        assertEquals("Papelão ondulado", mapped.getMaterial());
+        assertEquals(42.0, mapped.getQuantidadeEstimada(), 0.001);
+        assertNotNull(mapped.getContaminacao());
+        assertEquals("Média", mapped.getContaminacao().getNivel());
+        assertTrue(mapped.getContaminacao().isPresente());
+        assertEquals("Manter em local coberto e acionar coleta em 24h", mapped.getObservacoes());
+        assertEquals("Identificado lote de caixas de papelão com leve umidade superficial.", mapped.getReportText());
+    }
+
+    @Test
+    public void incidentRequestDTO_sanitizationAndNormalization() {
+
+        assertEquals("LOW", IncidentRequestDTO.normalizePriority("BAIXA"));
+        assertEquals("LOW", IncidentRequestDTO.normalizePriority("Baixa"));
+        assertEquals("LOW", IncidentRequestDTO.normalizePriority("low"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizePriority("MEDIA"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizePriority("Média"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizePriority("medium"));
+        assertEquals("HIGH", IncidentRequestDTO.normalizePriority("ALTA"));
+        assertEquals("HIGH", IncidentRequestDTO.normalizePriority("Alta"));
+        assertEquals("HIGH", IncidentRequestDTO.normalizePriority("high"));
+        assertEquals("CRITICAL", IncidentRequestDTO.normalizePriority("CRITICA"));
+        assertEquals("CRITICAL", IncidentRequestDTO.normalizePriority("Crítica"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizePriority(null));
+
+        assertEquals("LOW", IncidentRequestDTO.normalizeContamination("Baixa"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizeContamination("Média"));
+        assertEquals("HIGH", IncidentRequestDTO.normalizeContamination("Alta"));
+        assertEquals("LOW", IncidentRequestDTO.normalizeContamination(null));
+
+        assertNull(IncidentRequestDTO.normalizePhotoUrl("/data/user/0/com.aula.volta/cache/foto.jpg"));
+        assertNull(IncidentRequestDTO.normalizePhotoUrl(""));
+        assertNull(IncidentRequestDTO.normalizePhotoUrl(null));
+        assertEquals("https://res.cloudinary.com/test.jpg", IncidentRequestDTO.normalizePhotoUrl(" https://res.cloudinary.com/test.jpg "));
+
+        IncidentRequestDTO dto = new IncidentRequestDTO(
+                "area-123",
+                "waste-456",
+                "/local/path/foto.jpg",
+                "",
+                "Média",
+                -10.0,
+                "BAIXA"
+        );
+        assertEquals("LOW", dto.getPriority());
+        assertEquals("MEDIUM", dto.getContaminationLevel());
+        assertNull(dto.getPhotoUrl());
+        assertEquals(5.0, dto.getEstimatedQuantity(), 0.001);
+        assertEquals("Ocorrência registrada no app", dto.getEmployeeDescription());
     }
 }

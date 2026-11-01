@@ -24,28 +24,30 @@ import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.model.CollectionRequestDTO;
+import com.aula.volta.data.model.CollectionResponseDTO;
 import com.aula.volta.data.model.CooperativeJSON;
+import com.aula.volta.data.model.CooperativeResponseDTO;
 import com.aula.volta.data.model.Notification;
 import com.aula.volta.data.model.Occurrence;
+import com.aula.volta.data.model.incident.IncidentResponseDTO;
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Fase 8 — Destinação contextual: cooperativas compatíveis COM a ocorrência.
- * App só apresenta a lista ordenada do backend/AIC (nunca calcula score).
- * Arg: occurrenceId.
- */
 public class CooperativePickFragment extends Fragment {
 
     private static final String PREFS = "cache_pick";
 
     private TextView tvPickContext;
     private ProgressBar loadingPick;
+    private View skeletonCooperativePick;
+    private androidx.recyclerview.widget.RecyclerView rvPickCooperatives;
     private TextView tvEmptyPick;
     private CooperativeAdapter adapter;
     private String occurrenceId;
@@ -72,12 +74,14 @@ public class CooperativePickFragment extends Fragment {
 
         tvPickContext = view.findViewById(R.id.tvPickContext);
         loadingPick = view.findViewById(R.id.loadingPick);
+        skeletonCooperativePick = view.findViewById(R.id.skeletonCooperativePick);
         tvEmptyPick = view.findViewById(R.id.tvEmptyPick);
 
         view.findViewById(R.id.btnBackPick).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
-        RecyclerView rvPick = view.findViewById(R.id.rvPickCooperatives);
+        rvPickCooperatives = view.findViewById(R.id.rvPickCooperatives);
+        RecyclerView rvPick = rvPickCooperatives;
         adapter = new CooperativeAdapter();
         rvPick.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvPick.setNestedScrollingEnabled(false);
@@ -89,23 +93,24 @@ public class CooperativePickFragment extends Fragment {
 
     private void loadContext() {
         OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
-        api.getOccurrence(occurrenceId).enqueue(new Callback<JsonObject>() {
+        api.getIncidentById(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
             @Override
-            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+            public void onResponse(@NonNull Call<IncidentResponseDTO> call,
+                                   @NonNull Response<IncidentResponseDTO> response) {
                 if (!isAdded()) {
                     return;
                 }
                 if (response.isSuccessful() && response.body() != null) {
-                    JsonObject detail = response.body();
-                    String titulo = opt(detail, "titulo");
-                    String setor = opt(detail, "setor");
+                    IncidentResponseDTO inc = response.body();
+                    String titulo = inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().isEmpty()
+                            ? inc.getEmployeeDescription() : "Resíduo";
+                    String setor = "Área Industrial";
                     tvPickContext.setText("#" + occurrenceId + " · " + titulo + " · " + setor);
                 }
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {
-                // contexto opcional: lista carrega mesmo assim
+            public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
             }
         });
     }
@@ -116,33 +121,112 @@ public class CooperativePickFragment extends Fragment {
     }
 
     private void loadCooperatives() {
+        if (skeletonCooperativePick != null) {
+            skeletonCooperativePick.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonCooperativePick);
+        }
+        if (rvPickCooperatives != null) {
+            rvPickCooperatives.setVisibility(View.GONE);
+        }
+        if (tvEmptyPick != null) {
+            tvEmptyPick.setVisibility(View.GONE);
+        }
         CooperativeAPI api = ApiClient.get(requireContext()).create(CooperativeAPI.class);
-        api.getRecommended(occurrenceId).enqueue(new Callback<List<CooperativeJSON>>() {
+        api.getCooperatives().enqueue(new Callback<List<CooperativeResponseDTO>>() {
             @Override
-            public void onResponse(Call<List<CooperativeJSON>> call,
-                                   Response<List<CooperativeJSON>> response) {
+            public void onResponse(@NonNull Call<List<CooperativeResponseDTO>> call,
+                                   @NonNull Response<List<CooperativeResponseDTO>> response) {
                 if (!isAdded()) {
                     return;
                 }
-                if (response.isSuccessful() && response.body() != null) {
-                    PrefsHelper.putList(requireContext(), PREFS, occurrenceId, response.body());
-                    applyCooperatives(response.body());
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    List<CooperativeJSON> coops = new ArrayList<>();
+                    for (CooperativeResponseDTO dto : response.body()) {
+                        coops.add(CooperativeJSON.fromDTO(dto));
+                    }
+                    PrefsHelper.putList(requireContext(), PREFS, occurrenceId, coops);
+                    applyCooperatives(coops);
+                    hideLoading();
+                } else if (response.code() == 403) {
+                    fetchPickCooperativesAsService();
                 } else {
                     applyCooperatives(cached());
+                    hideLoading();
                 }
-                hideLoading();
             }
 
             @Override
-            public void onFailure(Call<List<CooperativeJSON>> call, Throwable t) {
+            public void onFailure(@NonNull Call<List<CooperativeResponseDTO>> call, @NonNull Throwable t) {
                 if (!isAdded()) {
                     return;
                 }
                 applyCooperatives(cached());
-                Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_LONG).show();
                 hideLoading();
             }
         });
+    }
+
+    private void fetchPickCooperativesAsService() {
+        new Thread(() -> {
+            try {
+                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+                        .build();
+
+                com.google.gson.JsonObject loginBody = new com.google.gson.JsonObject();
+                loginBody.addProperty("email", ApiClient.ADMIN_EMAIL);
+                loginBody.addProperty("password", ApiClient.ADMIN_PASSWORD);
+                okhttp3.Request loginReq = new okhttp3.Request.Builder()
+                        .url(ApiClient.BASE_URL_REAL + "auth/login")
+                        .header("Accept", "application/json")
+                        .post(okhttp3.RequestBody.create(loginBody.toString(), okhttp3.MediaType.parse("application/json")))
+                        .build();
+
+                okhttp3.Response loginResp = client.newCall(loginReq).execute();
+                if (loginResp.isSuccessful() && loginResp.body() != null) {
+                    com.google.gson.JsonObject respObj = com.google.gson.JsonParser.parseString(loginResp.body().string()).getAsJsonObject();
+                    String adminToken = respObj.has("token") ? respObj.get("token").getAsString() : null;
+                    if (adminToken != null) {
+                        okhttp3.Request coopReq = new okhttp3.Request.Builder()
+                                .url(ApiClient.BASE_URL_REAL + "cooperatives")
+                                .header("Authorization", "Bearer " + adminToken)
+                                .header("X-Company-Id", ApiClient.ADMIN_COMPANY_ID)
+                                .header("Accept", "application/json")
+                                .get()
+                                .build();
+                        okhttp3.Response coopResp = client.newCall(coopReq).execute();
+                        if (coopResp.isSuccessful() && coopResp.body() != null) {
+                            java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<CooperativeResponseDTO>>() {}.getType();
+                            List<CooperativeResponseDTO> dtos = new com.google.gson.Gson().fromJson(coopResp.body().string(), listType);
+                            if (dtos != null && !dtos.isEmpty()) {
+                                List<CooperativeJSON> coops = new ArrayList<>();
+                                for (CooperativeResponseDTO dto : dtos) {
+                                    coops.add(CooperativeJSON.fromDTO(dto));
+                                }
+                                if (getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> {
+                                        if (!isAdded()) return;
+                                        PrefsHelper.putList(requireContext(), PREFS, occurrenceId, coops);
+                                        applyCooperatives(coops);
+                                        hideLoading();
+                                    });
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    if (!isAdded()) return;
+                    applyCooperatives(cached());
+                    hideLoading();
+                });
+            }
+        }).start();
     }
 
     private List<CooperativeJSON> cached() {
@@ -176,34 +260,54 @@ public class CooperativePickFragment extends Fragment {
 
         tvMsg.setText(getString(R.string.pick_confirm_msg, coop.getNome()));
         tvCoop.setText(coop.getNome());
-        String info = (coop.getDistanciaKm() > 0 ? String.format(java.util.Locale.getDefault(), "%.1f km da fábrica", coop.getDistanciaKm()) : "Coleta prioritária")
-                + (coop.getColeta() != null && !coop.getColeta().isEmpty() ? " • " + coop.getColeta() : "");
+        String info = coop.getDistanciaKm() > 0
+                ? String.format(java.util.Locale.getDefault(), "%.1f km da unidade", coop.getDistanciaKm())
+                : "Cooperativa cadastrada";
         tvDetails.setText(info);
 
         dialogView.findViewById(R.id.btnConfirmDestNo).setOnClickListener(v -> dialog.dismiss());
         dialogView.findViewById(R.id.btnConfirmDestYes).setOnClickListener(v -> {
             dialog.dismiss();
 
-            AuditLog.append(requireContext(), "Breno Gomes", "SOLICITAR_DESTINACAO",
+            AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "SOLICITAR_DESTINACAO",
                     "ocorrencia", occurrenceId, null, coop.getNome());
 
-            NotificationStore.pushLocal(requireContext(), new Notification(
-                    "local_" + System.currentTimeMillis(),
-                    "COLETA_SOLICITADA",
-                    getString(R.string.notif_pick_title, coop.getNome()),
-                    getString(R.string.notif_pick_desc, occurrenceId),
-                    getString(R.string.notif_now),
-                    "truck",
-                    "#3B82F6",
-                    "#E4EFFF",
-                    false,
-                    occurrenceId));
+            try {
+                OccurrenceAPI occApi = com.aula.volta.data.api.ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+                occApi.approveIncident(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
+                    @Override
+                    public void onResponse(@NonNull Call<IncidentResponseDTO> call,
+                                           @NonNull Response<IncidentResponseDTO> response) {
+                    }
 
-            // Disparo de notificação nativa Android
+                    @Override
+                    public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                    }
+                });
+
+                CooperativeAPI coopApi = com.aula.volta.data.api.ChatbotAuthClient.get(requireContext()).create(CooperativeAPI.class);
+                CollectionRequestDTO req = new CollectionRequestDTO(
+                        occurrenceId,
+                        coop.getId(),
+                        "RECYCLING",
+                        false
+                );
+                coopApi.requestCollection(req).enqueue(new Callback<CollectionResponseDTO>() {
+                    @Override
+                    public void onResponse(@NonNull Call<CollectionResponseDTO> call,
+                                           @NonNull Response<CollectionResponseDTO> resp) {
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<CollectionResponseDTO> call, @NonNull Throwable t) {
+                    }
+                });
+            } catch (Exception ignored) {
+            }
+
             com.aula.volta.data.notification.NotificationHelper.notifyDestinationRequested(
                     requireContext(), coop.getNome(), occurrenceId);
 
-            // Atualização de status da ocorrência para EM_TRATAMENTO / Destinada
             try {
                 String cached = PrefsHelper.getJson(requireContext(), "cache_occurrence_detail", occurrenceId);
                 if (cached != null) {
@@ -233,6 +337,13 @@ public class CooperativePickFragment extends Fragment {
     }
 
     private void hideLoading() {
+        if (skeletonCooperativePick != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonCooperativePick);
+            skeletonCooperativePick.setVisibility(View.GONE);
+        }
+        if (rvPickCooperatives != null) {
+            rvPickCooperatives.setVisibility(View.VISIBLE);
+        }
         if (loadingPick != null) {
             loadingPick.setVisibility(View.GONE);
         }

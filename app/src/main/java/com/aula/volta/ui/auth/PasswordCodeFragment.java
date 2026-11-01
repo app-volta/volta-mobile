@@ -18,11 +18,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * Código da nova senha — Figma 790:1154 (Fase 13b).
- * Mock: qualquer código de 4 números; reenvio com timer de 48s.
- * Arg: email.
- */
 public class PasswordCodeFragment extends Fragment {
 
     private static final long RESEND_MILLIS = 48000L;
@@ -47,8 +42,14 @@ public class PasswordCodeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         String email = getArguments() != null ? getArguments().getString("email") : "";
-        ((TextView) view.findViewById(R.id.tvPasscodeSub)).setText(
-                getString(R.string.auth_code_sub, email == null ? "" : email));
+        TextView tvSub = view.findViewById(R.id.tvPasscodeSub);
+        TextView tvEmail = view.findViewById(R.id.tvPasscodeEmail);
+        if (tvSub != null) {
+            tvSub.setText(R.string.auth_confirm_sub);
+        }
+        if (tvEmail != null) {
+            tvEmail.setText(email == null || email.isEmpty() ? "seu e-mail" : email);
+        }
 
         view.findViewById(R.id.btnBackPasscode).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
@@ -87,16 +88,23 @@ public class PasswordCodeFragment extends Fragment {
                 return false;
             });
         }
-
-        tvResend = view.findViewById(R.id.tvResend);
-        tvResend.setOnClickListener(v -> {
-            if (canResend) {
-                Toast.makeText(requireContext(), R.string.auth_code_sent,
-                        Toast.LENGTH_SHORT).show();
-                startResendTimer();
+        boxes[0].post(() -> {
+            if (isAdded()) {
+                boxes[0].requestFocus();
             }
         });
-        startResendTimer();
+
+        tvResend = view.findViewById(R.id.tvResend);
+        if (tvResend != null) {
+            tvResend.setOnClickListener(v -> {
+                if (canResend) {
+                    Toast.makeText(requireContext(), R.string.auth_code_sent,
+                            Toast.LENGTH_SHORT).show();
+                    startResendTimer();
+                }
+            });
+            startResendTimer();
+        }
 
         view.findViewById(R.id.btnConfirmPasscode).setOnClickListener(v -> {
             StringBuilder code = new StringBuilder();

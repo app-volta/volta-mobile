@@ -12,9 +12,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.app.Dialog;
 import com.aula.volta.R;
+import com.aula.volta.util.BottomSheetImmersiveHelper;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.OccurrenceAPI;
+import com.aula.volta.data.model.incident.IncidentResponseDTO;
+import androidx.annotation.NonNull;
 import com.aula.volta.data.local.AuditLog;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.report.PgrsReport;
@@ -25,11 +31,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Bottom sheet de detalhe da ocorrência — Figma (554:27).
- * GET /occurrences/{id} (mock → API-ready), cache por id, offline via prefs.
- * Ações do responsável técnico (validar, observações, destinação) chegam na Fase 6b.
- */
 public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
 
     private static final String PREFS = "cache_occurrence_detail";
@@ -41,6 +42,14 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
     private TextView tvAuthor;
     private TextView tvDate;
     private TextView tvConfidence;
+
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        BottomSheetDialog dialog = (BottomSheetDialog) super.onCreateDialog(savedInstanceState);
+        BottomSheetImmersiveHelper.configureBottomSheet(dialog);
+        return dialog;
+    }
 
     public OccurrenceDetailSheet() {
     }
@@ -72,7 +81,7 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
                         Toast.LENGTH_SHORT).show();
                 return;
             }
-            AuditLog.append(requireContext(), "Breno Gomes", "GERAR",
+            AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "GERAR",
                     "relatorio", report.getName(), null, null);
             PgrsReport.share(requireContext(), report);
         });
@@ -98,17 +107,39 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
     }
 
     private void loadDetail(String occurrenceId) {
-        OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
-        api.getOccurrence(occurrenceId).enqueue(new Callback<JsonObject>() {
+        OccurrenceAPI api = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+        api.getIncidentById(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
             @Override
-            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+            public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
                 if (!isAdded()) {
                     return;
                 }
                 if (response.isSuccessful() && response.body() != null) {
-                    JsonObject detail = response.body();
-                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId,
-                            detail.toString());
+                    IncidentResponseDTO dto = response.body();
+                    JsonObject detail = new JsonObject();
+                    detail.addProperty("id", dto.getId());
+                    String cleanTitle = (dto.getTitle() != null && !dto.getTitle().trim().isEmpty())
+                            ? dto.getTitle().trim()
+                            : com.aula.volta.data.model.AiAnalysisJSON.generateSingleWordTitle(
+                                    null, null, dto.getEmployeeDescription());
+                    if (cleanTitle.isEmpty() || cleanTitle.equalsIgnoreCase("Resíduo")) {
+                        cleanTitle = "Resíduo Reciclável";
+                    }
+                    detail.addProperty("titulo", cleanTitle);
+                    detail.addProperty("material", cleanTitle);
+                    detail.addProperty("setor", com.aula.volta.data.model.Occurrence.resolveSector(dto, getContext()));
+                    detail.addProperty("peso_estimado", dto.getEstimatedQuantity() != null ? dto.getEstimatedQuantity() : 38.0);
+                    detail.addProperty("status", dto.getStatus() != null ? dto.getStatus() : "EM_ANALISE");
+                    detail.addProperty("prioridade", dto.getPriority() != null ? dto.getPriority() : "ALTA");
+                    detail.addProperty("quando", dto.getRegisteredAt() != null ? dto.getRegisteredAt() : "agora");
+                    if (dto.getAiDescription() != null && !dto.getAiDescription().trim().isEmpty()) {
+                        detail.addProperty("relatorio_auto", dto.getAiDescription().trim());
+                    }
+                    if (dto.getPhotoUrl() != null && !dto.getPhotoUrl().isEmpty()) {
+                        detail.addProperty("imageUrl", dto.getPhotoUrl());
+                        detail.addProperty("photoUrl", dto.getPhotoUrl());
+                    }
+                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, detail.toString());
                     applyDetail(detail);
                 } else {
                     loadFromCache(occurrenceId);
@@ -116,13 +147,10 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {
-                if (!isAdded()) {
-                    return;
+            public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                if (isAdded()) {
+                    loadFromCache(occurrenceId);
                 }
-                loadFromCache(occurrenceId);
-                Toast.makeText(requireContext(), R.string.offline_cache,
-                        Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -155,7 +183,9 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
         tvWeight.setText("≈" + peso + (unidade.isEmpty() ? "" : " " + unidade));
 
         setText(tvAuthor, opt(detail, "registrado_por"));
-        setText(tvDate, opt(detail, "data"));
+        String rawDate = opt(detail, "data");
+        if (rawDate.isEmpty()) rawDate = opt(detail, "quando");
+        setText(tvDate, com.aula.volta.data.model.Occurrence.formatBrazilianDateTime(rawDate));
         String confianca = opt(detail, "confianca_ia");
         tvConfidence.setText(confianca.isEmpty() ? "-" : confianca + "%");
     }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "471475588234",
+    "project_id": "volta-af1c7",
+    "storage_bucket": "volta-af1c7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:471475588234:android:cdd97b2fb541f5c08e3173",
+        "android_client_info": {
+          "package_name": "com.aula.volta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFF0G32teng_uJqq3X9IidHUFb0f7kHh4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

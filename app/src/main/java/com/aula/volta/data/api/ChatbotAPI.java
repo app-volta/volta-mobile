@@ -6,22 +6,16 @@ import com.aula.volta.data.model.chat.CreateSessionResponse;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 
-/**
- * Interface Retrofit para a API do Chatbot VOLTA (QA: https://chat.qa.54.210.1.34.sslip.io).
- *
- * Contratos:
- * 1. Criar sessão: POST /v1/sessions
- * 2. Enviar mensagem: POST /v1/chat
- * 3. Histórico: GET /v1/sessions/{session_id}/history
- * 4. Encerrar sessão: POST /v1/sessions/{session_id}/close
- */
 public interface ChatbotAPI {
 
     @Headers({
@@ -50,4 +44,28 @@ public interface ChatbotAPI {
     })
     @POST("v1/sessions/{session_id}/close")
     Call<JsonObject> closeSession(@Path("session_id") String sessionId);
+
+    @Multipart
+    @POST("v1/occurrences/predict")
+    Call<JsonObject> predictWaste(@Part MultipartBody.Part file);
+
+    @Headers({
+            "Content-Type: application/json; charset=utf-8",
+            "Accept: application/json; charset=utf-8"
+    })
+    @POST("v1/occurrences/drafts")
+    Call<JsonObject> createOccurrenceDraft(@Body JsonObject request);
+
+    @Headers({
+            "Accept: application/json; charset=utf-8"
+    })
+    @GET("v1/occurrences/drafts")
+    Call<JsonObject> listOccurrenceDrafts();
+
+    @Headers({
+            "Content-Type: application/json; charset=utf-8",
+            "Accept: application/json; charset=utf-8"
+    })
+    @POST("v1/occurrences/drafts/{draft_id}/approve")
+    Call<JsonObject> approveOccurrenceDraft(@Path("draft_id") String draftId);
 }

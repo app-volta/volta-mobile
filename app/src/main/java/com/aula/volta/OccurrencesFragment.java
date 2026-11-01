@@ -28,12 +28,11 @@ import com.aula.volta.ui.occurrences.OccurrencesFilterSheet;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Lista completa de ocorrências ("Ver todas" da Home) com busca instantânea e filtros compostos (Figma 554:24).
- */
 public class OccurrencesFragment extends Fragment {
 
     private ProgressBar loadingOccurrences;
+    private View skeletonOccurrencesList;
+    private androidx.recyclerview.widget.RecyclerView rvOccurrences;
     private TextView tvEmptyOccurrencesList;
     private TextView tvOccurrencesCount;
     private TextView btnClearFiltersChip;
@@ -43,13 +42,15 @@ public class OccurrencesFragment extends Fragment {
     private ImageView btnClearSearch;
 
     private OccurrenceAdapter adapter;
+    private final OccurrenceStore.StoreListener storeListener = this::loadOccurrences;
     private final List<Occurrence> allOccurrences = new ArrayList<>();
     private final ArrayList<String> filterMaterials = new ArrayList<>();
     private final ArrayList<String> filterStatuses = new ArrayList<>();
+    private final ArrayList<String> filterPriorities = new ArrayList<>();
     private String currentSearchQuery = "";
 
     public OccurrencesFragment() {
-        // Construtor vazio obrigatório
+
     }
 
     @Override
@@ -63,6 +64,7 @@ public class OccurrencesFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         loadingOccurrences = view.findViewById(R.id.loadingOccurrences);
+        skeletonOccurrencesList = view.findViewById(R.id.skeletonOccurrencesList);
         tvEmptyOccurrencesList = view.findViewById(R.id.tvEmptyOccurrencesList);
         tvOccurrencesCount = view.findViewById(R.id.tvOccurrencesCount);
         btnClearFiltersChip = view.findViewById(R.id.btnClearFiltersChip);
@@ -71,17 +73,39 @@ public class OccurrencesFragment extends Fragment {
         etSearchOccurrences = view.findViewById(R.id.etSearchOccurrences);
         btnClearSearch = view.findViewById(R.id.btnClearSearch);
 
-        RecyclerView rvOccurrences = view.findViewById(R.id.rvOccurrences);
+        View btnBack = view.findViewById(R.id.btnBackOccurrences);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
+        }
+
+        rvOccurrences = view.findViewById(R.id.rvOccurrences);
         adapter = new OccurrenceAdapter(occurrence -> {
             Bundle args = new Bundle();
             args.putString("occurrenceId", occurrence.getId());
+            if (occurrence.getPhotoUrl() != null && !occurrence.getPhotoUrl().isEmpty()) {
+                args.putString("photoUrl", occurrence.getPhotoUrl());
+                args.putString("imageUrl", occurrence.getPhotoUrl());
+            }
+            if (occurrence.getPhotoPath() != null && !occurrence.getPhotoPath().isEmpty()) {
+                args.putString("photoPath", occurrence.getPhotoPath());
+            }
             Navigation.findNavController(requireView()).navigate(R.id.nav_occurrence_full, args);
         });
         rvOccurrences.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvOccurrences.setAdapter(adapter);
 
+        OccurrenceStore.addListener(storeListener);
         setupSearchAndFilters();
         loadOccurrences();
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (skeletonOccurrencesList != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonOccurrencesList);
+        }
+        OccurrenceStore.removeListener(storeListener);
+        super.onDestroyView();
     }
 
     private void setupSearchAndFilters() {
@@ -121,7 +145,7 @@ public class OccurrencesFragment extends Fragment {
         if (btnFilterOccurrences != null) {
             btnFilterOccurrences.setOnClickListener(v -> {
                 OccurrencesFilterSheet sheet = OccurrencesFilterSheet.newInstance(
-                        new ArrayList<>(filterMaterials), new ArrayList<>(filterStatuses));
+                        new ArrayList<>(filterMaterials), new ArrayList<>(filterStatuses), new ArrayList<>(filterPriorities));
                 sheet.show(getParentFragmentManager(), "filter");
             });
         }
@@ -130,15 +154,21 @@ public class OccurrencesFragment extends Fragment {
                 OccurrencesFilterSheet.REQUEST_KEY, this, (requestKey, result) -> {
                     filterMaterials.clear();
                     filterStatuses.clear();
+                    filterPriorities.clear();
                     ArrayList<String> mats =
                             result.getStringArrayList(OccurrencesFilterSheet.ARG_MATERIALS);
                     ArrayList<String> stats =
                             result.getStringArrayList(OccurrencesFilterSheet.ARG_STATUSES);
+                    ArrayList<String> prios =
+                            result.getStringArrayList(OccurrencesFilterSheet.ARG_PRIORITIES);
                     if (mats != null) {
                         filterMaterials.addAll(mats);
                     }
                     if (stats != null) {
                         filterStatuses.addAll(stats);
+                    }
+                    if (prios != null) {
+                        filterPriorities.addAll(prios);
                     }
                     applyFilter();
                 });
@@ -151,13 +181,31 @@ public class OccurrencesFragment extends Fragment {
         currentSearchQuery = "";
         filterMaterials.clear();
         filterStatuses.clear();
+        filterPriorities.clear();
         applyFilter();
     }
 
     private void loadOccurrences() {
+        if (skeletonOccurrencesList != null) {
+            skeletonOccurrencesList.setVisibility(View.VISIBLE);
+            com.aula.volta.util.SkeletonPulseAnimator.start(skeletonOccurrencesList);
+        }
+        if (rvOccurrences != null) {
+            rvOccurrences.setVisibility(View.GONE);
+        }
+        if (tvEmptyOccurrencesList != null) {
+            tvEmptyOccurrencesList.setVisibility(View.GONE);
+        }
         OccurrenceStore.refresh(requireContext(), occurrences -> {
             if (!isAdded()) {
                 return;
+            }
+            if (skeletonOccurrencesList != null) {
+                com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonOccurrencesList);
+                skeletonOccurrencesList.setVisibility(View.GONE);
+            }
+            if (rvOccurrences != null) {
+                rvOccurrences.setVisibility(View.VISIBLE);
             }
             applyOccurrences(occurrences);
             hideLoading();
@@ -172,19 +220,15 @@ public class OccurrencesFragment extends Fragment {
         applyFilter();
     }
 
-    /**
-     * Aplica filtros compostos e atualiza contadores visuais e badges.
-     */
     private void applyFilter() {
         List<Occurrence> filtered = OccurrenceFilter.filter(
-                allOccurrences, currentSearchQuery, filterMaterials, filterStatuses);
+                allOccurrences, currentSearchQuery, filterMaterials, filterStatuses, filterPriorities);
 
         adapter.setItems(filtered);
 
         boolean hasActive = OccurrenceFilter.hasActiveFilters(
-                currentSearchQuery, filterMaterials, filterStatuses);
+                currentSearchQuery, filterMaterials, filterStatuses, filterPriorities);
 
-        // Atualizar estado vazio
         if (tvEmptyOccurrencesList != null) {
             if (filtered.isEmpty()) {
                 tvEmptyOccurrencesList.setVisibility(View.VISIBLE);
@@ -196,7 +240,6 @@ public class OccurrencesFragment extends Fragment {
             }
         }
 
-        // Atualizar texto de contagem
         if (tvOccurrencesCount != null && getContext() != null) {
             if (hasActive) {
                 tvOccurrencesCount.setText(getString(
@@ -207,13 +250,11 @@ public class OccurrencesFragment extends Fragment {
             }
         }
 
-        // Atualizar botão de reset de filtros
         if (btnClearFiltersChip != null) {
             btnClearFiltersChip.setVisibility(hasActive ? View.VISIBLE : View.GONE);
         }
 
-        // Atualizar badge do botão de filtros
-        int categoryFilterCount = filterMaterials.size() + filterStatuses.size();
+        int categoryFilterCount = filterMaterials.size() + filterStatuses.size() + filterPriorities.size();
         if (tvFilterBadge != null) {
             if (categoryFilterCount > 0) {
                 tvFilterBadge.setVisibility(View.VISIBLE);
@@ -231,6 +272,13 @@ public class OccurrencesFragment extends Fragment {
     }
 
     private void hideLoading() {
+        if (skeletonOccurrencesList != null) {
+            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonOccurrencesList);
+            skeletonOccurrencesList.setVisibility(View.GONE);
+        }
+        if (rvOccurrences != null) {
+            rvOccurrences.setVisibility(View.VISIBLE);
+        }
         if (loadingOccurrences != null) {
             loadingOccurrences.setVisibility(View.GONE);
         }

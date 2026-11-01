@@ -1,126 +1,345 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Diálogo para Alterar Classificação da Ocorrência (Figma 790:2725 / Fase 33) -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_dialog_finalize"
-    android:elevation="12dp"
-    android:gravity="center_horizontal"
+    android:background="@drawable/bg_bottom_sheet_surface"
     android:orientation="vertical"
-    android:paddingStart="24dp"
-    android:paddingTop="28dp"
-    android:paddingEnd="24dp"
+    android:paddingStart="20dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="20dp"
     android:paddingBottom="24dp">
 
-    <FrameLayout
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_action_chip">
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="14dp"
+        android:background="@drawable/bg_sheet_handle" />
 
-        <ImageView
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            android:layout_gravity="center"
-            android:contentDescription="@string/occ_action_edit_class"
-            android:src="@drawable/ic_stat_open"
-            app:tint="@color/occurrence_icon_tint" />
-    </FrameLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:gravity="center"
-        android:text="@string/occ_action_edit_class"
-        android:textColor="@color/dialog_finalize_title"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="18dp"
-        android:gravity="center"
-        android:lineSpacingExtra="2dp"
-        android:text="Corrija a tipologia do resíduo para destinação e cálculo de indicadores PGRS:"
-        android:textColor="@color/dialog_finalize_sub"
-        android:textSize="13sp" />
-
-    <RadioGroup
-        android:id="@+id/rgMaterials"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp">
+        android:layout_marginBottom="16dp">
 
-        <RadioButton
-            android:id="@+id/rbMatPapelao"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:text="Papelão Ondulado (Classe II A)"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="14sp" />
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:orientation="vertical">
 
-        <RadioButton
-            android:id="@+id/rbMatPlastico"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:text="Plástico Filme / PEBD (Classe II B)"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="14sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:text="Alterar classificação"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-        <RadioButton
-            android:id="@+id/rbMatMetal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:text="Metal / Sucata de Aço (Classe II B)"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="14sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif"
+                android:text="Define como esse resíduo entra no PGRS."
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
 
-        <RadioButton
-            android:id="@+id/rbMatVidro"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:text="Vidro Transparente (Classe II B)"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="14sp" />
+        <FrameLayout
+            android:id="@+id/btnCloseSheet"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_circle_icon_light"
+            android:clickable="true"
+            android:focusable="true">
 
-        <RadioButton
-            android:id="@+id/rbMatOrganico"
-            android:layout_width="match_parent"
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_close"
+                app:tint="@color/vf_text_secondary" />
+        </FrameLayout>
+    </RelativeLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:text="Material"
+        android:textColor="@color/vf_text_primary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="6dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/chipDialogPapelao"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_chip_gold_selected"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="✓ Papelão"
+            android:textColor="#C68A10"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipDialogPlastico"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Plástico"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipDialogMetal"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Metal"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/chipDialogVidro"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Vidro"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipDialogMadeira"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Madeira"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipDialogOrganico"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Orgânico"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipDialogOutro"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Outro"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:text="Prioridade da coleta"
+        android:textColor="@color/vf_text_primary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_segment_container"
+        android:orientation="horizontal"
+        android:padding="4dp">
+
+        <TextView
+            android:id="@+id/segPrioAlta"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_segment_pink_selected"
+            android:gravity="center"
+            android:text="Alta"
+            android:textColor="#E8556C"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/segPrioMedia"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Média"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/segPrioBaixa"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Baixa"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_hazard_card"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_warning_amber"
+            app:tint="#F97316" />
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:text="Resíduo Orgânico / Graxaria (Classe II A)"
-            android:textColor="@color/volta_text_primary_light"
-            android:textSize="14sp" />
-    </RadioGroup>
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:text="Resíduo perigoso"
+                android:textColor="@color/vf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif"
+                android:text="Requer destinação e tratamento especial (NBR 10004)"
+                android:textColor="@color/vf_text_secondary"
+                android:textSize="11.5sp" />
+        </LinearLayout>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchHazard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:useMaterialThemeColors="true" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:fontFamily="sans-serif"
+            android:text="Motivo da alteração"
+            android:textColor="@color/vf_text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:fontFamily="sans-serif"
+            android:text="opcional"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12sp" />
+    </RelativeLayout>
+
+    <EditText
+        android:id="@+id/etEditReason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="22dp"
+        android:background="@drawable/bg_input_register"
+        android:fontFamily="sans-serif"
+        android:gravity="top"
+        android:hint="Papelão está mais molhado do que parecia"
+        android:minHeight="48dp"
+        android:padding="12dp"
+        android:textColor="@color/vf_text_primary"
+        android:textColorHint="@color/vf_hint"
+        android:textSize="13.5sp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnConfirmEditClass"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:backgroundTint="@color/volta_green_primary"
+        android:layout_height="54dp"
+        android:background="@drawable/bg_btn_primary_v"
+        android:fontFamily="sans-serif"
         android:text="Salvar classificação"
+        android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="15sp"
         android:textStyle="bold"
-        app:cornerRadius="14dp" />
-
-    <TextView
-        android:id="@+id/btnCancelEditClass"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="8dp"
-        android:text="@string/pick_confirm_no"
-        android:textColor="@color/dialog_finalize_sub"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        app:backgroundTint="@null"
+        app:cornerRadius="16dp" />
 </LinearLayout>

@@ -2,9 +2,6 @@ package com.aula.volta.data.model.chat;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Payload para envio de mensagem ao Chatbot VOLTA (POST /v1/chat).
- */
 public class ChatMessageRequest {
 
     @SerializedName("session_id")

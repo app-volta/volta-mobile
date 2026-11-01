@@ -1,25 +1,28 @@
 package com.aula.volta.ui.assistant;
 
-import android.app.AlertDialog;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.AuthAPI;
 import com.aula.volta.data.api.ChatbotAPI;
 import com.aula.volta.data.api.ChatbotAuthClient;
@@ -42,22 +45,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Assistente VOLTA — Integração com o Chatbot no ambiente QA por HTTPS.
- *
- * Endereços:
- * - API de login: https://api.qa.54.210.1.34.sslip.io (POST /auth/login)
- * - Chatbot: https://chat.qa.54.210.1.34.sslip.io (POST /v1/sessions, POST /v1/chat, etc.)
- *
- * Funcionalidades:
- * 1. Login com JWT (Bearer Token)
- * 2. Criação de sessão e armazenamento de session_id
- * 3. Envio de mensagens com exibição de response.answer, citations, recommended_actions e validação humana
- * 4. Recuperação de histórico da sessão
- * 5. Encerramento de sessão para indexação do resumo
- * 6. Renovação automática de token após expiração (401)
- * 7. Isolamento absoluto do restante do app
- */
 public class AssistantFragment extends Fragment {
 
     private static final String TAG = "AssistantFragment";
@@ -66,11 +53,22 @@ public class AssistantFragment extends Fragment {
     private LinearLayout messages;
     private ScrollView scroll;
     private EditText input;
-    private FrameLayout btnSend;
     private View typingIndicatorView;
 
     private String currentSessionId;
     private boolean isSending;
+
+    private final androidx.activity.result.ActivityResultLauncher<android.content.Intent> speechLauncher =
+            registerForActivityResult(new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    java.util.ArrayList<String> matches = result.getData().getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+                    if (matches != null && !matches.isEmpty() && input != null) {
+                        String spokenText = matches.get(0);
+                        input.setText(spokenText);
+                        input.setSelection(spokenText.length());
+                    }
+                }
+            });
 
     public AssistantFragment() {
     }
@@ -89,34 +87,58 @@ public class AssistantFragment extends Fragment {
         messages = view.findViewById(R.id.assistantMessages);
         scroll = view.findViewById(R.id.scrollAssistant);
         input = view.findViewById(R.id.etAssistant);
-        btnSend = view.findViewById(R.id.btnSendAssistant);
 
         view.findViewById(R.id.btnBackAssistant).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
-        // Botão para encerrar sessão e iniciar nova conversa
-        View btnCloseSession = view.findViewById(R.id.btnCloseSession);
-        if (btnCloseSession != null) {
-            btnCloseSession.setOnClickListener(v -> restartSession());
+        TextView tvHello = view.findViewById(R.id.tvAssistantHello);
+        if (tvHello != null && getContext() != null) {
+            String fullName = SessionManager.name(requireContext());
+            if (fullName != null && !fullName.trim().isEmpty()) {
+                String firstName = fullName.trim().split("\\s+")[0];
+                tvHello.setText("Oi, " + firstName + "!");
+            }
         }
 
-        // Sugestões rápidas
+        View btnMic = view.findViewById(R.id.btnMicAssistant);
+        if (btnMic != null) {
+            btnMic.setOnClickListener(v -> {
+                try {
+                    android.content.Intent intent = new android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                            android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "pt-BR");
+                    intent.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Fale com o Assistente VOLTA...");
+                    speechLauncher.launch(intent);
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(requireContext(),
+                            "Reconhecimento de voz indisponível no dispositivo",
+                            android.widget.Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        renderDefaultFigmaConversation();
+
         View chipIsopor = view.findViewById(R.id.chipSuggestIsopor);
         if (chipIsopor != null) {
-            chipIsopor.setOnClickListener(v -> ask(((TextView) v).getText().toString()));
+            chipIsopor.setOnClickListener(v ->
+                    ask(((TextView) v).getText().toString()));
         }
 
         View chipPapelao = view.findViewById(R.id.chipSuggestPapelao);
         if (chipPapelao != null) {
-            chipPapelao.setOnClickListener(v -> ask(((TextView) v).getText().toString()));
+            chipPapelao.setOnClickListener(v ->
+                    ask(((TextView) v).getText().toString()));
         }
 
         View chipMeta = view.findViewById(R.id.chipSuggestMeta);
         if (chipMeta != null) {
-            chipMeta.setOnClickListener(v -> ask(((TextView) v).getText().toString()));
+            chipMeta.setOnClickListener(v ->
+                    ask(((TextView) v).getText().toString()));
         }
 
-        btnSend.setOnClickListener(v -> {
+        view.findViewById(R.id.btnSendAssistant).setOnClickListener(v -> {
             String text = input.getText().toString().trim();
             if (!text.isEmpty() && !isSending) {
                 ask(text);
@@ -124,13 +146,19 @@ public class AssistantFragment extends Fragment {
             }
         });
 
-        // Inicializa fluxo com o Chatbot
         initChatSession();
     }
 
-    /**
-     * Inicializa a sessão com o Chatbot. Se não tiver token JWT, tenta autenticar.
-     */
+    private void renderDefaultFigmaConversation() {
+        if (messages == null) {
+            return;
+        }
+        messages.removeAllViews();
+        addBot(getString(R.string.assistant_intro));
+        addUser(getString(R.string.assistant_chip_isopor));
+        addBot(getString(R.string.assistant_a_isopor));
+    }
+
     private void initChatSession() {
         if (!SessionManager.hasToken(requireContext())) {
             authenticateChatbot();
@@ -143,115 +171,38 @@ public class AssistantFragment extends Fragment {
         String email = SessionManager.email(requireContext());
         String password = SessionManager.password(requireContext());
 
-        if (email.isEmpty() || password.isEmpty() || email.contains("volta.mock") || "breno@volta.com".equals(email)) {
-            // Não há credenciais QA salvas ainda. Mostra mensagem inicial com opção de conectar
-            showQaLoginPrompt();
-            return;
+        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email)) {
+            email = ApiClient.EMPLOYEE_EMAIL;
+            password = ApiClient.EMPLOYEE_PASSWORD;
+        } else if (password.isEmpty() || "1234".equals(password)) {
+            password = ApiClient.EMPLOYEE_PASSWORD;
         }
 
         AuthAPI authApi = ChatbotAuthClient.get(requireContext()).create(AuthAPI.class);
         authApi.login(new LoginRequest(email, password)).enqueue(new Callback<LoginResponse>() {
             @Override
             public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
-                    SessionManager.saveToken(requireContext(), response.body().getToken());
-                    Log.i(TAG, "Chatbot autenticado com sucesso.");
-                    proceedSessionInit();
-                } else {
-                    showQaLoginPrompt();
+                if (!isAdded()) {
+                    return;
                 }
+                if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
+                    String token = response.body().getToken().trim();
+                    SessionManager.saveToken(requireContext(), token);
+                    ApiClient.saveToken(requireContext(), token);
+                    Log.i(TAG, "Chatbot QA autenticado com sucesso.");
+                }
+                proceedSessionInit();
             }
 
             @Override
             public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) {
+                    return;
+                }
                 Log.w(TAG, "Chatbot auth offline: " + t.getMessage());
-                showQaLoginPrompt();
+                proceedSessionInit();
             }
         });
-    }
-
-    private void showQaLoginPrompt() {
-        if (!isAdded()) {
-            return;
-        }
-        messages.removeAllViews();
-        addBot("Olá! O Chatbot VOLTA está conectado ao ambiente QA.\n\nPara interagir com o modelo de inteligência artificial, você pode autenticar com as credenciais de teste QA.",
-                null, null, false);
-
-        LinearLayout row = new LinearLayout(requireContext());
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(dp(40), dp(4), 0, dp(8));
-
-        TextView btnLoginQa = chip("🔒 Conectar Chatbot QA");
-        btnLoginQa.setOnClickListener(v -> showQaLoginDialog());
-        row.addView(btnLoginQa);
-
-        messages.addView(row);
-        addActionChips();
-    }
-
-    private void showQaLoginDialog() {
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_chatbot_login, null);
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setView(dialogView)
-                .create();
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        }
-
-        EditText etEmail = dialogView.findViewById(R.id.etChatbotQaEmail);
-        EditText etPassword = dialogView.findViewById(R.id.etChatbotQaPassword);
-        TextView btnConfirm = dialogView.findViewById(R.id.btnConfirmChatbotLogin);
-        TextView btnCancel = dialogView.findViewById(R.id.btnCancelChatbotLogin);
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        btnConfirm.setOnClickListener(v -> {
-            String email = etEmail.getText().toString().trim();
-            String password = etPassword.getText().toString();
-
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(requireContext(), "Preencha e-mail e senha de QA", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            btnConfirm.setEnabled(false);
-            btnConfirm.setText("Autenticando...");
-
-            AuthAPI authApi = ChatbotAuthClient.get(requireContext()).create(AuthAPI.class);
-            authApi.login(new LoginRequest(email, password)).enqueue(new Callback<LoginResponse>() {
-                @Override
-                public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
-                    if (!isAdded()) {
-                        return;
-                    }
-                    if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
-                        String token = response.body().getToken();
-                        SessionManager.login(requireContext(), email, password, SessionManager.name(requireContext()), token);
-                        Toast.makeText(requireContext(), "Chatbot QA conectado!", Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
-                        proceedSessionInit();
-                    } else {
-                        btnConfirm.setEnabled(true);
-                        btnConfirm.setText("Autenticar QA");
-                        Toast.makeText(requireContext(), "Credenciais QA inválidas (HTTP " + response.code() + ")", Toast.LENGTH_LONG).show();
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
-                    if (!isAdded()) {
-                        return;
-                    }
-                    btnConfirm.setEnabled(true);
-                    btnConfirm.setText("Autenticar QA");
-                    Toast.makeText(requireContext(), "Falha ao conectar: " + t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-                }
-            });
-        });
-
-        dialog.show();
     }
 
     private void proceedSessionInit() {
@@ -266,9 +217,6 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    /**
-     * Cria uma nova sessão no Chatbot (POST /v1/sessions).
-     */
     private void createNewSession() {
         ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
         api.createSession().enqueue(new Callback<CreateSessionResponse>() {
@@ -281,36 +229,19 @@ public class AssistantFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null && response.body().getSessionId() != null) {
                     currentSessionId = response.body().getSessionId();
                     SessionManager.saveChatSessionId(requireContext(), currentSessionId);
-
-                    messages.removeAllViews();
-                    addBot(getString(R.string.assistant_intro), null, null, false);
-                    addActionChips();
-                } else if (response.code() == 401) {
-                    showQaLoginPrompt();
+                    Log.i(TAG, "Sessão do Chatbot QA ativa: " + currentSessionId);
                 } else {
-                    useFallbackInitialMessage();
+                    Log.w(TAG, "Chatbot QA createSession status: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<CreateSessionResponse> call, @NonNull Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                useFallbackInitialMessage();
+                Log.w(TAG, "Chatbot QA createSession offline: " + t.getMessage());
             }
         });
     }
 
-    private void useFallbackInitialMessage() {
-        messages.removeAllViews();
-        addBot(getString(R.string.assistant_intro), null, null, false);
-        addActionChips();
-    }
-
-    /**
-     * Carrega o histórico da sessão existente (GET /v1/sessions/{session_id}/history).
-     */
     private void loadSessionHistory(String sessionId) {
         ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
         api.getHistory(sessionId).enqueue(new Callback<JsonElement>() {
@@ -320,26 +251,15 @@ public class AssistantFragment extends Fragment {
                     return;
                 }
                 if (response.isSuccessful() && response.body() != null) {
-                    messages.removeAllViews();
-                    boolean hasMessages = parseAndRenderHistory(response.body());
-                    if (!hasMessages) {
-                        useFallbackInitialMessage();
-                    }
+                    parseAndRenderHistory(response.body());
                 } else if (response.code() == 404 || response.code() == 400) {
                     createNewSession();
-                } else if (response.code() == 401) {
-                    showQaLoginPrompt();
-                } else {
-                    useFallbackInitialMessage();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonElement> call, @NonNull Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                useFallbackInitialMessage();
+                Log.w(TAG, "Histórico do Chatbot QA offline: " + t.getMessage());
             }
         });
     }
@@ -359,6 +279,8 @@ public class AssistantFragment extends Fragment {
             }
 
             if (list != null && list.size() > 0) {
+                messages.removeAllViews();
+                addBot(getString(R.string.assistant_intro));
                 for (JsonElement el : list) {
                     if (el.isJsonObject()) {
                         JsonObject item = el.getAsJsonObject();
@@ -372,9 +294,9 @@ public class AssistantFragment extends Fragment {
                             content = item.get("answer").getAsString();
                         }
 
-                        if ("user".equalsIgnoreCase(role)) {
+                        if ("user".equalsIgnoreCase(role) || "usuario".equalsIgnoreCase(role)) {
                             addUser(content);
-                        } else {
+                        } else if (!content.isEmpty()) {
                             addBot(content, null, null, false);
                         }
                     }
@@ -382,29 +304,32 @@ public class AssistantFragment extends Fragment {
                 return true;
             }
         } catch (Exception e) {
-            Log.e(TAG, "Erro ao analisar histórico", e);
+            Log.e(TAG, "Erro ao analisar histórico da sessão", e);
         }
         return false;
     }
 
-    /**
-     * Encerra a sessão atual (POST /v1/sessions/{session_id}/close) e cria uma nova.
-     */
-    private void restartSession() {
+    public void closeAndRestartSession() {
         if (currentSessionId != null && !currentSessionId.trim().isEmpty()) {
-            Toast.makeText(requireContext(), R.string.chatbot_session_closed, Toast.LENGTH_SHORT).show();
+            final String sessionToClose = currentSessionId;
             ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
-            api.closeSession(currentSessionId).enqueue(new Callback<JsonObject>() {
+            api.closeSession(sessionToClose).enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                    SessionManager.clearChatSessionId(requireContext());
-                    createNewSession();
+                    if (isAdded()) {
+                        SessionManager.clearChatSessionId(requireContext());
+                        currentSessionId = null;
+                        createNewSession();
+                    }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                    SessionManager.clearChatSessionId(requireContext());
-                    createNewSession();
+                    if (isAdded()) {
+                        SessionManager.clearChatSessionId(requireContext());
+                        currentSessionId = null;
+                        createNewSession();
+                    }
                 }
             });
         } else {
@@ -412,14 +337,10 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    /**
-     * Envia mensagem do usuário para o Chatbot (POST /v1/chat).
-     */
     private void ask(String text) {
         if (text == null || text.trim().isEmpty()) {
             return;
         }
-
         addUser(text);
         showTypingIndicator();
 
@@ -429,21 +350,26 @@ public class AssistantFragment extends Fragment {
                 @Override
                 public void onResponse(@NonNull Call<CreateSessionResponse> call,
                                        @NonNull Response<CreateSessionResponse> response) {
-                    if (response.isSuccessful() && response.body() != null) {
+                    if (!isAdded()) {
+                        return;
+                    }
+                    if (response.isSuccessful() && response.body() != null && response.body().getSessionId() != null) {
                         currentSessionId = response.body().getSessionId();
                         SessionManager.saveChatSessionId(requireContext(), currentSessionId);
                         dispatchChatMessage(text);
-                    } else if (response.code() == 401) {
-                        hideTypingIndicator();
-                        showQaLoginPrompt();
                     } else {
-                        fallbackResponse(text);
+                        hideTypingIndicator();
+                        addBot(answerFor(text));
                     }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<CreateSessionResponse> call, @NonNull Throwable t) {
-                    fallbackResponse(text);
+                    if (!isAdded()) {
+                        return;
+                    }
+                    hideTypingIndicator();
+                    addBot(answerFor(text));
                 }
             });
         } else {
@@ -468,14 +394,12 @@ public class AssistantFragment extends Fragment {
                     ChatMessageResponse body = response.body();
                     String answer = body.getAnswer();
                     if (answer == null || answer.trim().isEmpty()) {
-                        answer = fallbackAnswer(text);
+                        answer = answerFor(text);
                     }
-
                     addBot(answer, body.getRecommendedActions(), body.getCitations(), body.isRequiresHumanValidation());
-                } else if (response.code() == 401) {
-                    showQaLoginPrompt();
                 } else {
-                    fallbackResponse(text);
+                    Log.w(TAG, "Chatbot QA /v1/chat retornou HTTP " + response.code() + ", usando fallback.");
+                    addBot(answerFor(text));
                 }
             }
 
@@ -486,18 +410,59 @@ public class AssistantFragment extends Fragment {
                 }
                 isSending = false;
                 hideTypingIndicator();
-                Log.w(TAG, "Chatbot API indisponível, usando fallback inteligente: " + t.getMessage());
-                fallbackResponse(text);
+                Log.w(TAG, "Chatbot QA indisponível, usando fallback local: " + t.getMessage());
+                addBot(answerFor(text));
             }
         });
     }
 
-    private void fallbackResponse(String text) {
-        hideTypingIndicator();
-        addBot(fallbackAnswer(text), null, null, false);
+    private void showTypingIndicator() {
+        if (typingIndicatorView != null || messages == null) {
+            return;
+        }
+        LinearLayout row = new LinearLayout(requireContext());
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.BOTTOM);
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        rowParams.topMargin = dp(6);
+        rowParams.bottomMargin = dp(6);
+        row.setLayoutParams(rowParams);
+
+        ImageView mascot = new ImageView(requireContext());
+        mascot.setImageResource(R.drawable.mascote_volta);
+        mascot.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams mascotParams = new LinearLayout.LayoutParams(dp(28), dp(46));
+        mascotParams.rightMargin = dp(8);
+        mascot.setLayoutParams(mascotParams);
+        row.addView(mascot);
+
+        TextView tvTyping = new TextView(requireContext());
+        tvTyping.setText(getString(R.string.chatbot_thinking));
+        tvTyping.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
+        tvTyping.setTextColor(Color.parseColor("#0E7C48"));
+        tvTyping.setBackgroundResource(R.drawable.bg_assistant_bot_bubble);
+        tvTyping.setPadding(dp(14), dp(10), dp(14), dp(10));
+        Typeface inter = ResourcesCompat.getFont(requireContext(), R.font.font_inter);
+        if (inter != null) {
+            tvTyping.setTypeface(inter);
+        }
+        row.addView(tvTyping);
+
+        typingIndicatorView = row;
+        messages.addView(typingIndicatorView);
+        scrollToBottom();
     }
 
-    private String fallbackAnswer(String text) {
+    private void hideTypingIndicator() {
+        if (typingIndicatorView != null && messages != null) {
+            messages.removeView(typingIndicatorView);
+            typingIndicatorView = null;
+        }
+    }
+
+    private String answerFor(String text) {
         String q = text.toLowerCase(new Locale("pt", "BR"));
         if (q.contains("isopor") || q.contains("eps")) {
             return getString(R.string.assistant_a_isopor);
@@ -526,63 +491,29 @@ public class AssistantFragment extends Fragment {
         try {
             String json = PrefsHelper.getJson(requireContext(), "cache_reports", "summary");
             if (json != null) {
-                JsonObject summary =
+                com.google.gson.JsonObject summary =
                         com.google.gson.JsonParser.parseString(json).getAsJsonObject();
                 if (summary.has("kg_reciclados")) {
                     return summary.get("kg_reciclados").getAsInt();
                 }
             }
         } catch (Exception ignored) {
+
         }
         return 1147;
     }
 
-    private void showTypingIndicator() {
-        if (typingIndicatorView != null) {
-            return;
-        }
-
-        LinearLayout row = new LinearLayout(requireContext());
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        rowParams.topMargin = dp(6);
-        rowParams.bottomMargin = dp(6);
-        row.setLayoutParams(rowParams);
-
-        ImageView mascot = new ImageView(requireContext());
-        mascot.setImageResource(R.drawable.mascote_volta);
-        LinearLayout.LayoutParams mascotParams = new LinearLayout.LayoutParams(dp(28), dp(32));
-        mascotParams.rightMargin = dp(8);
-        mascot.setLayoutParams(mascotParams);
-        row.addView(mascot);
-
-        TextView tvTyping = new TextView(requireContext());
-        tvTyping.setText(getString(R.string.chatbot_thinking));
-        tvTyping.setTextSize(13);
-        tvTyping.setTextColor(requireContext().getColor(R.color.volta_green_dark));
-        tvTyping.setBackgroundResource(R.drawable.bg_chat_in);
-        tvTyping.setPadding(dp(12), dp(8), dp(12), dp(8));
-        row.addView(tvTyping);
-
-        typingIndicatorView = row;
-        messages.addView(typingIndicatorView);
-        scrollToBottom();
+    private void addBot(String text) {
+        addBot(text, null, null, false);
     }
 
-    private void hideTypingIndicator() {
-        if (typingIndicatorView != null) {
-            messages.removeView(typingIndicatorView);
-            typingIndicatorView = null;
-        }
-    }
-
-    private void addBot(String text, List<String> recommendedActions, List<Object> citations, boolean requiresHumanValidation) {
+    private void addBot(String text,
+                        @Nullable List<String> recommendedActions,
+                        @Nullable List<Object> citations,
+                        boolean requiresHumanValidation) {
         LinearLayout row = new LinearLayout(requireContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(android.view.Gravity.TOP);
+        row.setGravity(Gravity.BOTTOM);
         LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -592,164 +523,171 @@ public class AssistantFragment extends Fragment {
 
         ImageView mascot = new ImageView(requireContext());
         mascot.setImageResource(R.drawable.mascote_volta);
-        LinearLayout.LayoutParams mascotParams = new LinearLayout.LayoutParams(dp(32), dp(36));
+        mascot.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams mascotParams = new LinearLayout.LayoutParams(dp(28), dp(46));
         mascotParams.rightMargin = dp(8);
-        mascotParams.topMargin = dp(4);
         mascot.setLayoutParams(mascotParams);
         row.addView(mascot);
 
-        LinearLayout contentCol = new LinearLayout(requireContext());
-        contentCol.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams colParams = new LinearLayout.LayoutParams(
-                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
-        contentCol.setLayoutParams(colParams);
+        LinearLayout bubbleBox = new LinearLayout(requireContext());
+        bubbleBox.setOrientation(LinearLayout.VERTICAL);
+        bubbleBox.setBackgroundResource(R.drawable.bg_assistant_bot_bubble);
+        int padH = dp(14);
+        int padV = dp(12);
+        bubbleBox.setPadding(padH, padV, padH, padV);
+        int maxBubbleWidth = (int) (getResources().getDisplayMetrics().widthPixels * 0.78f);
+        LinearLayout.LayoutParams bubbleParams = new LinearLayout.LayoutParams(
+                maxBubbleWidth, LinearLayout.LayoutParams.WRAP_CONTENT);
+        bubbleBox.setLayoutParams(bubbleParams);
 
-        contentCol.addView(bubble(text, false));
+        TextView tv = new TextView(requireContext());
+        tv.setText(text);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f);
+        tv.setTextColor(Color.parseColor("#1B2430"));
+        tv.setLineSpacing(dp(3), 1.0f);
+        Typeface inter = ResourcesCompat.getFont(requireContext(), R.font.font_inter);
+        if (inter != null) {
+            tv.setTypeface(inter);
+        }
+        bubbleBox.addView(tv);
 
         if (requiresHumanValidation) {
             TextView tvValidation = new TextView(requireContext());
             tvValidation.setText(getString(R.string.chatbot_human_validation_badge));
-            tvValidation.setTextSize(11);
-            tvValidation.setTextColor(requireContext().getColor(R.color.priority_medium_text));
-            tvValidation.setBackgroundResource(R.drawable.bg_pill_dark);
-            tvValidation.setPadding(dp(8), dp(4), dp(8), dp(4));
+            tvValidation.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
+            tvValidation.setTextColor(Color.parseColor("#C68A10"));
+            if (inter != null) {
+                tvValidation.setTypeface(inter, Typeface.BOLD);
+            }
             LinearLayout.LayoutParams valParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            valParams.topMargin = dp(4);
+            valParams.topMargin = dp(6);
             tvValidation.setLayoutParams(valParams);
-            contentCol.addView(tvValidation);
+            bubbleBox.addView(tvValidation);
         }
 
         if (citations != null && !citations.isEmpty()) {
             TextView tvCitations = new TextView(requireContext());
             tvCitations.setText("📚 Fontes consultadas: " + citations.size() + " referências");
-            tvCitations.setTextSize(11);
-            tvCitations.setTextColor(requireContext().getColor(R.color.volta_text_muted_light));
+            tvCitations.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
+            tvCitations.setTextColor(Color.parseColor("#6B7280"));
+            if (inter != null) {
+                tvCitations.setTypeface(inter);
+            }
             LinearLayout.LayoutParams citParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            citParams.topMargin = dp(3);
+            citParams.topMargin = dp(4);
             tvCitations.setLayoutParams(citParams);
-            contentCol.addView(tvCitations);
+            bubbleBox.addView(tvCitations);
         }
 
         if (recommendedActions != null && !recommendedActions.isEmpty()) {
-            LinearLayout actionsRow = new LinearLayout(requireContext());
-            actionsRow.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout recCol = new LinearLayout(requireContext());
+            recCol.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams recParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-            actionsParams.topMargin = dp(6);
-            actionsRow.setLayoutParams(actionsParams);
+            recParams.topMargin = dp(8);
+            recCol.setLayoutParams(recParams);
 
             for (String action : recommendedActions) {
                 if (action != null && !action.trim().isEmpty()) {
-                    TextView btnAction = chip("💡 " + action.trim());
-                    btnAction.setOnClickListener(v -> ask(action.trim()));
-                    actionsRow.addView(btnAction);
+                    View pill = actionPill(R.drawable.ic_send_assistant, action.trim());
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) pill.getLayoutParams();
+                    lp.bottomMargin = dp(4);
+                    pill.setLayoutParams(lp);
+                    pill.setOnClickListener(v -> ask(action.trim()));
+                    recCol.addView(pill);
                 }
             }
-            contentCol.addView(actionsRow);
+            bubbleBox.addView(recCol);
         }
 
-        // Se a resposta for sobre isopor, adiciona botões contextuais de navegação
         if (text != null && (text.contains("Isopor") || text.contains("EPS"))) {
             LinearLayout actionsRow = new LinearLayout(requireContext());
             actionsRow.setOrientation(LinearLayout.HORIZONTAL);
             LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT);
-            actionsParams.topMargin = dp(6);
+            actionsParams.topMargin = dp(12);
             actionsRow.setLayoutParams(actionsParams);
 
-            TextView btnReg = chip(getString(R.string.assistant_chip_register));
+            View btnReg = actionPill(
+                    R.drawable.ic_camera_official,
+                    getString(R.string.assistant_chip_register));
             btnReg.setOnClickListener(v ->
                     Navigation.findNavController(requireView()).navigate(R.id.nav_register));
 
-            TextView btnCoop = chip(getString(R.string.assistant_chip_coops));
+            View btnCoop = actionPill(
+                    R.drawable.ic_nav_coops_figma,
+                    getString(R.string.assistant_chip_coops));
             btnCoop.setOnClickListener(v ->
                     Navigation.findNavController(requireView()).navigate(R.id.nav_cooperatives));
 
             actionsRow.addView(btnReg);
             actionsRow.addView(btnCoop);
-            contentCol.addView(actionsRow);
+            bubbleBox.addView(actionsRow);
         }
 
-        row.addView(contentCol);
+        row.addView(bubbleBox);
         messages.addView(row);
         scrollToBottom();
+    }
+
+    private View actionPill(int iconRes, String label) {
+        LinearLayout pill = new LinearLayout(requireContext());
+        pill.setOrientation(LinearLayout.HORIZONTAL);
+        pill.setGravity(Gravity.CENTER_VERTICAL);
+        pill.setBackgroundResource(R.drawable.bg_assistant_action_pill);
+        pill.setPadding(dp(11), 0, dp(11), 0);
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, dp(30));
+        lp.rightMargin = dp(6);
+        pill.setLayoutParams(lp);
+
+        ImageView icon = new ImageView(requireContext());
+        icon.setImageResource(iconRes);
+        icon.setColorFilter(Color.parseColor("#0E7C48"));
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dp(13), dp(13));
+        iconLp.rightMargin = dp(5);
+        icon.setLayoutParams(iconLp);
+        pill.addView(icon);
+
+        TextView tv = new TextView(requireContext());
+        tv.setText(label);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f);
+        tv.setTextColor(Color.parseColor("#0E7C48"));
+        Typeface inter = ResourcesCompat.getFont(requireContext(), R.font.font_inter);
+        tv.setTypeface(inter, Typeface.BOLD);
+        pill.addView(tv);
+
+        return pill;
     }
 
     private void addUser(String text) {
-        messages.addView(bubble(text, true));
-        scrollToBottom();
-    }
-
-    private TextView bubble(String text, boolean outgoing) {
         TextView tv = new TextView(requireContext());
         tv.setText(text);
-        tv.setTextSize(15);
-        int padH = dp(14);
-        int padV = dp(10);
-        tv.setPadding(padH, padV, padH, padV);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.topMargin = dp(4);
-        params.bottomMargin = dp(4);
-        if (outgoing) {
-            params.gravity = android.view.Gravity.END;
-            tv.setBackgroundResource(R.drawable.bg_button_gradient);
-            tv.setTextColor(requireContext().getColor(R.color.white));
-        } else {
-            params.gravity = android.view.Gravity.START;
-            tv.setBackgroundResource(R.drawable.bg_chat_in);
-            tv.setTextColor(requireContext().getColor(R.color.volta_text_primary_light));
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f);
+        tv.setTextColor(Color.WHITE);
+        Typeface inter = ResourcesCompat.getFont(requireContext(), R.font.font_inter);
+        if (inter != null) {
+            tv.setTypeface(inter);
         }
-        tv.setLayoutParams(params);
-        tv.setMaxWidth((int) (getResources().getDisplayMetrics().widthPixels * 0.78));
-        return tv;
-    }
+        tv.setBackgroundResource(R.drawable.bg_assistant_user_bubble);
+        tv.setPadding(dp(14), dp(12), dp(14), dp(12));
 
-    private void addActionChips() {
-        LinearLayout row = new LinearLayout(requireContext());
-        row.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.topMargin = dp(4);
-        params.bottomMargin = dp(6);
-        row.setLayoutParams(params);
+        params.gravity = Gravity.END;
+        params.topMargin = dp(8);
+        params.bottomMargin = dp(8);
+        tv.setLayoutParams(params);
+        tv.setMaxWidth((int) (getResources().getDisplayMetrics().widthPixels * 0.75f));
 
-        TextView register = chip(getString(R.string.assistant_chip_register));
-        register.setOnClickListener(v ->
-                Navigation.findNavController(requireView()).navigate(R.id.nav_register));
-        TextView coops = chip(getString(R.string.assistant_chip_coops));
-        coops.setOnClickListener(v ->
-                Navigation.findNavController(requireView()).navigate(R.id.nav_cooperatives));
-
-        row.addView(register);
-        row.addView(coops);
-        messages.addView(row);
+        messages.addView(tv);
         scrollToBottom();
-    }
-
-    private TextView chip(String text) {
-        TextView tv = new TextView(requireContext());
-        tv.setText(text);
-        tv.setTextSize(13);
-        tv.setTypeface(tv.getTypeface(), android.graphics.Typeface.BOLD);
-        tv.setTextColor(requireContext().getColor(R.color.volta_green_primary));
-        tv.setBackgroundResource(R.drawable.bg_chip_unselected);
-        int padH = dp(14);
-        tv.setPadding(padH, dp(8), padH, dp(8));
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.rightMargin = dp(8);
-        params.topMargin = dp(4);
-        params.bottomMargin = dp(4);
-        tv.setLayoutParams(params);
-        return tv;
     }
 
     private void scrollToBottom() {
@@ -759,6 +697,6 @@ public class AssistantFragment extends Fragment {
     }
 
     private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density);
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }
