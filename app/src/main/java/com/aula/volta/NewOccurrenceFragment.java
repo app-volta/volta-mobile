@@ -1,13 +1,10 @@
 package com.aula.volta;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.OrientationEventListener;
 import android.view.Surface;
@@ -24,7 +21,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
@@ -37,14 +33,22 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.aula.volta.data.api.AiAnalysisAPI;
+import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.util.ImageUtils;
+import com.aula.volta.util.NetworkUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
-
-import com.aula.volta.util.ImageUtils;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class NewOccurrenceFragment extends Fragment {
 
@@ -153,8 +157,7 @@ public class NewOccurrenceFragment extends Fragment {
         if (imgPhotoPreview != null) {
             imgPhotoPreview.setOnClickListener(v -> {
                 if (photoFile != null && photoFile.exists()) {
-                    String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
-                    String sectorName = (sectorIndex >= 0 && sectorIndex < sectors.length) ? sectors[sectorIndex] : "Setor não definido";
+                    String sectorName = selectedSectorName != null ? selectedSectorName : tvSector.getText().toString();
                     com.aula.volta.ui.dialog.ImagePreviewDialog.show(
                             getParentFragmentManager(),
                             photoFile.getAbsolutePath(),
@@ -175,6 +178,7 @@ public class NewOccurrenceFragment extends Fragment {
 
         sectorIndex = 0;
         tvSector.setText(getResources().getStringArray(R.array.occurrence_sector_options)[0]);
+        preloadAreasAndWasteTypes();
 
         requireActivity().getOnBackPressedDispatcher().addCallback(
                 getViewLifecycleOwner(),
@@ -204,13 +208,26 @@ public class NewOccurrenceFragment extends Fragment {
         });
 
         MaterialButton btnCamera = view.findViewById(R.id.btnCaptureCamera);
-        btnCamera.setOnClickListener(v -> checkPermissionAndOpenCamera());
+        btnCamera.setOnClickListener(v -> {
+            if (!ensureOnlineOrShowError(v)) {
+                return;
+            }
+            checkPermissionAndOpenCamera();
+        });
 
         MaterialButton btnGallery = view.findViewById(R.id.btnOpenGallery);
-        btnGallery.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+        btnGallery.setOnClickListener(v -> {
+            if (!ensureOnlineOrShowError(v)) {
+                return;
+            }
+            pickImageLauncher.launch("image/*");
+        });
 
         View btnRetake = view.findViewById(R.id.btnRetakePhoto);
         btnRetake.setOnClickListener(v -> {
+            if (!ensureOnlineOrShowError(v)) {
+                return;
+            }
             photoFile = null;
             updatePhotoState();
         });
@@ -228,6 +245,10 @@ public class NewOccurrenceFragment extends Fragment {
 
         View btnCameraPickGallery = view.findViewById(R.id.btnCameraPickGallery);
         btnCameraPickGallery.setOnClickListener(v -> {
+            if (!ensureOnlineOrShowError(v)) {
+                closeCameraOverlay();
+                return;
+            }
             closeCameraOverlay();
             pickImageLauncher.launch("image/*");
         });
@@ -253,6 +274,10 @@ public class NewOccurrenceFragment extends Fragment {
                         sendToAnalysis(btnSendAnalysis);
                     }
                 });
+
+        if (!NetworkUtils.isOnline(requireContext())) {
+            ensureOnlineOrShowError(view);
+        }
     }
 
     @Override
@@ -263,7 +288,113 @@ public class NewOccurrenceFragment extends Fragment {
         }
     }
 
+    private void preloadAreasAndWasteTypes() {
+        if (!isAdded() || getContext() == null) {
+            return;
+        }
+        AiAnalysisAPI api = ApiClient.get(requireContext()).create(AiAnalysisAPI.class);
+        api.getMyAreas().enqueue(new Callback<JsonArray>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null && response.body().size() > 0) {
+                    applyAreasArray(response.body());
+                } else {
+                    api.getSummary().enqueue(new Callback<JsonObject>() {
+                        @Override
+                        public void onResponse(@NonNull Call<JsonObject> call2, @NonNull Response<JsonObject> sumResp) {
+                            if (!isAdded() || !sumResp.isSuccessful() || sumResp.body() == null) return;
+                            JsonObject sum = sumResp.body();
+                            if (sum.has("areas") && sum.get("areas").isJsonArray()) {
+                                applyAreasArray(sum.getAsJsonArray("areas"));
+                            }
+                            if (sum.has("wasteTypes") && sum.get("wasteTypes").isJsonArray()) {
+                                PrefsHelper.putJson(requireContext(), "cache_waste_types", "list", sum.getAsJsonArray("wasteTypes").toString());
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(@NonNull Call<JsonObject> call2, @NonNull Throwable t) {
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
+            }
+        });
+
+        api.getWasteTypes().enqueue(new Callback<JsonArray>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null && response.body().size() > 0) {
+                    PrefsHelper.putJson(requireContext(), "cache_waste_types", "list", response.body().toString());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
+            }
+        });
+    }
+
+    private void applyAreasArray(JsonArray areas) {
+        if (areas == null || areas.size() == 0 || !isAdded()) return;
+        for (int i = 0; i < areas.size(); i++) {
+            JsonElement el = areas.get(i);
+            if (el.isJsonObject()) {
+                JsonObject obj = el.getAsJsonObject();
+                if (obj.has("id") && !obj.get("id").isJsonNull()) {
+                    String id = obj.get("id").getAsString();
+                    PrefsHelper.putJson(requireContext(), "cache_areas", id, obj.toString());
+                    if (selectedAreaId == null || selectedAreaId.isEmpty()) {
+                        selectedAreaId = id;
+                        if (obj.has("sectorName") && !obj.get("sectorName").isJsonNull()) {
+                            selectedSectorName = obj.get("sectorName").getAsString().trim();
+                            if (tvSector != null && !selectedSectorName.isEmpty()) {
+                                tvSector.setText(selectedSectorName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean ensureOnlineOrShowError(@Nullable View anchor) {
+        if (!isAdded() || getContext() == null) {
+            return false;
+        }
+        if (NetworkUtils.isOnline(requireContext())) {
+            return true;
+        }
+        Bundle errArgs = new Bundle();
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                com.aula.volta.ui.error.OfflineErrorFragment.TYPE_OFFLINE);
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Sem conexão para fotografar");
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                "Você precisa de conexão com a internet para tirar fotos e registrar ocorrências no banco de dados.");
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_TITLE, "Câmera e registro bloqueados offline");
+        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_BODY,
+                "Todas as ocorrências são enviadas diretamente ao banco oficial da unidade. Conecte-se ao Wi-Fi ou dados móveis para continuar.");
+        View navTarget = anchor != null ? anchor : getView();
+        if (navTarget != null) {
+            try {
+                Navigation.findNavController(navTarget).navigate(R.id.nav_offline_error, errArgs);
+            } catch (Exception ignored) {
+                Toast.makeText(requireContext(), "Sem conexão com a internet para tirar fotos.", Toast.LENGTH_SHORT).show();
+            }
+        }
+        return false;
+    }
+
     private void checkPermissionAndOpenCamera() {
+        if (!ensureOnlineOrShowError(getView())) {
+            return;
+        }
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
             openCameraViewfinder();
@@ -319,6 +450,9 @@ public class NewOccurrenceFragment extends Fragment {
     }
 
     private void openCameraViewfinder() {
+        if (!ensureOnlineOrShowError(getView())) {
+            return;
+        }
         if (cameraViewfinderOverlay != null) {
             cameraViewfinderOverlay.setVisibility(View.VISIBLE);
         }
@@ -396,6 +530,10 @@ public class NewOccurrenceFragment extends Fragment {
     }
 
     private void captureRealPhoto() {
+        if (!ensureOnlineOrShowError(getView())) {
+            closeCameraOverlay();
+            return;
+        }
         if (imageCapture == null) {
 
             closeCameraOverlay();
@@ -457,6 +595,9 @@ public class NewOccurrenceFragment extends Fragment {
     }
 
     private void openSystemCamera() {
+        if (!ensureOnlineOrShowError(getView())) {
+            return;
+        }
         try {
             cameraTempFile = new File(requireContext().getCacheDir(),
                     "volta_camera_" + System.currentTimeMillis() + ".jpg");
@@ -505,7 +646,7 @@ public class NewOccurrenceFragment extends Fragment {
         if (photoFile == null || !photoFile.exists()) {
             return;
         }
-        if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+        if (!NetworkUtils.isOnline(requireContext())) {
             if (cardSubmissionError != null) {
                 cardSubmissionError.setVisibility(View.VISIBLE);
             }
@@ -513,17 +654,7 @@ public class NewOccurrenceFragment extends Fragment {
                 btnSendAnalysis.setEnabled(true);
                 btnSendAnalysis.setText("Tentar de novo");
             }
-            Bundle errArgs = new Bundle();
-            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
-                    com.aula.volta.ui.error.OfflineErrorFragment.TYPE_SUBMISSION_FAILED);
-            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
-            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Não conseguimos enviar");
-            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
-                    "Sua foto e os dados continuam aqui. Confira a conexão e tente de novo.");
-            try {
-                Navigation.findNavController(v).navigate(R.id.nav_offline_error, errArgs);
-            } catch (Exception ignored) {
-            }
+            ensureOnlineOrShowError(v);
             return;
         }
         if (cardSubmissionError != null) {

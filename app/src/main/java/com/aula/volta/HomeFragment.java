@@ -104,8 +104,23 @@ public class HomeFragment extends Fragment {
         ViewPager2 vpCarousel = view.findViewById(R.id.vpCarousel);
         LinearLayout carouselDots = view.findViewById(R.id.carouselDots);
         if (vpCarousel != null) {
-            CarouselAdapter carouselAdapter = new CarouselAdapter(() ->
-                    Navigation.findNavController(view).navigate(R.id.nav_register));
+            CarouselAdapter carouselAdapter = new CarouselAdapter(() -> {
+                if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+                    Bundle errArgs = new Bundle();
+                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                            com.aula.volta.ui.error.OfflineErrorFragment.TYPE_OFFLINE);
+                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Sem conexão para fotografar");
+                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                            "Você precisa de conexão com a internet para tirar fotos e registrar ocorrências no banco de dados.");
+                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_TITLE, "Câmera e registro bloqueados offline");
+                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_BODY,
+                            "Todas as ocorrências são enviadas diretamente ao banco oficial da unidade. Conecte-se ao Wi-Fi ou dados móveis para continuar.");
+                    Navigation.findNavController(view).navigate(R.id.nav_offline_error, errArgs);
+                    return;
+                }
+                Navigation.findNavController(view).navigate(R.id.nav_register);
+            });
             vpCarousel.setAdapter(carouselAdapter);
             if (carouselDots != null) {
                 if (carouselAdapter.getItemCount() > 1) {
@@ -472,6 +487,10 @@ public class HomeFragment extends Fragment {
                     PrefsHelper.putJson(requireContext(), "cache_areas", areaId, el.toString());
                 }
             }
+        }
+
+        if (raw.has("wasteTypes") && raw.get("wasteTypes").isJsonArray()) {
+            PrefsHelper.putJson(requireContext(), "cache_waste_types", "list", raw.getAsJsonArray("wasteTypes").toString());
         }
 
         return summary;

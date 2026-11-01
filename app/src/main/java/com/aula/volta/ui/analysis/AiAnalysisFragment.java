@@ -1386,69 +1386,128 @@ public class AiAnalysisFragment extends Fragment {
             return;
         }
 
-        final OccurrenceAPI occurrenceApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
-        final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
+        final OccurrenceAPI occurrenceApi = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
+        final AiAnalysisAPI qaApi = ApiClient.get(requireContext()).create(AiAnalysisAPI.class);
 
         qaApi.getMyAreas().enqueue(new Callback<JsonArray>() {
             @Override
             public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> areaResp) {
                 if (!isAdded()) return;
-
-                if (areaResp.body() != null && areaResp.body().size() > 0) {
-                    for (com.google.gson.JsonElement el : areaResp.body()) {
-                        if (el.isJsonObject()) {
-                            com.google.gson.JsonObject o = el.getAsJsonObject();
-                            if (o.has("id") && !o.get("id").isJsonNull()) {
-                                com.aula.volta.data.local.PrefsHelper.putJson(requireContext(), "cache_areas", o.get("id").getAsString(), o.toString());
-                            }
-                        }
-                    }
+                if (areaResp.isSuccessful() && areaResp.body() != null && areaResp.body().size() > 0) {
+                    cacheAreas(areaResp.body());
+                    String resolvedAreaId = resolveBestAreaId(areaResp.body());
+                    resolveWasteTypeAndCreate(v, occurrenceApi, qaApi, resolvedAreaId, material, qtd, unidade, photoUrl, calculatedPriority);
+                } else {
+                    fetchAreasAndWasteTypesFromSummary(v, occurrenceApi, qaApi, material, qtd, unidade, photoUrl, calculatedPriority);
                 }
-                String resolvedAreaId = (explicitAreaId != null && !explicitAreaId.isEmpty())
-                        ? explicitAreaId
-                        : AiAnalysisJSON.resolveAreaId(areaResp.body(), setor);
-                if (resolvedAreaId == null && areaResp.body() != null && areaResp.body().size() > 0) {
-                    com.google.gson.JsonElement first = areaResp.body().get(0);
-                    if (first.isJsonObject() && first.getAsJsonObject().has("id")) {
-                        resolvedAreaId = first.getAsJsonObject().get("id").getAsString();
-                    }
-                }
-                if (resolvedAreaId == null) {
-                    resolvedAreaId = getCachedOrFallbackAreaId(requireContext());
-                }
-                final String areaId = resolvedAreaId;
-
-                qaApi.getWasteTypes().enqueue(new Callback<JsonArray>() {
-                    @Override
-                    public void onResponse(@NonNull Call<JsonArray> call2, @NonNull Response<JsonArray> wasteResp) {
-                        if (!isAdded()) return;
-                        String searchRef = (selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material;
-                        String resolvedWasteTypeId = AiAnalysisJSON.resolveWasteTypeId(wasteResp.body(), searchRef);
-                        if (resolvedWasteTypeId == null) {
-                            resolvedWasteTypeId = mapMaterialToWasteTypeId(material);
-                        }
-                        executeCreateCoreIncident(v, occurrenceApi, areaId, resolvedWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<JsonArray> call2, @NonNull Throwable t) {
-                        if (!isAdded()) return;
-                        String fallbackWasteTypeId = mapMaterialToWasteTypeId(material);
-                        executeCreateCoreIncident(v, occurrenceApi, areaId, fallbackWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
-                    }
-                });
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                String fallbackAreaId = (explicitAreaId != null && !explicitAreaId.isEmpty())
-                        ? explicitAreaId
-                        : getCachedOrFallbackAreaId(requireContext());
-                String fallbackWasteTypeId = mapMaterialToWasteTypeId(material);
-                executeCreateCoreIncident(v, occurrenceApi, fallbackAreaId, fallbackWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
+                fetchAreasAndWasteTypesFromSummary(v, occurrenceApi, qaApi, material, qtd, unidade, photoUrl, calculatedPriority);
             }
         });
+    }
+
+    private void fetchAreasAndWasteTypesFromSummary(View v, OccurrenceAPI occurrenceApi, AiAnalysisAPI qaApi,
+                                                    String material, double qtd, String unidade,
+                                                    @Nullable String photoUrl, String calculatedPriority) {
+        qaApi.getSummary().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> sumResp) {
+                if (!isAdded()) return;
+                JsonArray areasArr = null;
+                JsonArray wasteArr = null;
+                if (sumResp.isSuccessful() && sumResp.body() != null) {
+                    JsonObject sum = sumResp.body();
+                    if (sum.has("areas") && sum.get("areas").isJsonArray()) {
+                        areasArr = sum.getAsJsonArray("areas");
+                        cacheAreas(areasArr);
+                    }
+                    if (sum.has("wasteTypes") && sum.get("wasteTypes").isJsonArray()) {
+                        wasteArr = sum.getAsJsonArray("wasteTypes");
+                        PrefsHelper.putJson(requireContext(), "cache_waste_types", "list", wasteArr.toString());
+                    }
+                }
+                String resolvedAreaId = resolveBestAreaId(areasArr);
+                if (wasteArr != null && wasteArr.size() > 0) {
+                    String searchRef = (selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material;
+                    String resolvedWasteId = AiAnalysisJSON.resolveWasteTypeId(wasteArr, searchRef);
+                    if (resolvedWasteId == null) {
+                        resolvedWasteId = getCachedOrFallbackWasteTypeId(requireContext(), searchRef);
+                    }
+                    executeCreateCoreIncident(v, occurrenceApi, resolvedAreaId, resolvedWasteId, material, qtd, unidade, photoUrl, calculatedPriority);
+                } else {
+                    resolveWasteTypeAndCreate(v, occurrenceApi, qaApi, resolvedAreaId, material, qtd, unidade, photoUrl, calculatedPriority);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                String fallbackAreaId = resolveBestAreaId(null);
+                resolveWasteTypeAndCreate(v, occurrenceApi, qaApi, fallbackAreaId, material, qtd, unidade, photoUrl, calculatedPriority);
+            }
+        });
+    }
+
+    private void resolveWasteTypeAndCreate(View v, OccurrenceAPI occurrenceApi, AiAnalysisAPI qaApi,
+                                           @Nullable String areaId, String material, double qtd, String unidade,
+                                           @Nullable String photoUrl, String calculatedPriority) {
+        final String searchRef = (selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material;
+        qaApi.getWasteTypes().enqueue(new Callback<JsonArray>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonArray> call2, @NonNull Response<JsonArray> wasteResp) {
+                if (!isAdded()) return;
+                String resolvedWasteTypeId = null;
+                if (wasteResp.isSuccessful() && wasteResp.body() != null && wasteResp.body().size() > 0) {
+                    PrefsHelper.putJson(requireContext(), "cache_waste_types", "list", wasteResp.body().toString());
+                    resolvedWasteTypeId = AiAnalysisJSON.resolveWasteTypeId(wasteResp.body(), searchRef);
+                }
+                if (resolvedWasteTypeId == null) {
+                    resolvedWasteTypeId = getCachedOrFallbackWasteTypeId(requireContext(), searchRef);
+                }
+                executeCreateCoreIncident(v, occurrenceApi, areaId, resolvedWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<JsonArray> call2, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                String fallbackWasteTypeId = getCachedOrFallbackWasteTypeId(requireContext(), searchRef);
+                executeCreateCoreIncident(v, occurrenceApi, areaId, fallbackWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
+            }
+        });
+    }
+
+    private void cacheAreas(@Nullable JsonArray areas) {
+        if (areas == null || !isAdded()) return;
+        for (JsonElement el : areas) {
+            if (el.isJsonObject()) {
+                JsonObject o = el.getAsJsonObject();
+                if (o.has("id") && !o.get("id").isJsonNull()) {
+                    PrefsHelper.putJson(requireContext(), "cache_areas", o.get("id").getAsString(), o.toString());
+                }
+            }
+        }
+    }
+
+    @Nullable
+    private String resolveBestAreaId(@Nullable JsonArray areas) {
+        if (explicitAreaId != null && !explicitAreaId.trim().isEmpty()) {
+            return explicitAreaId.trim();
+        }
+        String resolved = AiAnalysisJSON.resolveAreaId(areas, setor);
+        if (resolved != null && !resolved.isEmpty()) {
+            return resolved;
+        }
+        if (areas != null && areas.size() > 0) {
+            JsonElement first = areas.get(0);
+            if (first.isJsonObject() && first.getAsJsonObject().has("id") && !first.getAsJsonObject().get("id").isJsonNull()) {
+                return first.getAsJsonObject().get("id").getAsString();
+            }
+        }
+        return getCachedOrFallbackAreaId(requireContext());
     }
 
     private String getCachedOrFallbackAreaId(android.content.Context context) {
@@ -1464,12 +1523,67 @@ public class AiAnalysisFragment extends Fragment {
             }
         } catch (Exception ignored) {
         }
+        try {
+            String sumStr = PrefsHelper.getJson(context, "cache_reports", "summary");
+            if (sumStr != null && !sumStr.isEmpty()) {
+                JsonObject sum = com.google.gson.JsonParser.parseString(sumStr).getAsJsonObject();
+                if (sum.has("areas") && sum.get("areas").isJsonArray()) {
+                    String fromSum = AiAnalysisJSON.resolveAreaId(sum.getAsJsonArray("areas"), setor);
+                    if (fromSum != null && !fromSum.isEmpty()) {
+                        return fromSum;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            java.util.List<Occurrence> cachedOccs = OccurrenceStore.cached(context);
+            if (cachedOccs != null) {
+                for (Occurrence o : cachedOccs) {
+                    if (o != null && o.getId() != null) {
+                        String dStr = PrefsHelper.getJson(context, "cache_occurrence_detail", o.getId());
+                        if (dStr != null && !dStr.isEmpty()) {
+                            JsonObject d = com.google.gson.JsonParser.parseString(dStr).getAsJsonObject();
+                            if (d.has("areaId") && !d.get("areaId").isJsonNull()) {
+                                String aid = d.get("areaId").getAsString();
+                                if (aid != null && aid.length() > 10) return aid;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
         return null;
+    }
+
+    private String getCachedOrFallbackWasteTypeId(android.content.Context context, String searchRef) {
+        try {
+            String listStr = PrefsHelper.getJson(context, "cache_waste_types", "list");
+            if (listStr != null && !listStr.isEmpty()) {
+                JsonArray arr = com.google.gson.JsonParser.parseString(listStr).getAsJsonArray();
+                String resolved = AiAnalysisJSON.resolveWasteTypeId(arr, searchRef);
+                if (resolved != null && !resolved.isEmpty()) {
+                    return resolved;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return mapMaterialToWasteTypeId(searchRef);
     }
 
     private void executeCreateCoreIncident(View v, OccurrenceAPI occurrenceApi, String areaId, String wasteTypeId,
                                            String material, double qtd, String unidade,
                                            @Nullable String photoUrl, String calculatedPriority) {
+        if (areaId == null || areaId.trim().isEmpty()) {
+            if (btnConfirm != null) {
+                btnConfirm.setEnabled(true);
+                btnConfirm.setText("Tentar de novo");
+            }
+            Toast.makeText(requireContext(), "Nenhuma área operacional encontrada para sua unidade no banco de dados.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         String singleWordTitle = AiAnalysisJSON.generateSingleWordTitle(
                 material,
                 descricao,
@@ -1506,11 +1620,14 @@ public class AiAnalysisFragment extends Fragment {
         }
 
         String apiPriority = IncidentRequestDTO.normalizePriority(calculatedPriority);
+        String empDescription = (descricao != null && !descricao.trim().isEmpty())
+                ? descricao.trim()
+                : singleWordTitle;
         IncidentRequestDTO req = new IncidentRequestDTO(
                 areaId,
                 wasteTypeId,
                 finalPhotoUrl,
-                singleWordTitle,
+                empDescription,
                 contaminationLevel,
                 qtd,
                 apiPriority
@@ -1544,12 +1661,14 @@ public class AiAnalysisFragment extends Fragment {
                                 errDetail += " (Tipo de resíduo inválido)";
                             } else if (errBody.toLowerCase(Locale.ROOT).contains("url")) {
                                 errDetail += " (URL da foto inválida)";
+                            } else if (response.code() == 403) {
+                                errDetail += " (Perfil sem permissão para registrar ocorrência)";
                             }
                         }
                     } catch (Exception ignored) {
                     }
                     final String failReason = errDetail;
-                    Log.w("AiAnalysisFragment", "POST /incidents falhou com " + failReason + ", tentando retry com área alternativa...");
+                    Log.w("AiAnalysisFragment", "POST /incidents falhou com " + failReason);
                     if (response.code() == 404) {
                         String altAreaId = getCachedOrFallbackAreaId(requireContext());
                         if (altAreaId != null && !altAreaId.equals(req.getAreaId())) {
@@ -1563,7 +1682,7 @@ public class AiAnalysisFragment extends Fragment {
                                         handleOccurrenceCreatedSuccess(v, inc2.getId(), material, qtd, unidade, inc2.getPhotoUrl() != null ? inc2.getPhotoUrl() : sentPhotoUrl, calculatedPriority, true, null);
                                         return;
                                     }
-                                    fallbackToDraftAndSave(v, material, qtd, unidade, sentPhotoUrl, calculatedPriority, altAreaId, singleWordTitle, failReason);
+                                    showDatabaseRegistrationError(v, failReason);
                                 }
 
                                 @Override
@@ -1575,7 +1694,7 @@ public class AiAnalysisFragment extends Fragment {
                             return;
                         }
                     }
-                    fallbackToDraftAndSave(v, material, qtd, unidade, sentPhotoUrl, calculatedPriority, areaId, singleWordTitle, failReason);
+                    showDatabaseRegistrationError(v, failReason);
                 }
             }
 
@@ -1587,6 +1706,15 @@ public class AiAnalysisFragment extends Fragment {
                 showSubmissionOfflineError(v, isOffline);
             }
         });
+    }
+
+    private void showDatabaseRegistrationError(View v, String failReason) {
+        if (!isAdded()) return;
+        if (btnConfirm != null) {
+            btnConfirm.setEnabled(true);
+            btnConfirm.setText("Tentar de novo");
+        }
+        Toast.makeText(requireContext(), "Não foi possível registrar no banco (" + failReason + ")", Toast.LENGTH_LONG).show();
     }
 
     private void showSubmissionOfflineError(View v, boolean isOffline) {
@@ -1619,47 +1747,6 @@ public class AiAnalysisFragment extends Fragment {
                 Toast.makeText(requireContext(), "Falha na conexão. Verifique sua internet.", Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-    private void fallbackToDraftAndSave(View v, String material, double qtd, String unidade,
-                                        @Nullable String photoUrl, String calculatedPriority,
-                                        String areaId, String singleWordTitle) {
-        fallbackToDraftAndSave(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, singleWordTitle, null);
-    }
-
-    private void fallbackToDraftAndSave(View v, String material, double qtd, String unidade,
-                                        @Nullable String photoUrl, String calculatedPriority,
-                                        String areaId, String singleWordTitle, @Nullable String reason) {
-        JsonObject draftReq = new JsonObject();
-        draftReq.addProperty("area_id", areaId);
-        draftReq.addProperty("employee_description", singleWordTitle);
-        draftReq.addProperty("priority", calculatedPriority);
-        if (photoUrl != null && !photoUrl.isEmpty()) {
-            draftReq.addProperty("photo_url", photoUrl);
-            draftReq.addProperty("photoUrl", photoUrl);
-            draftReq.addProperty("imageUrl", photoUrl);
-        }
-        draftReq.addProperty("estimated_quantity", qtd);
-
-        ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
-        chatApi.createOccurrenceDraft(draftReq).enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> resp) {
-                if (!isAdded()) return;
-                if (resp.isSuccessful() && resp.body() != null && resp.body().has("draft_id")) {
-                    String draftId = resp.body().get("draft_id").getAsString();
-                    handleOccurrenceCreatedSuccess(v, draftId, material, qtd, unidade, photoUrl, calculatedPriority, false, reason);
-                } else {
-                    saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority, reason);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
-                saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority, reason);
-            }
-        });
     }
 
     private String mapMaterialToWasteTypeId(String material) {
@@ -1706,7 +1793,7 @@ public class AiAnalysisFragment extends Fragment {
         Occurrence occ = new Occurrence(
                 id,
                 title,
-                setor == null ? "Frigorífico — Setor B2" : setor,
+                setor == null ? "Planta Principal" : setor,
                 "Hoje",
                 calculatedPriority,
                 "AGUARDANDO_VALIDACAO",
@@ -1717,18 +1804,10 @@ public class AiAnalysisFragment extends Fragment {
         OccurrenceStore.pushLocal(requireContext(), occ);
 
         AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR",
-                "ocorrencia", id, null, isDatabaseSaved ? "BANCO_OFICIAL" : "OFFLINE");
+                "ocorrencia", id, null, "BANCO_OFICIAL");
         pushOccurrenceNotification(id, material);
 
-        if (isDatabaseSaved) {
-            Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
-        } else {
-            String msg = "Salvo localmente no celular";
-            if (note != null && !note.isEmpty()) {
-                msg += " (" + note + ")";
-            }
-            Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
-        }
+        Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
 
         navigateToDetail(v, id);
     }
@@ -1749,7 +1828,7 @@ public class AiAnalysisFragment extends Fragment {
         detail.addProperty("material_principal", primary);
         detail.addProperty("item_especifico", specific);
         detail.addProperty("contaminacao", selectedContamination != null ? selectedContamination : "Baixa");
-        detail.addProperty("setor", (setor != null && !setor.isEmpty()) ? setor : "Frigorífico — Setor B2");
+        detail.addProperty("setor", (setor != null && !setor.isEmpty()) ? setor : "Planta Principal");
         detail.addProperty("peso_estimado", qtd);
         detail.addProperty("unidade", unidade);
         detail.addProperty("status", "AGUARDANDO_VALIDACAO");
@@ -1858,63 +1937,8 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
-    private void saveOfflineAndNavigateToDetail(View v, String material, double qtd, String unidade, String priority) {
-        saveOfflineAndNavigateToDetail(v, material, qtd, unidade, priority, null);
-    }
-
-    private void saveOfflineAndNavigateToDetail(View v, String material, double qtd, String unidade, String priority, @Nullable String reason) {
-        if (!isAdded() || getContext() == null) {
-            return;
-        }
-        String offlineId = "off_" + System.currentTimeMillis();
-        persistOccurrenceDetail(offlineId, material, qtd, unidade, priority, null);
-        pushOccurrenceToList(offlineId, material, priority);
-        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR_OFFLINE",
-                "ocorrencia", offlineId, null, "OFFLINE");
-        pushOccurrenceNotification(offlineId, material);
-
-        PendingOccurrence pending = new PendingOccurrence(
-                offlineId,
-                material,
-                (descricao != null && !descricao.isEmpty()) ? descricao : material,
-                setor == null ? "Frigorífico — Setor B2" : setor,
-                "LOW",
-                qtd,
-                photoPath,
-                System.currentTimeMillis()
-        );
-        SyncQueue.enqueue(requireContext(), pending);
-
-        String msg = "Ocorrência salva offline no celular";
-        if (reason != null && !reason.isEmpty()) {
-            msg += " (" + reason + ")";
-        }
-        Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
-
-        navigateToDetail(v, offlineId);
-    }
-
     private void pushOccurrenceNotification(String occurrenceId, String material) {
         com.aula.volta.data.notification.NotificationHelper.notifyOccurrenceSent(
                 requireContext(), occurrenceId, material, setor != null ? setor : "");
-    }
-
-    private void pushOccurrenceToList(String occurrenceId, String material, String priority) {
-        String title = AiAnalysisJSON.generateSingleWordTitle(
-                material,
-                descricao,
-                (analysis != null ? analysis.getMaterial() : null)
-        );
-        String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily((selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material);
-        OccurrenceStore.pushLocal(requireContext(), new Occurrence(
-                occurrenceId,
-                title,
-                setor == null ? "Frigorífico — Setor B2" : setor,
-                getString(R.string.notif_now),
-                priority,
-                "AGUARDANDO_VALIDACAO",
-                primaryFamily,
-                remoteImageUrl,
-                photoPath));
     }
 }

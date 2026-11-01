@@ -54,4 +54,10 @@ public interface AiAnalysisAPI {
     })
     @GET("waste-types")
     Call<JsonArray> getWasteTypes();
+
+    @Headers({
+            "Accept: application/json; charset=utf-8"
+    })
+    @GET("summary")
+    Call<JsonObject> getSummary();
 }

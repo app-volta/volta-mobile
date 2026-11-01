@@ -52,6 +52,11 @@ public final class ChatbotAuthClient {
                                     .header("Host", "api.qa.54.210.1.34.sslip.io")
                                     .header("Accept", "application/json; charset=utf-8");
 
+                            String companyId = SessionManager.getCompanyId(appContext);
+                            if (companyId != null && !companyId.isEmpty()) {
+                                builder.header("X-Company-Id", companyId);
+                            }
+
                             if (!original.url().encodedPath().contains("/auth/login")) {
                                 String token = resolveToken(appContext);
                                 if (token.isEmpty()) {
@@ -70,12 +75,15 @@ public final class ChatbotAuthClient {
                                 response.close();
                                 String refreshed = refreshQaTokenBlocking(appContext);
                                 if (refreshed != null && !refreshed.isEmpty()) {
-                                    Request retry = original.newBuilder()
+                                    Request.Builder retryBuilder = original.newBuilder()
                                             .header("Host", "api.qa.54.210.1.34.sslip.io")
                                             .header("Accept", "application/json; charset=utf-8")
-                                            .header("Authorization", "Bearer " + refreshed)
-                                            .build();
-                                    return chain.proceed(retry);
+                                            .header("Authorization", "Bearer " + refreshed);
+                                    String retryCompanyId = SessionManager.getCompanyId(appContext);
+                                    if (retryCompanyId != null && !retryCompanyId.isEmpty()) {
+                                        retryBuilder.header("X-Company-Id", retryCompanyId);
+                                    }
+                                    return chain.proceed(retryBuilder.build());
                                 }
                             }
                             return response;
@@ -93,9 +101,13 @@ public final class ChatbotAuthClient {
                             }
                             String newToken = refreshQaTokenBlocking(appContext);
                             if (newToken != null && !newToken.isEmpty()) {
-                                return response.request().newBuilder()
-                                        .header("Authorization", "Bearer " + newToken)
-                                        .build();
+                                Request.Builder rb = response.request().newBuilder()
+                                        .header("Authorization", "Bearer " + newToken);
+                                String cid = SessionManager.getCompanyId(appContext);
+                                if (cid != null && !cid.isEmpty()) {
+                                    rb.header("X-Company-Id", cid);
+                                }
+                                return rb.build();
                             }
                             return null;
                         }
