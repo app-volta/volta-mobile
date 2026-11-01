@@ -24,9 +24,6 @@ import androidx.navigation.Navigation;
 import com.aula.volta.R;
 import com.aula.volta.data.local.SessionManager;
 
-/**
- * 23c · Perfil · alterar senha (Figma 1721:1390).
- */
 public class ChangePasswordFragment extends Fragment {
 
     private EditText etCurrentPassword;
@@ -74,19 +71,16 @@ public class ChangePasswordFragment extends Fragment {
         view.findViewById(R.id.btnBackChangePassword).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
-        // Toggle visibilidade da senha atual
         btnToggleCurrentPassword.setOnClickListener(v -> {
             currentPasswordVisible = !currentPasswordVisible;
             togglePasswordVisibility(etCurrentPassword, btnToggleCurrentPassword, currentPasswordVisible);
         });
 
-        // Toggle visibilidade da nova senha
         btnToggleNewPassword.setOnClickListener(v -> {
             newPasswordVisible = !newPasswordVisible;
             togglePasswordVisibility(etNewPassword, btnToggleNewPassword, newPasswordVisible);
         });
 
-        // Link "Esqueci a senha"
         view.findViewById(R.id.btnForgotCurrentPassword).setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext())
                     .setTitle("Redefinir senha")
@@ -233,7 +227,6 @@ public class ChangePasswordFragment extends Fragment {
             return;
         }
 
-        // Salva na sessão e propaga resultado
         Bundle result = new Bundle();
         result.putBoolean("passwordChanged", true);
         getParentFragmentManager().setFragmentResult("profile_result", result);

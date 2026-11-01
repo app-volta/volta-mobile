@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 23f · Perfil · minha unidade (Figma 1721:1606) -->
+
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:background="@color/volta_background_light">
 
-    <!-- Fundo com fluidos -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,7 +28,6 @@
             android:paddingEnd="28dp"
             android:paddingBottom="40dp">
 
-            <!-- Botão Voltar (40x40dp circular branco com sombra) -->
             <FrameLayout
                 android:id="@+id/btnBackUnit"
                 android:layout_width="40dp"
@@ -48,7 +46,6 @@
                     app:tint="#1B2430" />
             </FrameLayout>
 
-            <!-- Título e Subtítulo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -70,14 +67,12 @@
                 android:textColor="@color/vf_text_secondary"
                 android:textSize="14sp" />
 
-            <!-- Grid 2x2: Linha 1 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
                 android:orientation="horizontal">
 
-                <!-- Card 1: Ocorrências (162x74dp) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="74dp"
@@ -131,7 +126,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Card 2: Recuperado (162x74dp) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="74dp"
@@ -185,14 +179,12 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Grid 2x2: Linha 2 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:orientation="horizontal">
 
-                <!-- Card 3: Próxima coleta (162x74dp) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="74dp"
@@ -246,7 +238,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Card 4: Responsável técnico (162x74dp) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="74dp"
@@ -302,7 +293,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Card: Meta do mês (Figma 1721:1693: 334x104dp) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -311,7 +301,6 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Header: Título + Badge 76% -->
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
@@ -349,7 +338,6 @@
                     </FrameLayout>
                 </RelativeLayout>
 
-                <!-- Valores: 1.147 kg de 1.500 kg -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -378,7 +366,6 @@
                         android:textSize="14sp" />
                 </LinearLayout>
 
-                <!-- Barra de progresso verde de 9dp -->
                 <ProgressBar
                     android:id="@+id/pbUnitGoal"
                     style="?android:attr/progressBarStyleHorizontal"
@@ -390,7 +377,6 @@
                     android:progressDrawable="@drawable/bg_progress_goal" />
             </LinearLayout>
 
-            <!-- Card: Cooperativa parceira (Figma 1721:1701: 334x50dp) -->
             <LinearLayout
                 android:id="@+id/rowUnitPartnerCoop"
                 android:layout_width="match_parent"

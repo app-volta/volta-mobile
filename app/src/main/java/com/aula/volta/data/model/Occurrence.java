@@ -8,10 +8,6 @@ import com.google.gson.JsonParser;
 
 import java.util.Locale;
 
-/**
- * Modelo de domínio da ocorrência (utilizado em toda a UI da Home, Lista e Detalhe).
- * Suporta conversão tanto de OccurrenceJSON legado quanto de IncidentResponseDTO da API Oficial do banco.
- */
 public class Occurrence {
 
     private final String id;
@@ -47,9 +43,13 @@ public class Occurrence {
         if (json == null) {
             return null;
         }
-        String title = (json.getTitulo() != null && !json.getTitulo().trim().isEmpty())
-                ? json.getTitulo()
-                : AiAnalysisJSON.generateSingleWordTitle(json.getMaterial(), null, null);
+        String title = json.getTitulo();
+        if (title != null) {
+            title = title.replaceAll("(?i)\\s*\\(Classe\\s+[A-Za-z0-9]+\\)", "").trim();
+        }
+        if (title == null || title.trim().isEmpty() || title.length() > 30) {
+            title = AiAnalysisJSON.generateSingleWordTitle(json.getMaterial(), title, null);
+        }
         return new Occurrence(
                 json.getId(),
                 title,
@@ -73,18 +73,19 @@ public class Occurrence {
         String id = inc.getId() != null ? inc.getId() : "";
         String sector = resolveSector(inc, context);
         String mat = resolveMaterial(inc);
-        String singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, inc.getEmployeeDescription(), inc.getWasteTypeId());
+        String singleTitle;
+        if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty()) {
+            singleTitle = inc.getTitle().trim();
+        } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty()) {
+            singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, inc.getEmployeeDescription(), inc.getWasteTypeId());
+        } else {
+            singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, null, inc.getWasteTypeId());
+        }
         String prio = (inc.getPriority() != null && !inc.getPriority().isEmpty())
                 ? inc.getPriority()
                 : AiAnalysisJSON.calculatePriority(mat, inc.getContaminationLevel(), singleTitle);
         String stat = inc.getStatus() != null ? inc.getStatus() : "EM_ANALISE";
-        String time = "Hoje";
-        if (inc.getRegisteredAt() != null && !inc.getRegisteredAt().isEmpty()) {
-            time = inc.getRegisteredAt().replace("T", " ");
-            if (time.length() > 16) {
-                time = time.substring(0, 16);
-            }
-        }
+        String time = formatBrazilianDateTime(inc.getRegisteredAt());
         String photoUrl = inc.getPhotoUrl();
         String photoPath = null;
         if (context != null) {
@@ -112,7 +113,10 @@ public class Occurrence {
                         sector = d.get("setor").getAsString();
                     }
                     if (d.has("titulo") && !d.get("titulo").isJsonNull()) {
-                        singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, d.get("titulo").getAsString(), null);
+                        String t = d.get("titulo").getAsString().trim();
+                        if (!t.isEmpty()) {
+                            singleTitle = t;
+                        }
                     }
                 }
             } catch (Exception ignored) {
@@ -121,14 +125,14 @@ public class Occurrence {
         return new Occurrence(id, singleTitle, sector, time, prio, stat, mat, photoUrl, photoPath);
     }
 
-    private static String resolveSector(IncidentResponseDTO inc, Context context) {
+    public static String resolveSector(IncidentResponseDTO inc, Context context) {
         if (inc == null) {
-            return "Frigorífico — Setor B2";
+            return "Planta Principal";
         }
         String areaId = inc.getAreaId();
         if (areaId != null && !areaId.isEmpty()) {
             String lower = areaId.toLowerCase(Locale.ROOT);
-            if (lower.contains("3059a21a")) return "Frigorífico — Setor B2";
+            if (lower.contains("3059a21a")) return "Planta Principal";
             if (lower.contains("9c98cf54")) return "Expedição";
             if (lower.contains("86901188")) return "Manutenção";
             if (lower.contains("1f7e4e53")) return "Armazenamento";
@@ -151,9 +155,9 @@ public class Occurrence {
             if (lowerDesc.contains("expedi")) return "Expedição";
             if (lowerDesc.contains("manuten")) return "Manutenção";
             if (lowerDesc.contains("armazen")) return "Armazenamento";
-            if (lowerDesc.contains("frigor")) return "Frigorífico — Setor B2";
+            if (lowerDesc.contains("frigor")) return "Planta Principal";
         }
-        return "Frigorífico — Setor B2";
+        return "Planta Principal";
     }
 
     private static String resolveMaterial(IncidentResponseDTO inc) {
@@ -163,7 +167,6 @@ public class Occurrence {
         String desc = inc.getEmployeeDescription() != null ? inc.getEmployeeDescription().toLowerCase(Locale.ROOT) : "";
         String wId = inc.getWasteTypeId() != null ? inc.getWasteTypeId().toLowerCase(Locale.ROOT) : "";
 
-        // 1. Mapeamento por UUID da API QA (tabela waste_types)
         if (wId.contains("bd985415") || wId.contains("4e73b22b")) {
             return "Aparas de Papelão";
         }
@@ -195,7 +198,6 @@ public class Occurrence {
             return "Resíduo Misto";
         }
 
-        // 2. Classificação semântica por descrição do operador
         if (desc.contains("cadeir") || desc.contains("mesa") || desc.contains("móvel") || desc.contains("movel") || desc.contains("mobili")) {
             return "Mobiliário / Madeira";
         }
@@ -254,5 +256,45 @@ public class Occurrence {
 
     public String getPhotoPath() {
         return photoPath;
+    }
+
+    public static String formatBrazilianDateTime(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return "Hoje";
+        }
+        String clean = raw.trim();
+        if (clean.equalsIgnoreCase("hoje") || clean.equalsIgnoreCase("ontem")
+                || clean.startsWith("há ") || clean.contains("às")) {
+            return clean;
+        }
+
+        try {
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile(
+                    "^(\\d{4})-(\\d{2})-(\\d{2})[T ](\\d{2}):(\\d{2})");
+            java.util.regex.Matcher m = p.matcher(clean);
+            if (m.find()) {
+                String year = m.group(1);
+                String month = m.group(2);
+                String day = m.group(3);
+                String hour = m.group(4);
+                String minute = m.group(5);
+
+                java.text.SimpleDateFormat sdfToday = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ROOT);
+                String todayStr = sdfToday.format(new java.util.Date());
+                if (todayStr.equals(year + "-" + month + "-" + day)) {
+                    return "Hoje às " + hour + ":" + minute;
+                }
+                return day + "/" + month + "/" + year + " às " + hour + ":" + minute;
+            }
+
+            java.util.regex.Pattern pDateOnly = java.util.regex.Pattern.compile("^(\\d{4})-(\\d{2})-(\\d{2})$");
+            java.util.regex.Matcher mDate = pDateOnly.matcher(clean);
+            if (mDate.find()) {
+                return mDate.group(3) + "/" + mDate.group(2) + "/" + mDate.group(1);
+            }
+        } catch (Exception ignored) {
+        }
+
+        return clean;
     }
 }

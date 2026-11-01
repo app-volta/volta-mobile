@@ -2,7 +2,6 @@ package com.aula.volta.data.api;
 
 import com.aula.volta.data.model.CollectionRequestDTO;
 import com.aula.volta.data.model.CollectionResponseDTO;
-import com.aula.volta.data.model.CooperativeJSON;
 import com.aula.volta.data.model.CooperativeResponseDTO;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -16,14 +15,8 @@ import retrofit2.http.Headers;
 import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
-import retrofit2.http.Query;
 
-/**
- * Endpoints de cooperativas e coletas da API VOLTA (https://api.54.210.1.34.sslip.io).
- */
 public interface CooperativeAPI {
-
-    // --- Endpoints Oficiais do Banco de Dados ---
 
     @Headers({"Accept: application/json; charset=utf-8"})
     @GET("cooperatives")
@@ -68,9 +61,4 @@ public interface CooperativeAPI {
     })
     @POST("collections/{collectionId}/review")
     Call<JsonObject> reviewCollection(@Path("collectionId") String collectionId, @Body JsonObject body);
-
-    // --- Endpoints de compatibilidade ---
-
-    @GET("cooperatives/recommended")
-    Call<List<CooperativeJSON>> getRecommended(@Query("occurrenceId") String occurrenceId);
 }

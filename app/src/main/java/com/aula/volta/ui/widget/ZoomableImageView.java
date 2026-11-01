@@ -14,10 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 
-/**
- * ImageView interativo com suporte a Pinch-to-Zoom (pinça) e Double-Tap (toque duplo).
- * Permite arrastar (pan) quando a imagem estiver com zoom.
- */
 public class ZoomableImageView extends AppCompatImageView {
 
     private Matrix matrix = new Matrix();

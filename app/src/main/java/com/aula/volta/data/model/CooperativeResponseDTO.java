@@ -2,9 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO de cooperativa de reciclagem (GET /cooperatives e GET /cooperatives/{id}).
- */
 public class CooperativeResponseDTO {
 
     @SerializedName("id")
@@ -26,7 +23,7 @@ public class CooperativeResponseDTO {
     private Double averageRating;
 
     @SerializedName("specialties")
-    private String specialties;
+    private com.google.gson.JsonElement specialties;
 
     public CooperativeResponseDTO() {
     }
@@ -80,10 +77,38 @@ public class CooperativeResponseDTO {
     }
 
     public String getSpecialties() {
-        return specialties;
+        if (specialties == null || specialties.isJsonNull()) {
+            return "Resíduos Recicláveis";
+        }
+        if (specialties.isJsonPrimitive()) {
+            return formatSpecialty(specialties.getAsString());
+        }
+        if (specialties.isJsonArray()) {
+            StringBuilder sb = new StringBuilder();
+            for (com.google.gson.JsonElement el : specialties.getAsJsonArray()) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(formatSpecialty(el.getAsString()));
+            }
+            return sb.toString();
+        }
+        return specialties.toString();
+    }
+
+    private static String formatSpecialty(String raw) {
+        if (raw == null || raw.trim().isEmpty()) return "Resíduos";
+        String upper = raw.trim().toUpperCase(java.util.Locale.ROOT);
+        if (upper.contains("PAPEL")) return "Papelão";
+        if (upper.contains("PLAST")) return "Plástico";
+        if (upper.contains("MET")) return "Metal";
+        if (upper.contains("VIDR")) return "Vidro";
+        if (upper.contains("MADEIR")) return "Madeira";
+        if (upper.contains("ORGAN")) return "Orgânico";
+        if (upper.contains("ELETR")) return "Eletrônico";
+        String val = raw.replace("_", " ").toLowerCase(java.util.Locale.ROOT);
+        return Character.toUpperCase(val.charAt(0)) + val.substring(1);
     }
 
     public void setSpecialties(String specialties) {
-        this.specialties = specialties;
+        this.specialties = specialties != null ? new com.google.gson.JsonPrimitive(specialties) : null;
     }
 }

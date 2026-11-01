@@ -9,10 +9,6 @@ import java.io.File;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-/**
- * Testes unitários para o utilitário de rotação e processamento de imagem ImageUtils.
- * Valida conversão de rotação EXIF e comportamento seguro com arquivos nulos/inexistentes.
- */
 public class ImageUtilsTest {
 
     @Test

@@ -29,27 +29,15 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-/**
- * Serviço de Upload de Imagens no Cloudinary (Fase 13 - Integração em Nuvem).
- *
- * Realiza upload direto (unsigned) de fotos para a nuvem do Cloudinary via OkHttp,
- * retornando a secure_url HTTPS para envio à IA e ao backend.
- *
- * Possui controle de idempotência (cache por arquivo + fila in-flight) para garantir
- * que a mesma foto nunca seja enviada duas vezes ao Cloudinary.
- */
 public final class CloudinaryUploader {
 
     private static final String TAG = "CloudinaryUploader";
 
-    // Configurações oficiais do Cloudinary do projeto VOLTA
     public static String CLOUD_NAME = "kgou1air";
 
-    // Ocorrências / Análise de IA
     public static String UPLOAD_PRESET = "AI-Analysis";
     public static String ASSET_FOLDER = "Ocorrencia/Assets/Images";
 
-    // Fotos de Perfil (Perfil-Photo / Perfil/Assets/Image)
     public static String PROFILE_UPLOAD_PRESET = "Perfil-Photo";
     public static String PROFILE_ASSET_FOLDER = "Perfil/Assets/Image";
 
@@ -91,11 +79,9 @@ public final class CloudinaryUploader {
         }
     }
 
-    // Cache de URLs já enviadas (filePath -> secureUrl) para evitar upload duplicado da mesma foto
     private static final Map<String, String> uploadedUrlCache = new ConcurrentHashMap<>();
     private static final Map<String, String> uploadedPublicIdCache = new ConcurrentHashMap<>();
 
-    // Controle de uploads em andamento (filePath -> lista de callbacks aguardando)
     private static final Map<String, List<UploadCallback>> inFlightCallbacks = new HashMap<>();
 
     public interface BitmapCallback {
@@ -103,10 +89,6 @@ public final class CloudinaryUploader {
         void onError(Exception e);
     }
 
-    /**
-     * Faz download seguro de imagem remota em background com suporte a redirecionamentos
-     * e leitura completa do stream em buffer, retornando o Bitmap na Main Thread.
-     */
     public static void fetchRemoteBitmap(String remoteUrl, BitmapCallback callback) {
         if (remoteUrl == null || remoteUrl.trim().isEmpty() || !remoteUrl.startsWith("http")) {
             if (callback != null) {
@@ -161,9 +143,6 @@ public final class CloudinaryUploader {
     private CloudinaryUploader() {
     }
 
-    /**
-     * Retorna a URL do Cloudinary já existente para este arquivo local, se já tiver sido enviado.
-     */
     public static String getCachedUrl(String localFilePath) {
         if (localFilePath == null) return null;
         String direct = uploadedUrlCache.get(localFilePath);
@@ -178,9 +157,6 @@ public final class CloudinaryUploader {
         return null;
     }
 
-    /**
-     * Sanitiza o e-mail do usuário para servir como public_id único e consistente no Cloudinary.
-     */
     public static String sanitizeEmailForPublicId(String email) {
         if (email == null || email.trim().isEmpty()) {
             return "avatar_guest";
@@ -188,9 +164,6 @@ public final class CloudinaryUploader {
         return "avatar_" + email.trim().toLowerCase().replaceAll("[^a-zA-Z0-9]", "_");
     }
 
-    /**
-     * Retorna a URL pública determinística da foto de perfil do usuário no Cloudinary.
-     */
     public static String getDeterministicProfileUrl(String email) {
         if (email == null || email.trim().isEmpty()) {
             return null;
@@ -199,39 +172,24 @@ public final class CloudinaryUploader {
         return "https://res.cloudinary.com/" + CLOUD_NAME + "/image/upload/" + PROFILE_ASSET_FOLDER + "/" + id + ".jpg";
     }
 
-    /**
-     * Faz upload da imagem de ocorrência (preset AI-Analysis, pasta Ocorrencia/Assets/Images).
-     */
     public static void uploadImage(Context context, File imageFile, UploadCallback callback) {
         uploadImage(context, imageFile, UPLOAD_PRESET, ASSET_FOLDER, null, callback);
     }
 
-    /**
-     * Faz upload da foto de perfil associando ao e-mail do usuário (preset Perfil-Photo, pasta Perfil/Assets/Image).
-     */
     public static void uploadProfileImage(Context context, File imageFile, String userEmail, UploadCallback callback) {
         String publicId = sanitizeEmailForPublicId(userEmail);
         uploadImage(context, imageFile, PROFILE_UPLOAD_PRESET, PROFILE_ASSET_FOLDER, publicId, callback);
     }
 
-    /**
-     * Faz upload da foto de perfil (preset Perfil-Photo, pasta Perfil/Assets/Image).
-     */
     public static void uploadProfileImage(Context context, File imageFile, UploadCallback callback) {
         String userEmail = com.aula.volta.data.local.SessionManager.email(context);
         uploadProfileImage(context, imageFile, userEmail, callback);
     }
 
-    /**
-     * Faz upload da imagem no Cloudinary com preset e pasta especificados.
-     */
     public static void uploadImage(Context context, File imageFile, String uploadPreset, String assetFolder, UploadCallback callback) {
         uploadImage(context, imageFile, uploadPreset, assetFolder, null, callback);
     }
 
-    /**
-     * Faz upload da imagem no Cloudinary com preset, pasta e public_id especificados.
-     */
     public static void uploadImage(Context context, File imageFile, String uploadPreset, String assetFolder, String publicId, UploadCallback callback) {
         if (imageFile == null || !imageFile.exists()) {
             if (callback != null) {
@@ -244,7 +202,6 @@ public final class CloudinaryUploader {
         final String fileKey = imageFile.getAbsolutePath() + "_" + imageFile.lastModified() + "_" + uploadPreset
                 + "_" + (publicId != null ? publicId : "");
 
-        // 1. Se esta foto já foi enviada anteriormente com este preset, reaproveita a URL
         String fromCache = uploadedUrlCache.get(fileKey);
         if (fromCache == null || fromCache.isEmpty()) {
             fromCache = getCachedUrl(imageFile.getAbsolutePath());
@@ -258,7 +215,6 @@ public final class CloudinaryUploader {
             return;
         }
 
-        // 2. Se ainda não configurado no Cloudinary, executa fallback gracioso com arquivo local
         if (CLOUD_NAME == null || CLOUD_NAME.trim().isEmpty()
                 || uploadPreset == null || uploadPreset.trim().isEmpty()) {
             if (callback != null) {
@@ -269,7 +225,6 @@ public final class CloudinaryUploader {
             return;
         }
 
-        // 3. Se já existe um upload em andamento para este mesmo arquivo, anexa o callback
         synchronized (inFlightCallbacks) {
             List<UploadCallback> waiting = inFlightCallbacks.get(fileKey);
             if (waiting != null) {
@@ -285,7 +240,6 @@ public final class CloudinaryUploader {
             inFlightCallbacks.put(fileKey, newList);
         }
 
-        // Prepara multipart com OkHttp
         MultipartBody.Builder form = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("upload_preset", uploadPreset);

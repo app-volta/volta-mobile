@@ -29,11 +29,6 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * Adapter dos cards de ocorrência (Fase 2). Mesmo visual do Figma, 100% orientado a dados:
- * badge por prioridade, ícone/fundo por material ou miniatura real da foto (Cloudinary / local).
- * Reutilizado na HomeFragment e OccurrencesFragment.
- */
 public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.ViewHolder> {
 
     public interface OnItemClickListener {
@@ -46,7 +41,7 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
 
     static {
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-        final int cacheSize = maxMemory / 8; // 1/8 da memória disponível
+        final int cacheSize = maxMemory / 8;
         memoryCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
             protected int sizeOf(String key, Bitmap bitmap) {
@@ -57,9 +52,15 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
 
     private final List<Occurrence> items = new ArrayList<>();
     private final OnItemClickListener listener;
+    private boolean forceMaterialIcon = false;
 
     public OccurrenceAdapter(OnItemClickListener listener) {
         this.listener = listener;
+    }
+
+    public void setForceMaterialIcon(boolean forceMaterialIcon) {
+        this.forceMaterialIcon = forceMaterialIcon;
+        notifyDataSetChanged();
     }
 
     public void setItems(List<Occurrence> occurrences) {
@@ -86,7 +87,11 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
         holder.subtitle.setText(occurrence.getSetor() + " · " + occurrence.getTempoRelativo());
 
         applyPriorityStyle(holder);
-        applyMaterialIcon(holder, occurrence);
+        if (forceMaterialIcon) {
+            applyMaterialIcon(holder, occurrence);
+        } else {
+            applyVisualMediaOrMaterial(holder, occurrence);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -117,16 +122,11 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
         }
     }
 
-    /**
-     * Exibe a miniatura real da ocorrência (local ou da nuvem Cloudinary) com cantos arredondados (r=14dp),
-     * ou faz fallback para o ícone vetorial do tipo de resíduo.
-     */
     private void applyVisualMediaOrMaterial(ViewHolder holder, Occurrence occurrence) {
         final float cornerRadiusPx = 14f * holder.itemView.getResources().getDisplayMetrics().density;
         String localPath = occurrence.getPhotoPath();
         String remoteUrl = occurrence.getPhotoUrl();
 
-        // 1. Tenta carregar imagem local se existir no dispositivo
         if (localPath != null && !localPath.isEmpty()) {
             File localFile = new File(localPath);
             if (localFile.exists()) {
@@ -144,7 +144,6 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
             }
         }
 
-        // 2. Tenta carregar a imagem remota do Cloudinary / API
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
             Bitmap cached = memoryCache.get(remoteUrl);
             if (cached != null) {
@@ -152,7 +151,6 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
                 return;
             }
 
-            // Exibe ícone vetorial temporário enquanto faz o download em background
             applyMaterialFallback(holder, occurrence);
 
             holder.thumbnail.setTag(remoteUrl);
@@ -180,7 +178,6 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
             return;
         }
 
-        // 3. Fallback: ícone vetorial temático do material
         applyMaterialFallback(holder, occurrence);
     }
 
@@ -193,10 +190,6 @@ public class OccurrenceAdapter extends RecyclerView.Adapter<OccurrenceAdapter.Vi
         holder.iconContainer.setBackground(null);
     }
 
-    /**
-     * Exibe o icone tematico oficial do tipo de residuo (Figma 790:1706),
-     * garantindo que nas ocorrencias recentes seja sempre usado o icone e nao a foto da ocorrencia.
-     */
     private void applyMaterialIcon(ViewHolder holder, Occurrence occurrence) {
         if (holder.thumbnail != null) {
             holder.thumbnail.setVisibility(View.GONE);

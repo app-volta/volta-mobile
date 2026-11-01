@@ -51,11 +51,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * 23a · Perfil · editar dados (Figma 1721:1264).
- * Suporte completo a alteração de foto via câmera ou galeria, com upload no Cloudinary (preset Perfil-Photo),
- * sincronização em tempo real no banco oficial (PUT /users/me) e espelhamento no Cloud Firestore.
- */
 public class EditProfileFragment extends Fragment {
 
     private static final String TAG = "EditProfileFragment";
@@ -80,7 +75,6 @@ public class EditProfileFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Launcher de captura de foto pela câmera
         takePictureLauncher = registerForActivityResult(
                 new ActivityResultContracts.TakePicture(), success -> {
                     if (success && cameraTempFile != null && cameraTempFile.exists()) {
@@ -88,7 +82,6 @@ public class EditProfileFragment extends Fragment {
                     }
                 });
 
-        // Launcher de seleção de foto pela galeria
         pickImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(), uri -> {
                     if (uri != null) {
@@ -99,7 +92,6 @@ public class EditProfileFragment extends Fragment {
                     }
                 });
 
-        // Launcher de permissão de câmera
         requestCameraPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(), isGranted -> {
                     if (isGranted) {
@@ -132,7 +124,6 @@ public class EditProfileFragment extends Fragment {
         view.findViewById(R.id.btnBackEditProfile).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
-        // Preenche dados atuais da sessão
         String name = SessionManager.name(requireContext());
         if (name == null || name.trim().isEmpty()) {
             name = getString(R.string.profile_name);
@@ -155,19 +146,15 @@ public class EditProfileFragment extends Fragment {
         loadAvatar();
         fetchUserProfileFromDatabase();
 
-        // Trocar foto
         View.OnClickListener photoClick = v -> openPhotoSheet();
         view.findViewById(R.id.avatarContainerEdit).setOnClickListener(photoClick);
         view.findViewById(R.id.btnChangePhoto).setOnClickListener(photoClick);
 
-        // Seleção de Setor
         view.findViewById(R.id.btnSelectSector).setOnClickListener(v -> showSectorDialog());
 
-        // Alterar senha
         view.findViewById(R.id.rowChangePassword).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.nav_change_password));
 
-        // Salvar alterações
         view.findViewById(R.id.btnSaveProfileChanges).setOnClickListener(v -> saveChanges());
     }
 
@@ -186,7 +173,6 @@ public class EditProfileFragment extends Fragment {
     private void loadAvatar() {
         if (!isAdded()) return;
 
-        // 1. Tenta carregar do cache local
         String email = SessionManager.email(requireContext());
         String cleanEmail = email != null ? email.trim().toLowerCase(Locale.ROOT) : "";
         String localPath = SessionManager.getProfilePhotoLocal(requireContext());
@@ -208,9 +194,12 @@ public class EditProfileFragment extends Fragment {
             }
         }
 
-        // 2. Tenta carregar da URL remota do Cloudinary
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
+        if ((remoteUrl == null || remoteUrl.isEmpty()) && !cleanEmail.isEmpty()) {
+            remoteUrl = CloudinaryUploader.getDeterministicProfileUrl(cleanEmail);
+        }
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
+            final String finalRemoteUrl = remoteUrl;
             final Context appContext = requireContext().getApplicationContext();
             CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new CloudinaryUploader.BitmapCallback() {
                 @Override
@@ -223,6 +212,7 @@ public class EditProfileFragment extends Fragment {
                                 bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos2);
                             }
                             SessionManager.saveProfilePhotoLocal(appContext, cleanEmail, hashedFile.getAbsolutePath());
+                            SessionManager.saveProfilePhotoUrl(appContext, cleanEmail, finalRemoteUrl);
                         }
                     } catch (Exception ignored) {
                     }
@@ -313,11 +303,6 @@ public class EditProfileFragment extends Fragment {
         }
     }
 
-    /**
-     * Processa a imagem (EXIF + Center Crop 1:1 quadrado + redimensionamento 512x512),
-     * atualiza o avatar imediatamente na tela e faz o upload assíncrono para o Cloudinary
-     * usando o preset Perfil-Photo e pasta Perfil/Assets/Image.
-     */
     private void processAndSaveProfilePhoto(File sourceFile) {
         if (sourceFile == null || !sourceFile.exists()) {
             return;
@@ -329,7 +314,6 @@ public class EditProfileFragment extends Fragment {
                 return;
             }
 
-            // Corrige orientação EXIF se necessário
             try {
                 ExifInterface exif = new ExifInterface(sourceFile.getAbsolutePath());
                 int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
@@ -345,14 +329,12 @@ public class EditProfileFragment extends Fragment {
             } catch (Exception ignored) {
             }
 
-            // Recorte quadrado 1:1 centralizado (Center Crop)
             int minDim = Math.min(bitmap.getWidth(), bitmap.getHeight());
             int cropX = (bitmap.getWidth() - minDim) / 2;
             int cropY = (bitmap.getHeight() - minDim) / 2;
             Bitmap square = Bitmap.createBitmap(bitmap, cropX, cropY, minDim, minDim);
             Bitmap finalAvatar = Bitmap.createScaledBitmap(square, 512, 512, true);
 
-            // Salva permanentemente no diretório de arquivos do app com isolamento por usuário
             String myEmail = SessionManager.email(requireContext());
             String cleanEmail = myEmail != null ? myEmail.trim().toLowerCase(Locale.ROOT) : "";
             File avatarFile = !cleanEmail.isEmpty()
@@ -362,17 +344,14 @@ public class EditProfileFragment extends Fragment {
                 finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos);
             }
 
-            // Grava caminho local na sessão
             SessionManager.saveProfilePhotoLocal(requireContext(), myEmail, avatarFile.getAbsolutePath());
 
-            // Atualiza UI instantaneamente com avatar circular sem atraso
             displayCircularPhoto(finalAvatar);
 
             Toast.makeText(requireContext(), R.string.profile_photo_uploading, Toast.LENGTH_SHORT).show();
 
             final Context appContext = requireContext().getApplicationContext();
 
-            // Dispara upload para o Cloudinary com public_id determinístico baseado no e-mail (preset Perfil-Photo / pasta Perfil/Assets/Image)
             CloudinaryUploader.uploadProfileImage(appContext, avatarFile, myEmail, new CloudinaryUploader.UploadCallback() {
                 @Override
                 public void onSuccess(String remoteUrl, String publicId) {
@@ -380,7 +359,6 @@ public class EditProfileFragment extends Fragment {
                     SessionManager.saveProfilePhotoLocal(appContext, myEmail, avatarFile.getAbsolutePath());
                     Log.i(TAG, "Foto de perfil enviada ao Cloudinary com sucesso: " + remoteUrl);
 
-                    // 1. Salva no banco de dados oficial via PUT /users/me (API Geral)
                     try {
                         AuthAPI authApi = ApiClient.get(appContext).create(AuthAPI.class);
                         JsonObject body = new JsonObject();
@@ -454,7 +432,6 @@ public class EditProfileFragment extends Fragment {
             tvEditProfileInitials.setVisibility(View.VISIBLE);
         }
 
-        // Remove do banco oficial via PUT /users/me
         try {
             AuthAPI authApi = ApiClient.get(appContext).create(AuthAPI.class);
             JsonObject body = new JsonObject();
@@ -509,7 +486,6 @@ public class EditProfileFragment extends Fragment {
             SessionManager.saveSector(requireContext(), selectedSector);
         }
 
-        // Persiste na API Oficial (PUT /users/me)
         try {
             AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
             JsonObject body = new JsonObject();

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- BottomSheet Elegante de Seleção de Setor / Local (Figma 851:3836) -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -11,7 +11,6 @@
     android:paddingEnd="20dp"
     android:paddingBottom="24dp">
 
-    <!-- Handle superior de arrasto -->
     <View
         android:layout_width="40dp"
         android:layout_height="4dp"
@@ -19,7 +18,6 @@
         android:layout_marginBottom="14dp"
         android:background="@drawable/bg_sheet_handle" />
 
-    <!-- Barra de Título + Fechar -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -70,7 +68,6 @@
         </FrameLayout>
     </RelativeLayout>
 
-    <!-- Lista de Setores -->
     <RadioGroup
         android:id="@+id/rgSectors"
         android:layout_width="match_parent"
@@ -78,7 +75,6 @@
         android:layout_marginBottom="20dp"
         android:orientation="vertical" />
 
-    <!-- Botão de Confirmação -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnConfirmSector"
         android:layout_width="match_parent"

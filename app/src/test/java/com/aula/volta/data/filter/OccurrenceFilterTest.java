@@ -56,7 +56,6 @@ public class OccurrenceFilterTest {
         assertEquals(1, byTitle.size());
         assertEquals("48291", byTitle.get(0).getId());
 
-        // Com acentuação e sem acentuação (Normalizer)
         List<Occurrence> bySectorWithoutAccent = OccurrenceFilter.filter(sampleOccurrences, "frigorifico", null, null);
         assertEquals(1, bySectorWithoutAccent.size());
         assertEquals("Frigorífico B2", bySectorWithoutAccent.get(0).getSetor());
@@ -85,7 +84,6 @@ public class OccurrenceFilterTest {
         assertEquals(1, result.size());
         assertEquals("48291", result.get(0).getId());
 
-        // RESOLVIDO deve aceitar tanto RESOLVIDO quanto APROVADA
         statuses = Collections.singletonList("RESOLVIDO");
         result = OccurrenceFilter.filter(sampleOccurrences, null, null, statuses);
         assertEquals(2, result.size());
@@ -93,7 +91,7 @@ public class OccurrenceFilterTest {
 
     @Test
     public void testCompositeFilter_Text_Material_And_Status() {
-        // Busca "central", material "plast", status "EM_ANALISE" -> deve achar 48292
+
         List<Occurrence> result = OccurrenceFilter.filter(
                 sampleOccurrences,
                 "central",
@@ -103,7 +101,6 @@ public class OccurrenceFilterTest {
         assertEquals(1, result.size());
         assertEquals("48292", result.get(0).getId());
 
-        // Mesma busca mas com status incompatível -> 0 resultados
         result = OccurrenceFilter.filter(
                 sampleOccurrences,
                 "central",
@@ -126,23 +123,49 @@ public class OccurrenceFilterTest {
     @Test
     public void testFilterByPrimaryMaterialAndSpecificItem() {
         List<Occurrence> extended = new ArrayList<>(sampleOccurrences);
-        extended.add(new Occurrence("48295", "Cadeira de escritório", "Almoxarifado", "há 3 horas", "BAIXA", "NOVO", "Plástico — Cadeira de escritório (Classe A)"));
-        extended.add(new Occurrence("48296", "Palete PBR Quebrado", "Expedição", "há 4 horas", "BAIXA", "NOVO", "Madeira — Palete PBR (Classe B)"));
+        extended.add(new Occurrence("48295", "Cadeira de escritório", "Almoxarifado", "há 3 horas", "BAIXA", "NOVO", "Plástico — Cadeira de escritório"));
+        extended.add(new Occurrence("48296", "Palete PBR Quebrado", "Expedição", "há 4 horas", "BAIXA", "NOVO", "Madeira — Palete PBR"));
 
-        // Filtro por "madeira" deve encontrar o Palete PBR
         List<String> woodFilter = Collections.singletonList("madeira");
         List<Occurrence> woodResult = OccurrenceFilter.filter(extended, null, woodFilter, null);
         assertEquals(1, woodResult.size());
         assertEquals("48296", woodResult.get(0).getId());
 
-        // Filtro por "plast" deve encontrar tanto Plástico Filme quanto Cadeira de escritório classificada como Plástico
         List<String> plasticFilter = Collections.singletonList("plast");
         List<Occurrence> plasticResult = OccurrenceFilter.filter(extended, null, plasticFilter, null);
         assertEquals(2, plasticResult.size());
 
-        // Busca textual por "cadeira" encontra a cadeira
         List<Occurrence> chairResult = OccurrenceFilter.filter(extended, "cadeira", null, null);
         assertEquals(1, chairResult.size());
         assertEquals("48295", chairResult.get(0).getId());
+    }
+
+    @Test
+    public void testFilterByPriority() {
+        List<String> alta = Collections.singletonList("ALTA");
+        List<Occurrence> altaResult = OccurrenceFilter.filter(sampleOccurrences, null, null, null, alta);
+        assertEquals(1, altaResult.size());
+        assertEquals("48291", altaResult.get(0).getId());
+
+        List<String> media = Collections.singletonList("MÉDIA");
+        List<Occurrence> mediaResult = OccurrenceFilter.filter(sampleOccurrences, null, null, null, media);
+        assertEquals(1, mediaResult.size());
+        assertEquals("48292", mediaResult.get(0).getId());
+
+        List<String> baixa = Collections.singletonList("BAIXA");
+        List<Occurrence> baixaResult = OccurrenceFilter.filter(sampleOccurrences, null, null, null, baixa);
+        assertEquals(2, baixaResult.size());
+    }
+
+    @Test
+    public void testFilterByAbertaAndAprovadaStatus() {
+
+        List<String> aberta = Collections.singletonList("ABERTA");
+        List<Occurrence> abertaResult = OccurrenceFilter.filter(sampleOccurrences, null, null, aberta);
+        assertEquals(2, abertaResult.size());
+
+        List<String> aprovada = Collections.singletonList("APROVADA");
+        List<Occurrence> aprovadaResult = OccurrenceFilter.filter(sampleOccurrences, null, null, aprovada);
+        assertEquals(2, aprovadaResult.size());
     }
 }

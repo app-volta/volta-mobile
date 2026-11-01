@@ -20,11 +20,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Repositório e gerenciador em tempo real das notificações no Cloud Firestore.
- * Conecta-se à coleção "notifications" e sincroniza instantaneamente com o NotificationStore e
- * a bandeja do sistema Android com garantia de não duplicação.
- */
 public class FirestoreNotificationRepository {
 
     private static final String TAG = "FirestoreNotifRepo";
@@ -34,7 +29,6 @@ public class FirestoreNotificationRepository {
     private ListenerRegistration listenerRegistration;
     private boolean isListening = false;
 
-    // Rastreia notificações emitidas localmente por este dispositivo para evitar duplicações por eco do Firestore
     private final Set<String> localSentDocIds = Collections.synchronizedSet(new HashSet<>());
     private final Set<String> localSentKeys = Collections.synchronizedSet(new HashSet<>());
 
@@ -52,9 +46,6 @@ public class FirestoreNotificationRepository {
         return instance;
     }
 
-    /**
-     * Inicia a escuta em tempo real da coleção "notifications" no Firestore.
-     */
     public synchronized void startListening(Context context) {
         if (isListening && listenerRegistration != null) {
             return;
@@ -87,7 +78,7 @@ public class FirestoreNotificationRepository {
                                 String targetUser = (String) docData.get("user_id");
                                 if (targetUser != null && !targetUser.isEmpty() && !"all".equalsIgnoreCase(targetUser)) {
                                     if (!currentEmail.isEmpty() && !targetUser.equalsIgnoreCase(currentEmail)) {
-                                        // Notificação singular de outro usuário; ignora
+
                                         continue;
                                     }
                                 }
@@ -101,11 +92,8 @@ public class FirestoreNotificationRepository {
                                 boolean wasSentLocally = localSentDocIds.contains(docId) || localSentKeys.contains(contentKey);
                                 boolean alreadyCached = NotificationStore.hasNotification(appContext, notification);
 
-                                // Integra ao NotificationStore de forma segura e deduplicada
                                 NotificationStore.pushLocal(appContext, notification);
 
-                                // Notifica na bandeja nativa apenas se não foi originada neste dispositivo,
-                                // não estiver previamente em cache e não tiver sido marcada como lida
                                 if (!wasSentLocally && !alreadyCached && !notification.isLida()) {
                                     String channelId = NotificationHelper.CHANNEL_OCCURRENCES;
                                     if ("META".equalsIgnoreCase(notification.getTipo())) {
@@ -153,9 +141,6 @@ public class FirestoreNotificationRepository {
         }
     }
 
-    /**
-     * Para a escuta de notificações em tempo real.
-     */
     public synchronized void stopListening() {
         if (listenerRegistration != null) {
             listenerRegistration.remove();
@@ -164,9 +149,6 @@ public class FirestoreNotificationRepository {
         isListening = false;
     }
 
-    /**
-     * Envia uma nova notificação para o Cloud Firestore com ID determinístico.
-     */
     public void sendNotification(String docId, String titulo, String descricao, String tipo,
                                  String occurrenceId, String icone, String tint, String bg, String userId) {
         try {
@@ -175,7 +157,6 @@ public class FirestoreNotificationRepository {
                 docId = prefix + java.util.UUID.randomUUID().toString();
             }
 
-            // Registra localmente para ignorar o eco do snapshot listener
             localSentDocIds.add(docId);
             String contentKey = (occurrenceId != null ? occurrenceId : "")
                     + "|" + (tipo != null ? tipo : "NOVA_OCORRENCIA")
@@ -194,6 +175,7 @@ public class FirestoreNotificationRepository {
             data.put("bg", bg != null ? bg : "#E2F7EC");
             data.put("lida", false);
             data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            data.put("timestampMillis", System.currentTimeMillis());
             data.put("user_id", (userId != null && !userId.isEmpty()) ? userId : "all");
 
             final String finalDocId = docId;
@@ -219,9 +201,6 @@ public class FirestoreNotificationRepository {
         sendNotification(null, titulo, descricao, tipo, occurrenceId, icone, tint, bg);
     }
 
-    /**
-     * Exclui uma notificação do Cloud Firestore.
-     */
     public void deleteNotification(String docId) {
         if (docId == null || docId.trim().isEmpty()) {
             return;
@@ -238,9 +217,6 @@ public class FirestoreNotificationRepository {
         }
     }
 
-    /**
-     * Marca uma notificação como lida no Cloud Firestore.
-     */
     public void markAsRead(String docId) {
         if (docId == null || docId.isEmpty()) {
             return;
@@ -283,16 +259,19 @@ public class FirestoreNotificationRepository {
             tipo = "NOVA_OCORRENCIA";
         }
 
+        long timestampMillis = System.currentTimeMillis();
+        Object tsObj = data.get("timestamp");
+        if (tsObj instanceof Timestamp) {
+            timestampMillis = ((Timestamp) tsObj).toDate().getTime();
+        } else if (tsObj instanceof Long) {
+            timestampMillis = (Long) tsObj;
+        } else if (data.get("timestampMillis") instanceof Long) {
+            timestampMillis = (Long) data.get("timestampMillis");
+        }
+
         String tempoRelativo = (String) data.get("tempo_relativo");
-        if (tempoRelativo == null) {
-            Object tsObj = data.get("timestamp");
-            if (tsObj instanceof Timestamp) {
-                Date date = ((Timestamp) tsObj).toDate();
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                tempoRelativo = "hoje às " + sdf.format(date);
-            } else {
-                tempoRelativo = "Agora";
-            }
+        if (tempoRelativo == null || tempoRelativo.equals("Agora")) {
+            tempoRelativo = com.aula.volta.NotificationAdapter.formatRelativeTime(timestampMillis);
         }
 
         String icone = (String) data.get("icone");
@@ -327,7 +306,8 @@ public class FirestoreNotificationRepository {
                 tint,
                 bg,
                 lida,
-                occurrenceId
+                occurrenceId,
+                timestampMillis
         );
     }
 }

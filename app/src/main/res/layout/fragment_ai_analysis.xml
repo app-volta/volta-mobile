@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Análise IA — Figma 851:3792 (15 · escaneando, 16 · análise, 16a · editar, 16b · revisada) -->
+
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
-    <!-- Background oficial com fluidos e setas em marca d'água (Figma 851:3792) -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -31,7 +30,6 @@
             android:paddingEnd="20dp"
             android:paddingBottom="24dp">
 
-            <!-- Botão Voltar (Sombra blur sem borda - Figma 851:3989) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btnBackAnalysis"
                 android:layout_width="40dp"
@@ -53,7 +51,6 @@
                     app:tint="#1B2430" />
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Título e Subtítulo (Figma 851:3992 / 851:3993) -->
             <TextView
                 android:id="@+id/tvAiHeaderTitle"
                 android:layout_width="wrap_content"
@@ -75,7 +72,6 @@
                 android:textColor="@color/vf_text_secondary"
                 android:textSize="14sp" />
 
-            <!-- Progresso 2 de 2: duas barras cheias verdes (Figma 851:3994 / 851:3995) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="6dp"
@@ -98,9 +94,6 @@
                     android:background="@drawable/bg_step_filled" />
             </LinearLayout>
 
-            <!-- ======================================================== -->
-            <!-- ESTADO 1: CARREGANDO / ESCANEANDO (Figma 15 · 851:3975) -->
-            <!-- ======================================================== -->
             <LinearLayout
                 android:id="@+id/aiLoadingGroup"
                 android:layout_width="match_parent"
@@ -108,7 +101,6 @@
                 android:orientation="vertical"
                 android:visibility="visible">
 
-                <!-- Foto com laser verde varrendo (Figma 851:3996) -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="170dp"
@@ -130,27 +122,32 @@
                             android:scaleType="centerCrop"
                             android:src="@drawable/img_caixas_papelao" />
 
-                        <!-- Retículo de Câmera / Escaneamento IA VOLTA (Viewfinder) -->
+                        <ImageView
+                            android:id="@+id/imgScannerGif"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="fitXY"
+                            android:importantForAccessibility="no" />
+
                         <ImageView
                             android:id="@+id/imgScannerReticle"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:scaleType="fitXY"
+                            android:visibility="gone"
                             android:src="@drawable/bg_scanner_reticle" />
 
-                        <!-- Linha/faixa laser animada com brilho difuso e linha neon (Figma 851:4017) -->
                         <FrameLayout
                             android:id="@+id/viewScanBand"
                             android:layout_width="match_parent"
-                            android:layout_height="52dp">
+                            android:layout_height="52dp"
+                            android:visibility="gone">
 
-                            <!-- Brilho difuso em degradê -->
                             <View
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:background="@drawable/bg_scan_band" />
 
-                            <!-- Linha central brilhante do laser -->
                             <View
                                 android:layout_width="match_parent"
                                 android:layout_height="2.5dp"
@@ -158,7 +155,6 @@
                                 android:background="#16C784" />
                         </FrameLayout>
 
-                        <!-- Pill superior esquerdo: Status do Escaneamento (Figma 851:4027) -->
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="30dp"
@@ -191,7 +187,6 @@
                     </FrameLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Cabeçalho: O que a IA encontrou + Badge ALTA -->
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -225,7 +220,6 @@
                         android:textStyle="bold" />
                 </RelativeLayout>
 
-                <!-- Skeleton dos 4 cards (Figma 851:4034 - 851:4045) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -334,7 +328,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Skeleton VOLTA recomenda -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -392,9 +385,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- ======================================================== -->
-            <!-- ESTADO 2: ANÁLISE CONCLUÍDA / REVISADA (Figma 16 e 16b)  -->
-            <!-- ======================================================== -->
             <LinearLayout
                 android:id="@+id/aiResultGroup"
                 android:layout_width="match_parent"
@@ -402,7 +392,6 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- Foto com Badge de Status (Limpa, sem as caixas mockadas - Figma 851:4096) -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="170dp"
@@ -423,7 +412,6 @@
                             android:scaleType="centerCrop"
                             android:src="@drawable/img_caixas_papelao" />
 
-                        <!-- Pill Status Superior: "Análise concluída" ou "Revisado por você" (Figma 851:4127) -->
                         <LinearLayout
                             android:id="@+id/pillAiStatus"
                             android:layout_width="wrap_content"
@@ -457,7 +445,6 @@
                     </FrameLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Cabeçalho da seção: Título + Badge de Prioridade (Figma 851:4131 / 851:4132) -->
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -492,14 +479,12 @@
                         android:textStyle="bold" />
                 </RelativeLayout>
 
-                <!-- Grade com os 4 Cards: Textos BOLD conforme Figma 851:4140 - 851:4169 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:weightSum="2">
 
-                    <!-- Card 1: Tipo (Gold) -->
                     <LinearLayout
                         android:id="@+id/cardAiType"
                         android:layout_width="0dp"
@@ -528,13 +513,12 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:fontFamily="@font/poppins_bold"
-                            android:text="Papelão A"
+                            android:text="Papelão"
                             android:textColor="@color/vf_gold"
                             android:textSize="20sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <!-- Card 2: Contaminação (Verde) -->
                     <LinearLayout
                         android:id="@+id/cardAiContamination"
                         android:layout_width="0dp"
@@ -577,7 +561,6 @@
                     android:orientation="horizontal"
                     android:weightSum="2">
 
-                    <!-- Card 3: Quantidade (Azul) -->
                     <FrameLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -615,7 +598,6 @@
                                 android:textStyle="bold" />
                         </LinearLayout>
 
-                        <!-- Badge "editado" -->
                         <TextView
                             android:id="@+id/badgeQuantityEdited"
                             android:layout_width="wrap_content"
@@ -635,7 +617,6 @@
                             android:visibility="gone" />
                     </FrameLayout>
 
-                    <!-- Card 4: Caixas / Unidades (Roxo) -->
                     <FrameLayout
                         android:layout_width="0dp"
                         android:layout_height="72dp"
@@ -674,7 +655,6 @@
                                 android:textStyle="bold" />
                         </LinearLayout>
 
-                        <!-- Badge "editado" Unidades -->
                         <TextView
                             android:id="@+id/badgeUnitsEditedResult"
                             android:layout_width="wrap_content"
@@ -695,8 +675,6 @@
                     </FrameLayout>
                 </LinearLayout>
 
-
-                <!-- Box de Orientação: "Confira os resultados antes de gerar o relatório" (Figma 851:4170) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -728,7 +706,6 @@
                         android:textSize="12.5sp" />
                 </LinearLayout>
 
-                <!-- VOLTA recomenda (Mascote + Recomendação - Figma 851:4178) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -787,9 +764,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- ======================================================== -->
-            <!-- ESTADO 3: EDITAR ANÁLISE 1 (Figma 16a · 907:5210)       -->
-            <!-- ======================================================== -->
             <LinearLayout
                 android:id="@+id/aiEditGroup"
                 android:layout_width="match_parent"
@@ -797,7 +771,6 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- Card de Instrução com Thumbnail da Foto (Figma 907:5210) -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -858,7 +831,6 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 1. Linha Superior: Tipo de material (Esquerda) + Classe A B C (Direita) -->
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -874,62 +846,8 @@
                         android:textColor="@color/vf_text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:fontFamily="sans-serif"
-                            android:text="Classe"
-                            android:textColor="@color/vf_text_secondary"
-                            android:textSize="12sp" />
-
-                        <TextView
-                            android:id="@+id/pillClassA"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_marginEnd="4dp"
-                            android:background="@drawable/bg_class_circle_selected"
-                            android:gravity="center"
-                            android:text="A"
-                            android:textColor="@color/white"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/pillClassB"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:layout_marginEnd="4dp"
-                            android:background="@drawable/bg_class_circle_unselected"
-                            android:gravity="center"
-                            android:text="B"
-                            android:textColor="@color/vf_text_secondary"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/pillClassC"
-                            android:layout_width="22dp"
-                            android:layout_height="22dp"
-                            android:background="@drawable/bg_class_circle_unselected"
-                            android:gravity="center"
-                            android:text="C"
-                            android:textColor="@color/vf_text_secondary"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
                 </RelativeLayout>
 
-                <!-- Chips de materiais (Figma 907:5210) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1040,7 +958,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- 2. Grau de contaminação -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -1050,7 +967,6 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
-                <!-- Segmented Control de Contaminação -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
@@ -1095,14 +1011,12 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- 3. Quantidade e Caixas lado a lado (Figma 907:5210) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:weightSum="2">
 
-                    <!-- Coluna Quantidade (com destaque dinâmico se editado) -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1142,7 +1056,6 @@
                                 android:visibility="gone" />
                         </LinearLayout>
 
-                        <!-- Stepper Box Quantidade -->
                         <LinearLayout
                             android:id="@+id/stepperWeightContainer"
                             android:layout_width="match_parent"
@@ -1229,7 +1142,6 @@
                             android:textSize="11sp" />
                     </LinearLayout>
 
-                    <!-- Coluna Caixas -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -1269,7 +1181,6 @@
                                 android:visibility="gone" />
                         </LinearLayout>
 
-                        <!-- Stepper Box Caixas -->
                         <LinearLayout
                             android:id="@+id/stepperUnitsContainer"
                             android:layout_width="match_parent"
@@ -1355,7 +1266,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Card Educativo Mascote Voltinha: "✦ Sua correção ensina a IA" (Figma 907:5210) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1402,7 +1312,6 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Barra Inferior Fixa de Ações (Figma 851:3972 / 851:4185 / 907:5210) -->
     <FrameLayout
         android:id="@+id/layoutBottomBarAi"
         android:layout_width="match_parent"
@@ -1414,7 +1323,6 @@
         android:paddingEnd="20dp"
         android:paddingBottom="24dp">
 
-        <!-- Ações do Resultado (16 e 16b) -->
         <LinearLayout
             android:id="@+id/bottomBarActionsResult"
             android:layout_width="match_parent"
@@ -1454,7 +1362,6 @@
                 app:cornerRadius="16dp" />
         </LinearLayout>
 
-        <!-- Ações do Modo Editar (16a) -->
         <LinearLayout
             android:id="@+id/bottomBarActionsEdit"
             android:layout_width="match_parent"
@@ -1496,7 +1403,6 @@
         </LinearLayout>
     </FrameLayout>
 
-    <!-- Top Toast de Correção Salva (Figma 16b · 907:5084) -->
     <LinearLayout
         android:id="@+id/toastCorrectionSaved"
         android:layout_width="match_parent"

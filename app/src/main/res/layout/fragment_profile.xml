@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Perfil — Figma 790:3470: Fluidos, Header do Colaborador, Sobre você, Configurações, Sair e Versão -->
+
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:background="@color/volta_background_light">
 
-    <!-- Fundo com fluidos e marca d'água oficial (Figma 790:3471) -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,9 +28,6 @@
             android:paddingEnd="24dp"
             android:paddingBottom="120dp">
 
-            <!-- =============================================================================== -->
-            <!--                                  HEADER                                         -->
-            <!-- =============================================================================== -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -42,9 +38,6 @@
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
-            <!-- =============================================================================== -->
-            <!--                     CARD DO COLABORADOR (Figma 790:3485)                        -->
-            <!-- =============================================================================== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -55,7 +48,6 @@
                 android:orientation="horizontal"
                 android:padding="20dp">
 
-                <!-- Avatar circular branco com iniciais em verde e suporte a foto de perfil (Figma 790:3492: 74x74dp) -->
                 <FrameLayout
                     android:id="@+id/avatarContainer"
                     android:layout_width="74dp"
@@ -94,7 +86,6 @@
                         android:src="@drawable/ic_camera_white" />
                 </FrameLayout>
 
-                <!-- Informações do usuário -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -134,9 +125,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--                        SEÇÃO: SOBRE VOCÊ (Figma 790:3497)                       -->
-            <!-- =============================================================================== -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -169,17 +157,16 @@
                     android:textStyle="bold" />
             </RelativeLayout>
 
-            <!-- Grid 2x2 Linha 1: E-mail e Cadastro -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:orientation="horizontal">
 
-                <!-- Card 1: E-mail (Figma 790:3499) -->
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="74dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="82dp"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_surface_16"
@@ -230,10 +217,10 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Card 2: Cadastro (Figma 790:3506) -->
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="74dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="82dp"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_surface_16"
@@ -283,17 +270,16 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Grid 2x2 Linha 2: Ocorrências e Recuperado -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 android:orientation="horizontal">
 
-                <!-- Card 3: Ocorrências (Figma 790:3513) -->
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="74dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="82dp"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_surface_16"
@@ -343,10 +329,10 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Card 4: Recuperado (Figma 790:3520) -->
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="74dp"
+                    android:layout_height="wrap_content"
+                    android:minHeight="82dp"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_surface_16"
@@ -397,9 +383,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--                     SEÇÃO: CONFIGURAÇÕES (Figma 790:3527)                       -->
-            <!-- =============================================================================== -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -410,11 +393,13 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <!-- Linha 1: Notificações (Figma 790:3528) -->
             <LinearLayout
                 android:id="@+id/rowProfileNotifications"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
+                android:minHeight="54dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
                 android:layout_marginBottom="8dp"
                 android:background="@drawable/bg_card_surface_16"
                 android:clickable="true"
@@ -447,7 +432,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
                     android:fontFamily="@font/font_inter"
-                    android:text="3 novas"
+                    android:visibility="gone"
                     android:textColor="@color/vf_text_secondary"
                     android:textSize="13sp" />
 
@@ -458,11 +443,13 @@
                     app:tint="#9CA3AF" />
             </LinearLayout>
 
-            <!-- Linha 2: Minha unidade (Figma 790:3536) -->
             <LinearLayout
                 android:id="@+id/rowProfileUnit"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
+                android:minHeight="54dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
                 android:layout_marginBottom="8dp"
                 android:background="@drawable/bg_card_surface_16"
                 android:clickable="true"
@@ -506,11 +493,13 @@
                     app:tint="#9CA3AF" />
             </LinearLayout>
 
-            <!-- Linha 3: Ajuda com o VOLTA (Figma 790:3544) -->
             <LinearLayout
                 android:id="@+id/rowProfileHelp"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
+                android:minHeight="54dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
                 android:layout_marginBottom="24dp"
                 android:background="@drawable/bg_card_surface_16"
                 android:clickable="true"
@@ -553,9 +542,6 @@
                     app:tint="#9CA3AF" />
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--                    BOTÃO: SAIR DA CONTA (Figma 1376:992)                        -->
-            <!-- =============================================================================== -->
             <FrameLayout
                 android:id="@+id/btnLogout"
                 android:layout_width="match_parent"
@@ -576,7 +562,6 @@
                     android:textStyle="bold" />
             </FrameLayout>
 
-            <!-- Versão do App -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -590,8 +575,6 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-
-    <!-- Toast flutuante de confirmação (Figma 1723:1366 e 1723:1460: 320x68dp r16 #1B2430) -->
     <LinearLayout
         android:id="@+id/toastProfileFeedback"
         android:layout_width="320dp"

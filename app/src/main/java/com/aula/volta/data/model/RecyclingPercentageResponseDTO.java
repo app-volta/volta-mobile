@@ -2,9 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO para cálculo de percentual de reciclagem (POST /esg/recycling-percentage).
- */
 public class RecyclingPercentageResponseDTO {
 
     @SerializedName("totalWasteKg")

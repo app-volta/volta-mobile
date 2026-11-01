@@ -7,9 +7,6 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Testes unitários para o sistema de listeners e sincronização em tempo real do OccurrenceStore.
- */
 public class OccurrenceStoreSyncTest {
 
     @Test
@@ -26,7 +23,7 @@ public class OccurrenceStoreSyncTest {
 
         OccurrenceStore.removeListener(listener);
         OccurrenceStore.notifyListeners();
-        assertEquals(2, callCount.get()); // Não deve incrementar após remoção
+        assertEquals(2, callCount.get());
     }
 
     @Test

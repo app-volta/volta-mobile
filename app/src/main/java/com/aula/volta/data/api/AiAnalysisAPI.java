@@ -14,17 +14,6 @@ import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 
-/**
- * Endpoints de Análise de Imagem por IA e Relatório de IA de Incidentes (QA: https://api.qa.54.210.1.34.sslip.io).
- *
- * Contratos mapeados:
- * 1. POST /occurrences/{id}/analysis — Análise direta de imagem (recebe photoUrl/imageUrl do Cloudinary)
- * 2. POST /incidents — Registra incidente com photoUrl (secure_url do Cloudinary), areaId, wasteTypeId, etc.
- * 3. GET /incidents/{id}/ai-report — Consulta o relatório de IA gerado para o incidente (AiReportResponseDTO)
- * 4. GET /incidents/{id}/scoring-context — Consulta o contexto de score com resumo do relatório de IA
- * 5. GET /areas/mine — Lista os setores/áreas da empresa autenticada
- * 6. GET /waste-types — Lista o catálogo de tipos de resíduo (CONAMA 275/2001 / NBR 10004)
- */
 public interface AiAnalysisAPI {
 
     @Headers({

@@ -33,11 +33,6 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Bottom sheet Central de Notificações — Volta Design System e Figma (790:1854).
- * Suporta filtros por abas, sincronização Firestore em tempo real, deep linking de alta fidelidade,
- * swipe para arquivar com desfazer e estado vazio enriquecido com o mascote VOLTA.
- */
 public class NotificationsSheet extends BottomSheetDialogFragment {
 
     public static final String REQUEST_KEY_UPDATED = "notifications_updated";
@@ -219,7 +214,6 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
         rvNotifications.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvNotifications.setAdapter(adapter);
 
-        // Deslizar para remover notificação (Swipe-to-dismiss com Undo)
         ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
@@ -262,7 +256,7 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
                     paint.setColor(Color.parseColor("#E53935"));
                     Drawable icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_trash_white);
 
-                    if (dX > 0) { // Deslizando para a direita
+                    if (dX > 0) {
                         c.drawRect((float) itemView.getLeft(), (float) itemView.getTop(), dX, (float) itemView.getBottom(), paint);
                         if (icon != null) {
                             int iconMargin = (itemView.getHeight() - icon.getIntrinsicHeight()) / 2;
@@ -273,7 +267,7 @@ public class NotificationsSheet extends BottomSheetDialogFragment {
                             icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
                             icon.draw(c);
                         }
-                    } else { // Deslizando para a esquerda
+                    } else {
                         c.drawRect((float) itemView.getRight() + dX, (float) itemView.getTop(), (float) itemView.getRight(), (float) itemView.getBottom(), paint);
                         if (icon != null) {
                             int iconMargin = (itemView.getHeight() - icon.getIntrinsicHeight()) / 2;

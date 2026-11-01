@@ -13,9 +13,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * Senha atualizada — Figma 790:1241. Volta ao login limpando o recovery da pilha.
- */
 public class PasswordSuccessFragment extends Fragment {
 
     public PasswordSuccessFragment() {

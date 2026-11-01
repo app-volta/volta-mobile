@@ -46,10 +46,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-/**
- * Nova ocorrência — Passo 1 de 2 (Figma 851:3792).
- * Captura real de fotos através de CameraX no visor embutido ou Câmera do Sistema.
- */
 public class NewOccurrenceFragment extends Fragment {
 
     private static final int MAX_PHOTO_DIMEN = 1280;
@@ -59,15 +55,14 @@ public class NewOccurrenceFragment extends Fragment {
     private View photoPreviewGroup;
     private ImageView imgPhotoPreview;
     private MaterialButton btnSendAnalysis;
+    private View cardSubmissionError;
     private TextView tvSector;
     private EditText etDescription;
 
-    // Elementos do visor embutido de Câmera
     private FrameLayout cameraViewfinderOverlay;
     private PreviewView cameraPreviewView;
     private ImageView cameraPreviewImage;
 
-    // CameraX
     private ProcessCameraProvider cameraProvider;
     private ImageCapture imageCapture;
     private Camera camera;
@@ -78,6 +73,8 @@ public class NewOccurrenceFragment extends Fragment {
     private File photoFile;
     private File cameraTempFile;
     private int sectorIndex;
+    private String selectedAreaId;
+    private String selectedSectorName;
 
     private ActivityResultLauncher<Uri> takePictureLauncher;
     private ActivityResultLauncher<String> pickImageLauncher;
@@ -102,14 +99,13 @@ public class NewOccurrenceFragment extends Fragment {
     }
 
     public NewOccurrenceFragment() {
-        // Construtor vazio obrigatório
+
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Launcher para Câmera do Sistema (fallback e opção direta)
         takePictureLauncher = registerForActivityResult(
                 new ActivityResultContracts.TakePicture(), success -> {
                     if (success && cameraTempFile != null && cameraTempFile.exists()) {
@@ -118,7 +114,6 @@ public class NewOccurrenceFragment extends Fragment {
                     }
                 });
 
-        // Launcher para Galeria de Fotos
         pickImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(), uri -> {
                     if (uri != null) {
@@ -130,7 +125,6 @@ public class NewOccurrenceFragment extends Fragment {
                     }
                 });
 
-        // Launcher de Permissão de Câmera
         requestCameraPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(), isGranted -> {
                     if (isGranted) {
@@ -171,6 +165,7 @@ public class NewOccurrenceFragment extends Fragment {
             });
         }
         btnSendAnalysis = view.findViewById(R.id.btnSendAnalysis);
+        cardSubmissionError = view.findViewById(R.id.cardSubmissionError);
         tvSector = view.findViewById(R.id.tvSector);
         etDescription = view.findViewById(R.id.etDescription);
 
@@ -208,29 +203,23 @@ public class NewOccurrenceFragment extends Fragment {
             }
         });
 
-        // Botão Câmera -> Inicia captura de foto real
         MaterialButton btnCamera = view.findViewById(R.id.btnCaptureCamera);
         btnCamera.setOnClickListener(v -> checkPermissionAndOpenCamera());
 
-        // Botão Galeria -> Seleciona arquivo do dispositivo
         MaterialButton btnGallery = view.findViewById(R.id.btnOpenGallery);
         btnGallery.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
 
-        // Botão Trocar foto
         View btnRetake = view.findViewById(R.id.btnRetakePhoto);
         btnRetake.setOnClickListener(v -> {
             photoFile = null;
             updatePhotoState();
         });
 
-        // Seletor de Setor / Localização
         View btnSector = view.findViewById(R.id.btnSector);
         btnSector.setOnClickListener(v -> showSectorDialog());
 
-        // Botão Enviar para análise
         btnSendAnalysis.setOnClickListener(this::sendToAnalysis);
 
-        // Controles do Visor da Câmera (Tela 13 do Figma)
         View btnCameraClose = view.findViewById(R.id.btnCameraClose);
         btnCameraClose.setOnClickListener(v -> closeCameraOverlay());
 
@@ -250,6 +239,20 @@ public class NewOccurrenceFragment extends Fragment {
         btnCameraFlip.setOnClickListener(v -> flipCamera());
 
         updatePhotoState();
+
+        getParentFragmentManager().setFragmentResultListener(
+                com.aula.volta.ui.error.OfflineErrorFragment.REQUEST_KEY,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> {
+                    if (result.getBoolean(com.aula.volta.ui.error.OfflineErrorFragment.RESULT_ONLINE, false)
+                            && photoFile != null && photoFile.exists() && btnSendAnalysis != null) {
+                        if (cardSubmissionError != null) {
+                            cardSubmissionError.setVisibility(View.GONE);
+                        }
+                        btnSendAnalysis.setText("Enviar para análise");
+                        sendToAnalysis(btnSendAnalysis);
+                    }
+                });
     }
 
     @Override
@@ -260,9 +263,6 @@ public class NewOccurrenceFragment extends Fragment {
         }
     }
 
-    /**
-     * Verifica permissão de câmera antes de abrir o visor.
-     */
     private void checkPermissionAndOpenCamera() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -272,9 +272,6 @@ public class NewOccurrenceFragment extends Fragment {
         }
     }
 
-    /**
-     * Determina a rotação do display atual para sincronizar o CameraX.
-     */
     private int getDisplayRotation() {
         if (cameraPreviewView != null && cameraPreviewView.getDisplay() != null) {
             return cameraPreviewView.getDisplay().getRotation();
@@ -285,10 +282,6 @@ public class NewOccurrenceFragment extends Fragment {
         return Surface.ROTATION_0;
     }
 
-    /**
-     * Monitora a orientação do sensor físico do aparelho para que a captura
-     * registre a tag EXIF correta mesmo se a tela estiver travada em portrait.
-     */
     private void setupOrientationListener() {
         if (orientationEventListener == null && getContext() != null) {
             orientationEventListener = new OrientationEventListener(requireContext()) {
@@ -325,9 +318,6 @@ public class NewOccurrenceFragment extends Fragment {
         }
     }
 
-    /**
-     * Abre o visor de câmera embutido e inicia o CameraX para visualização em tempo real.
-     */
     private void openCameraViewfinder() {
         if (cameraViewfinderOverlay != null) {
             cameraViewfinderOverlay.setVisibility(View.VISIBLE);
@@ -344,9 +334,6 @@ public class NewOccurrenceFragment extends Fragment {
         }
     }
 
-    /**
-     * Inicia a sessão de câmera com CameraX.
-     */
     private void startCameraX() {
         if (getContext() == null) {
             return;
@@ -359,7 +346,7 @@ public class NewOccurrenceFragment extends Fragment {
                 cameraProvider = cameraProviderFuture.get();
                 bindCameraUseCases();
             } catch (Exception e) {
-                // Se o CameraX falhar no dispositivo, abre a câmera padrão do sistema
+
                 closeCameraOverlay();
                 openSystemCamera();
             }
@@ -395,7 +382,7 @@ public class NewOccurrenceFragment extends Fragment {
                 cameraPreviewImage.setVisibility(View.GONE);
             }
         } catch (Exception e) {
-            // Emulador sem suporte Camera2 ou câmera indisponível
+
             if (cameraPreviewImage != null) {
                 cameraPreviewImage.setVisibility(View.VISIBLE);
             }
@@ -408,12 +395,9 @@ public class NewOccurrenceFragment extends Fragment {
         }
     }
 
-    /**
-     * Dispara a captura real da foto através do use-case do CameraX.
-     */
     private void captureRealPhoto() {
         if (imageCapture == null) {
-            // Fallback: se CameraX não estiver ativo, abre a câmera do sistema
+
             closeCameraOverlay();
             openSystemCamera();
             return;
@@ -448,16 +432,13 @@ public class NewOccurrenceFragment extends Fragment {
                         if (!isAdded()) {
                             return;
                         }
-                        // Em caso de falha de hardware, tenta a câmera nativa do sistema
+
                         closeCameraOverlay();
                         openSystemCamera();
                     }
                 });
     }
 
-    /**
-     * Alterna a lanterna / flash do dispositivo.
-     */
     private void toggleTorch() {
         if (camera != null && camera.getCameraInfo().hasFlashUnit()) {
             isTorchOn = !isTorchOn;
@@ -468,9 +449,6 @@ public class NewOccurrenceFragment extends Fragment {
         }
     }
 
-    /**
-     * Alterna entre câmera frontal e traseira.
-     */
     private void flipCamera() {
         lensFacing = (lensFacing == CameraSelector.LENS_FACING_BACK)
                 ? CameraSelector.LENS_FACING_FRONT
@@ -478,9 +456,6 @@ public class NewOccurrenceFragment extends Fragment {
         bindCameraUseCases();
     }
 
-    /**
-     * Dispara a câmera nativa do sistema Android caso o usuário prefira ou como fallback.
-     */
     private void openSystemCamera() {
         try {
             cameraTempFile = new File(requireContext().getCacheDir(),
@@ -496,14 +471,15 @@ public class NewOccurrenceFragment extends Fragment {
     private void showSectorDialog() {
         com.aula.volta.ui.occurrence.SelectSectorSheet sheet =
                 com.aula.volta.ui.occurrence.SelectSectorSheet.newInstance(sectorIndex);
-        sheet.setOnSectorSelectedListener((index, sectorName) -> {
+        sheet.setOnSectorSelectedListener((index, sectorName, areaId) -> {
             sectorIndex = index;
+            selectedSectorName = sectorName;
+            selectedAreaId = areaId;
             tvSector.setText(sectorName);
         });
         sheet.show(getChildFragmentManager(), "select_sector");
     }
 
-    /** Atualiza estado vazio vs. foto anexada (Figma 12 vs 14). */
     private void updatePhotoState() {
         boolean hasPhoto = photoFile != null && photoFile.exists();
         photoEmptyGroup.setVisibility(hasPhoto ? View.GONE : View.VISIBLE);
@@ -529,21 +505,46 @@ public class NewOccurrenceFragment extends Fragment {
         if (photoFile == null || !photoFile.exists()) {
             return;
         }
+        if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+            if (cardSubmissionError != null) {
+                cardSubmissionError.setVisibility(View.VISIBLE);
+            }
+            if (btnSendAnalysis != null) {
+                btnSendAnalysis.setEnabled(true);
+                btnSendAnalysis.setText("Tentar de novo");
+            }
+            Bundle errArgs = new Bundle();
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                    com.aula.volta.ui.error.OfflineErrorFragment.TYPE_SUBMISSION_FAILED);
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Não conseguimos enviar");
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                    "Sua foto e os dados continuam aqui. Confira a conexão e tente de novo.");
+            try {
+                Navigation.findNavController(v).navigate(R.id.nav_offline_error, errArgs);
+            } catch (Exception ignored) {
+            }
+            return;
+        }
+        if (cardSubmissionError != null) {
+            cardSubmissionError.setVisibility(View.GONE);
+        }
         btnSendAnalysis.setEnabled(false);
 
-        // Inicia o upload no Cloudinary exatamente ao clicar no botão "Enviar para análise"
         com.aula.volta.data.upload.CloudinaryUploader.uploadImage(requireContext(), photoFile, null);
 
-        String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
         Bundle args = new Bundle();
         args.putString("photoPath", photoFile.getAbsolutePath());
         args.putString("descricao", etDescription.getText().toString().trim());
-        args.putString("setor", sectors[sectorIndex]);
+        String sector = selectedSectorName != null ? selectedSectorName : tvSector.getText().toString();
+        args.putString("setor", sector);
+        if (selectedAreaId != null && !selectedAreaId.isEmpty()) {
+            args.putString("areaId", selectedAreaId);
+        }
         args.putBoolean("avisar", false);
         Navigation.findNavController(v).navigate(R.id.nav_ai_analysis, args);
     }
 
-    /** Copia conteúdo da galeria para o cache. */
     private File copyToCache(Uri uri) {
         if (!isAdded() || getContext() == null) {
             return null;
@@ -551,7 +552,6 @@ public class NewOccurrenceFragment extends Fragment {
         return ImageUtils.copyUriToCache(requireContext(), uri);
     }
 
-    /** Reduz dimensões para análise performática e garante rotação EXIF na orientação correta. */
     private File compressImage(File source) {
         if (source == null || !source.exists() || !isAdded() || getContext() == null) {
             return null;

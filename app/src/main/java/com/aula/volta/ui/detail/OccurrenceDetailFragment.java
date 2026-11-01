@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.Looper;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.ChatbotAPI;
+import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.ChatbotClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.google.gson.JsonArray;
@@ -52,16 +53,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Detalhe da Ocorrência — Figma 851:3792.
- * Telas:
- *  - 17 · Ocorrência (851:4196)
- *  - 17a · Alterar classificação 2 (908:5946)
- *  - 17c · Adicionar observação 2 (908:6103)
- *  - 17d · Ocorrência · ações aplicadas 2 (908:6409)
- *  - Diálogo · finalizar (851:4885)
- *  - 19 · Ocorrência · finalizada (851:4403)
- */
 public class OccurrenceDetailFragment extends Fragment {
 
     private static final String PREFS = "cache_occurrence_detail";
@@ -89,7 +80,6 @@ public class OccurrenceDetailFragment extends Fragment {
     private TextView tvToastFinalizedSub;
     private TextView btnToastOpenPgrs;
 
-    // Tracker 3 steps
     private FrameLayout stepCircle0;
     private ImageView stepCheck0;
     private TextView stepLabel0;
@@ -105,12 +95,12 @@ public class OccurrenceDetailFragment extends Fragment {
     private String occurrenceId;
     private String currentStatus = "EM_ANALISE";
     private JsonObject currentDetailJson;
-    private String currentMaterial = "Papelão (Classe A)";
-    private String currentMaterialName = "Papelão";
+    private String currentMaterial = "Resíduo Reciclável";
+    private String currentMaterialName = "Resíduo";
     private String currentQualityClass = "A";
     private String currentPriority = "BAIXA";
     private String currentContamination = "baixa";
-    private String currentSector = "Frigorífico — Setor B2";
+    private String currentSector = "Planta Principal";
     private String currentWeight = "38 kg";
     private final Handler pollHandler = new Handler(Looper.getMainLooper());
     private final Runnable pollStatusRunnable = new Runnable() {
@@ -215,7 +205,6 @@ public class OccurrenceDetailFragment extends Fragment {
             btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         }
 
-        // Ações do responsável (17a, 17c)
         if (rowEditClass != null) {
             rowEditClass.setOnClickListener(this::showEditClassificationSheet);
         }
@@ -223,12 +212,10 @@ public class OccurrenceDetailFragment extends Fragment {
             rowObserve.setOnClickListener(this::showAddObservationSheet);
         }
 
-        // Finalizar ocorrência (Diálogo 851:4885)
         if (btnFinalizeOcc != null) {
             btnFinalizeOcc.setOnClickListener(this::showFinalizeDialog);
         }
 
-        // Ação do Toast PGRS (abre PDF mockado)
         View.OnClickListener openPgrsAction = v -> {
             try {
                 File report = PgrsReport.generatePdf(requireContext());
@@ -299,7 +286,7 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void loadDetail() {
-        // 1. Carrega imediatamente do cache local para exibir foto, relatório e dados sem atraso
+
         String cachedStr = PrefsHelper.getJson(requireContext(), PREFS, occurrenceId);
         if (cachedStr != null && !cachedStr.isEmpty()) {
             try {
@@ -309,8 +296,7 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         }
 
-        // 2. Consulta API oficial do backend (/incidents/{id})
-        OccurrenceAPI api = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
+        OccurrenceAPI api = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
         api.getIncidentById(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
             @Override
             public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
@@ -321,30 +307,46 @@ public class OccurrenceDetailFragment extends Fragment {
                     IncidentResponseDTO dto = response.body();
                     JsonObject body = new JsonObject();
                     body.addProperty("id", dto.getId());
-                    String mat = (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().isEmpty())
-                            ? dto.getEmployeeDescription()
-                            : (currentDetailJson != null && currentDetailJson.has("material") ? currentDetailJson.get("material").getAsString() : "Papelão (Classe A)");
-                    body.addProperty("titulo", mat);
-                    body.addProperty("material", mat);
+                    String cleanTitle = (dto.getTitle() != null && !dto.getTitle().trim().isEmpty())
+                            ? dto.getTitle().trim()
+                            : com.aula.volta.data.model.AiAnalysisJSON.generateSingleWordTitle(
+                                    (currentDetailJson != null && currentDetailJson.has("material")) ? currentDetailJson.get("material").getAsString() : null,
+                                    null,
+                                    dto.getEmployeeDescription()
+                            );
+                    if (cleanTitle.isEmpty() || cleanTitle.equalsIgnoreCase("Resíduo")) {
+                        cleanTitle = "Resíduo Reciclável";
+                    }
+                    body.addProperty("titulo", cleanTitle);
+                    String resolvedMat = (currentDetailJson != null && currentDetailJson.has("material")
+                            && !currentDetailJson.get("material").getAsString().isEmpty()
+                            && !currentDetailJson.get("material").getAsString().equalsIgnoreCase("Resíduo Reciclável"))
+                            ? currentDetailJson.get("material").getAsString()
+                            : cleanTitle;
+                    body.addProperty("material", resolvedMat);
                     String sector = (currentDetailJson != null && currentDetailJson.has("setor"))
-                            ? currentDetailJson.get("setor").getAsString() : "Frigorífico — Setor B2";
+                            ? currentDetailJson.get("setor").getAsString()
+                            : com.aula.volta.data.model.Occurrence.resolveSector(dto, getContext());
                     body.addProperty("setor", sector);
                     double peso = (dto.getEstimatedQuantity() != null && dto.getEstimatedQuantity() > 0)
                             ? dto.getEstimatedQuantity()
                             : (currentDetailJson != null && currentDetailJson.has("peso_estimado") ? currentDetailJson.get("peso_estimado").getAsDouble() : 5.0);
                     body.addProperty("peso_estimado", peso);
 
+                    if (dto.getContaminationLevel() != null && !dto.getContaminationLevel().isEmpty()) {
+                        body.addProperty("contaminacao", com.aula.volta.data.model.AiAnalysisJSON.mapContaminationLabel(dto.getContaminationLevel()));
+                    }
+
                     String stat = (dto.getStatus() != null && !dto.getStatus().isEmpty()) ? dto.getStatus() : currentStatus;
                     body.addProperty("status", stat);
 
                     String prio = (dto.getPriority() != null && !dto.getPriority().isEmpty())
                             ? dto.getPriority()
-                            : (currentDetailJson != null && currentDetailJson.has("prioridade") ? currentDetailJson.get("prioridade").getAsString() : AiAnalysisJSON.calculatePriority(mat, "LOW", dto.getEmployeeDescription()));
+                            : (currentDetailJson != null && currentDetailJson.has("prioridade") ? currentDetailJson.get("prioridade").getAsString() : AiAnalysisJSON.calculatePriority(cleanTitle, "LOW", dto.getEmployeeDescription()));
                     body.addProperty("prioridade", prio);
 
                     body.addProperty("quando", dto.getRegisteredAt() != null ? dto.getRegisteredAt() : (currentDetailJson != null && currentDetailJson.has("quando") ? currentDetailJson.get("quando").getAsString() : "agora"));
 
-                    // Preserva foto remota ou local sem sobrescrever com null
                     String photoUrl = dto.getPhotoUrl();
                     if ((photoUrl == null || photoUrl.isEmpty()) && currentDetailJson != null) {
                         if (currentDetailJson.has("photoUrl")) photoUrl = currentDetailJson.get("photoUrl").getAsString();
@@ -359,10 +361,14 @@ public class OccurrenceDetailFragment extends Fragment {
                         body.addProperty("photoPath", currentDetailJson.get("photoPath").getAsString());
                     }
 
-                    // Preserva relatório automático detalhado da IA sem sobrescrever com descrição simples
-                    String relatorio = (currentDetailJson != null && currentDetailJson.has("relatorio_auto") && !currentDetailJson.get("relatorio_auto").getAsString().isEmpty())
-                            ? currentDetailJson.get("relatorio_auto").getAsString()
-                            : (dto.getEmployeeDescription() != null ? dto.getEmployeeDescription() : "");
+                    String relatorio = "";
+                    if (dto.getAiDescription() != null && !dto.getAiDescription().trim().isEmpty()) {
+                        relatorio = dto.getAiDescription().trim();
+                    } else if (currentDetailJson != null && currentDetailJson.has("relatorio_auto") && !currentDetailJson.get("relatorio_auto").getAsString().isEmpty()) {
+                        relatorio = currentDetailJson.get("relatorio_auto").getAsString();
+                    } else if (dto.getEmployeeDescription() != null) {
+                        relatorio = dto.getEmployeeDescription();
+                    }
                     if (!relatorio.isEmpty()) {
                         body.addProperty("relatorio_auto", relatorio);
                     }
@@ -371,23 +377,20 @@ public class OccurrenceDetailFragment extends Fragment {
                     PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
                     applyDetail(currentDetailJson);
 
-                    // Busca relatório oficial de IA se ainda não estiver completo
                     fetchAiReportIfMissing(api, body);
-                } else {
-                    fallbackOccurrenceDetail(api);
+                } else if (currentDetailJson == null) {
+                    loadFromCache();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    fallbackOccurrenceDetail(api);
+                if (isAdded() && currentDetailJson == null) {
+                    loadFromCache();
                 }
             }
         });
 
-
-        // 4. Consulta a API de Rascunhos para validar se foi aprovado pela gestão web
         checkDraftApprovalStatus();
     }
 
@@ -419,105 +422,44 @@ public class OccurrenceDetailFragment extends Fragment {
     private void checkDraftApprovalStatus() {
         if (occurrenceId == null || occurrenceId.isEmpty() || !isAdded()) return;
         try {
-            ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
-            chatApi.listOccurrenceDrafts().enqueue(new Callback<JsonObject>() {
+            OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+            occApi.getIncidentById(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
                 @Override
-                public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
                     if (!isAdded() || !response.isSuccessful() || response.body() == null) return;
-                    JsonObject res = response.body();
-                    if (res.has("data") && res.get("data").isJsonArray()) {
-                        JsonArray arr = res.getAsJsonArray("data");
-                        for (int i = 0; i < arr.size(); i++) {
-                            JsonObject draft = arr.get(i).getAsJsonObject();
-                            if (draft.has("id") && occurrenceId.equals(draft.get("id").getAsString())) {
-                                String st = draft.has("status") ? draft.get("status").getAsString() : "";
-                                if ("APROVADO".equalsIgnoreCase(st) || "APPROVED".equalsIgnoreCase(st) || "CONCLUIDO".equalsIgnoreCase(st)) {
-                                    if (!"APROVADA".equalsIgnoreCase(currentStatus)) {
-                                        currentStatus = "APROVADA";
-                                        if (currentDetailJson != null) {
-                                            currentDetailJson.addProperty("status", "APROVADA");
-                                            PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
-                                        }
-                                        syncFinalizedUi();
-                                        NotificationHelper.notifyOccurrenceApproved(requireContext(), occurrenceId, currentMaterial);
-                                    }
-                                }
-                                break;
+                    String st = response.body().getStatus() != null ? response.body().getStatus() : "";
+                    if ("APPROVED".equalsIgnoreCase(st) || "APROVADO".equalsIgnoreCase(st)
+                            || "APROVADA".equalsIgnoreCase(st) || "CLOSED".equalsIgnoreCase(st)) {
+                        if (!"APROVADA".equalsIgnoreCase(currentStatus)) {
+                            currentStatus = "APROVADA";
+                            if (currentDetailJson != null) {
+                                currentDetailJson.addProperty("status", "APROVADA");
+                                PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
                             }
+                            OccurrenceStore.updateStatus(requireContext(), occurrenceId, "APROVADA");
+                            syncFinalizedUi();
+                            NotificationHelper.notifyOccurrenceApproved(requireContext(), occurrenceId, currentMaterial);
                         }
                     }
                 }
 
                 @Override
-                public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
                 }
             });
         } catch (Exception ignored) {
         }
     }
 
-
-
-    private void fallbackOccurrenceDetail(OccurrenceAPI api) {
-        api.getOccurrence(occurrenceId).enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonObject body = response.body();
-                    if (currentDetailJson != null) {
-                        if (!body.has("photoPath") && currentDetailJson.has("photoPath")) {
-                            body.addProperty("photoPath", currentDetailJson.get("photoPath").getAsString());
-                        }
-                        if (!body.has("imageUrl") && currentDetailJson.has("imageUrl")) {
-                            body.addProperty("imageUrl", currentDetailJson.get("imageUrl").getAsString());
-                        }
-                    }
-                    currentDetailJson = body;
-                    applyDetail(currentDetailJson);
-                } else if (currentDetailJson == null) {
-                    loadFromCacheOrMock();
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (currentDetailJson == null) {
-                    loadFromCacheOrMock();
-                }
-            }
-        });
-    }
-
-    private void loadFromCacheOrMock() {
+    private void loadFromCache() {
         String cached = PrefsHelper.getJson(requireContext(), PREFS, occurrenceId);
         if (cached != null) {
             try {
                 currentDetailJson = JsonParser.parseString(cached).getAsJsonObject();
                 applyDetail(currentDetailJson);
-                return;
             } catch (Exception ignored) {
             }
         }
-
-        // Mock alinhado ao protótipo do Figma 851:3792
-        currentDetailJson = new JsonObject();
-        currentDetailJson.addProperty("id", occurrenceId);
-        currentDetailJson.addProperty("titulo", "Papelão (Classe A)");
-        currentDetailJson.addProperty("material", "Papelão (Classe A)");
-        currentDetailJson.addProperty("setor", "Frigorífico — Setor B2");
-        currentDetailJson.addProperty("peso_estimado", 38.0);
-        currentDetailJson.addProperty("status", currentStatus);
-        currentDetailJson.addProperty("prioridade", "BAIXA");
-        currentDetailJson.addProperty("quando", "hoje, 09:12");
-        currentDetailJson.addProperty("relatorio_auto",
-                "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta.");
-        applyDetail(currentDetailJson);
     }
 
     private void applyDetail(JsonObject json) {
@@ -525,7 +467,7 @@ public class OccurrenceDetailFragment extends Fragment {
             return;
         }
 
-        String rawMaterial = opt(json, "material", "Papelão (Classe A)");
+        String rawMaterial = opt(json, "material", "Resíduo Reciclável");
         String rawClasse = opt(json, "classe", "");
         currentQualityClass = com.aula.volta.data.model.AiAnalysisJSON.extractQualityClassLetter(rawMaterial, rawClasse);
         currentMaterialName = com.aula.volta.data.model.AiAnalysisJSON.extractMaterialName(rawMaterial);
@@ -566,7 +508,8 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         }
         if (tvOccSubtitle != null) {
-            tvOccSubtitle.setText("Registrada por " + com.aula.volta.data.local.SessionManager.name(requireContext()) + " • " + quando);
+            String brQuando = com.aula.volta.data.model.Occurrence.formatBrazilianDateTime(quando);
+            tvOccSubtitle.setText("Registrada por " + com.aula.volta.data.local.SessionManager.name(requireContext()) + " · " + brQuando);
         }
 
         if (tvOccCardTitle != null) {
@@ -694,15 +637,13 @@ public class OccurrenceDetailFragment extends Fragment {
         imgOccThumbnail.setImageResource(R.drawable.img_caixas_papelao);
     }
 
-    /**
-     * Sincroniza a interface conforme status da ocorrência (17 vs 19).
-     */
     private void syncFinalizedUi() {
         if (!isAdded()) return;
 
         boolean isDone = "APPROVED".equalsIgnoreCase(currentStatus)
                 || "APROVADO".equalsIgnoreCase(currentStatus)
                 || "APROVADA".equalsIgnoreCase(currentStatus)
+                || "CLOSED".equalsIgnoreCase(currentStatus)
                 || "RESOLVIDO".equalsIgnoreCase(currentStatus)
                 || "RESOLVIDA".equalsIgnoreCase(currentStatus)
                 || "FINALIZADA".equalsIgnoreCase(currentStatus)
@@ -710,7 +651,6 @@ public class OccurrenceDetailFragment extends Fragment {
                 || "CONCLUIDA".equalsIgnoreCase(currentStatus)
                 || "CONCLUIDO".equalsIgnoreCase(currentStatus);
 
-        // Tracker de 3 passos
         if (stepCircle0 != null) {
             stepCircle0.setBackgroundResource(R.drawable.bg_step_done);
         }
@@ -748,14 +688,12 @@ public class OccurrenceDetailFragment extends Fragment {
                 stepLabel2.setTextColor(requireContext().getColor(R.color.vf_green_deep));
             }
 
-            // Badge superior direito: APROVADA
             if (tvOccStatus != null) {
                 tvOccStatus.setText("APROVADA");
                 tvOccStatus.setBackgroundResource(R.drawable.bg_badge_aprovada);
                 tvOccStatus.setTextColor(requireContext().getColor(R.color.status_aprovada_text));
             }
 
-            // Na tela finalizada pela gestão Web, ações de edição e botão de envio somem
             if (rowEditClass != null) {
                 rowEditClass.setVisibility(View.GONE);
             }
@@ -781,7 +719,6 @@ public class OccurrenceDetailFragment extends Fragment {
                 stepLabel2.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
             }
 
-            // Badge superior direito: EM ANÁLISE
             if (tvOccStatus != null) {
                 tvOccStatus.setText("EM ANÁLISE");
                 tvOccStatus.setBackgroundResource(R.drawable.bg_badge_media);
@@ -803,7 +740,6 @@ public class OccurrenceDetailFragment extends Fragment {
         }
     }
 
-    /** Bottom sheet de alteração de classificação (Figma 17a · 908:5946) */
     private void showEditClassificationSheet(View v) {
         String initialPrio = "Alta";
         if (currentPriority != null) {
@@ -817,11 +753,10 @@ public class OccurrenceDetailFragment extends Fragment {
         EditClassificationSheet sheet = EditClassificationSheet.newInstance(
                 currentMaterialName, currentQualityClass, initialPrio, false, "");
         sheet.setOnClassificationChangedListener((material, qualityClass, priority, isHazard, reason) -> {
-            String prevClass = currentQualityClass;
             String prevMaterial = currentMaterial;
-            currentQualityClass = qualityClass;
+            currentQualityClass = "";
             currentMaterialName = material;
-            currentMaterial = currentMaterialName + " (Classe " + currentQualityClass + ")";
+            currentMaterial = currentMaterialName;
             currentPriority = priority != null
                     ? priority.toUpperCase(java.util.Locale.forLanguageTag("pt-BR"))
                     : "ALTA";
@@ -845,25 +780,66 @@ public class OccurrenceDetailFragment extends Fragment {
                     currentStatus,
                     currentMaterial));
 
-            // Subtítulo da ação aplicada (Figma 17d · 908:6409)
             if (tvEditClassSub != null) {
                 tvEditClassSub.setVisibility(View.VISIBLE);
-                tvEditClassSub.setText("✓ Qualidade " + prevClass + " → " + currentQualityClass + " · prioridade " + priority.toLowerCase());
+                tvEditClassSub.setText("✓ Material: " + currentMaterialName + " · prioridade " + priority.toLowerCase());
             }
 
             AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ALTERAR_CLASSIFICACAO",
                     "ocorrencia", occurrenceId, prevMaterial, currentMaterial);
 
-            Toast.makeText(requireContext(), "Classificação alterada para Classe " + currentQualityClass, Toast.LENGTH_SHORT).show();
+            try {
+                OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+                JsonObject updateBody = new JsonObject();
+                updateBody.addProperty("title", currentMaterialName);
+                JsonArray wasteTypeArr = new JsonArray();
+                wasteTypeArr.add(mapMaterialToWasteTypeId(currentMaterialName));
+                updateBody.add("wasteTypeIds", wasteTypeArr);
+                updateBody.addProperty("priority", com.aula.volta.data.model.incident.IncidentRequestDTO.normalizePriority(currentPriority));
+                if (isHazard) {
+                    updateBody.addProperty("contaminationLevel", "HIGH");
+                }
+                String changeReason = (reason != null && !reason.trim().isEmpty())
+                        ? reason.trim()
+                        : "Classificação revisada no aplicativo para " + currentMaterialName;
+                updateBody.addProperty("changeReason", changeReason);
+                occApi.updateIncident(occurrenceId, updateBody).enqueue(new Callback<IncidentResponseDTO>() {
+                    @Override
+                    public void onResponse(@NonNull Call<IncidentResponseDTO> call,
+                                           @NonNull Response<IncidentResponseDTO> response) {
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                    }
+                });
+            } catch (Exception ignored) {
+            }
+
+            Toast.makeText(requireContext(), "Classificação alterada para " + currentMaterialName, Toast.LENGTH_SHORT).show();
         });
         sheet.show(getChildFragmentManager(), "edit_classification");
     }
 
-    /** Bottom sheet de adicionar observação (Figma 17c · 908:6103) */
+    private String mapMaterialToWasteTypeId(String material) {
+        if (material == null) return "bd985415-4b25-4c07-beca-cc086dce9b13";
+        String lower = material.toLowerCase(java.util.Locale.ROOT);
+        if (lower.contains("papel")) return "bd985415-4b25-4c07-beca-cc086dce9b13";
+        if (lower.contains("plast") || lower.contains("plást")) return "8b3f6a14-9a27-462f-b414-24329d927af7";
+        if (lower.contains("metal") || lower.contains("lata") || lower.contains("ferro") || lower.contains("aço") || lower.contains("alum")) return "5ee946da-2975-45e7-80d7-a5a8e49b4b2d";
+        if (lower.contains("vidro")) return "2605dca7-b392-4835-a2a7-99a1aa68a7ab";
+        if (lower.contains("organ") || lower.contains("orgân")) return "5cb7e3c8-6dac-45e4-870f-92cc64a2a452";
+        if (lower.contains("eletron") || lower.contains("eletrôn")) return "7807fd3c-7c11-42c3-95be-48884968d3c1";
+        if (lower.contains("quimic") || lower.contains("químic") || lower.contains("perigo") || lower.contains("oleo") || lower.contains("óleo")) return "db21c099-511a-4dbc-82dc-2090b4b6d0a5";
+        if (lower.contains("textil") || lower.contains("têxtil") || lower.contains("tecido")) return "9221e10b-b15b-40d8-a798-49f372ab9efb";
+        if (lower.contains("madeira") || lower.contains("pallet") || lower.contains("palete") || lower.contains("tabua") || lower.contains("tábua") || lower.contains("mobil")) return "e9e077a8-7464-422d-a3be-44bc770fd5d2";
+        return "dc9b7d17-cd48-475a-a313-d5de98505854";
+    }
+
     private void showAddObservationSheet(View v) {
         AddObservationSheet sheet = AddObservationSheet.newInstance();
         sheet.setOnObservationSavedListener(obs -> {
-            // Subtítulo da observação adicionada (Figma 17d · 908:6409)
+
             if (tvObserveSub != null) {
                 tvObserveSub.setVisibility(View.VISIBLE);
                 tvObserveSub.setText("✓ 1 observação · agora");
@@ -872,12 +848,35 @@ public class OccurrenceDetailFragment extends Fragment {
             AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ADICIONAR_OBSERVACAO",
                     "ocorrencia", occurrenceId, null, obs);
 
+            if (obs != null && !obs.trim().isEmpty()) {
+                try {
+                    OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+                    JsonObject updateBody = new JsonObject();
+                    String baseReport = tvOccAutoReport != null && tvOccAutoReport.getText() != null
+                            ? tvOccAutoReport.getText().toString().trim() : "";
+                    String combinedAiDesc = baseReport.isEmpty() ? obs.trim() : (baseReport + "\nObservação: " + obs.trim());
+                    updateBody.addProperty("aiDescription", combinedAiDesc);
+                    String reason = obs.trim().length() > 190 ? obs.trim().substring(0, 190) : obs.trim();
+                    updateBody.addProperty("changeReason", reason);
+                    occApi.updateIncident(occurrenceId, updateBody).enqueue(new Callback<IncidentResponseDTO>() {
+                        @Override
+                        public void onResponse(@NonNull Call<IncidentResponseDTO> call,
+                                               @NonNull Response<IncidentResponseDTO> response) {
+                        }
+
+                        @Override
+                        public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                        }
+                    });
+                } catch (Exception ignored) {
+                }
+            }
+
             showTopBannerToast("Observação salva!", "Adicionada ao histórico da ocorrência", false, true);
         });
         sheet.show(getChildFragmentManager(), "add_observation");
     }
 
-    /** Diálogo de confirmação para finalizar (Figma 851:4885) */
     private void showFinalizeDialog(View v) {
         View dialogView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_finalize, null);
@@ -924,9 +923,8 @@ public class OccurrenceDetailFragment extends Fragment {
                         currentMaterial);
                 OccurrenceStore.update(requireContext(), occ);
 
-                // Disparo de finalização oficial para a API do banco de dados (PATCH /incidents/{id}/close)
                 try {
-                    OccurrenceAPI occApi = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
+                    OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
                     occApi.closeIncident(occurrenceId).enqueue(new Callback<Void>() {
                         @Override
                         public void onResponse(@NonNull Call<Void> call,
@@ -950,7 +948,6 @@ public class OccurrenceDetailFragment extends Fragment {
                 }
                 syncFinalizedUi();
 
-                // Exibe Toast Flutuante de Ocorrência Enviada para Análise
                 showTopBannerToast(
                         "Ocorrência enviada",
                         "Encaminhada para a central de gestão e análise técnica",

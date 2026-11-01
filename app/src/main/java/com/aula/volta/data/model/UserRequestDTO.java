@@ -2,9 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO para cadastro de usuário na API VOLTA (POST /users).
- */
 public class UserRequestDTO {
 
     @SerializedName("name")

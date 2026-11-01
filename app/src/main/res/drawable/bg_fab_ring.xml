@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 6dp white outside stroke ring (total 80x80dp when inner is 68x68dp) -->
+
     <item>
         <shape android:shape="oval">
             <solid android:color="#FFFFFF" />
         </shape>
     </item>
-    <!-- 68x68dp vertical linear gradient circle (#22C06F -> #0E7C48) -->
+
     <item
         android:bottom="6dp"
         android:left="6dp"

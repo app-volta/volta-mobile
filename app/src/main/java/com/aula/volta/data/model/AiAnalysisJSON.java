@@ -9,12 +9,6 @@ import com.google.gson.annotations.SerializedName;
 import java.text.Normalizer;
 import java.util.Locale;
 
-/**
- * Contrato da Análise de IA do VOLTA.
- * Compatível com o contrato de análise direta (POST /occurrences/{id}/analysis),
- * endpoint de visão computacional (POST /v1/occurrences/predict)
- * e com o relatório de IA da API QA (GET /incidents/{id}/ai-report - AiReportResponseDTO).
- */
 public class AiAnalysisJSON {
 
     @SerializedName(value = "material", alternate = {"detectedWasteType", "detected_waste_type"})
@@ -205,9 +199,6 @@ public class AiAnalysisJSON {
         this.rawAiData = rawAiData;
     }
 
-    /**
-     * Converte a resposta do endpoint de visão de IA (POST /v1/occurrences/predict) para AiAnalysisJSON.
-     */
     public static AiAnalysisJSON fromPredict(JsonObject json, double fallbackKg) {
         if (json == null) {
             return createOfflineFallback(null);
@@ -224,12 +215,12 @@ public class AiAnalysisJSON {
         }
 
         String rawType = json.has("detected_waste_type") && !json.get("detected_waste_type").isJsonNull()
-                ? json.get("detected_waste_type").getAsString() : "Papelão A";
+                ? json.get("detected_waste_type").getAsString() : "Outros";
         if (rawType.toLowerCase(Locale.ROOT).contains("não confirmado") || rawType.trim().isEmpty()) {
-            rawType = "Papelão A";
+            rawType = "Outros";
         }
-        res.material = rawType.trim();
-        res.specificItem = extractMaterialName(rawType);
+        res.material = extractMaterialName(rawType);
+        res.specificItem = res.material;
         res.primaryMaterial = classifyPrimaryMaterial(rawType, json.toString(), "");
 
         boolean hasExplicitKg = false;
@@ -335,36 +326,22 @@ public class AiAnalysisJSON {
         res.confianca = 0.94;
         res.unidades = u;
 
-        // Extrai classe de qualidade explícita caso fornecida pelo Gemini Vision
-        if (json.has("quality_class") && !json.get("quality_class").isJsonNull()) {
-            String qClass = json.get("quality_class").getAsString().trim();
-            if (!qClass.isEmpty()) {
-                res.material = formatMaterialWithClass(res.primaryMaterial, res.specificItem, qClass);
-            }
-        } else if (json.has("classe") && !json.get("classe").isJsonNull()) {
-            String qClass = json.get("classe").getAsString().trim();
-            if (!qClass.isEmpty()) {
-                res.material = formatMaterialWithClass(res.primaryMaterial, res.specificItem, qClass);
-            }
-        }
-
         return res;
     }
 
-    /**
-     * Converte um AiReportResponseDTO da API QA (GET /incidents/{id}/ai-report) para AiAnalysisJSON.
-     */
     public static AiAnalysisJSON fromAiReport(AiReportResponseDTO report, double estimatedKg) {
         AiAnalysisJSON json = new AiAnalysisJSON();
         if (report == null) {
-            return createOfflineFallback(null);
+            AiAnalysisJSON fallback = createOfflineFallback("Papelão");
+            fallback.material = "Papelão";
+            return fallback;
         }
         json.incidentId = report.getIncidentId();
         String detectedType = (report.getDetectedWasteType() != null && !report.getDetectedWasteType().trim().isEmpty())
                 ? report.getDetectedWasteType().trim()
-                : "Papelão A";
-        json.material = detectedType;
-        json.specificItem = extractMaterialName(detectedType);
+                : "Papelão";
+        json.material = extractMaterialName(detectedType);
+        json.specificItem = json.material;
         json.primaryMaterial = classifyPrimaryMaterial(detectedType, report.getReportText(), "");
 
         json.aiContaminationLevel = report.getAiContaminationLevel();
@@ -440,12 +417,6 @@ public class AiAnalysisJSON {
         return rawLevel.trim();
     }
 
-    /**
-     * Calcula dinamicamente a prioridade/urgência (BAIXA, MEDIA ou ALTA)
-     * com base no tipo de resíduo, nível de contaminação e descrição.
-     * Móveis (ex.: cadeiras, mesas), madeira, paletes e resíduos inertes secos
-     * com contaminação baixa recebem prioridade BAIXA.
-     */
     public static String calculatePriority(String wasteType, String contaminationLevel, String description) {
         String text = ((wasteType != null ? wasteType : "") + " "
                 + (description != null ? description : "")).toLowerCase(Locale.ROOT);
@@ -453,7 +424,6 @@ public class AiAnalysisJSON {
                 ? contaminationLevel.toUpperCase(Locale.ROOT)
                 : "LOW";
 
-        // 1. Alta urgência: resíduos perigosos, químicos, inflamáveis, contaminação alta ou risco operacional/ambiental
         if (contam.contains("HIGH") || contam.contains("ALTA") || contam.contains("CRITICAL")
                 || text.contains("perig") || text.contains("químic") || text.contains("quimic")
                 || text.contains("óleo") || text.contains("oleo") || text.contains("graxa")
@@ -463,7 +433,6 @@ public class AiAnalysisJSON {
             return "ALTA";
         }
 
-        // 2. Média urgência: contaminação média, materiais orgânicos perecíveis ou resíduos em área de fluxo
         if (contam.contains("MED") || contam.contains("MÉD")
                 || text.contains("organ") || text.contains("orgân") || text.contains("alimento")
                 || text.contains("comida") || text.contains("perecivel") || text.contains("perecível")
@@ -471,8 +440,6 @@ public class AiAnalysisJSON {
             return "MEDIA";
         }
 
-        // 3. Baixa urgência: mobiliário (cadeiras, mesas), paletes, madeira, recicláveis secos (plásticos, papelão, metais, vidro)
-        // com contaminação baixa ou inexistente
         return "BAIXA";
     }
 
@@ -501,14 +468,41 @@ public class AiAnalysisJSON {
             u.tipo = "Paletes";
             u.quantidade = 2;
             json.unidades = u;
-        } else {
+        } else if (desc.contains("manuten") || desc.contains("usinagem") || desc.contains("oficina")) {
+            json.primaryMaterial = "Metal";
+            json.specificItem = "Sucata Metálica";
+            json.material = "Sucata Metálica";
+            json.quantidadeEstimada = 35.0;
+            Unidades u = new Unidades();
+            u.tipo = "Lotes";
+            u.quantidade = 1;
+            json.unidades = u;
+        } else if (desc.contains("expedi") || desc.contains("embalag") || desc.contains("plast")) {
+            json.primaryMaterial = "Plástico";
+            json.specificItem = "Plástico Filme";
+            json.material = "Plástico Filme";
+            json.quantidadeEstimada = 28.0;
+            Unidades u = new Unidades();
+            u.tipo = "Fardos";
+            u.quantidade = 2;
+            json.unidades = u;
+        } else if (desc.contains("papel") || desc.contains("cartao") || desc.contains("kraft")) {
             json.primaryMaterial = "Papelão";
-            json.specificItem = "Papelão";
-            json.material = "Papelão A";
+            json.specificItem = "Caixas de Papelão";
+            json.material = "Caixas de Papelão";
             json.quantidadeEstimada = 38.0;
             Unidades u = new Unidades();
             u.tipo = "Caixas";
             u.quantidade = 11;
+            json.unidades = u;
+        } else {
+            json.primaryMaterial = "Outros";
+            json.specificItem = "Resíduo Reciclável";
+            json.material = "Resíduo Reciclável";
+            json.quantidadeEstimada = 20.0;
+            Unidades u = new Unidades();
+            u.tipo = "Unidades";
+            u.quantidade = 1;
             json.unidades = u;
         }
         json.unidade = "kg";
@@ -521,9 +515,6 @@ public class AiAnalysisJSON {
         return json;
     }
 
-    /**
-     * Converte o retorno de GET /incidents/{id}/scoring-context em AiAnalysisJSON quando aiReport está presente.
-     */
     public static AiAnalysisJSON fromScoringContext(JsonObject ctx, double estimatedKg) {
         if (ctx == null) {
             return null;
@@ -551,9 +542,6 @@ public class AiAnalysisJSON {
         return null;
     }
 
-    /**
-     * Resolve o UUID da área em GET /areas/mine ignorando acentos e diferenças de pontuação.
-     */
     public static String resolveAreaId(JsonArray array, String preferredSector) {
         if (array == null || array.size() == 0) {
             return null;
@@ -580,9 +568,6 @@ public class AiAnalysisJSON {
         return firstId;
     }
 
-    /**
-     * Resolve o UUID do tipo de resíduo em GET /waste-types com base na descrição (default: PAPER/PAPEL).
-     */
     public static String resolveWasteTypeId(JsonArray array, String description) {
         if (array == null || array.size() == 0) {
             return null;
@@ -590,8 +575,10 @@ public class AiAnalysisJSON {
         String normDesc = normalize(description);
         String primary = classifyPrimaryMaterial(description, "", "");
 
-        String[] targetKeywords = new String[]{"papel", "paper"};
-        if (primary != null && primary.toLowerCase(Locale.ROOT).contains("pl")) {
+        String[] targetKeywords;
+        if (primary != null && primary.toLowerCase(Locale.ROOT).contains("papel")) {
+            targetKeywords = new String[]{"papel", "paper"};
+        } else if (primary != null && primary.toLowerCase(Locale.ROOT).contains("pl")) {
             targetKeywords = new String[]{"plast", "plastic"};
         } else if (primary != null && primary.toLowerCase(Locale.ROOT).contains("met")) {
             targetKeywords = new String[]{"metal", "alumin", "lata"};
@@ -607,10 +594,12 @@ public class AiAnalysisJSON {
             targetKeywords = new String[]{"eletron", "electronic"};
         } else if (normDesc.contains("textil") || normDesc.contains("tecido")) {
             targetKeywords = new String[]{"textil", "fabric"};
+        } else {
+            targetKeywords = new String[]{"misto", "recicla", "geral", "outro"};
         }
 
         String firstId = null;
-        String fallbackId = null;
+        String fallbackPaperId = null;
         for (JsonElement el : array) {
             if (el.isJsonObject()) {
                 JsonObject obj = el.getAsJsonObject();
@@ -625,8 +614,9 @@ public class AiAnalysisJSON {
                             ? normalize(obj.get("description").getAsString()) : "";
 
                     if (cat.contains("papel") || cat.contains("paper")) {
-                        fallbackId = id;
+                        fallbackPaperId = id;
                     }
+
                     for (String kw : targetKeywords) {
                         if (cat.contains(kw) || desc.contains(kw)) {
                             return id;
@@ -635,13 +625,12 @@ public class AiAnalysisJSON {
                 }
             }
         }
-        return fallbackId != null ? fallbackId : firstId;
+        if (normDesc.isEmpty() && fallbackPaperId != null) {
+            return fallbackPaperId;
+        }
+        return fallbackPaperId != null ? fallbackPaperId : firstId;
     }
 
-    /**
-     * Classifica o material principal em uma das categorias padronizadas do ecossistema VOLTA:
-     * Papelão, Plástico, Metal, Vidro, Madeira, Orgânico, Perigoso ou Outros.
-     */
     public static String classifyPrimaryMaterial(String detectedItem, String rawText, String userDescription) {
         String combined = normalize((detectedItem != null ? detectedItem : "") + " "
                 + (rawText != null ? rawText : "") + " "
@@ -651,7 +640,6 @@ public class AiAnalysisJSON {
             return "Outros";
         }
 
-        // 1. Resíduos Perigosos / Químicos / Inflamáveis
         if (combined.contains("perig") || combined.contains("quimic") || combined.contains("oleo")
                 || combined.contains("graxa") || combined.contains("solvente") || combined.contains("tinta")
                 || combined.contains("bateria") || combined.contains("pilha") || combined.contains("lampada")
@@ -659,7 +647,6 @@ public class AiAnalysisJSON {
             return "Perigoso";
         }
 
-        // 2. Madeira (paletes, estrados, tábuas, caixotes, móveis de madeira)
         if (combined.contains("madeira") || combined.contains("pallet") || combined.contains("palete")
                 || combined.contains("estrado") || combined.contains("caixote") || combined.contains("tabua")
                 || combined.contains("compensado") || combined.contains("mdf") || combined.contains("pbr")
@@ -667,13 +654,11 @@ public class AiAnalysisJSON {
             return "Madeira";
         }
 
-        // 3. Vidro (garrafas, potes, vidros planos, cacos)
         if (combined.contains("vidro") || combined.contains("garrafa de vidro") || combined.contains("caco")
                 || combined.contains("frasco de vidro") || combined.contains("pote de vidro") || combined.contains("espelho")) {
             return "Vidro";
         }
 
-        // 4. Metal (latas, sucata metálica, ferro, aço, alumínio, perfis, tambores)
         if (combined.contains("metal") || combined.contains("alumin") || combined.contains("ferro")
                 || combined.contains("aco") || combined.contains("cobre") || combined.contains("lata")
                 || combined.contains("latinha") || combined.contains("sucata") || combined.contains("perfil")
@@ -681,7 +666,6 @@ public class AiAnalysisJSON {
             return "Metal";
         }
 
-        // 5. Plástico (cadeiras de escritório/plásticas, baldes, garrafas PET, filme stretch, bombonas, isopor/EPS, potes, copos)
         if (combined.contains("plast") || combined.contains("isopor") || combined.contains("eps")
                 || combined.contains("pet") || combined.contains("polietileno") || combined.contains("polipropileno")
                 || combined.contains("pvc") || combined.contains("filme stretch") || combined.contains("bombona")
@@ -690,14 +674,12 @@ public class AiAnalysisJSON {
             return "Plástico";
         }
 
-        // 6. Papelão e Papel (caixas de papelão, kraft, cartões, papéis de escritório)
         if (combined.contains("papel") || combined.contains("papelao") || combined.contains("cartao")
                 || combined.contains("kraft") || combined.contains("jornal") || combined.contains("revista")
-                || combined.contains("documento") || combined.contains("caixa")) {
+                || combined.contains("documento") || combined.contains("caixa de papel") || combined.contains("caixas de papel")) {
             return "Papelão";
         }
 
-        // 7. Orgânico (restos de alimentos, refeitório, podas, cascas)
         if (combined.contains("organ") || combined.contains("alimento") || combined.contains("comida")
                 || combined.contains("refeitorio") || combined.contains("refeicao") || combined.contains("fruta")
                 || combined.contains("casca") || combined.contains("resto")) {
@@ -709,7 +691,7 @@ public class AiAnalysisJSON {
 
     public static String extractPrimaryMaterial(String rawMaterial) {
         if (rawMaterial == null || rawMaterial.trim().isEmpty()) {
-            return "Papelão";
+            return "Outros";
         }
         if (rawMaterial.contains(" — ")) {
             String[] parts = rawMaterial.split(" — ");
@@ -727,7 +709,7 @@ public class AiAnalysisJSON {
 
     public static String extractSpecificItem(String rawMaterial) {
         if (rawMaterial == null || rawMaterial.trim().isEmpty()) {
-            return "Papelão";
+            return "Outros";
         }
         String base;
         if (rawMaterial.contains(" — ")) {
@@ -747,9 +729,10 @@ public class AiAnalysisJSON {
             return "Papelão";
         }
         String clean = rawMaterial
-                .replaceAll("(?i)\\s*\\(Classe\\s+[ABC]\\)", "")
-                .replaceAll("(?i)\\s+Classe\\s+[ABC]$", "")
-                .replaceAll("\\s+[ABC]$", "")
+                .replaceAll("(?i)\\s*\\(Classe\\s+[^)]+\\)", "")
+                .replaceAll("(?i)\\s*\\(Resíduo[^)]+\\)", "")
+                .replaceAll("(?i)\\s+Classe\\s+[A-Za-z0-9_]+$", "")
+                .replaceAll("(?i)\\s+[ABC]$", "")
                 .trim();
         return clean.isEmpty() ? "Papelão" : clean;
     }
@@ -778,35 +761,36 @@ public class AiAnalysisJSON {
 
     public static String formatMaterialWithClass(String primaryMaterial, String specificItem, String classSpec) {
         String pm = (primaryMaterial != null && !primaryMaterial.trim().isEmpty())
-                ? primaryMaterial.trim() : "Papelão";
-        String letter = extractQualityClassLetter(primaryMaterial + " " + (specificItem != null ? specificItem : ""), classSpec);
+                ? primaryMaterial.trim() : "Reciclável";
+        pm = extractMaterialName(pm);
 
-        if (specificItem != null && !specificItem.trim().isEmpty()
-                && !normalize(specificItem).equals(normalize(pm))) {
+        if (specificItem != null && !specificItem.trim().isEmpty()) {
             String cleanItem = extractMaterialName(specificItem);
-            return pm + " — " + cleanItem + " (Classe " + letter + ")";
+            String normItem = normalize(cleanItem);
+            String normPm = normalize(pm);
+            if (normItem.equals(normPm)) {
+                return pm;
+            }
+            if (normItem.startsWith(normPm) || normItem.contains(normPm)) {
+                return cleanItem;
+            }
+            return pm + " — " + cleanItem;
         }
-        return pm + " (Classe " + letter + ")";
+        return pm;
     }
 
     public static String formatMaterialWithClass(String rawMaterial, String classSpec) {
         if (rawMaterial == null || rawMaterial.trim().isEmpty()) {
-            return "Papelão (Classe " + extractQualityClassLetter(null, classSpec) + ")";
+            return "Reciclável";
         }
         if (rawMaterial.contains(" — ") || rawMaterial.contains(" - ")) {
             String primary = extractPrimaryMaterial(rawMaterial);
             String item = extractSpecificItem(rawMaterial);
             return formatMaterialWithClass(primary, item, classSpec);
         }
-        String baseMat = extractMaterialName(rawMaterial);
-        String letter = extractQualityClassLetter(rawMaterial, classSpec);
-        return baseMat + " (Classe " + letter + ")";
+        return extractMaterialName(rawMaterial);
     }
 
-    /**
-     * Gera o nome/título do incidente como uma ÚNICA palavra gerada pela IA
-     * (ex: "cadeiras empilhadas na rua" -> "Mobiliário").
-     */
     public static String generateSingleWordTitle(String material, String description, String rawText) {
         String combined = normalize((material != null ? material : "") + " "
                 + (description != null ? description : "") + " "
@@ -816,14 +800,12 @@ public class AiAnalysisJSON {
             return "Reciclável";
         }
 
-        // 1. Mobiliário (cadeiras, mesas, sofás, armários, móveis em geral)
         if (combined.contains("cadeir") || combined.contains("mesa") || combined.contains("mobilia") || combined.contains("mobiliari") || combined.contains("moveis") || combined.contains("movel")
                 || combined.contains("sofa") || combined.contains("armario") || combined.contains("poltrona")
                 || combined.contains("estante") || combined.contains("banco")) {
             return "Mobiliário";
         }
 
-        // 2. Eletrônico (computadores, telas, monitores, periféricos, placas, pilhas)
         if (combined.contains("computad") || combined.contains("tela") || combined.contains("monitor")
                 || combined.contains("eletron") || combined.contains("placa") || combined.contains("teclado")
                 || combined.contains("mouse") || combined.contains("cabo") || combined.contains("fio")
@@ -831,14 +813,12 @@ public class AiAnalysisJSON {
             return "Eletrônico";
         }
 
-        // 3. Químico / Perigoso (óleos, graxas, solventes, tintas)
         if (combined.contains("oleo") || combined.contains("graxa") || combined.contains("solvent")
                 || combined.contains("tinta") || combined.contains("quimic") || combined.contains("toxic")
                 || combined.contains("perig")) {
             return "Químico";
         }
 
-        // 4. Palete / Madeira
         if (combined.contains("pallet") || combined.contains("palete")) {
             return "Palete";
         }
@@ -847,46 +827,39 @@ public class AiAnalysisJSON {
             return "Madeira";
         }
 
-        // 5. Vidro (garrafas, potes, cacos, espelhos)
         if (combined.contains("vidro") || combined.contains("garrafa") || combined.contains("caco")
                 || combined.contains("espelho") || combined.contains("frasco") || combined.contains("pote")) {
             return "Vidro";
         }
 
-        // 6. Metal (latas, sucata, ferro, aço, alumínio)
         if (combined.contains("metal") || combined.contains("alumin") || combined.contains("ferro")
                 || combined.contains("aco") || combined.contains("lata") || combined.contains("latinha")
                 || combined.contains("sucata") || combined.contains("cobre")) {
             return "Metal";
         }
 
-        // 7. Plástico (filme stretch, pet, copos, bombonas, sacolas)
         if (combined.contains("plast") || combined.contains("pet") || combined.contains("filme")
                 || combined.contains("isopor") || combined.contains("eps") || combined.contains("sacola")
                 || combined.contains("bombona") || combined.contains("copo") || combined.contains("pvc")) {
             return "Plástico";
         }
 
-        // 8. Papelão e Papel (caixas, aparas, papelão ondulado, cartões)
         if (combined.contains("papel") || combined.contains("cartao") || combined.contains("kraft")
-                || combined.contains("caixa") || combined.contains("jornal") || combined.contains("revista")) {
+                || combined.contains("caixa de papel") || combined.contains("caixas de papel") || combined.contains("jornal") || combined.contains("revista")) {
             return "Papelão";
         }
 
-        // 9. Orgânico (alimentos, restos, podas, peotta)
         if (combined.contains("organ") || combined.contains("alimento") || combined.contains("comida")
                 || combined.contains("peotta") || combined.contains("casca") || combined.contains("fruta")
                 || combined.contains("refeic") || combined.contains("refeit")) {
             return "Orgânico";
         }
 
-        // 10. Têxtil (uniformes, panos, estopas, tecidos)
         if (combined.contains("textil") || combined.contains("tecido") || combined.contains("pano")
                 || combined.contains("uniforme") || combined.contains("estopa")) {
             return "Têxtil";
         }
 
-        // Fallback seguro: palavra única derivada da classificação primária
         String primary = classifyPrimaryMaterial(material, rawText, description);
         if (primary != null && !primary.trim().isEmpty()) {
             String[] words = primary.trim().split("\\s+");

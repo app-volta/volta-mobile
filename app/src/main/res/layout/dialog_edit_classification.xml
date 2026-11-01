@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Bottom Sheet Alterar Classificação — Figma 17a (908:5946) -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -11,7 +11,6 @@
     android:paddingEnd="20dp"
     android:paddingBottom="24dp">
 
-    <!-- Handle do Bottom Sheet -->
     <View
         android:layout_width="40dp"
         android:layout_height="4dp"
@@ -19,7 +18,6 @@
         android:layout_marginBottom="14dp"
         android:background="@drawable/bg_sheet_handle" />
 
-    <!-- Cabeçalho com Fechar -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -70,7 +68,6 @@
         </FrameLayout>
     </RelativeLayout>
 
-    <!-- 1. Seção Material -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -84,17 +81,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="6dp"
         android:orientation="horizontal">
 
         <TextView
             android:id="@+id/chipDialogPapelao"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:layout_marginEnd="6dp"
-            android:layout_weight="1"
             android:background="@drawable/bg_chip_gold_selected"
             android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:text="✓ Papelão"
             android:textColor="#C68A10"
             android:textSize="12.5sp"
@@ -102,12 +100,13 @@
 
         <TextView
             android:id="@+id/chipDialogPlastico"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:layout_marginEnd="6dp"
-            android:layout_weight="1"
             android:background="@drawable/bg_chip_white_stroke"
             android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:text="Plástico"
             android:textColor="@color/vf_text_secondary"
             android:textSize="12.5sp"
@@ -115,160 +114,80 @@
 
         <TextView
             android:id="@+id/chipDialogMetal"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:layout_marginEnd="6dp"
-            android:layout_weight="1"
             android:background="@drawable/bg_chip_white_stroke"
             android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:text="Metal"
             android:textColor="@color/vf_text_secondary"
             android:textSize="12.5sp"
             android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/chipDialogVidro"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
             android:background="@drawable/bg_chip_white_stroke"
             android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:text="Vidro"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipDialogMadeira"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Madeira"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipDialogOrganico"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Orgânico"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/chipDialogOutro"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_chip_white_stroke"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="Outro"
             android:textColor="@color/vf_text_secondary"
             android:textSize="12.5sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- 2. Qualidade do material com descrições das classes (Figma 908:5946) -->
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:fontFamily="sans-serif"
-            android:text="Qualidade do material"
-            android:textColor="@color/vf_text_primary"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:fontFamily="sans-serif"
-            android:text="era A"
-            android:textColor="@color/vf_text_secondary"
-            android:textSize="12sp" />
-    </RelativeLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_segment_container"
-        android:orientation="horizontal"
-        android:padding="4dp">
-
-        <!-- Classe A -->
-        <LinearLayout
-            android:id="@+id/colClassA"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvClassATitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="A"
-                android:textColor="@color/vf_text_primary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvClassASub"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="limpo e seco"
-                android:textColor="@color/vf_text_secondary"
-                android:textSize="10sp" />
-        </LinearLayout>
-
-        <!-- Classe B (Selecionada por padrão na tela de alterar) -->
-        <LinearLayout
-            android:id="@+id/colClassB"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/bg_chip_gold_selected"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvClassBTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="B"
-                android:textColor="#C68A10"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvClassBSub"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="úmido ou sujo"
-                android:textColor="#C68A10"
-                android:textSize="10sp" />
-        </LinearLayout>
-
-        <!-- Classe C -->
-        <LinearLayout
-            android:id="@+id/colClassC"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvClassCTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="C"
-                android:textColor="@color/vf_text_primary"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvClassCSub"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="contaminado"
-                android:textColor="@color/vf_text_secondary"
-                android:textSize="10sp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- 3. Prioridade da coleta -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -322,7 +241,6 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- 4. Resíduo perigoso Card -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -359,7 +277,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:fontFamily="sans-serif"
-                android:text="Classe I (NBR 10004) · destino especial"
+                android:text="Requer destinação e tratamento especial (NBR 10004)"
                 android:textColor="@color/vf_text_secondary"
                 android:textSize="11.5sp" />
         </LinearLayout>
@@ -371,7 +289,6 @@
             app:useMaterialThemeColors="true" />
     </LinearLayout>
 
-    <!-- 5. Motivo da alteração -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -412,7 +329,6 @@
         android:textColorHint="@color/vf_hint"
         android:textSize="13.5sp" />
 
-    <!-- Botão Salvar Classificação -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnConfirmEditClass"
         android:layout_width="match_parent"

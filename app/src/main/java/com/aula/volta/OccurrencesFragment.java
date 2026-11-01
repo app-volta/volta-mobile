@@ -28,9 +28,6 @@ import com.aula.volta.ui.occurrences.OccurrencesFilterSheet;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Lista completa de ocorrências ("Ver todas" da Home) com busca instantânea e filtros compostos (Figma 554:24).
- */
 public class OccurrencesFragment extends Fragment {
 
     private ProgressBar loadingOccurrences;
@@ -49,10 +46,11 @@ public class OccurrencesFragment extends Fragment {
     private final List<Occurrence> allOccurrences = new ArrayList<>();
     private final ArrayList<String> filterMaterials = new ArrayList<>();
     private final ArrayList<String> filterStatuses = new ArrayList<>();
+    private final ArrayList<String> filterPriorities = new ArrayList<>();
     private String currentSearchQuery = "";
 
     public OccurrencesFragment() {
-        // Construtor vazio obrigatório
+
     }
 
     @Override
@@ -147,7 +145,7 @@ public class OccurrencesFragment extends Fragment {
         if (btnFilterOccurrences != null) {
             btnFilterOccurrences.setOnClickListener(v -> {
                 OccurrencesFilterSheet sheet = OccurrencesFilterSheet.newInstance(
-                        new ArrayList<>(filterMaterials), new ArrayList<>(filterStatuses));
+                        new ArrayList<>(filterMaterials), new ArrayList<>(filterStatuses), new ArrayList<>(filterPriorities));
                 sheet.show(getParentFragmentManager(), "filter");
             });
         }
@@ -156,15 +154,21 @@ public class OccurrencesFragment extends Fragment {
                 OccurrencesFilterSheet.REQUEST_KEY, this, (requestKey, result) -> {
                     filterMaterials.clear();
                     filterStatuses.clear();
+                    filterPriorities.clear();
                     ArrayList<String> mats =
                             result.getStringArrayList(OccurrencesFilterSheet.ARG_MATERIALS);
                     ArrayList<String> stats =
                             result.getStringArrayList(OccurrencesFilterSheet.ARG_STATUSES);
+                    ArrayList<String> prios =
+                            result.getStringArrayList(OccurrencesFilterSheet.ARG_PRIORITIES);
                     if (mats != null) {
                         filterMaterials.addAll(mats);
                     }
                     if (stats != null) {
                         filterStatuses.addAll(stats);
+                    }
+                    if (prios != null) {
+                        filterPriorities.addAll(prios);
                     }
                     applyFilter();
                 });
@@ -177,6 +181,7 @@ public class OccurrencesFragment extends Fragment {
         currentSearchQuery = "";
         filterMaterials.clear();
         filterStatuses.clear();
+        filterPriorities.clear();
         applyFilter();
     }
 
@@ -215,19 +220,15 @@ public class OccurrencesFragment extends Fragment {
         applyFilter();
     }
 
-    /**
-     * Aplica filtros compostos e atualiza contadores visuais e badges.
-     */
     private void applyFilter() {
         List<Occurrence> filtered = OccurrenceFilter.filter(
-                allOccurrences, currentSearchQuery, filterMaterials, filterStatuses);
+                allOccurrences, currentSearchQuery, filterMaterials, filterStatuses, filterPriorities);
 
         adapter.setItems(filtered);
 
         boolean hasActive = OccurrenceFilter.hasActiveFilters(
-                currentSearchQuery, filterMaterials, filterStatuses);
+                currentSearchQuery, filterMaterials, filterStatuses, filterPriorities);
 
-        // Atualizar estado vazio
         if (tvEmptyOccurrencesList != null) {
             if (filtered.isEmpty()) {
                 tvEmptyOccurrencesList.setVisibility(View.VISIBLE);
@@ -239,7 +240,6 @@ public class OccurrencesFragment extends Fragment {
             }
         }
 
-        // Atualizar texto de contagem
         if (tvOccurrencesCount != null && getContext() != null) {
             if (hasActive) {
                 tvOccurrencesCount.setText(getString(
@@ -250,13 +250,11 @@ public class OccurrencesFragment extends Fragment {
             }
         }
 
-        // Atualizar botão de reset de filtros
         if (btnClearFiltersChip != null) {
             btnClearFiltersChip.setVisibility(hasActive ? View.VISIBLE : View.GONE);
         }
 
-        // Atualizar badge do botão de filtros
-        int categoryFilterCount = filterMaterials.size() + filterStatuses.size();
+        int categoryFilterCount = filterMaterials.size() + filterStatuses.size() + filterPriorities.size();
         if (tvFilterBadge != null) {
             if (categoryFilterCount > 0) {
                 tvFilterBadge.setVisibility(View.VISIBLE);

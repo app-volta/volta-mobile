@@ -2,7 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/** Espelho Gson de GET /occurrences (contrato futuro). */
 public class OccurrenceJSON {
 
     private String id;

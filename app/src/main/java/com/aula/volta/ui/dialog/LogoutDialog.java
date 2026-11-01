@@ -19,9 +19,6 @@ import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.local.SessionManager;
 import com.aula.volta.ui.auth.AuthActivity;
 
-/**
- * Diálogo de confirmação de saída — Figma 1721:1709.
- */
 public class LogoutDialog extends DialogFragment {
 
     public static LogoutDialog newInstance() {

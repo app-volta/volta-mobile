@@ -2,7 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/** Espelho Gson de GET /notifications (contrato futuro). */
 public class NotificationJSON {
 
     private String id;
@@ -20,6 +19,9 @@ public class NotificationJSON {
 
     @SerializedName("occurrence_id")
     private String occurrenceId;
+
+    @SerializedName("timestamp")
+    private Long timestamp;
 
     public String getId() {
         return id;
@@ -59,5 +61,13 @@ public class NotificationJSON {
 
     public String getOccurrenceId() {
         return occurrenceId;
+    }
+
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
     }
 }

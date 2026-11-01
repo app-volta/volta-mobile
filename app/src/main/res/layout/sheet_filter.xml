@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Bottom sheet Filtrar ocorrências — Figma (554:24): chips multi-seleção + Aplicar. -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -112,6 +112,59 @@
             android:checkable="true"
             android:text="Orgânico"
             app:chipStrokeWidth="1dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMatOutro"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:text="Outro"
+            app:chipStrokeWidth="1dp" />
+    </com.google.android.material.chip.ChipGroup>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_small"
+        android:text="Prioridade"
+        android:textColor="@color/volta_text_primary_light"
+        android:textSize="@dimen/text_size_body"
+        android:textStyle="bold" />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroupPriority"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        app:singleSelection="false">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipPrioAlta"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:text="ALTA"
+            app:chipStrokeWidth="1dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipPrioMedia"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:text="MÉDIA"
+            app:chipStrokeWidth="1dp" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipPrioBaixa"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:text="BAIXA"
+            app:chipStrokeWidth="1dp" />
     </com.google.android.material.chip.ChipGroup>
 
     <TextView
@@ -136,25 +189,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checkable="true"
-            android:text="@string/filter_status_open"
+            android:text="Aberta"
             app:chipStrokeWidth="1dp" />
 
         <com.google.android.material.chip.Chip
-            android:id="@+id/chipStatusAnalise"
+            android:id="@+id/chipStatusAprovada"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checkable="true"
-            android:text="@string/filter_status_analyzing"
-            app:chipStrokeWidth="1dp" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipStatusColetada"
-            style="@style/Widget.Material3.Chip.Filter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:text="@string/filter_status_collected"
+            android:text="Aprovada"
             app:chipStrokeWidth="1dp" />
     </com.google.android.material.chip.ChipGroup>
 

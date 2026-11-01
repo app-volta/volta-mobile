@@ -2,9 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO de resposta de perfil de usuário na API VOLTA (GET /users/me e GET /users/{id}).
- */
 public class UserResponseDTO {
 
     @SerializedName("id")

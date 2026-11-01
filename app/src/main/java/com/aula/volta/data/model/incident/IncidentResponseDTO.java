@@ -1,10 +1,8 @@
 package com.aula.volta.data.model.incident;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.List;
 
-/**
- * Resposta de incidente registrado na API QA (POST /incidents e GET /incidents/{id}).
- */
 public class IncidentResponseDTO {
 
     @SerializedName("id")
@@ -22,11 +20,23 @@ public class IncidentResponseDTO {
     @SerializedName("wasteTypeId")
     private String wasteTypeId;
 
+    @SerializedName("wasteTypeIds")
+    private List<String> wasteTypeIds;
+
     @SerializedName("photoUrl")
     private String photoUrl;
 
     @SerializedName("employeeDescription")
     private String employeeDescription;
+
+    @SerializedName("title")
+    private String title;
+
+    @SerializedName("aiDescription")
+    private String aiDescription;
+
+    @SerializedName("changeReason")
+    private String changeReason;
 
     @SerializedName("contaminationLevel")
     private String contaminationLevel;
@@ -79,11 +89,25 @@ public class IncidentResponseDTO {
     }
 
     public String getWasteTypeId() {
-        return wasteTypeId;
+        if (wasteTypeId != null && !wasteTypeId.isEmpty()) {
+            return wasteTypeId;
+        }
+        if (wasteTypeIds != null && !wasteTypeIds.isEmpty()) {
+            return wasteTypeIds.get(0);
+        }
+        return null;
     }
 
     public void setWasteTypeId(String wasteTypeId) {
         this.wasteTypeId = wasteTypeId;
+    }
+
+    public List<String> getWasteTypeIds() {
+        return wasteTypeIds;
+    }
+
+    public void setWasteTypeIds(List<String> wasteTypeIds) {
+        this.wasteTypeIds = wasteTypeIds;
     }
 
     public String getPhotoUrl() {
@@ -140,5 +164,29 @@ public class IncidentResponseDTO {
 
     public void setRegisteredAt(String registeredAt) {
         this.registeredAt = registeredAt;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getAiDescription() {
+        return aiDescription;
+    }
+
+    public void setAiDescription(String aiDescription) {
+        this.aiDescription = aiDescription;
+    }
+
+    public String getChangeReason() {
+        return changeReason;
+    }
+
+    public void setChangeReason(String changeReason) {
+        this.changeReason = changeReason;
     }
 }

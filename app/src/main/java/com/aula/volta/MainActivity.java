@@ -22,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Gate de sessão (Fase 13): sem login volta ao fluxo de acesso.
         if (!com.aula.volta.data.local.SessionManager.isLoggedIn(this)) {
             android.content.Intent intent = new android.content.Intent(
                     this, com.aula.volta.ui.auth.AuthActivity.class);
@@ -36,35 +35,24 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        // =========================================================================
-        // 1. OCULTAR A BARRA DE NAVEGAÇÃO DO SISTEMA (VOLTAR, HOME, APPS)
-        // =========================================================================
         androidx.core.view.WindowInsetsControllerCompat controller =
                 androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
 
         if (controller != null) {
-            // Esconde os botões de navegação
+
             controller.hide(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
 
-            // Faz a barra reaparecer temporariamente só se o usuário deslizar da borda
             controller.setSystemBarsBehavior(
                     androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             );
         }
 
-        // =========================================================================
-        // 2. AJUSTAR O PADDING DO LAYOUT (Apenas para o topo / barra de status)
-        // =========================================================================
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            // statusBars() para não aplicar padding desnecessário na parte inferior
+
             Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
             v.setPadding(statusBars.left, statusBars.top, statusBars.right, 0);
             return insets;
         });
-
-        // _________________________________________________________________________________________
-        //            TOOLBAR
-        // _________________________________________________________________________________________
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -74,19 +62,13 @@ public class MainActivity extends AppCompatActivity {
 
         NavController navController = navHostFragment.getNavController();
 
-        // _________________________________________________________________________________________
-        //            BOTTOM NAVIGATION VIEW (Figma 790:1736: fundo #FFFFFF + borda superior #EEF0F5)
-        // _________________________________________________________________________________________
-
         BottomNavigationView navView = findViewById(R.id.bottomNavigationView);
         navView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.bottom_bar_bg));
 
-        // Habilitar menu button (dizendo quais os fragments de nível superior) - 4 tabs reais + FAB central
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_home, R.id.nav_cooperatives, R.id.nav_register, R.id.nav_reports, R.id.nav_profile)
                 .build();
 
-        // Ativando a barra de ação sincronizada com o NavController
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
         navView.setOnItemSelectedListener(item -> {
@@ -113,15 +95,14 @@ public class MainActivity extends AppCompatActivity {
         navController.addOnDestinationChangedListener((ctrl, destination, args) -> {
             int destId = destination.getId();
 
-            // Todos os fragmentos possuem layout próprio no Figma sem Toolbar nativa
             toolbar.setVisibility(android.view.View.GONE);
 
-            // Fluxo de registro (851:3792), Assistente (790:1911) e Chat (790:3191) não exibem a Tab bar inferior
             boolean hideBottomBar = (destId == R.id.nav_assistant
-                    || destId == R.id.nav_chat
+
                     || destId == R.id.nav_register
                     || destId == R.id.nav_ai_analysis
-                    || destId == R.id.nav_occurrence_full);
+                    || destId == R.id.nav_occurrence_full
+                    || destId == R.id.nav_offline_error);
             int barVis = hideBottomBar ? android.view.View.GONE : android.view.View.VISIBLE;
             navView.setVisibility(barVis);
             if (fabRegister != null) {
@@ -145,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // FAB Central - navega para Registrar com pilha simples (singleTop + popUpTo home, sem saveState)
         fabRegister.setOnClickListener(v -> {
             if (navController.getCurrentDestination() == null
                     || navController.getCurrentDestination().getId() != R.id.nav_register) {
@@ -157,13 +137,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Canais de Notificação Android (Fase 26)
         com.aula.volta.data.notification.NotificationHelper.createChannels(this);
 
-        // Notificações em Tempo Real via Firebase Cloud Firestore
         com.aula.volta.data.notification.FirestoreNotificationRepository.getInstance().startListening(this);
 
-        // Obtenção do Token FCM (Cloud Messaging)
         com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult() != null) {
@@ -171,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-        // Sincronização Offline Industrial (Fase 25)
         com.aula.volta.data.sync.SyncManager.registerNetworkCallback(this);
         com.aula.volta.data.sync.SyncManager.syncPending(this);
     }

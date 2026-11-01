@@ -6,14 +6,12 @@
     android:layout_height="match_parent"
     android:background="#F009101A">
 
-    <!-- Imagem Zoomável Centralizada -->
     <com.aula.volta.ui.widget.ZoomableImageView
         android:id="@+id/imgPreviewZoom"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:contentDescription="Imagem ampliada" />
 
-    <!-- Barra de Carregamento para Imagens Remotas -->
     <ProgressBar
         android:id="@+id/loadingPreview"
         android:layout_width="48dp"
@@ -22,7 +20,6 @@
         android:indeterminateTint="@color/volta_green_primary"
         android:visibility="gone" />
 
-    <!-- Top Bar Elegante com Botão Fechar e Título -->
     <LinearLayout
         android:id="@+id/previewTopBar"
         android:layout_width="match_parent"
@@ -80,7 +77,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Card Flutuante Inferior com Detalhes da Ocorrência -->
     <LinearLayout
         android:id="@+id/cardPreviewDetails"
         android:layout_width="match_parent"

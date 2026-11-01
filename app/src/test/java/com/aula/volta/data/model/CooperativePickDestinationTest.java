@@ -10,9 +10,6 @@ import org.junit.Test;
 
 import java.util.Collections;
 
-/**
- * Testes unitários para o fluxo de destinação contextual e confirmação de coleta (Fase 34).
- */
 public class CooperativePickDestinationTest {
 
     private final Gson gson = new Gson();
@@ -52,7 +49,6 @@ public class CooperativePickDestinationTest {
                 "Papelão Ondulado"
         );
 
-        // Ao solicitar destinação, status avança para EM_TRATAMENTO
         Occurrence updated = new Occurrence(
                 original.getId(),
                 original.getTitulo(),

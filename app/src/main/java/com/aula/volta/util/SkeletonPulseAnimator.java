@@ -7,10 +7,6 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-/**
- * Utilitário para gerenciar animação suave de pulso (shimmer/skeleton)
- * em layouts de carregamento antes do retorno de APIs.
- */
 public final class SkeletonPulseAnimator {
 
     private static final Map<View, ValueAnimator> animators = new WeakHashMap<>();
@@ -18,9 +14,6 @@ public final class SkeletonPulseAnimator {
     private SkeletonPulseAnimator() {
     }
 
-    /**
-     * Inicia a animação de pulso contínuo (alpha 0.45f -> 1.0f -> 0.45f).
-     */
     public static void start(View view) {
         if (view == null) return;
         stop(view);
@@ -37,9 +30,6 @@ public final class SkeletonPulseAnimator {
         animators.put(view, anim);
     }
 
-    /**
-     * Interrompe o pulso e restaura a opacidade do elemento para 1.0f.
-     */
     public static void stop(View view) {
         if (view == null) return;
         ValueAnimator anim = animators.remove(view);

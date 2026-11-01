@@ -29,11 +29,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-/**
- * Cadastro — Figma 790:1007.
- * 4 cards com chips coloridos, seleção de setor industrial,
- * aceite de termos e validações completas (mínimo de 8 caracteres de senha).
- */
 public class RegisterFragment extends Fragment {
 
     private String selectedSector = "";
@@ -53,7 +48,6 @@ public class RegisterFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Restaura estado em caso de rotação de tela
         TextView tvSector = view.findViewById(R.id.tvRegisterSector);
         if (savedInstanceState != null) {
             selectedSector = savedInstanceState.getString("selected_sector", "");
@@ -64,7 +58,6 @@ public class RegisterFragment extends Fragment {
             passwordVisible = savedInstanceState.getBoolean("password_visible", false);
         }
 
-        // Botão Fechar circular superior direito e link Rodapé "Entrar"
         View.OnClickListener goBack = v -> {
             if (!Navigation.findNavController(v).popBackStack(R.id.auth_login, false)) {
                 Navigation.findNavController(v).navigateUp();
@@ -79,7 +72,6 @@ public class RegisterFragment extends Fragment {
             btnGoLogin.setOnClickListener(goBack);
         }
 
-        // Card Setor e Diálogo de Seleção
         View cardSector = view.findViewById(R.id.cardRegisterSector);
         View.OnClickListener openSectorDialog = v -> {
             String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
@@ -98,7 +90,6 @@ public class RegisterFragment extends Fragment {
             cardSector.setOnClickListener(openSectorDialog);
         }
 
-        // Toggle Visibilidade de Senha (preservando Typeface/Fonte)
         EditText etPassword = view.findViewById(R.id.etRegisterPassword);
         ImageView btnToggle = view.findViewById(R.id.btnToggleRegisterPassword);
         if (etPassword != null && btnToggle != null) {
@@ -109,7 +100,6 @@ public class RegisterFragment extends Fragment {
             });
         }
 
-        // Checkbox e Texto dos Termos
         CheckBox cbTerms = view.findViewById(R.id.cbTerms);
         TextView tvTerms = view.findViewById(R.id.tvTerms);
         View rowTerms = view.findViewById(R.id.rowTerms);
@@ -124,7 +114,6 @@ public class RegisterFragment extends Fragment {
             });
         }
 
-        // Submissão do Cadastro com Validações
         view.findViewById(R.id.btnCreateAccount).setOnClickListener(v -> {
             String name = textOf(view, R.id.etRegisterName).trim();
             String email = textOf(view, R.id.etRegisterEmail).trim();
@@ -151,10 +140,8 @@ public class RegisterFragment extends Fragment {
                 return;
             }
 
-            // Persiste o setor localmente na sessão
             SessionManager.saveSector(requireContext(), selectedSector);
 
-            // Disparo do cadastro de usuário na API oficial do banco (POST /users)
             try {
                 AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
                 UserRequestDTO req = new UserRequestDTO(

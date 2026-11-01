@@ -8,7 +8,6 @@
     android:background="@color/volta_background_light"
     tools:context=".MainActivity">
 
-    <!-- Toolbar oculta (nenhum fragmento no Figma usa ActionBar nativa) -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
@@ -22,7 +21,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:titleTextColor="@color/volta_text_primary_light" />
 
-    <!-- Container dos Fragmentos (Navegação Central) -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView"
         android:name="androidx.navigation.fragment.NavHostFragment"
@@ -35,7 +33,6 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         app:navGraph="@navigation/nav_graph" />
 
-    <!-- Borda superior 1dp #EEF0F5 da Tab bar (Figma 790:1736) -->
     <View
         android:id="@+id/tabBarBorder"
         android:layout_width="0dp"
@@ -46,7 +43,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Barra de Navegação Inferior - 4 itens + FAB central sobreposto (Figma 790:1736) -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="0dp"
@@ -65,13 +61,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 
-    <!-- FAB Central - Registrar (Figma tab-camera 790:1736:
-         68x68dp degradê #22C06F -> #0E7C48 + 6dp borda branca externa = 80x80dp total) -->
     <FrameLayout
         android:id="@+id/fabRegister"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginBottom="28dp"
+        android:layout_marginBottom="44dp"
         android:background="@drawable/bg_fab_ring"
         android:clickable="true"
         android:focusable="true"

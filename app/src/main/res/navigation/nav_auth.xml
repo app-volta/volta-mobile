@@ -79,4 +79,26 @@
         android:name="com.aula.volta.ui.auth.PasswordSuccessFragment"
         tools:layout="@layout/fragment_password_success" />
 
+    <fragment
+        android:id="@+id/auth_offline_error"
+        android:name="com.aula.volta.ui.error.OfflineErrorFragment"
+        tools:layout="@layout/fragment_offline_error">
+        <argument
+            android:name="title"
+            android:defaultValue="Sem conexão por aqui"
+            app:argType="string" />
+        <argument
+            android:name="message"
+            android:defaultValue="Você precisa de uma conexão com a internet para entrar no VOLTA."
+            app:argType="string" />
+        <argument
+            android:name="badge"
+            android:defaultValue="Você está offline"
+            app:argType="string" />
+        <argument
+            android:name="errorType"
+            android:defaultValue="OFFLINE"
+            app:argType="string" />
+    </fragment>
+
 </navigation>

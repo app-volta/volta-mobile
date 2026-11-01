@@ -17,12 +17,6 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
-/**
- * Utilitário para garantir que todos os BottomSheets e Dialogs do VOLTA:
- * 1. Não ativem a barra de navegação do sistema ("barra de ações") ao abrir.
- * 2. Iniciem exatamente na base física do celular (bottom = 0), sem espaço ou padding da navigation bar.
- * 3. Desloquem apenas quando o teclado virtual (IME) estiver visível.
- */
 public final class BottomSheetImmersiveHelper {
 
     private BottomSheetImmersiveHelper() {
@@ -41,7 +35,7 @@ public final class BottomSheetImmersiveHelper {
 
         Window window = dialog.getWindow();
         if (window != null) {
-            // Impede que o WindowManager ative a barra de ações ao focar a nova janela antes do hide()
+
             window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
             applyImmersiveWindow(window);
 
@@ -49,7 +43,7 @@ public final class BottomSheetImmersiveHelper {
             decorView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
                 @Override
                 public void onViewAttachedToWindow(@NonNull View v) {
-                    // Sobrescreve imediatamente qualquer flag aplicada pelo BottomSheetDialog.onAttachedToWindow()
+
                     applyImmersiveWindow(window);
                     stripBottomSheetInsets(dialog, expandImmediately);
                 }

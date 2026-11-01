@@ -14,11 +14,6 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Serviço do Firebase Cloud Messaging (FCM) para o app VOLTA.
- * Recebe mensagens push enviadas via console ou backend e encaminha para o
- * NotificationStore (memória/cache) e para a bandeja do sistema Android.
- */
 public class VoltaFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "VoltaFCM";
@@ -87,10 +82,8 @@ public class VoltaFirebaseMessagingService extends FirebaseMessagingService {
                 occurrenceId
         );
 
-        // 1. Armazena no cache unificado do app (UI atualiza imediatamente)
         NotificationStore.pushLocal(this, notification);
 
-        // 2. Emite notificação visual na bandeja do sistema Android
         String channelId = NotificationHelper.CHANNEL_OCCURRENCES;
         if ("META".equalsIgnoreCase(tipo)) {
             channelId = NotificationHelper.CHANNEL_GOALS;

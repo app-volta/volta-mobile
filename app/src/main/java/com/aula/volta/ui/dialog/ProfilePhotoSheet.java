@@ -14,12 +14,6 @@ import com.aula.volta.util.BottomSheetImmersiveHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
-/**
- * BottomSheetDialogFragment para seleção da origem da foto de perfil:
- * - Tirar foto com a câmera
- * - Escolher da galeria
- * - Remover foto atual (quando aplicável)
- */
 public class ProfilePhotoSheet extends BottomSheetDialogFragment {
 
     public interface OnPhotoOptionSelectedListener {

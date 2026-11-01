@@ -18,11 +18,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * Código da nova senha — Figma 790:1154 (Fase 13b).
- * Mock: qualquer código de 4 números; reenvio com timer de 48s.
- * Arg: email.
- */
 public class PasswordCodeFragment extends Fragment {
 
     private static final long RESEND_MILLIS = 48000L;

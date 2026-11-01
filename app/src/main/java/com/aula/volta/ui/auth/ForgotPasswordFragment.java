@@ -13,9 +13,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * Esqueci a senha — Figma 790:1119 (Fase 13b, mock: e-mail válido segue ao código).
- */
 public class ForgotPasswordFragment extends Fragment {
 
     public ForgotPasswordFragment() {

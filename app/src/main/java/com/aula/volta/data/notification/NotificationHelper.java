@@ -19,10 +19,6 @@ import com.aula.volta.data.model.Notification;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Utilitário central para criação de canais, emissão de notificações na bandeja do sistema Android,
- * armazenamento no cache unificado e replicação em tempo real no Cloud Firestore com garantia anti-duplicação.
- */
 public final class NotificationHelper {
 
     private static final String TAG = "NotificationHelper";
@@ -31,18 +27,12 @@ public final class NotificationHelper {
     public static final String CHANNEL_GOALS = "volta_goals";
     public static final String CHANNEL_SYNC = "volta_sync";
 
-    // Debouncing in-memory para suprimir qualquer emissão duplicada no sistema Android dentro da janela de 3s
     private static final Map<String, Long> sRecentlyEmitted = new ConcurrentHashMap<>();
     private static final long DEBOUNCE_WINDOW_MS = 3000L;
 
     private NotificationHelper() {
     }
 
-    /**
-     * Calcula um ID numérico determinístico para a notificação na bandeja do Android.
-     * Isso assegura que re-emissões do mesmo evento apenas atualizem a notificação existente,
-     * em vez de empilhar notificações duplicadas.
-     */
     public static int computeNotificationId(String occurrenceId, String title, String body) {
         if (occurrenceId != null && !occurrenceId.isEmpty()) {
             return Math.abs(occurrenceId.hashCode());
@@ -66,9 +56,6 @@ public final class NotificationHelper {
         return false;
     }
 
-    /**
-     * Inicializa os canais de notificação exigidos no Android 8.0 (API 26) ou superior.
-     */
     public static void createChannels(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return;
@@ -79,7 +66,6 @@ public final class NotificationHelper {
             return;
         }
 
-        // 1. Canal de Ocorrências e Coletas (Alta prioridade / som / popup)
         NotificationChannel occChannel = new NotificationChannel(
                 CHANNEL_OCCURRENCES,
                 context.getString(R.string.channel_occurrences_name),
@@ -89,7 +75,6 @@ public final class NotificationHelper {
         occChannel.enableVibration(true);
         manager.createNotificationChannel(occChannel);
 
-        // 2. Canal de Metas e Relatórios PGRS (Importância padrão)
         NotificationChannel goalsChannel = new NotificationChannel(
                 CHANNEL_GOALS,
                 context.getString(R.string.channel_goals_name),
@@ -98,7 +83,6 @@ public final class NotificationHelper {
         goalsChannel.setDescription(context.getString(R.string.channel_goals_desc));
         manager.createNotificationChannel(goalsChannel);
 
-        // 3. Canal de Sincronização Offline (Silencioso)
         NotificationChannel syncChannel = new NotificationChannel(
                 CHANNEL_SYNC,
                 context.getString(R.string.channel_sync_name),
@@ -108,11 +92,29 @@ public final class NotificationHelper {
         manager.createNotificationChannel(syncChannel);
     }
 
-    /**
-     * Emite notificação de nova ocorrência registrada e replica no Firestore com ID determinístico.
-     */
+    public static boolean isNotificationAllowed(Context context, String type) {
+        if (context == null) return true;
+        try {
+            android.content.SharedPreferences prefs = context.getSharedPreferences("prefs_notification_settings", Context.MODE_PRIVATE);
+            if ("APROVACAO".equalsIgnoreCase(type)) {
+                return prefs.getBoolean("notif_approved", true);
+            }
+            if ("COLETA_AGENDADA".equalsIgnoreCase(type) || "DESTINACAO".equalsIgnoreCase(type)) {
+                return prefs.getBoolean("notif_collection", true);
+            }
+            if ("NOVA_OCORRENCIA".equalsIgnoreCase(type)) {
+                return prefs.getBoolean("notif_sector", true);
+            }
+        } catch (Exception ignored) {
+        }
+        return true;
+    }
+
     public static void notifyOccurrenceCreated(Context context, String occurrenceId,
                                               String material, String setor) {
+        if (!isNotificationAllowed(context, "NOVA_OCORRENCIA")) {
+            return;
+        }
         String title = context.getString(R.string.notif_occurrence_title, occurrenceId);
         String body = context.getString(R.string.notif_occurrence_desc, material, setor);
         String singularId = "occ_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
@@ -139,11 +141,11 @@ public final class NotificationHelper {
                 singularId, title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#C68A10", "#FDF3DE", myEmail);
     }
 
-    /**
-     * Emite notificação de ocorrência enviada para análise técnica e replica no Firestore.
-     */
     public static void notifyOccurrenceSent(Context context, String occurrenceId,
                                             String material, String setor) {
+        if (!isNotificationAllowed(context, "NOVA_OCORRENCIA")) {
+            return;
+        }
         String title = "Ocorrência #" + occurrenceId + " enviada";
         String body = (material != null && !material.isEmpty())
                 ? material + " · Enviada para análise técnica"
@@ -172,10 +174,10 @@ public final class NotificationHelper {
                 singularId, title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#12A05E", "#E2F7EC", myEmail);
     }
 
-    /**
-     * Emite notificação de ocorrência aprovada pela gestão web e replica no Firestore.
-     */
     public static void notifyOccurrenceApproved(Context context, String occurrenceId, String material) {
+        if (!isNotificationAllowed(context, "APROVACAO")) {
+            return;
+        }
         String title = "Ocorrência #" + occurrenceId + " aprovada";
         String body = (material != null && !material.isEmpty())
                 ? material + " · Aprovada e homologada no PGRS"
@@ -204,10 +206,10 @@ public final class NotificationHelper {
                 singularId, title, body, "APROVACAO", occurrenceId, "check", "#12A05E", "#E2F7EC", myEmail);
     }
 
-    /**
-     * Emite notificação de coleta agendada com a cooperativa e replica no Firestore.
-     */
     public static void notifyPickupScheduled(Context context, String coopName, String horario) {
+        if (!isNotificationAllowed(context, "COLETA_AGENDADA")) {
+            return;
+        }
         String title = context.getString(R.string.notif_pickup_title);
         String body = context.getString(R.string.notif_pickup_body, coopName, horario);
         String singularId = "pickup_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString();
@@ -234,10 +236,10 @@ public final class NotificationHelper {
                 singularId, title, body, "COLETA_AGENDADA", null, "truck", "#3B82F6", "#E4EFFF", myEmail);
     }
 
-    /**
-     * Emite notificação nativa de destinação solicitada para cooperativa e replica no Firestore.
-     */
     public static void notifyDestinationRequested(Context context, String coopName, String occurrenceId) {
+        if (!isNotificationAllowed(context, "DESTINACAO")) {
+            return;
+        }
         String title = context.getString(R.string.notif_pick_title, coopName);
         String body = context.getString(R.string.notif_pick_desc, occurrenceId);
         String singularId = "dest_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
@@ -264,9 +266,6 @@ public final class NotificationHelper {
                 singularId, title, body, "COLETA_AGENDADA", occurrenceId, "truck", "#3B82F6", "#E4EFFF", myEmail);
     }
 
-    /**
-     * Emite notificação de ocorrência finalizada no PGRS e replica no Firestore.
-     */
     public static void notifyPgrsFinalized(Context context, String occurrenceId) {
         String title = context.getString(R.string.notif_pgrs_finalized_title, occurrenceId);
         String body = context.getString(R.string.notif_pgrs_finalized_body);
@@ -294,9 +293,6 @@ public final class NotificationHelper {
                 singularId, title, body, "META", occurrenceId, "trophy", "#8B6FE0", "#EFEAFB", myEmail);
     }
 
-    /**
-     * Emite notificação quando uma ocorrência offline é sincronizada na nuvem e replica no Firestore.
-     */
     public static void notifySyncComplete(Context context, String occurrenceId,
                                           String material, String setor) {
         String title = context.getString(R.string.sync_success_title, occurrenceId);
@@ -324,11 +320,14 @@ public final class NotificationHelper {
                 notifId, title, body, "SYNC", occurrenceId, "check", "#0E7C48", "#E2F7EC");
     }
 
-    /**
-     * Emite notificação remota vinda do Firebase (FCM / Firestore).
-     */
     public static void notifyRemote(Context context, String channelId, String title,
                                     String body, String occurrenceId) {
+        if (body != null) {
+            String b = body.toUpperCase(java.util.Locale.ROOT);
+            if (b.contains("APROVAD") && !isNotificationAllowed(context, "APROVACAO")) return;
+            if (b.contains("COLETA") && !isNotificationAllowed(context, "COLETA_AGENDADA")) return;
+            if ((b.contains("OCORRÊNCIA") || b.contains("OCORRENCIA")) && !isNotificationAllowed(context, "NOVA_OCORRENCIA")) return;
+        }
         if (channelId == null || channelId.isEmpty()) {
             channelId = CHANNEL_OCCURRENCES;
         }
@@ -372,7 +371,7 @@ public final class NotificationHelper {
 
             manager.notify(notificationId, builder.build());
         } catch (SecurityException ignored) {
-            // Permissão POST_NOTIFICATIONS não concedida pelo usuário
+
         }
     }
 }

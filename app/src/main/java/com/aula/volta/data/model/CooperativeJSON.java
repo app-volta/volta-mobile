@@ -5,10 +5,6 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Modelo de cooperativa para a UI do fluxo de seleção e destinação.
- * Suporta tanto o JSON legado quanto a conversão de CooperativeResponseDTO do banco de dados oficial.
- */
 public class CooperativeJSON {
 
     private String id;
@@ -17,6 +13,12 @@ public class CooperativeJSON {
 
     @SerializedName("distancia_km")
     private double distanciaKm;
+
+    @SerializedName("latitude")
+    private Double latitude;
+
+    @SerializedName("longitude")
+    private Double longitude;
 
     private String coleta;
     private String tag;
@@ -44,26 +46,51 @@ public class CooperativeJSON {
     }
 
     public static CooperativeJSON fromDTO(CooperativeResponseDTO dto) {
+        return fromDTO(dto, -23.5320, -46.6850);
+    }
+
+    public static CooperativeJSON fromDTO(CooperativeResponseDTO dto, double userLat, double userLng) {
         if (dto == null) {
             return null;
         }
         String id = dto.getId() != null ? dto.getId() : "";
         String name = dto.getName() != null ? dto.getName() : "Cooperativa";
-        double rating = dto.getAverageRating() != null ? dto.getAverageRating() : 4.8;
-        String specs = dto.getSpecialties() != null ? dto.getSpecialties() : "Papelão, Plásticos";
-        List<String> mats = Arrays.asList(specs.split(",\\s*"));
-        return new CooperativeJSON(
+        String specs = dto.getSpecialties() != null ? dto.getSpecialties() : "";
+        List<String> mats = (!specs.isEmpty())
+                ? Arrays.asList(specs.split(",\\s*"))
+                : java.util.Collections.emptyList();
+
+        double dist = 0.0;
+        if (dto.getLatitude() != null && dto.getLongitude() != null) {
+            dist = calculateDistanceKm(userLat, userLng, dto.getLatitude(), dto.getLongitude());
+        }
+
+        CooperativeJSON coop = new CooperativeJSON(
                 id,
                 name,
-                "Especialista em " + specs,
-                2.8,
-                "Seg à Sex • 08h às 17h",
-                "Cooperativa Certificada",
-                rating,
-                98,
+                specs.isEmpty() ? "" : ("Recebe: " + specs),
+                dist,
+                null,
+                null,
+                null,
+                0,
                 mats,
-                "Coleta rápida em até 24h"
+                null
         );
+        coop.setLatitude(dto.getLatitude());
+        coop.setLongitude(dto.getLongitude());
+        return coop;
+    }
+
+    public static double calculateDistanceKm(double lat1, double lon1, double lat2, double lon2) {
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double km = 6371.0 * c;
+        return Math.round(km * 10.0) / 10.0;
     }
 
     public String getId() {
@@ -90,6 +117,10 @@ public class CooperativeJSON {
         return tag;
     }
 
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
     public Double getAvaliacao() {
         return avaliacao;
     }
@@ -102,11 +133,31 @@ public class CooperativeJSON {
         return distanciaKm;
     }
 
+    public void setDistanciaKm(double distanciaKm) {
+        this.distanciaKm = distanciaKm;
+    }
+
     public List<String> getMateriais() {
         return materiais;
     }
 
     public String getDisponibilidade() {
         return disponibilidade;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 }

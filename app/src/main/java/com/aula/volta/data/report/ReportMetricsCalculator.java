@@ -12,11 +12,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Calculador de métricas e indicadores de relatórios ESG do VOLTA (PGRS).
- * Classe de lógica pura e determinística (coberta por testes unitários).
- * Suporta modo legado (com baseline Figma para testes) e modo live database (100% desmocado do banco oficial).
- */
 public final class ReportMetricsCalculator {
 
     public enum Period {
@@ -53,12 +48,12 @@ public final class ReportMetricsCalculator {
         if (period == null) period = Period.MONTH;
         switch (period) {
             case WEEK:
-                return "Nesta semana";
+                return "Nesta Semana";
             case QUARTER:
-                return "Neste trimestre";
+                return "Neste Trimestre";
             case MONTH:
             default:
-                return "Neste mês";
+                return "Neste Mês";
         }
     }
 
@@ -66,12 +61,25 @@ public final class ReportMetricsCalculator {
         if (period == null) period = Period.MONTH;
         switch (period) {
             case WEEK:
-                return "Meta da semana";
+                return "Meta da Semana";
             case QUARTER:
-                return "Meta do trimestre";
+                return "Meta do Trimestre";
             case MONTH:
             default:
-                return "Meta do mês";
+                return "Meta do Mês";
+        }
+    }
+
+    public static String getVsPeriodTitle(Period period) {
+        if (period == null) period = Period.MONTH;
+        switch (period) {
+            case WEEK:
+                return "vs. semana passada";
+            case QUARTER:
+                return "vs. trimestre passado";
+            case MONTH:
+            default:
+                return "vs. mês passado";
         }
     }
 
@@ -120,10 +128,6 @@ public final class ReportMetricsCalculator {
     private ReportMetricsCalculator() {
     }
 
-    /**
-     * Calcula o resumo de métricas para o período selecionado, combinando métricas corporativas
-     * com ocorrências registradas em tempo real pelos operadores.
-     */
     public static ReportSummary calculate(
             Period period,
             JsonObject baseEsgSummary,
@@ -136,12 +140,23 @@ public final class ReportMetricsCalculator {
         }
         double scale = getPeriodScale(period);
         int goalKg = getGoalKg(period);
+        if (baseEsgSummary != null) {
+            if (period == Period.MONTH && baseEsgSummary.has("monthlyTarget") && !baseEsgSummary.get("monthlyTarget").isJsonNull()) {
+                double mt = baseEsgSummary.get("monthlyTarget").getAsDouble();
+                if (mt > 0) goalKg = (int) Math.round(mt);
+            } else if (period == Period.WEEK && baseEsgSummary.has("weeklyTarget") && !baseEsgSummary.get("weeklyTarget").isJsonNull()) {
+                double wt = baseEsgSummary.get("weeklyTarget").getAsDouble();
+                if (wt > 0) goalKg = (int) Math.round(wt);
+            } else if (period == Period.QUARTER && baseEsgSummary.has("quarterlyTarget") && !baseEsgSummary.get("quarterlyTarget").isJsonNull()) {
+                double qt = baseEsgSummary.get("quarterlyTarget").getAsDouble();
+                if (qt > 0) goalKg = (int) Math.round(qt);
+            }
+        }
 
         boolean isLiveDatabase = baseEsgSummary != null
                 && baseEsgSummary.has("isLiveDatabase")
                 && baseEsgSummary.get("isLiveDatabase").getAsBoolean();
 
-        // 1. Processa ocorrências reais cadastradas no banco
         int opAbertas = 0;
         int opResolvidas = 0;
         int opKg = 0;
@@ -150,7 +165,7 @@ public final class ReportMetricsCalculator {
         Map<String, Integer> sectorKg = new HashMap<>();
 
         if (!isLiveDatabase) {
-            // Modo legado/mock com padding Figma 790:3322 (para retrocompatibilidade com testes)
+
             materials.put("Papelão", (int) Math.round(542 * scale));
             materials.put("Plástico", (int) Math.round(318 * scale));
             materials.put("Metal", (int) Math.round(176 * scale));
@@ -171,6 +186,7 @@ public final class ReportMetricsCalculator {
                         || status.contains("FINALIZAD")
                         || status.contains("APROVAD")
                         || status.contains("COLETAD")
+                        || status.contains("CONCLUID")
                         || status.contains("CLOSED");
 
                 if (isResolved) {
@@ -179,15 +195,13 @@ public final class ReportMetricsCalculator {
                     opAbertas++;
                 }
 
-                // Determina o peso estimado
-                double weight = 25.0; // Padrão razoável por lote no banco
+                double weight = isLiveDatabase ? 0.0 : 25.0;
                 if (weightsById != null && id != null && weightsById.containsKey(id) && weightsById.get(id) != null) {
                     weight = weightsById.get(id);
                 }
                 int weightInt = (int) Math.round(weight);
                 opKg += weightInt;
 
-                // Determina a família de material
                 String mat = occ.getMaterial();
                 if (materialsById != null && id != null && materialsById.containsKey(id)) {
                     mat = materialsById.get(id);
@@ -196,7 +210,6 @@ public final class ReportMetricsCalculator {
                 int currentMatKg = materials.containsKey(family) ? materials.get(family) : 0;
                 materials.put(family, currentMatKg + weightInt);
 
-                // Determina o setor
                 String sector = occ.getSetor() != null ? occ.getSetor() : "Frigorífico B2";
                 if (sector.contains("—")) {
                     sector = sector.substring(sector.indexOf("—") + 1).trim();
@@ -209,7 +222,7 @@ public final class ReportMetricsCalculator {
         ReportSummary summary = new ReportSummary();
 
         if (isLiveDatabase) {
-            // MODO DESMOCADO — 100% PURO DO BANCO DE DADOS
+
             if (baseEsgSummary != null && baseEsgSummary.has("corporateTotalKg") && !baseEsgSummary.get("corporateTotalKg").isJsonNull()) {
                 int corpKg = (int) Math.round(baseEsgSummary.get("corporateTotalKg").getAsInt() * scale);
                 summary.totalKg = corpKg > 0 ? corpKg : opKg;
@@ -229,7 +242,6 @@ public final class ReportMetricsCalculator {
                 summary.recyclingRate = 0;
             }
 
-            // Se houver divisão explícita corporativa por tipo
             if (baseEsgSummary != null && baseEsgSummary.has("por_tipo") && baseEsgSummary.get("por_tipo").isJsonObject()) {
                 JsonObject pt = baseEsgSummary.getAsJsonObject("por_tipo");
                 for (Map.Entry<String, JsonElement> e : pt.entrySet()) {
@@ -241,7 +253,7 @@ public final class ReportMetricsCalculator {
             }
             summary.materialBreakdown = materials;
         } else {
-            // Modo legado com baseline Figma (garante compatibilidade com testes existentes)
+
             int baseKg = (int) Math.round(1147 * scale);
             int baseAbertas = Math.max(1, (int) Math.round(6 * scale));
             int baseResolvidas = Math.max(1, (int) Math.round(46 * scale));
@@ -283,7 +295,6 @@ public final class ReportMetricsCalculator {
         summary.goalKg = goalKg;
         summary.goalPercent = Math.min(100, (int) Math.round(summary.totalKg * 100.0 / goalKg));
 
-        // Processa top 3 setores ordenados por peso
         List<Map.Entry<String, Integer>> sortedSectors = new ArrayList<>(sectorKg.entrySet());
         sortedSectors.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
 
@@ -306,7 +317,7 @@ public final class ReportMetricsCalculator {
         if (lower.contains("plást") || lower.contains("plast") || lower.contains("pet") || lower.contains("filme") || lower.contains("isopor") || lower.contains("eps")) {
             return "Plástico";
         }
-        if (lower.contains("vidro") || lower.contains("caco")) {
+        if (lower.contains("vidro") || lower.contains("caco") || lower.contains("garrafa")) {
             return "Vidro";
         }
         if (lower.contains("metal") || lower.contains("alum") || lower.contains("aço") || lower.contains("ferro") || lower.contains("lata") || lower.contains("sucata") || lower.contains(" aco") || lower.contains("aco ") || lower.equals("aco")) {
@@ -318,6 +329,15 @@ public final class ReportMetricsCalculator {
         if (lower.contains("orgân") || lower.contains("organ") || lower.contains("alimento") || lower.contains("comida") || lower.contains("peotta")) {
             return "Orgânico";
         }
-        return "Papelão";
+        if (lower.contains("perig") || lower.contains("quimic") || lower.contains("oleo") || lower.contains("graxa") || lower.contains("tinta")) {
+            return "Perigoso";
+        }
+        if (lower.contains("eletron") || lower.contains("bateria") || lower.contains("pilha")) {
+            return "Eletrônico";
+        }
+        if (lower.contains("textil") || lower.contains("tecido") || lower.contains("pano")) {
+            return "Têxtil";
+        }
+        return "Outros";
     }
 }

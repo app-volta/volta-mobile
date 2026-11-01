@@ -2,9 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO de tipo de resíduo (GET /waste-types).
- */
 public class WasteTypeResponseDTO {
 
     @SerializedName("id")

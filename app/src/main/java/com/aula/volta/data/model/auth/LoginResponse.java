@@ -2,10 +2,6 @@ package com.aula.volta.data.model.auth;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Resposta de sucesso ou erro da API de autenticação do VOLTA (POST /auth/login).
- * Mapeia TokenResponseDTO do OpenAPI QA (token, expiresIn) e campos alternativos.
- */
 public class LoginResponse {
 
     @SerializedName(value = "token", alternate = {"access_token", "jwt", "authToken"})

@@ -1,18 +1,18 @@
 package com.aula.volta.data.model.incident;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
-/**
- * Dados para registro de incidente na API QA (POST /incidents).
- * O campo photoUrl recebe a secure_url gerada no Cloudinary após clicar em "Enviar para análise".
- */
 public class IncidentRequestDTO {
 
     @SerializedName("areaId")
     private String areaId;
 
-    @SerializedName("wasteTypeId")
-    private String wasteTypeId;
+    @SerializedName("wasteTypeIds")
+    private List<String> wasteTypeIds;
 
     @SerializedName("photoUrl")
     private String photoUrl;
@@ -36,12 +36,86 @@ public class IncidentRequestDTO {
                               String employeeDescription, String contaminationLevel,
                               Double estimatedQuantity, String priority) {
         this.areaId = areaId;
-        this.wasteTypeId = wasteTypeId;
-        this.photoUrl = photoUrl;
-        this.employeeDescription = employeeDescription;
-        this.contaminationLevel = contaminationLevel;
-        this.estimatedQuantity = estimatedQuantity;
-        this.priority = priority;
+        setWasteTypeId(wasteTypeId);
+        this.photoUrl = normalizePhotoUrl(photoUrl);
+        this.employeeDescription = normalizeDescription(employeeDescription);
+        this.contaminationLevel = normalizeContamination(contaminationLevel);
+        this.estimatedQuantity = normalizeQuantity(estimatedQuantity);
+        this.priority = normalizePriority(priority);
+    }
+
+    public IncidentRequestDTO(String areaId, List<String> wasteTypeIds, String photoUrl,
+                              String employeeDescription, String contaminationLevel,
+                              Double estimatedQuantity, String priority) {
+        this.areaId = areaId;
+        this.wasteTypeIds = wasteTypeIds != null ? new ArrayList<>(wasteTypeIds) : new ArrayList<>();
+        this.photoUrl = normalizePhotoUrl(photoUrl);
+        this.employeeDescription = normalizeDescription(employeeDescription);
+        this.contaminationLevel = normalizeContamination(contaminationLevel);
+        this.estimatedQuantity = normalizeQuantity(estimatedQuantity);
+        this.priority = normalizePriority(priority);
+    }
+
+    public static String normalizePriority(String p) {
+        if (p == null) {
+            return "MEDIUM";
+        }
+        String upper = p.trim().toUpperCase(Locale.ROOT);
+        if (upper.contains("BAIX") || "LOW".equals(upper)) {
+            return "LOW";
+        }
+        if (upper.contains("MÉD") || upper.contains("MED") || "MEDIUM".equals(upper)) {
+            return "MEDIUM";
+        }
+        if (upper.contains("ALT") || "HIGH".equals(upper)) {
+            return "HIGH";
+        }
+        if (upper.contains("CRÍT") || upper.contains("CRIT") || "CRITICAL".equals(upper)) {
+            return "CRITICAL";
+        }
+        return "MEDIUM";
+    }
+
+    public static String normalizeContamination(String c) {
+        if (c == null) {
+            return "LOW";
+        }
+        String upper = c.trim().toUpperCase(Locale.ROOT);
+        if (upper.contains("ALT") || "HIGH".equals(upper)) {
+            return "HIGH";
+        }
+        if (upper.contains("MÉD") || upper.contains("MED") || "MEDIUM".equals(upper)) {
+            return "MEDIUM";
+        }
+        if (upper.contains("BAIX") || "LOW".equals(upper)) {
+            return "LOW";
+        }
+        return "LOW";
+    }
+
+    public static String normalizePhotoUrl(String url) {
+        if (url == null) {
+            return null;
+        }
+        String trimmed = url.trim();
+        if (trimmed.isEmpty() || (!trimmed.startsWith("http://") && !trimmed.startsWith("https://"))) {
+            return null;
+        }
+        return trimmed;
+    }
+
+    public static String normalizeDescription(String desc) {
+        if (desc == null || desc.trim().isEmpty()) {
+            return "Ocorrência registrada no app";
+        }
+        return desc.trim();
+    }
+
+    public static Double normalizeQuantity(Double qty) {
+        if (qty == null || qty <= 0.0) {
+            return 5.0;
+        }
+        return Math.round(qty * 100.0) / 100.0;
     }
 
     public String getAreaId() {
@@ -53,11 +127,23 @@ public class IncidentRequestDTO {
     }
 
     public String getWasteTypeId() {
-        return wasteTypeId;
+        return (wasteTypeIds != null && !wasteTypeIds.isEmpty()) ? wasteTypeIds.get(0) : null;
     }
 
     public void setWasteTypeId(String wasteTypeId) {
-        this.wasteTypeId = wasteTypeId;
+        if (wasteTypeId != null && !wasteTypeId.trim().isEmpty()) {
+            this.wasteTypeIds = new ArrayList<>(Collections.singletonList(wasteTypeId.trim()));
+        } else {
+            this.wasteTypeIds = new ArrayList<>();
+        }
+    }
+
+    public List<String> getWasteTypeIds() {
+        return wasteTypeIds;
+    }
+
+    public void setWasteTypeIds(List<String> wasteTypeIds) {
+        this.wasteTypeIds = wasteTypeIds;
     }
 
     public String getPhotoUrl() {
@@ -65,7 +151,7 @@ public class IncidentRequestDTO {
     }
 
     public void setPhotoUrl(String photoUrl) {
-        this.photoUrl = photoUrl;
+        this.photoUrl = normalizePhotoUrl(photoUrl);
     }
 
     public String getEmployeeDescription() {
@@ -73,7 +159,7 @@ public class IncidentRequestDTO {
     }
 
     public void setEmployeeDescription(String employeeDescription) {
-        this.employeeDescription = employeeDescription;
+        this.employeeDescription = normalizeDescription(employeeDescription);
     }
 
     public String getContaminationLevel() {
@@ -81,7 +167,7 @@ public class IncidentRequestDTO {
     }
 
     public void setContaminationLevel(String contaminationLevel) {
-        this.contaminationLevel = contaminationLevel;
+        this.contaminationLevel = normalizeContamination(contaminationLevel);
     }
 
     public Double getEstimatedQuantity() {
@@ -89,7 +175,7 @@ public class IncidentRequestDTO {
     }
 
     public void setEstimatedQuantity(Double estimatedQuantity) {
-        this.estimatedQuantity = estimatedQuantity;
+        this.estimatedQuantity = normalizeQuantity(estimatedQuantity);
     }
 
     public String getPriority() {
@@ -97,6 +183,6 @@ public class IncidentRequestDTO {
     }
 
     public void setPriority(String priority) {
-        this.priority = priority;
+        this.priority = normalizePriority(priority);
     }
 }

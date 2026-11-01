@@ -21,12 +21,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * Criar nova senha — Figma 790:1190.
- * Medidor de força com 4 barras e texto abaixo alinhado à esquerda,
- * validação visual do campo de confirmação com borda ativa #1BA463,
- * chip verde e ícone de check circular, e validação de mínimo de 8 caracteres.
- */
 public class ResetPasswordFragment extends Fragment {
 
     private EditText etNew;
@@ -129,7 +123,6 @@ public class ResetPasswordFragment extends Fragment {
         });
     }
 
-    /** 1 Fraca (#E5484D) · 2 Média (#E8893A) · 3 Boa (#1BA463) · 4 Forte (#0E7C48). */
     private void updateStrength(int length) {
         if (!isAdded() || tvStrength == null) return;
         if (length == 0) {
@@ -162,10 +155,6 @@ public class ResetPasswordFragment extends Fragment {
         tvStrength.setTextColor(activeColor);
     }
 
-    /**
-     * Atualiza o campo de confirmação:
-     * Quando matching (e length >= 8): borda ativa #1BA463, chip verde e ícone de check circular.
-     */
     private void updateConfirmState() {
         if (!isAdded() || cardConfirm == null || etNew == null || etConfirm == null) return;
         String first = etNew.getText().toString();

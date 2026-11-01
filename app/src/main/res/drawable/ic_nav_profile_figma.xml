@@ -4,7 +4,7 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- BottomBarIcons/Frame-3.svg - Perfil -->
+
     <path
         android:pathData="M12,12 C14.2091,12 16,10.2091 16,8 C16,5.79086 14.2091,4 12,4 C9.79086,4 8,5.79086 8,8 C8,10.2091 9.79086,12 12,12 Z"
         android:strokeWidth="1.9"

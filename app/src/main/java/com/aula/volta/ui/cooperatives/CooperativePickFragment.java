@@ -40,11 +40,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Fase 8 — Destinação contextual: cooperativas compatíveis COM a ocorrência.
- * App só apresenta a lista ordenada do backend/AIC (nunca calcula score).
- * Arg: occurrenceId.
- */
 public class CooperativePickFragment extends Fragment {
 
     private static final String PREFS = "cache_pick";
@@ -111,38 +106,11 @@ public class CooperativePickFragment extends Fragment {
                             ? inc.getEmployeeDescription() : "Resíduo";
                     String setor = "Área Industrial";
                     tvPickContext.setText("#" + occurrenceId + " · " + titulo + " · " + setor);
-                } else {
-                    fallbackLoadContext(api);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    fallbackLoadContext(api);
-                }
-            }
-        });
-    }
-
-    private void fallbackLoadContext(OccurrenceAPI api) {
-        api.getOccurrence(occurrenceId).enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonObject detail = response.body();
-                    String titulo = opt(detail, "titulo");
-                    String setor = opt(detail, "setor");
-                    tvPickContext.setText("#" + occurrenceId + " · " + titulo + " · " + setor);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                // contexto opcional: lista carrega mesmo assim
             }
         });
     }
@@ -182,7 +150,8 @@ public class CooperativePickFragment extends Fragment {
                 } else if (response.code() == 403) {
                     fetchPickCooperativesAsService();
                 } else {
-                    fallbackRecommended(api);
+                    applyCooperatives(cached());
+                    hideLoading();
                 }
             }
 
@@ -191,7 +160,8 @@ public class CooperativePickFragment extends Fragment {
                 if (!isAdded()) {
                     return;
                 }
-                fallbackRecommended(api);
+                applyCooperatives(cached());
+                hideLoading();
             }
         });
     }
@@ -259,35 +229,6 @@ public class CooperativePickFragment extends Fragment {
         }).start();
     }
 
-    private void fallbackRecommended(CooperativeAPI api) {
-        api.getRecommended(occurrenceId).enqueue(new Callback<List<CooperativeJSON>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<CooperativeJSON>> call,
-                                   @NonNull Response<List<CooperativeJSON>> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (response.isSuccessful() && response.body() != null) {
-                    PrefsHelper.putList(requireContext(), PREFS, occurrenceId, response.body());
-                    applyCooperatives(response.body());
-                } else {
-                    applyCooperatives(cached());
-                }
-                hideLoading();
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<CooperativeJSON>> call, @NonNull Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                applyCooperatives(cached());
-                Toast.makeText(requireContext(), R.string.offline_cache, Toast.LENGTH_LONG).show();
-                hideLoading();
-            }
-        });
-    }
-
     private List<CooperativeJSON> cached() {
         return PrefsHelper.getList(requireContext(), PREFS, occurrenceId,
                 PrefsHelper.listType(CooperativeJSON.class));
@@ -319,8 +260,9 @@ public class CooperativePickFragment extends Fragment {
 
         tvMsg.setText(getString(R.string.pick_confirm_msg, coop.getNome()));
         tvCoop.setText(coop.getNome());
-        String info = (coop.getDistanciaKm() > 0 ? String.format(java.util.Locale.getDefault(), "%.1f km da fábrica", coop.getDistanciaKm()) : "Coleta prioritária")
-                + (coop.getColeta() != null && !coop.getColeta().isEmpty() ? " • " + coop.getColeta() : "");
+        String info = coop.getDistanciaKm() > 0
+                ? String.format(java.util.Locale.getDefault(), "%.1f km da unidade", coop.getDistanciaKm())
+                : "Cooperativa cadastrada";
         tvDetails.setText(info);
 
         dialogView.findViewById(R.id.btnConfirmDestNo).setOnClickListener(v -> dialog.dismiss());
@@ -330,9 +272,20 @@ public class CooperativePickFragment extends Fragment {
             AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "SOLICITAR_DESTINACAO",
                     "ocorrencia", occurrenceId, null, coop.getNome());
 
-            // Disparo oficial da coleta para a API do banco de dados (POST /collections)
             try {
-                CooperativeAPI coopApi = ApiClient.get(requireContext()).create(CooperativeAPI.class);
+                OccurrenceAPI occApi = com.aula.volta.data.api.ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+                occApi.approveIncident(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
+                    @Override
+                    public void onResponse(@NonNull Call<IncidentResponseDTO> call,
+                                           @NonNull Response<IncidentResponseDTO> response) {
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                    }
+                });
+
+                CooperativeAPI coopApi = com.aula.volta.data.api.ChatbotAuthClient.get(requireContext()).create(CooperativeAPI.class);
                 CollectionRequestDTO req = new CollectionRequestDTO(
                         occurrenceId,
                         coop.getId(),
@@ -352,11 +305,9 @@ public class CooperativePickFragment extends Fragment {
             } catch (Exception ignored) {
             }
 
-            // Disparo de notificação nativa Android, cache e Firestore unificados
             com.aula.volta.data.notification.NotificationHelper.notifyDestinationRequested(
                     requireContext(), coop.getNome(), occurrenceId);
 
-            // Atualização de status da ocorrência para EM_TRATAMENTO / Destinada
             try {
                 String cached = PrefsHelper.getJson(requireContext(), "cache_occurrence_detail", occurrenceId);
                 if (cached != null) {

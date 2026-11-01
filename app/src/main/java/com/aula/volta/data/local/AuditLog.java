@@ -10,11 +10,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-/**
- * Auditoria local (regra transversal). Toda mutação relevante gera entrada
- * {usuario, acao, entidade, entidade_id, valor_anterior, valor_novo, timestamp}.
- * Backend terá tabela imutável; app nunca apaga log.
- */
 public final class AuditLog {
 
     private static final String PREFS = "cache_audit";

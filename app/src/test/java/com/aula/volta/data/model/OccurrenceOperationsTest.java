@@ -8,9 +8,6 @@ import com.google.gson.Gson;
 
 import org.junit.Test;
 
-/**
- * Testes unitários para as ações operacionais e trilha de auditoria (Fase 33).
- */
 public class OccurrenceOperationsTest {
 
     private final Gson gson = new Gson();
@@ -58,7 +55,6 @@ public class OccurrenceOperationsTest {
         assertEquals(setorAnterior, forwardEntry.getValorAnterior());
         assertEquals(novoSetor, forwardEntry.getValorNovo());
 
-        // Validar atualização do modelo Occurrence
         Occurrence original = new Occurrence("48291", "Palete Danificado", setorAnterior, "há 5 min", "ALTA", "NOVO", "Papelão");
         Occurrence updated = new Occurrence(original.getId(), original.getTitulo(), novoSetor, original.getTempoRelativo(), original.getPrioridade(), original.getStatus(), original.getMaterial());
 
@@ -85,7 +81,6 @@ public class OccurrenceOperationsTest {
         assertEquals(matAnterior, editClassEntry.getValorAnterior());
         assertEquals(novoMat, editClassEntry.getValorNovo());
 
-        // Validar atualização do modelo Occurrence
         Occurrence original = new Occurrence("48291", "Resíduo Descartado", "Expedição", "há 5 min", "ALTA", "NOVO", matAnterior);
         Occurrence updated = new Occurrence(original.getId(), original.getTitulo(), original.getSetor(), original.getTempoRelativo(), original.getPrioridade(), original.getStatus(), novoMat);
 

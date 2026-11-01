@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Confirmar e-mail — Figma 790:1055 -->
+
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -16,7 +16,6 @@
         android:paddingTop="28dp"
         android:paddingBottom="24dp">
 
-        <!-- Botão Voltar (Figma 40x40dp, r20) -->
         <FrameLayout
             android:id="@+id/btnBackConfirm"
             android:layout_width="40dp"
@@ -36,7 +35,6 @@
                 app:tint="@color/volta_text_primary_light" />
         </FrameLayout>
 
-        <!-- Badge Circular Padronizado 84x84dp (#FFEFE2 com dot vermelho #E8556C) -->
         <FrameLayout
             android:layout_width="84dp"
             android:layout_height="84dp"
@@ -65,7 +63,6 @@
             </FrameLayout>
         </FrameLayout>
 
-        <!-- Título e Subtítulo Alinhados ao Início (Start com margem de 28dp) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -99,7 +96,6 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
-        <!-- 4 caixas de código (68x72dp, r16, 16dp gap) -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -164,7 +160,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- CTA Confirmar -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnConfirmCode"
             android:layout_width="match_parent"
@@ -180,7 +175,6 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <!-- Reenvio de Código -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -2,9 +2,6 @@ package com.aula.volta.data.model.incident;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Relatório gerado pela IA para um incidente na API QA (GET /incidents/{id}/ai-report).
- */
 public class AiReportResponseDTO {
 
     @SerializedName("id")

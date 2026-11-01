@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Relatórios — Figma 790:3322 & 1408:2420: Fluidos, Período, PGRS, Mês, Meta, Materiais, Setores, Histórico, Exportar e Toast -->
+
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:background="@color/volta_background_light">
 
-    <!-- Fundo com fluidos e marca d'água oficial (Figma 790:3323) -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,9 +28,6 @@
             android:paddingEnd="24dp"
             android:paddingBottom="120dp">
 
-            <!-- =============================================================================== -->
-            <!--                                  HEADER                                         -->
-            <!-- =============================================================================== -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -51,9 +47,6 @@
                 android:textColor="@color/vf_text_secondary"
                 android:textSize="13.5sp" />
 
-            <!-- =============================================================================== -->
-            <!--                           CHIPS DE PERÍODO (Figma 790:3337)                     -->
-            <!-- =============================================================================== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
@@ -106,9 +99,6 @@
                     android:textSize="14sp" />
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--                           CARD PGRS (Figma 790:3343)                            -->
-            <!-- =============================================================================== -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -170,21 +160,18 @@
                     app:tint="@color/white" />
             </RelativeLayout>
 
-            <!-- Skeleton da tela de Relatórios durante carregamento de API -->
             <include
                 android:id="@+id/skeletonReports"
                 layout="@layout/layout_skeleton_reports"
-                android:visibility="gone" />
+                android:visibility="visible" />
 
             <LinearLayout
                 android:id="@+id/layoutReportsDynamicContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:orientation="vertical">
 
-            <!-- =============================================================================== -->
-            <!--                         SEÇÃO: NESTE MÊS (Figma 790:3357)                       -->
-            <!-- =============================================================================== -->
             <TextView
                 android:id="@+id/tvReportsPeriodTitle"
                 android:layout_width="wrap_content"
@@ -202,7 +189,6 @@
                 android:layout_marginBottom="12dp"
                 android:orientation="horizontal">
 
-                <!-- KPI: Ocorrências -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -221,6 +207,7 @@
                         android:textColor="#E8893A"
                         android:textSize="21sp"
                         android:textStyle="bold"
+                        android:text="—"
                         tools:text="52" />
 
                     <TextView
@@ -234,7 +221,6 @@
                         android:textSize="11.5sp" />
                 </LinearLayout>
 
-                <!-- KPI: Kg recuperados -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -253,6 +239,7 @@
                         android:textColor="#0E7C48"
                         android:textSize="21sp"
                         android:textStyle="bold"
+                        android:text="—"
                         tools:text="1.147" />
 
                     <TextView
@@ -266,7 +253,6 @@
                         android:textSize="11.5sp" />
                 </LinearLayout>
 
-                <!-- KPI: Taxa coleta -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -284,6 +270,7 @@
                         android:textColor="#3B82F6"
                         android:textSize="21sp"
                         android:textStyle="bold"
+                        android:text="—"
                         tools:text="89%" />
 
                     <TextView
@@ -298,9 +285,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--                   COMPARAÇÃO VS. MÊS PASSADO (Figma 790:3367)                   -->
-            <!-- =============================================================================== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -310,9 +294,10 @@
                 android:padding="14dp">
 
                 <TextView
+                    android:id="@+id/tvReportsVsTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginBottom="10dp"
                     android:fontFamily="@font/font_inter"
                     android:text="@string/reports_vs_last_month"
                     android:textColor="@color/vf_text_secondary"
@@ -323,13 +308,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:weightSum="3">
 
-                    <!-- Col 1 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:gravity="center_horizontal"
                         android:orientation="vertical">
 
                         <LinearLayout
@@ -357,17 +343,18 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:fontFamily="@font/font_inter"
-                            android:text="ocorrências"
+                            android:text="Ocorrências"
                             android:textColor="@color/vf_text_secondary"
                             android:textSize="11.5sp" />
                     </LinearLayout>
 
-                    <!-- Col 2 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:gravity="center_horizontal"
                         android:orientation="vertical">
 
                         <LinearLayout
@@ -395,17 +382,18 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:fontFamily="@font/font_inter"
-                            android:text="recuperado"
+                            android:text="Recuperado"
                             android:textColor="@color/vf_text_secondary"
                             android:textSize="11.5sp" />
                     </LinearLayout>
 
-                    <!-- Col 3 -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:gravity="center_horizontal"
                         android:orientation="vertical">
 
                         <LinearLayout
@@ -433,17 +421,15 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:fontFamily="@font/font_inter"
-                            android:text="taxa"
+                            android:text="Taxa"
                             android:textColor="@color/vf_text_secondary"
                             android:textSize="11.5sp" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--                       CARD META DO MÊS (Figma 790:3381)                         -->
-            <!-- =============================================================================== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -502,7 +488,8 @@
                         android:textColor="@color/vf_text_primary"
                         android:textSize="21sp"
                         android:textStyle="bold"
-                        tools:text="1.147 kg" />
+                        tools:text="1.147 kg"
+                        android:text="—" />
 
                     <TextView
                         android:id="@+id/tvGoalTotal"
@@ -530,9 +517,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--                   POR TIPO DE MATERIAL (Figma 790:3389 & 3390)                  -->
-            <!-- =============================================================================== -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -552,9 +536,6 @@
                 android:orientation="vertical"
                 android:padding="16dp" />
 
-            <!-- =============================================================================== -->
-            <!--                TOP SETORES DA FÁBRICA (Figma 790:3407 & 3408..3428)             -->
-            <!-- =============================================================================== -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -565,7 +546,6 @@
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
-            <!-- Setor 1: Frigorífico B2 (Figma 790:3408) -->
             <LinearLayout
                 android:id="@+id/rowTopSector1"
                 android:layout_width="match_parent"
@@ -601,7 +581,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
-                        android:text="Frigorífico B2"
+                        android:text="—"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        tools:text="Frigorífico B2"
                         android:textColor="@color/vf_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -611,12 +594,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
-                        android:text="342 kg"
+                        android:text="—"
+                        tools:text="0 kg"
                         android:textColor="@color/vf_text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <!-- Mini Barra Setor 1 -->
                 <LinearLayout
                     android:layout_width="120dp"
                     android:layout_height="6dp"
@@ -638,7 +621,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Setor 2: Expedição (Figma 790:3415) -->
             <LinearLayout
                 android:id="@+id/rowTopSector2"
                 android:layout_width="match_parent"
@@ -674,7 +656,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
-                        android:text="Expedição"
+                        android:text="—"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        tools:text="Expedição"
                         android:textColor="@color/vf_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -684,12 +669,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
-                        android:text="218 kg"
+                        android:text="—"
+                        tools:text="0 kg"
                         android:textColor="@color/vf_text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <!-- Mini Barra Setor 2 -->
                 <LinearLayout
                     android:layout_width="120dp"
                     android:layout_height="6dp"
@@ -711,7 +696,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Setor 3: Manutenção (Figma 790:3422) -->
             <LinearLayout
                 android:id="@+id/rowTopSector3"
                 android:layout_width="match_parent"
@@ -747,7 +731,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
-                        android:text="Manutenção"
+                        android:text="—"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        tools:text="Manutenção"
                         android:textColor="@color/vf_text_primary"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -757,12 +744,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/font_inter"
-                        android:text="187 kg"
+                        android:text="—"
+                        tools:text="0 kg"
                         android:textColor="@color/vf_text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <!-- Mini Barra Setor 3 -->
                 <LinearLayout
                     android:layout_width="120dp"
                     android:layout_height="6dp"
@@ -784,9 +771,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--                HISTÓRICO RECENTE (Figma 790:3429 & 3434..3459)                  -->
-            <!-- =============================================================================== -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -833,7 +817,6 @@
                 </LinearLayout>
             </RelativeLayout>
 
-            <!-- Item 1: Papelão molhado (Figma 790:3434) -->
             <LinearLayout
                 android:id="@+id/rowRecentHistory1"
                 android:layout_width="match_parent"
@@ -905,7 +888,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Item 2: Plástico embalagem (Figma 790:3442) -->
             <LinearLayout
                 android:id="@+id/rowRecentHistory2"
                 android:layout_width="match_parent"
@@ -977,7 +959,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Item 3: Sucata metálica (Figma 790:3451) -->
             <LinearLayout
                 android:id="@+id/rowRecentHistory3"
                 android:layout_width="match_parent"
@@ -1049,9 +1030,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- =============================================================================== -->
-            <!--             BOTÃO EXPORTAR TODOS OS DADOS (Figma 1376:990 / 1408:2558)          -->
-            <!-- =============================================================================== -->
             <LinearLayout
                 android:id="@+id/btnExportAllData"
                 android:layout_width="match_parent"
@@ -1085,34 +1063,44 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- =================================================================================== -->
-    <!--            FAB CIRCULAR DO MASCOTE VOLTA FLUTUANTE (Figma 790:3466: 66x66dp)        -->
-    <!-- =================================================================================== -->
     <FrameLayout
-        android:id="@+id/fabMascotReports"
         android:layout_width="66dp"
         android:layout_height="66dp"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="20dp"
-        android:background="@drawable/bg_mascot_circle"
-        android:clickable="true"
-        android:contentDescription="Assistente VOLTA"
-        android:elevation="8dp"
-        android:focusable="true">
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-        <ImageView
-            android:layout_width="36dp"
-            android:layout_height="48dp"
+        <View
+            android:layout_width="104dp"
+            android:layout_height="104dp"
             android:layout_gravity="center"
-            android:importantForAccessibility="no"
-            android:src="@drawable/ic_volta_arrow_white"
-            app:tint="#5DA753" />
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_mascot_halo" />
+
+        <FrameLayout
+            android:id="@+id/fabMascotReports"
+            android:layout_width="66dp"
+            android:layout_height="66dp"
+            android:background="@drawable/bg_mascot_circle"
+            android:clickable="true"
+            android:contentDescription="Assistente VOLTA"
+            android:elevation="6dp"
+            android:focusable="true"
+            android:outlineAmbientShadowColor="#0E7C48"
+            android:outlineProvider="background"
+            android:outlineSpotShadowColor="#0E7C48">
+
+            <ImageView
+                android:layout_width="39dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"
+                android:src="@drawable/mascote_volta" />
+        </FrameLayout>
     </FrameLayout>
 
-    <!-- =================================================================================== -->
-    <!--            TOAST: DADOS EXPORTADOS (Figma 1408:2420 / 1408:2565)                    -->
-    <!-- =================================================================================== -->
     <FrameLayout
         android:id="@+id/toastExported"
         android:layout_width="match_parent"

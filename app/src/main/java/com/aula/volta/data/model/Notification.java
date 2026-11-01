@@ -1,9 +1,5 @@
 package com.aula.volta.data.model;
 
-/**
- * Modelo de domínio da tela de notificações.
- * Lido sempre via NotificationStore (único ponto de leitura da UI).
- */
 public class Notification {
 
     private final String id;
@@ -16,10 +12,11 @@ public class Notification {
     private final String bg;
     private boolean lida;
     private final String occurrenceId;
+    private final long timestamp;
 
     public Notification(String id, String tipo, String titulo, String descricao,
                         String tempoRelativo, String icone, String tint, String bg,
-                        boolean lida, String occurrenceId) {
+                        boolean lida, String occurrenceId, long timestamp) {
         this.id = id;
         this.tipo = tipo;
         this.titulo = titulo;
@@ -30,9 +27,17 @@ public class Notification {
         this.bg = bg;
         this.lida = lida;
         this.occurrenceId = occurrenceId;
+        this.timestamp = timestamp > 0 ? timestamp : System.currentTimeMillis();
+    }
+
+    public Notification(String id, String tipo, String titulo, String descricao,
+                        String tempoRelativo, String icone, String tint, String bg,
+                        boolean lida, String occurrenceId) {
+        this(id, tipo, titulo, descricao, tempoRelativo, icone, tint, bg, lida, occurrenceId, System.currentTimeMillis());
     }
 
     public static Notification fromJson(NotificationJSON json) {
+        long ts = json.getTimestamp() != null && json.getTimestamp() > 0 ? json.getTimestamp() : System.currentTimeMillis();
         return new Notification(
                 json.getId(),
                 json.getTipo(),
@@ -43,7 +48,8 @@ public class Notification {
                 json.getTint(),
                 json.getBg(),
                 json.isLida(),
-                json.getOccurrenceId());
+                json.getOccurrenceId(),
+                ts);
     }
 
     public String getId() {
@@ -88,5 +94,9 @@ public class Notification {
 
     public String getOccurrenceId() {
         return occurrenceId;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
     }
 }

@@ -68,11 +68,10 @@ public class HomeFragment extends Fragment {
     private TextView tvAvatarInitials;
     private OccurrenceAdapter adapter;
 
-    /** Contador das 3 cargas (resumo, ocorrências, notificações) para esconder o loading. */
     private int pendingLoads = 3;
 
     public HomeFragment() {
-        // Construtor vazio obrigatório
+
     }
 
     @Override
@@ -102,40 +101,28 @@ public class HomeFragment extends Fragment {
         }
         loadAvatarPhoto();
 
-        // _________________________________________________________________________________________
-        //            AÇÕES DA HOME (navegação interna, sem item na bottom bar)
-        // _________________________________________________________________________________________
-
-        // Carrossel da Home (Figma 790:1648): slide CTA + slide Últimos 7 dias (com peek lateral)
         ViewPager2 vpCarousel = view.findViewById(R.id.vpCarousel);
         LinearLayout carouselDots = view.findViewById(R.id.carouselDots);
         if (vpCarousel != null) {
-            vpCarousel.setClipToPadding(false);
-            vpCarousel.setClipChildren(false);
-            vpCarousel.setOffscreenPageLimit(1);
-            View innerChild = vpCarousel.getChildAt(0);
-            if (innerChild instanceof RecyclerView) {
-                RecyclerView rv = (RecyclerView) innerChild;
-                rv.setClipToPadding(false);
-                rv.setClipChildren(false);
-                rv.setOverScrollMode(View.OVER_SCROLL_NEVER);
-            }
-
             CarouselAdapter carouselAdapter = new CarouselAdapter(() ->
                     Navigation.findNavController(view).navigate(R.id.nav_register));
             vpCarousel.setAdapter(carouselAdapter);
             if (carouselDots != null) {
-                setupDots(carouselDots, carouselAdapter.getItemCount(), 0);
-                vpCarousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-                    @Override
-                    public void onPageSelected(int position) {
-                        setupDots(carouselDots, carouselAdapter.getItemCount(), position);
-                    }
-                });
+                if (carouselAdapter.getItemCount() > 1) {
+                    carouselDots.setVisibility(View.VISIBLE);
+                    setupDots(carouselDots, carouselAdapter.getItemCount(), 0);
+                    vpCarousel.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                        @Override
+                        public void onPageSelected(int position) {
+                            setupDots(carouselDots, carouselAdapter.getItemCount(), position);
+                        }
+                    });
+                } else {
+                    carouselDots.setVisibility(View.GONE);
+                }
             }
         }
 
-        // Link "Ver todas" para navegar para a aba de Ocorrências
         TextView tvSeeAll = view.findViewById(R.id.tvSeeAllOccurrences);
         if (tvSeeAll != null) {
             tvSeeAll.setOnClickListener(v -> {
@@ -143,7 +130,6 @@ public class HomeFragment extends Fragment {
             });
         }
 
-        // Sino abre as notificações
         View btnNotifications = view.findViewById(R.id.btnNotifications);
         if (btnNotifications != null) {
             btnNotifications.setOnClickListener(v -> {
@@ -151,7 +137,6 @@ public class HomeFragment extends Fragment {
             });
         }
 
-        // Mascote VOLTA Flutuante + Balão (Figma 790:1732 e 790:1734) -> abre o assistente
         View fabMascot = view.findViewById(R.id.fabMascot);
         View balloonMascot = view.findViewById(R.id.balloonMascot);
         View.OnClickListener openAssistant = v ->
@@ -162,10 +147,6 @@ public class HomeFragment extends Fragment {
         if (balloonMascot != null) {
             balloonMascot.setOnClickListener(openAssistant);
         }
-
-        // _________________________________________________________________________________________
-        //            LISTA DINÂMICA (Fase 2 — mesmo visual Figma via adapter)
-        // _________________________________________________________________________________________
 
         rvRecentOccurrences = view.findViewById(R.id.rvRecentOccurrences);
         RecyclerView rvRecent = rvRecentOccurrences;
@@ -187,6 +168,7 @@ public class HomeFragment extends Fragment {
             }
             Navigation.findNavController(requireView()).navigate(R.id.nav_occurrence_full, args);
         });
+        adapter.setForceMaterialIcon(true);
         rvRecent.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvRecent.setNestedScrollingEnabled(false);
         rvRecent.setAdapter(adapter);
@@ -196,11 +178,9 @@ public class HomeFragment extends Fragment {
                 getViewLifecycleOwner(),
                 (requestKey, result) -> loadNotificationDot());
 
-        // 1. Carregamento Cache-First Imediato (sem tela em branco e sem esperar rede)
         loadSummaryFromCache();
         applyOccurrences(recentOnly(OccurrenceStore.cached(requireContext())));
 
-        // 2. Loading verde animado com timer de segurança de no máximo 3s
         if (loadingHome != null) {
             loadingHome.setVisibility(View.VISIBLE);
             loadingHome.postDelayed(() -> {
@@ -210,7 +190,6 @@ public class HomeFragment extends Fragment {
             }, 3000);
         }
 
-        // 3. Atualização em segundo plano via rede
         OccurrenceStore.addListener(storeListener);
         loadSummary();
         loadOccurrences();
@@ -241,17 +220,12 @@ public class HomeFragment extends Fragment {
         loadOccurrences();
     }
 
-    /**
-     * Atualiza a saudação ("Bom dia,", "Boa tarde,", "Boa noite,") dependendo do horário local
-     * e vincula o nome e iniciais do colaborador obtidos do SessionManager e da API oficial do banco (GET /users/me).
-     */
     private void updateGreetingAndUser() {
         if (!isAdded() || getView() == null) return;
         if (tvGreeting == null) tvGreeting = getView().findViewById(R.id.tvGreeting);
         if (tvUserName == null) tvUserName = getView().findViewById(R.id.tvUserName);
         if (tvAvatarInitials == null) tvAvatarInitials = getView().findViewById(R.id.tvAvatarInitials);
 
-        // 1. Saudação contextual baseada na hora do dia
         Calendar cal = Calendar.getInstance();
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         String greeting;
@@ -266,16 +240,28 @@ public class HomeFragment extends Fragment {
             tvGreeting.setText(greeting);
         }
 
-        // 2. Nome da sessão local
         String currentName = SessionManager.name(requireContext());
         if (currentName == null || currentName.trim().isEmpty() || "Breno Liu".equalsIgnoreCase(currentName)) {
             currentName = "Colaborador";
         }
         applyUserNameAndInitials(currentName);
 
-        // 3. Atualização ao vivo via API oficial do banco (GET /users/me)
         try {
             AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+            authApi.getMyCompany().enqueue(new Callback<com.aula.volta.data.model.CompanyResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<com.aula.volta.data.model.CompanyResponseDTO> call,
+                                       @NonNull Response<com.aula.volta.data.model.CompanyResponseDTO> compResp) {
+                    if (isAdded() && compResp.isSuccessful() && compResp.body() != null) {
+                        com.aula.volta.data.model.CompanyResponseDTO c = compResp.body();
+                        SessionManager.saveCompany(requireContext(), c.getName(), c.getFormattedCnpj(), c.getAddress());
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<com.aula.volta.data.model.CompanyResponseDTO> call, @NonNull Throwable t) {
+                }
+            });
             authApi.getMe().enqueue(new Callback<UserResponseDTO>() {
                 @Override
                 public void onResponse(@NonNull Call<UserResponseDTO> call, @NonNull Response<UserResponseDTO> response) {
@@ -389,7 +375,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /** Resumo da unidade via GET /summary do banco de dados oficial. */
     private void loadSummary() {
         if (skeletonHomeSummary != null) {
             skeletonHomeSummary.setVisibility(View.VISIBLE);
@@ -439,6 +424,15 @@ public class HomeFragment extends Fragment {
                 if (first.has("totalRecycledKg") && !first.get("totalRecycledKg").isJsonNull()) {
                     kg = (int) Math.round(first.get("totalRecycledKg").getAsDouble());
                 }
+                if (first.has("monthlyTarget") && !first.get("monthlyTarget").isJsonNull()) {
+                    summary.addProperty("monthlyTarget", first.get("monthlyTarget").getAsDouble());
+                }
+                if (first.has("weeklyTarget") && !first.get("weeklyTarget").isJsonNull()) {
+                    summary.addProperty("weeklyTarget", first.get("weeklyTarget").getAsDouble());
+                }
+                if (first.has("quarterlyTarget") && !first.get("quarterlyTarget").isJsonNull()) {
+                    summary.addProperty("quarterlyTarget", first.get("quarterlyTarget").getAsDouble());
+                }
             }
         }
 
@@ -462,7 +456,6 @@ public class HomeFragment extends Fragment {
         summary.addProperty("abertas", openCount);
         summary.addProperty("resolvidas", resolvedCount);
 
-        // Atualiza cache de setores
         if (raw.has("areas") && raw.get("areas").isJsonArray()) {
             for (com.google.gson.JsonElement el : raw.getAsJsonArray("areas")) {
                 if (el.isJsonObject() && el.getAsJsonObject().has("id")) {
@@ -513,10 +506,10 @@ public class HomeFragment extends Fragment {
                 applySummary(com.google.gson.JsonParser.parseString(json).getAsJsonObject());
                 return;
             } catch (Exception ignored) {
-                // cache corrompido: fallback para padrões
+
             }
         }
-        // Fallback padrão inicial (Figma 790:1685..1703)
+
         if (tvStatOpenCount != null && (tvStatOpenCount.getText() == null || "—".contentEquals(tvStatOpenCount.getText()))) {
             tvStatOpenCount.setText("9");
         }
@@ -541,7 +534,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /** Ocorrências recentes via OccurrenceStore (API + locais lançados no app). */
     private void loadOccurrences() {
         if (skeletonRecentOccurrences != null) {
             skeletonRecentOccurrences.setVisibility(View.VISIBLE);
@@ -569,7 +561,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    /** Home mostra só as 3 mais recentes; a lista completa vive em nav_occurrences. */
     private List<Occurrence> recentOnly(List<Occurrence> occurrences) {
         if (occurrences == null) {
             return new ArrayList<>();
@@ -585,7 +576,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /** Badge do sino = contagem de não lidas. */
     private void loadNotificationDot() {
         NotificationStore.refresh(requireContext(), notifications -> {
             int unread = NotificationStore.unreadCount(notifications);

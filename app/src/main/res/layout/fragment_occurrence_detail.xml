@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Detalhe da Ocorrência — Figma 851:3792 (17 · Ocorrência, 17d · ações aplicadas, 19 · finalizada) -->
+
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F7F8FC">
 
-    <!-- Background oficial com fluidos e setas em marca d'água (Figma 851:3792) -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -14,7 +13,6 @@
         android:scaleType="fitXY"
         android:src="@drawable/bg_home_fluidos" />
 
-    <!-- Conteúdo Rolável -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollOccContent"
         android:layout_width="match_parent"
@@ -32,7 +30,6 @@
             android:paddingEnd="20dp"
             android:paddingBottom="20dp">
 
-            <!-- Botão Voltar Circular com Sombra Suave (sem borda cinza) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btnBackOcc"
                 android:layout_width="40dp"
@@ -53,7 +50,6 @@
                     android:src="@drawable/ic_chevron_left" />
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Cabeçalho: Título + Subtítulo + Badge Status -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -106,7 +102,6 @@
                     android:textStyle="bold" />
             </RelativeLayout>
 
-            <!-- Tracker (3 Passos): Registrada → Análise IA → Aprovação -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -114,7 +109,6 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <!-- Passo 1: Registrada -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -156,7 +150,6 @@
                     android:layout_weight="1"
                     android:background="@color/vf_green" />
 
-                <!-- Passo 2: Análise IA -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -198,7 +191,6 @@
                     android:layout_weight="1"
                     android:background="@color/vf_border" />
 
-                <!-- Passo 3: Aprovação -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -234,7 +226,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Card Principal da Ocorrência (Figma 851:4236) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -251,7 +242,6 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Linha Superior: Foto Miniatura + Dados -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -284,7 +274,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/poppins_semibold"
-                                android:text="Papelão (Classe A)"
+                                android:text="Papelão"
                                 android:textColor="@color/vf_text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -357,7 +347,6 @@
                         android:layout_marginBottom="12dp"
                         android:background="@color/vf_border" />
 
-                    <!-- Relatório Automático -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -380,7 +369,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Seção: Ações do responsável (Figma 851:4267) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -391,7 +379,6 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <!-- Ação 1: Alterar classificação (Figma 851:4263) -->
             <LinearLayout
                 android:id="@+id/rowEditClass"
                 android:layout_width="match_parent"
@@ -435,14 +422,13 @@
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
-                    <!-- Subtítulo dinâmico (Figma 17d: ✓ Qualidade A → B · prioridade alta) -->
                     <TextView
                         android:id="@+id/tvEditClassSub"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:fontFamily="sans-serif-medium"
-                        android:text="✓ Qualidade A → B · prioridade alta"
+                        android:text="✓ Material atualizado"
                         android:textColor="@color/vf_green_deep"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -457,7 +443,6 @@
                     app:tint="@color/vf_hint" />
             </LinearLayout>
 
-            <!-- Ação 2: Adicionar observação (Figma 851:4263) -->
             <LinearLayout
                 android:id="@+id/rowObserve"
                 android:layout_width="match_parent"
@@ -501,7 +486,6 @@
                         android:textSize="15sp"
                         android:textStyle="bold" />
 
-                    <!-- Subtítulo dinâmico (Figma 17d: ✓ 1 observação · agora) -->
                     <TextView
                         android:id="@+id/tvObserveSub"
                         android:layout_width="wrap_content"
@@ -525,7 +509,6 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Barra Inferior Fixa com Botão Finalizar Ocorrência (Figma 851:4291) -->
     <LinearLayout
         android:id="@+id/layoutBottomBarOcc"
         android:layout_width="match_parent"
@@ -553,7 +536,6 @@
             app:cornerRadius="16dp" />
     </LinearLayout>
 
-    <!-- Top Toast de Ocorrência Finalizada (Figma 19 · 851:4403) -->
     <LinearLayout
         android:id="@+id/toastFinalized"
         android:layout_width="match_parent"

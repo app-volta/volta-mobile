@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Diálogo · Sair da conta (Figma 1721:1709) -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -11,7 +11,6 @@
     android:paddingEnd="24dp"
     android:paddingBottom="24dp">
 
-    <!-- Chip Ícone Logout (64x64dp, pastel red #FDEAEC) -->
     <FrameLayout
         android:layout_width="64dp"
         android:layout_height="64dp"
@@ -25,7 +24,6 @@
             android:src="@drawable/ic_logout" />
     </FrameLayout>
 
-    <!-- Título -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -37,7 +35,6 @@
         android:textSize="20sp"
         android:textStyle="bold" />
 
-    <!-- Mensagem -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -49,7 +46,6 @@
         android:textColor="#7C8698"
         android:textSize="14sp" />
 
-    <!-- Botão Sim, sair (borda vermelha e sem fundo; quando clicado fica vermelho e texto branco) -->
     <FrameLayout
         android:id="@+id/btnConfirmLogout"
         android:layout_width="match_parent"
@@ -72,7 +68,6 @@
             android:textStyle="bold" />
     </FrameLayout>
 
-    <!-- Link Voltar / Cancelar -->
     <TextView
         android:id="@+id/btnCancelLogout"
         android:layout_width="wrap_content"

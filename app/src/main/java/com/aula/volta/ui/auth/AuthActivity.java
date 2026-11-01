@@ -13,10 +13,6 @@ import com.aula.volta.MainActivity;
 import com.aula.volta.R;
 import com.aula.volta.data.local.SessionManager;
 
-/**
- * Fluxo de acesso — Figma 790:955+ (Fase 13, mock local).
- * Launcher do app: com sessão vai direto à Main.
- */
 public class AuthActivity extends AppCompatActivity {
 
     @Override
@@ -40,7 +36,8 @@ public class AuthActivity extends AppCompatActivity {
                         || id == R.id.auth_confirm
                         || id == R.id.auth_forgot
                         || id == R.id.auth_passcode
-                        || id == R.id.auth_reset);
+                        || id == R.id.auth_reset
+                        || id == R.id.auth_offline_error);
 
                 WindowInsetsControllerCompat insetsController =
                         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
@@ -66,7 +63,6 @@ public class AuthActivity extends AppCompatActivity {
         finish();
     }
 
-    /** Chamado pelas telas ao concluir login/cadastro. */
     public void finishLogin() {
         goMain();
     }

@@ -8,7 +8,6 @@
     android:clipChildren="false"
     android:clipToPadding="false">
 
-    <!-- Background oficial com fluidos e setas em marca d'água (Figma 790:1625) -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -32,10 +31,6 @@
             android:paddingTop="@dimen/spacing_medium"
             android:paddingBottom="116dp">
 
-            <!-- =================================================================================== -->
-            <!--                            HEADER: Avatar + Saudação + Notificação                  -->
-            <!-- =================================================================================== -->
-
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -43,7 +38,6 @@
                 android:paddingStart="24dp"
                 android:paddingEnd="24dp">
 
-                <!-- Avatar circular 48x48dp com degradê #22C06F -> #0E7C48 e suporte a foto de perfil (Figma 790:1638) -->
                 <FrameLayout
                     android:id="@+id/avatarContainer"
                     android:layout_width="@dimen/avatar_size_home"
@@ -75,7 +69,6 @@
                         android:textStyle="bold" />
                 </FrameLayout>
 
-                <!-- Saudação ("Bom dia,") e nome do usuário ("Breno Gomes") (Figma 790:1640 e 790:1641) -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -105,7 +98,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Botão de notificação: círculo branco 44x44dp + sino + badge contador (Figma 790:1642) -->
                 <FrameLayout
                     android:id="@+id/btnNotifications"
                     android:layout_width="@dimen/tap_target_min"
@@ -116,7 +108,6 @@
                     android:contentDescription="Notificações"
                     android:focusable="true">
 
-                    <!-- Círculo branco 44dp com borda sutil -->
                     <View
                         android:layout_width="44dp"
                         android:layout_height="44dp"
@@ -124,7 +115,6 @@
                         android:background="@drawable/bg_notification_circle"
                         android:elevation="2dp" />
 
-                    <!-- Ícone do sino (stroke) -->
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="22dp"
@@ -132,7 +122,6 @@
                         android:elevation="3dp"
                         android:src="@drawable/ic_notification_bell" />
 
-                    <!-- Badge contador (Figma 790:1646: círculo vermelho com número) -->
                     <TextView
                         android:id="@+id/tvNotifCount"
                         android:layout_width="20dp"
@@ -148,10 +137,6 @@
                 </FrameLayout>
             </RelativeLayout>
 
-            <!-- =================================================================================== -->
-            <!--                   CARROSSEL HOME (Figma 790:1648: CTA + Últimos 7 dias)            -->
-            <!-- =================================================================================== -->
-
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/vpCarousel"
                 android:layout_width="match_parent"
@@ -159,7 +144,7 @@
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:paddingStart="20dp"
-                android:paddingEnd="32dp" />
+                android:paddingEnd="20dp" />
 
             <LinearLayout
                 android:id="@+id/carouselDots"
@@ -169,9 +154,9 @@
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="16dp"
                 android:gravity="center"
-                android:orientation="horizontal" />
+                android:orientation="horizontal"
+                android:visibility="gone" />
 
-            <!-- Loading da Home oculto em favor do Skeleton Loading -->
             <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:id="@+id/loadingHome"
                 android:layout_width="wrap_content"
@@ -183,10 +168,6 @@
                 app:indicatorColor="#1BA463"
                 app:indicatorSize="36dp"
                 app:trackThickness="3.5dp" />
-
-            <!-- =================================================================================== -->
-            <!--                            RESUMO DA UNIDADE — 3 Cards (Figma 790:1684..1703)      -->
-            <!-- =================================================================================== -->
 
             <TextView
                 android:layout_width="wrap_content"
@@ -201,11 +182,10 @@
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
-            <!-- Skeleton dos 3 Cards de Resumo -->
             <include
                 android:id="@+id/skeletonHomeSummary"
                 layout="@layout/layout_skeleton_home_summary"
-                android:visibility="gone" />
+                android:visibility="visible" />
 
             <LinearLayout
                 android:id="@+id/layoutSummaryCards"
@@ -216,9 +196,9 @@
                 android:orientation="horizontal"
                 android:paddingStart="24dp"
                 android:paddingEnd="24dp"
+                android:visibility="gone"
                 android:weightSum="3">
 
-                <!-- Card 1: Abertas (laranja #FFEFE2 / #E8893A) (Figma 790:1685) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -252,8 +232,8 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="9"
-                        tools:text="9"
+                        android:text="—"
+                        tools:text="0"
                         android:textColor="@color/stat_open_icon"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -270,7 +250,6 @@
                         android:textSize="11.5sp" />
                 </LinearLayout>
 
-                <!-- Card 2: Resolvidas (verde #E2F7EC / #0E7C48) (Figma 790:1691) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -305,8 +284,8 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="43"
-                        tools:text="43"
+                        android:text="—"
+                        tools:text="0"
                         android:textColor="@color/stat_resolved_icon"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -323,7 +302,6 @@
                         android:textSize="11.5sp" />
                 </LinearLayout>
 
-                <!-- Card 3: kg Reciclados (azul #E4EFFF / #3B82F6) (Figma 790:1697) -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -357,8 +335,8 @@
                         android:fontFamily="@font/font_poppins"
                         android:includeFontPadding="false"
                         android:maxLines="1"
-                        android:text="1.147"
-                        tools:text="1.147"
+                        android:text="—"
+                        tools:text="0"
                         android:textColor="@color/stat_recycled_icon"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -375,10 +353,6 @@
                         android:textSize="11.5sp" />
                 </LinearLayout>
             </LinearLayout>
-
-            <!-- =================================================================================== -->
-            <!--                            OCORRÊNCIAS RECENTES — Título + Ver todas                -->
-            <!-- =================================================================================== -->
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -412,11 +386,6 @@
                     android:textStyle="bold" />
             </RelativeLayout>
 
-            <!-- =================================================================================== -->
-            <!--              OCORRÊNCIAS RECENTES — lista dinâmica (Figma 790:1706)                 -->
-            <!-- =================================================================================== -->
-
-            <!-- Skeleton de ocorrências recentes -->
             <include
                 android:id="@+id/skeletonRecentOccurrences"
                 layout="@layout/layout_skeleton_home_occurrences"
@@ -445,7 +414,6 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Mascote VOLTA Flutuante + Balão de fala (Figma 790:1732 e 790:1734 — 26dp acima da Tab bar, sem corte) -->
     <LinearLayout
         android:id="@+id/floatingMascotGroup"
         android:layout_width="wrap_content"
@@ -460,7 +428,6 @@
         android:paddingEnd="14dp"
         android:paddingBottom="26dp">
 
-        <!-- Balão: "Dúvida no descarte? Me chama!" (Figma 790:1732) -->
         <FrameLayout
             android:id="@+id/balloonMascot"
             android:layout_width="wrap_content"
@@ -484,14 +451,12 @@
                 android:textStyle="bold" />
         </FrameLayout>
 
-        <!-- Container com halo verde difuso + botão circular 66x66dp branco #FFFFFF e borda #E2F7EC (Figma 790:1734) -->
         <FrameLayout
             android:layout_width="66dp"
             android:layout_height="66dp"
             android:clipChildren="false"
             android:clipToPadding="false">
 
-            <!-- Halo verde (DROP_SHADOW #8C0E7C48 r=30 off=(0,14)) -->
             <View
                 android:layout_width="104dp"
                 android:layout_height="104dp"
@@ -499,7 +464,6 @@
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_mascot_halo" />
 
-            <!-- Botão circular do Mascote (Figma 790:1734: 66x66dp) -->
             <FrameLayout
                 android:id="@+id/fabMascot"
                 android:layout_width="66dp"

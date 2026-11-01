@@ -17,11 +17,9 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Testes unitários dos contratos de API de Login, Chatbot QA e Análise de Imagem por IA.
- */
 public class ChatbotIntegrationContractTest {
 
     private final Gson gson = new Gson();
@@ -185,5 +183,47 @@ public class ChatbotIntegrationContractTest {
         assertTrue(mapped.getContaminacao().isPresente());
         assertEquals("Manter em local coberto e acionar coleta em 24h", mapped.getObservacoes());
         assertEquals("Identificado lote de caixas de papelão com leve umidade superficial.", mapped.getReportText());
+    }
+
+    @Test
+    public void incidentRequestDTO_sanitizationAndNormalization() {
+
+        assertEquals("LOW", IncidentRequestDTO.normalizePriority("BAIXA"));
+        assertEquals("LOW", IncidentRequestDTO.normalizePriority("Baixa"));
+        assertEquals("LOW", IncidentRequestDTO.normalizePriority("low"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizePriority("MEDIA"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizePriority("Média"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizePriority("medium"));
+        assertEquals("HIGH", IncidentRequestDTO.normalizePriority("ALTA"));
+        assertEquals("HIGH", IncidentRequestDTO.normalizePriority("Alta"));
+        assertEquals("HIGH", IncidentRequestDTO.normalizePriority("high"));
+        assertEquals("CRITICAL", IncidentRequestDTO.normalizePriority("CRITICA"));
+        assertEquals("CRITICAL", IncidentRequestDTO.normalizePriority("Crítica"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizePriority(null));
+
+        assertEquals("LOW", IncidentRequestDTO.normalizeContamination("Baixa"));
+        assertEquals("MEDIUM", IncidentRequestDTO.normalizeContamination("Média"));
+        assertEquals("HIGH", IncidentRequestDTO.normalizeContamination("Alta"));
+        assertEquals("LOW", IncidentRequestDTO.normalizeContamination(null));
+
+        assertNull(IncidentRequestDTO.normalizePhotoUrl("/data/user/0/com.aula.volta/cache/foto.jpg"));
+        assertNull(IncidentRequestDTO.normalizePhotoUrl(""));
+        assertNull(IncidentRequestDTO.normalizePhotoUrl(null));
+        assertEquals("https://res.cloudinary.com/test.jpg", IncidentRequestDTO.normalizePhotoUrl(" https://res.cloudinary.com/test.jpg "));
+
+        IncidentRequestDTO dto = new IncidentRequestDTO(
+                "area-123",
+                "waste-456",
+                "/local/path/foto.jpg",
+                "",
+                "Média",
+                -10.0,
+                "BAIXA"
+        );
+        assertEquals("LOW", dto.getPriority());
+        assertEquals("MEDIUM", dto.getContaminationLevel());
+        assertNull(dto.getPhotoUrl());
+        assertEquals(5.0, dto.getEstimatedQuantity(), 0.001);
+        assertEquals("Ocorrência registrada no app", dto.getEmployeeDescription());
     }
 }

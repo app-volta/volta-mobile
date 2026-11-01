@@ -2,9 +2,6 @@ package com.aula.volta.ui.auth;
 
 import com.aula.volta.R;
 
-/**
- * Validador e lógica de regras de negócio para o fluxo de autenticação (Figma 790:954).
- */
 public final class AuthValidator {
 
     private AuthValidator() {
@@ -26,14 +23,6 @@ public final class AuthValidator {
         return isValidPassword(first) && first.equals(second);
     }
 
-    /**
-     * Medidor de força de senha:
-     * 0 caracteres: Nível 0 (vazio)
-     * 1..3 caracteres: Nível 1 (Fraca)
-     * 4..5 caracteres: Nível 2 (Média)
-     * 6..7 caracteres: Nível 3 (Boa)
-     * 8+ caracteres: Nível 4 (Forte)
-     */
     public static int calculateStrengthLevel(int length) {
         if (length >= 8) {
             return 4;

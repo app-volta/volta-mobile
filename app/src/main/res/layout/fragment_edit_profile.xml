@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 23a · Perfil · editar dados (Figma 1721:1264) -->
+
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:background="@color/volta_background_light">
 
-    <!-- Fundo oficial com fluidos e formas -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,7 +28,6 @@
             android:paddingEnd="24dp"
             android:paddingBottom="40dp">
 
-            <!-- Botão Voltar (40x40dp circular branco com sombra) -->
             <FrameLayout
                 android:id="@+id/btnBackEditProfile"
                 android:layout_width="40dp"
@@ -48,7 +46,6 @@
                     app:tint="#1B2430" />
             </FrameLayout>
 
-            <!-- Título e Subtítulo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -69,7 +66,6 @@
                 android:textColor="#7C8698"
                 android:textSize="14sp" />
 
-            <!-- Bloco Avatar + Trocar foto -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -120,7 +116,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Campo 1: Nome completo -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -171,7 +166,6 @@
                     tools:text="Breno Gomes" />
             </LinearLayout>
 
-            <!-- Campo 2: E-mail da unidade -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -231,7 +225,6 @@
                 android:textColor="#7C8698"
                 android:textSize="12sp" />
 
-            <!-- Campo 3: Setor -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -289,7 +282,6 @@
                     app:tint="#1B2430" />
             </LinearLayout>
 
-            <!-- Linha Alterar Senha (Card 50dp) -->
             <LinearLayout
                 android:id="@+id/rowChangePassword"
                 android:layout_width="match_parent"
@@ -329,7 +321,6 @@
                     app:tint="#9CA3AF" />
             </LinearLayout>
 
-            <!-- Botão Salvar alterações -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSaveProfileChanges"
                 android:layout_width="match_parent"

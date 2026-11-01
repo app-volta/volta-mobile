@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Botão flutuante do Mascote VOLTA (Figma 790:1734: 66x66dp, #FFFFFF, borda 2.5dp #E2F7EC) -->
+
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
     <solid android:color="#FFFFFF" />

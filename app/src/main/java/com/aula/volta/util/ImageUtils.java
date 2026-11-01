@@ -15,22 +15,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-/**
- * Utilitário central para processamento, correção de rotação EXIF e compressão de imagens no VOLTA.
- * Garante que fotos tiradas pela câmera em modo retrato (portrait) permaneçam verticais (em pé)
- * tanto no preview, quanto na análise por IA, envio ao Cloudinary e exibição nos cards.
- */
 public final class ImageUtils {
 
     private static final String TAG = "ImageUtils";
 
     private ImageUtils() {
-        // Classe utilitária
+
     }
 
-    /**
-     * Obtém a orientação EXIF do arquivo de imagem.
-     */
     public static int getExifOrientation(@Nullable String filePath) {
         if (filePath == null || filePath.trim().isEmpty()) {
             return ExifInterface.ORIENTATION_NORMAL;
@@ -48,9 +40,6 @@ public final class ImageUtils {
         }
     }
 
-    /**
-     * Converte o atributo de orientação EXIF em graus de rotação (0, 90, 180 ou 270).
-     */
     public static int getExifRotationDegrees(int orientation) {
         switch (orientation) {
             case ExifInterface.ORIENTATION_ROTATE_90:
@@ -67,10 +56,6 @@ public final class ImageUtils {
         }
     }
 
-    /**
-     * Constrói a Matrix de transformação correspondente à orientação EXIF informada.
-     * Retorna null se nenhuma rotação ou espelhamento for necessário.
-     */
     @Nullable
     public static Matrix getExifTransformationMatrix(int orientation) {
         Matrix matrix = new Matrix();
@@ -103,10 +88,6 @@ public final class ImageUtils {
         }
     }
 
-    /**
-     * Aplica a orientação EXIF ao Bitmap, girando/espelhando os pixels caso necessário.
-     * Recicla o bitmap original caso um novo bitmap rotacionado seja criado.
-     */
     @Nullable
     public static Bitmap applyExifOrientation(@Nullable Bitmap bitmap, int orientation) {
         if (bitmap == null) {
@@ -129,10 +110,6 @@ public final class ImageUtils {
         }
     }
 
-    /**
-     * Decodifica um arquivo de imagem aplicando o downsampling (inSampleSize) e a rotação EXIF,
-     * garantindo que a imagem seja retornada sempre com a orientação correta (upright).
-     */
     @Nullable
     public static Bitmap decodeFileWithExifRotation(@Nullable String filePath, int maxDimen) {
         if (filePath == null || filePath.trim().isEmpty()) {
@@ -174,21 +151,6 @@ public final class ImageUtils {
         }
     }
 
-    /**
-     * Processa a foto capturada (seja pelo CameraX, câmera nativa do sistema ou galeria):
-     * 1. Lê a orientação EXIF original do arquivo fonte.
-     * 2. Decodifica com inSampleSize adequado para não estourar memória (maxDimen).
-     * 3. Gira fisicamente os pixels para que fiquem verticais / na orientação correta.
-     * 4. Salva o JPEG resultante no diretório de arquivos permanente do app (filesDir).
-     * 5. Grava ORIENTATION_NORMAL no cabeçalho EXIF do arquivo de destino.
-     * 6. Deleta arquivos intermediários/temporários do cache para economizar armazenamento.
-     *
-     * @param context Contexto da aplicação.
-     * @param source Arquivo de origem (ex: cache de captura ou cópia da galeria).
-     * @param maxDimen Dimensão máxima desejada (largura ou altura).
-     * @param quality Qualidade do JPEG (0 a 100).
-     * @return Novo arquivo permanente na orientação correta ou null se falhar.
-     */
     @Nullable
     public static File fixOrientationAndCompress(@NonNull Context context,
                                                 @Nullable File source,
@@ -237,7 +199,6 @@ public final class ImageUtils {
 
             uprightBitmap.recycle();
 
-            // Grava EXIF ORIENTATION_NORMAL no arquivo final para clientes que leem tags EXIF
             try {
                 ExifInterface destExif = new ExifInterface(out.getAbsolutePath());
                 destExif.setAttribute(ExifInterface.TAG_ORIENTATION,
@@ -246,7 +207,6 @@ public final class ImageUtils {
             } catch (Throwable ignored) {
             }
 
-            // Remove o arquivo temporário de origem se não for o mesmo e estiver no cache
             if (!source.getAbsolutePath().equals(out.getAbsolutePath())) {
                 String sourcePath = source.getAbsolutePath();
                 if (sourcePath.contains("cache") || source.getName().startsWith("volta_")) {
@@ -264,9 +224,6 @@ public final class ImageUtils {
         }
     }
 
-    /**
-     * Copia um conteúdo de Uri (galeria) para arquivo temporário no cache.
-     */
     @Nullable
     public static File copyUriToCache(@NonNull Context context, @NonNull Uri uri) {
         try {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Card de notificação — Figma 790:1864 (não lida #F7F8FC) e 790:1895 (lida #FFFFFF c/ borda #EEF0F5) -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

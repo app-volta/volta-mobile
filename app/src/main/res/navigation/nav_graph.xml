@@ -40,7 +40,6 @@
         android:label="@string/nav_profile"
         tools:layout="@layout/fragment_profile" />
 
-    <!-- Seção 6 · Perfil — configurações da conta (Figma 1721:1263) -->
     <fragment
         android:id="@+id/nav_edit_profile"
         android:name="com.aula.volta.ui.profile.EditProfileFragment"
@@ -88,7 +87,6 @@
             app:popUpToInclusive="false" />
     </fragment>
 
-    <!-- Rotas internas (Fase 0): sem item na bottom bar, abertas via navigate() com args -->
     <dialog
         android:id="@+id/nav_occurrence_detail"
         android:name="com.aula.volta.ui.detail.OccurrenceDetailSheet">
@@ -97,7 +95,6 @@
             app:argType="string" />
     </dialog>
 
-    <!-- Ocorrência cheia — Figma 790:2725 (Fase 8): tracker, ações, escolher cooperativa -->
     <fragment
         android:id="@+id/nav_occurrence_full"
         android:name="com.aula.volta.ui.detail.OccurrenceDetailFragment"
@@ -122,7 +119,6 @@
             android:defaultValue="@null" />
     </fragment>
 
-    <!-- Destinação contextual — Fase 8: cooperativas da ocorrência, backend ordena -->
     <fragment
         android:id="@+id/nav_cooperative_pick"
         android:name="com.aula.volta.ui.cooperatives.CooperativePickFragment"
@@ -132,17 +128,6 @@
             app:argType="string" />
     </fragment>
 
-    <!-- Chat com a cooperativa — Figma 790:3191 (Fase 11, mock local) -->
-    <fragment
-        android:id="@+id/nav_chat"
-        android:name="com.aula.volta.ui.chat.ChatFragment"
-        tools:layout="@layout/fragment_chat">
-        <argument
-            android:name="coopName"
-            app:argType="string" />
-    </fragment>
-
-    <!-- Assistente VOLTA — Figma 790:1911 (Fase 12, mock local) -->
     <fragment
         android:id="@+id/nav_assistant"
         android:name="com.aula.volta.ui.assistant.AssistantFragment"
@@ -151,5 +136,27 @@
     <dialog
         android:id="@+id/nav_notifications"
         android:name="com.aula.volta.ui.notifications.NotificationsSheet" />
+
+    <fragment
+        android:id="@+id/nav_offline_error"
+        android:name="com.aula.volta.ui.error.OfflineErrorFragment"
+        tools:layout="@layout/fragment_offline_error">
+        <argument
+            android:name="title"
+            android:defaultValue="Sem conexão por aqui"
+            app:argType="string" />
+        <argument
+            android:name="message"
+            android:defaultValue="Você precisa de uma conexão com a internet para continuar."
+            app:argType="string" />
+        <argument
+            android:name="badge"
+            android:defaultValue="Você está offline"
+            app:argType="string" />
+        <argument
+            android:name="errorType"
+            android:defaultValue="OFFLINE"
+            app:argType="string" />
+    </fragment>
 
 </navigation>

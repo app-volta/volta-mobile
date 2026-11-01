@@ -2,9 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO para solicitar uma coleta na API VOLTA (POST /collections).
- */
 public class CollectionRequestDTO {
 
     @SerializedName("incidentId")

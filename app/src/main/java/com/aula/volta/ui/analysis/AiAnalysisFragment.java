@@ -3,6 +3,10 @@ package com.aula.volta.ui.analysis;
 import android.animation.ObjectAnimator;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.ImageDecoder;
+import android.graphics.drawable.AnimatedImageDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import com.aula.volta.util.ImageUtils;
 import android.os.Bundle;
 import android.os.Handler;
@@ -63,14 +67,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Análise da IA — Passo 2 de 2 (Figma 851:3792).
- * Contempla:
- *  - 15 · Análise da IA · escaneando (851:3975)
- *  - 16 · Análise da IA (851:4075)
- *  - 16a · Editar análise 1 (907:5210)
- *  - 16b · Análise da IA · revisada 1 (907:5084)
- */
 public class AiAnalysisFragment extends Fragment {
 
     private LinearLayout aiLoadingGroup;
@@ -96,33 +92,32 @@ public class AiAnalysisFragment extends Fragment {
     private TextView tvMiddleStatusHint;
     private com.google.android.material.button.MaterialButton btnConfirm;
 
-    // Seletor de Material Principal na Análise IA
     private LinearLayout cardAiType;
     private TextView tvAiTypeLabel;
     private TextView badgeAiPriority;
 
-    // Campos do modo de edição (16a)
     private TextView tvEditWeightValue;
     private TextView tvEditUnitsValue;
     private int currentWeight = 42;
     private int currentUnits = 11;
     private int initialEstimatedWeight = 42;
     private int initialEstimatedUnits = 11;
-    private String selectedMaterial = "Papelão";
-    private String selectedClass = "Classe A";
+    private String selectedMaterial = "";
+    private String selectedClass = "";
     private String selectedContamination = "Baixa";
     private boolean isRevised = false;
 
-    // Snapshot para restaurar caso o usuário cancele a edição (16a -> Cancelar/Voltar)
-    private int snapshotWeight = 42;
-    private int snapshotUnits = 11;
-    private String snapshotMaterial = "Papelão";
-    private String snapshotClass = "Classe A";
+    private int snapshotWeight = 10;
+    private int snapshotUnits = 1;
+    private String snapshotMaterial = "";
+    private String snapshotClass = "";
     private String snapshotContamination = "Baixa";
 
     private AiAnalysisJSON analysis;
     private com.google.gson.JsonObject lastPredictJson;
     private String currentPriority = "BAIXA";
+    private AnimatedImageDrawable animatedScanDrawable;
+    private ImageView imgScannerGif;
     private ObjectAnimator scanAnimator;
     private final Handler scanHandler = new Handler(Looper.getMainLooper());
     private TextView tvScanStatus;
@@ -150,6 +145,7 @@ public class AiAnalysisFragment extends Fragment {
     private String createdIncidentId;
     private String descricao;
     private String setor;
+    private String explicitAreaId;
 
     public AiAnalysisFragment() {
     }
@@ -173,6 +169,7 @@ public class AiAnalysisFragment extends Fragment {
         descricao = args != null && args.getString("descricao") != null
                 ? args.getString("descricao").trim() : "";
         setor = args != null ? args.getString("setor") : null;
+        explicitAreaId = args != null ? args.getString("areaId") : null;
 
         aiLoadingGroup = view.findViewById(R.id.aiLoadingGroup);
         tvScanStatus = view.findViewById(R.id.tvScanStatus);
@@ -259,11 +256,9 @@ public class AiAnalysisFragment extends Fragment {
             });
         }
 
-        // Botão Editar (16 -> 16a)
         MaterialButton btnEdit = view.findViewById(R.id.btnEditAnalysis);
         btnEdit.setOnClickListener(v -> switchToEditView());
 
-        // Botão Confirmar e gerar relatório (16 / 16b -> 17)
         btnConfirm = view.findViewById(R.id.btnConfirmAnalysis);
         btnConfirm.setOnClickListener(this::confirmOccurrence);
 
@@ -307,39 +302,68 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void startScanAnimation(View root) {
+        imgScannerGif = root.findViewById(R.id.imgScannerGif);
         View band = root.findViewById(R.id.viewScanBand);
         View frame = root.findViewById(R.id.scanPhotoFrame);
         tvScanStatus = root.findViewById(R.id.tvScanStatus);
 
-        if (band == null || frame == null) {
-            return;
+        stopScanAnimation();
+
+        boolean gifStarted = false;
+        if (imgScannerGif != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                ImageDecoder.Source source = ImageDecoder.createSource(getResources(), R.drawable.scanner_analisando);
+                Drawable drawable = ImageDecoder.decodeDrawable(source);
+                imgScannerGif.setImageDrawable(drawable);
+                if (drawable instanceof AnimatedImageDrawable) {
+                    animatedScanDrawable = (AnimatedImageDrawable) drawable;
+                    animatedScanDrawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
+                    animatedScanDrawable.start();
+                    gifStarted = true;
+                }
+            } catch (Throwable e) {
+                try {
+                    ImageDecoder.Source source = ImageDecoder.createSource(requireContext().getAssets(), "scanner_analisando.gif");
+                    Drawable drawable = ImageDecoder.decodeDrawable(source);
+                    imgScannerGif.setImageDrawable(drawable);
+                    if (drawable instanceof AnimatedImageDrawable) {
+                        animatedScanDrawable = (AnimatedImageDrawable) drawable;
+                        animatedScanDrawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
+                        animatedScanDrawable.start();
+                        gifStarted = true;
+                    }
+                } catch (Throwable ex) {
+                    Log.e("AiAnalysisFragment", "Erro ao iniciar scanner GIF", ex);
+                }
+            }
         }
-        frame.post(() -> {
-            if (!isAdded() || getView() == null) {
-                return;
-            }
-            stopScanAnimation();
-            int frameH = frame.getHeight();
-            int bandH = band.getHeight();
-            float density = getResources().getDisplayMetrics().density;
-            if (frameH <= 0) {
-                frameH = (int) (170 * density);
-            }
-            if (bandH <= 0) {
-                bandH = (int) (52 * density);
-            }
 
-            // Linha e feixe laser varrendo suavemente de cima a baixo (ping-pong)
-            float maxTranslation = Math.max(10, frameH - bandH);
-            scanAnimator = ObjectAnimator.ofFloat(band, "translationY", 0f, maxTranslation);
-            scanAnimator.setDuration(1200);
-            scanAnimator.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
-            scanAnimator.setRepeatCount(ValueAnimator.INFINITE);
-            scanAnimator.setRepeatMode(ValueAnimator.REVERSE);
-            scanAnimator.start();
-        });
+        if (!gifStarted && band != null && frame != null) {
+            band.setVisibility(View.VISIBLE);
+            frame.post(() -> {
+                if (!isAdded() || getView() == null) {
+                    return;
+                }
+                int frameH = frame.getHeight();
+                int bandH = band.getHeight();
+                float density = getResources().getDisplayMetrics().density;
+                if (frameH <= 0) {
+                    frameH = (int) (170 * density);
+                }
+                if (bandH <= 0) {
+                    bandH = (int) (52 * density);
+                }
 
-        // 4. Ciclo dinâmico das etapas de escaneamento da IA (calibrado para o Gemini Vision)
+                float maxTranslation = Math.max(10, frameH - bandH);
+                scanAnimator = ObjectAnimator.ofFloat(band, "translationY", 0f, maxTranslation);
+                scanAnimator.setDuration(1200);
+                scanAnimator.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+                scanAnimator.setRepeatCount(ValueAnimator.INFINITE);
+                scanAnimator.setRepeatMode(ValueAnimator.REVERSE);
+                scanAnimator.start();
+            });
+        }
+
         scanHandler.removeCallbacksAndMessages(null);
         if (tvScanStatus != null) {
             tvScanStatus.setText("Escaneando resíduo…");
@@ -372,6 +396,13 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void stopScanAnimation() {
+        if (animatedScanDrawable != null) {
+            try {
+                animatedScanDrawable.stop();
+            } catch (Exception ignored) {
+            }
+            animatedScanDrawable = null;
+        }
         if (scanAnimator != null) {
             scanAnimator.cancel();
             scanAnimator = null;
@@ -440,7 +471,6 @@ public class AiAnalysisFragment extends Fragment {
         scanStartTime = System.currentTimeMillis();
         analysisCompleted = false;
 
-        // Limite de segurança de 3.8s: se a rede externa estiver lenta/travada, finaliza imediatamente sem travar
         scanTimeoutRunnable = () -> {
             if (!isAdded() || analysisCompleted) return;
             Log.i("AiAnalysisFragment", "Limite de tempo de escaneamento atingido (3.8s). Finalizando via análise contratual.");
@@ -451,7 +481,7 @@ public class AiAnalysisFragment extends Fragment {
         if (photoPath != null && !photoPath.isEmpty()) {
             final File imageFile = new File(photoPath);
             if (imageFile.exists()) {
-                // 1. Inicia upload Cloudinary em paralelo para termos o link HTTPS pronto
+
                 CloudinaryUploader.uploadImage(requireContext(), imageFile, new CloudinaryUploader.UploadCallback() {
                     @Override
                     public void onSuccess(String remoteUrl, String publicId) {
@@ -465,7 +495,6 @@ public class AiAnalysisFragment extends Fragment {
                     }
                 });
 
-                // 2. Se online, tenta envio rápido para o endpoint predict
                 if (SyncManager.isOnline(requireContext())) {
                     sendImageDirectlyToAi(imageFile);
                     return;
@@ -476,16 +505,14 @@ public class AiAnalysisFragment extends Fragment {
         executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
     }
 
-    /**
-     * Conecta o envio da foto capturada pelo usuario diretamente com a IA do Gemini Vision (POST /v1/occurrences/predict).
-     * O retorno e validado pelo juiz LLM e já popula os cards e recomendacoes em tempo real.
-     */
     private void sendImageDirectlyToAi(File imageFile) {
         if (!isAdded() || getContext() == null) {
             return;
         }
 
-        RequestBody reqFile = RequestBody.create(MediaType.parse("image/jpeg"), imageFile);
+        String fileName = imageFile.getName() != null ? imageFile.getName().toLowerCase(Locale.ROOT) : "";
+        String mime = (fileName.endsWith(".png")) ? "image/png" : "image/jpeg";
+        RequestBody reqFile = RequestBody.create(MediaType.parse(mime), imageFile);
         MultipartBody.Part part = MultipartBody.Part.createFormData("file", imageFile.getName(), reqFile);
 
         ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
@@ -517,65 +544,6 @@ public class AiAnalysisFragment extends Fragment {
         });
     }
 
-    /**
-     * Registra o rascunho de ocorrencia auditado no banco com a proveniencia da IA (POST /v1/occurrences/drafts).
-     */
-    private void createBackgroundDraft(final JsonObject aiData) {
-        if (!isAdded() || getContext() == null || aiData == null) {
-            return;
-        }
-        final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
-        qaApi.getMyAreas().enqueue(new Callback<JsonArray>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> areaResp) {
-                if (!isAdded()) return;
-                String resolvedAreaId = AiAnalysisJSON.resolveAreaId(areaResp.body(), setor);
-                if (resolvedAreaId == null) {
-                    resolvedAreaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
-                }
-                final String areaId = resolvedAreaId;
-
-                String singleWordTitle = AiAnalysisJSON.generateSingleWordTitle(
-                        (analysis != null ? analysis.getMaterial() : null),
-                        descricao,
-                        aiData != null ? aiData.toString() : null
-                );
-
-                JsonObject draftReq = new JsonObject();
-                draftReq.addProperty("area_id", areaId);
-                draftReq.addProperty("employee_description", singleWordTitle);
-                String bgPriority = AiAnalysisJSON.calculatePriority(singleWordTitle, "LOW", singleWordTitle);
-                draftReq.addProperty("priority", bgPriority);
-                draftReq.add("ai_data", aiData);
-
-                ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
-                chatApi.createOccurrenceDraft(draftReq).enqueue(new Callback<JsonObject>() {
-                    @Override
-                    public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> resp) {
-                        if (resp.isSuccessful() && resp.body() != null && resp.body().has("draft_id")) {
-                            String draftId = resp.body().get("draft_id").getAsString();
-                            createdIncidentId = draftId;
-                            Log.i("AiAnalysisFragment", "Draft criado com sucesso no banco: " + draftId);
-                            if (analysis != null) {
-                                analysis.setIncidentId(draftId);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                        Log.w("AiAnalysisFragment", "Erro ao criar draft: " + t.getMessage());
-                    }
-                });
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
-                Log.w("AiAnalysisFragment", "Erro ao obter areas para draft: " + t.getMessage());
-            }
-        });
-    }
-
     private void executeAiAnalysisRequest(@Nullable String imageUrl) {
         if (!isAdded()) {
             return;
@@ -589,7 +557,6 @@ public class AiAnalysisFragment extends Fragment {
             body.addProperty("foto_url", imageUrl);
         }
 
-        // Se temos link HTTPS gerado pelo Cloudinary e internet ativa, executa o fluxo OpenAPI v3 QA
         if (imageUrl != null && imageUrl.startsWith("http") && SyncManager.isOnline(requireContext())) {
             final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
             tryQaIncidentAiReportFlow(qaApi, imageUrl, body);
@@ -598,11 +565,6 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
-    /**
-     * Fluxo OpenAPI v3 QA: resolve areaId (/areas/mine) e wasteTypeId (/waste-types),
-     * registra incidente com photoUrl do Cloudinary (POST /incidents) e consulta
-     * o relatório da IA (GET /incidents/{id}/ai-report e GET /incidents/{id}/scoring-context).
-     */
     private void tryQaIncidentAiReportFlow(final AiAnalysisAPI qaApi,
                                            final String cloudinaryUrl,
                                            final JsonObject fallbackBody) {
@@ -799,14 +761,12 @@ public class AiAnalysisFragment extends Fragment {
         boolean unitsChanged = (currentUnits != initialEstimatedUnits);
 
         if (isRevised) {
-            String classLetter = selectedClass != null ? selectedClass.replace("Classe ", "").trim() : "A";
             String specific = (analysis != null && analysis.getSpecificItem() != null)
                     ? analysis.getSpecificItem() : "";
             selectPrimaryMaterialFamily(selectedMaterial, false);
             tvAiContamination.setText(selectedContamination);
             tvAiQuantity.setText("≈ " + currentWeight + " kg");
 
-            // Destaque dinâmico de quantidade: apenas se alterado em relação à estimativa da IA
             if (badgeQuantityEdited != null) {
                 badgeQuantityEdited.setVisibility(weightChanged ? View.VISIBLE : View.GONE);
             }
@@ -816,7 +776,6 @@ public class AiAnalysisFragment extends Fragment {
                         : R.drawable.bg_card_stat_recycled);
             }
 
-            // Destaque dinâmico de unidades/caixas: apenas se alterado em relação à estimativa da IA
             TextView badgeUnitsResult = getView() != null ? getView().findViewById(R.id.badgeUnitsEditedResult) : null;
             LinearLayout cardUnits = getView() != null ? getView().findViewById(R.id.cardAiUnits) : null;
             if (badgeUnitsResult != null) {
@@ -840,9 +799,8 @@ public class AiAnalysisFragment extends Fragment {
                 icMiddleStatus.setVisibility(View.VISIBLE);
             }
         } else {
-            String rawMat = analysis.getMaterial() != null ? analysis.getMaterial().trim() : "Papelão A";
-            String classLetter = AiAnalysisJSON.extractQualityClassLetter(rawMat, null);
-            selectedClass = "Classe " + classLetter;
+            String rawMat = analysis.getMaterial() != null ? analysis.getMaterial().trim() : "Reciclável";
+            selectedClass = "";
             String primary = analysis.getPrimaryMaterial();
             String specific = analysis.getSpecificItem();
             String resolvedFamily = ReportMetricsCalculator.resolveMaterialFamily(primary != null ? primary : rawMat);
@@ -909,22 +867,18 @@ public class AiAnalysisFragment extends Fragment {
         String family = ReportMetricsCalculator.resolveMaterialFamily(rawFamily);
         selectedMaterial = family;
 
-        // 1. Atualiza Card 1 (Tipo de Material)
         updateTypeCardUi(family);
 
-        // 2. Atualiza Prioridade dinamicamente
         String specific = (analysis != null && analysis.getSpecificItem() != null)
                 ? analysis.getSpecificItem() : "";
         String formattedMat = AiAnalysisJSON.formatMaterialWithClass(family, specific, selectedClass);
         currentPriority = AiAnalysisJSON.calculatePriority(formattedMat, selectedContamination, descricao);
         updatePriorityBadge(currentPriority);
 
-        // 3. Se o usuário tocou diretamente, atualiza a recomendação do Mascote VOLTA para o material
         if (userInitiated) {
             updateRecommendationForMaterial(family);
         }
 
-        // 4. Mantém sincronizado com os chips do modo de edição caso o usuário entre em Editar depois
         if (getView() != null) {
             updateMaterialChipsUi(getView());
         }
@@ -960,8 +914,8 @@ public class AiAnalysisFragment extends Fragment {
             textColor = Color.parseColor("#10B981");
             cardBg = R.drawable.bg_card_mat_green;
         } else {
-            textColor = Color.parseColor("#C68A10");
-            cardBg = R.drawable.bg_card_type_gold;
+            textColor = Color.parseColor("#475569");
+            cardBg = R.drawable.bg_card_mat_gray;
         }
 
         tvAiMaterial.setTextColor(textColor);
@@ -988,6 +942,8 @@ public class AiAnalysisFragment extends Fragment {
             tvAiRecommendation.setText("Empilhe paletes em área nivelada e seca para viabilizar reuso imediato ou trituração energética.");
         } else if (lower.contains("orgân") || lower.contains("organ")) {
             tvAiRecommendation.setText("Encaminhe rapidamente para compostagem ou biogás antes de atrair vetores e odores.");
+        } else {
+            tvAiRecommendation.setText("Identifique e segregue em recipientes adequados conforme as diretrizes ambientais internas.");
         }
     }
 
@@ -1010,7 +966,6 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
-    /** Configura o painel interativo de edição (16a) */
     private void setupEditControls(View root) {
         tvEditWeightValue = root.findViewById(R.id.tvEditWeightValue);
         tvEditUnitsValue = root.findViewById(R.id.tvEditUnitsValue);
@@ -1028,7 +983,6 @@ public class AiAnalysisFragment extends Fragment {
             });
         }
 
-        // Stepper Peso
         View btnWeightMinus = root.findViewById(R.id.btnWeightMinus);
         View btnWeightPlus = root.findViewById(R.id.btnWeightPlus);
         if (btnWeightMinus != null) {
@@ -1048,7 +1002,6 @@ public class AiAnalysisFragment extends Fragment {
             });
         }
 
-        // Stepper Unidades
         View btnUnitsMinus = root.findViewById(R.id.btnUnitsMinus);
         View btnUnitsPlus = root.findViewById(R.id.btnUnitsPlus);
         if (btnUnitsMinus != null) {
@@ -1069,16 +1022,10 @@ public class AiAnalysisFragment extends Fragment {
         }
         updateEditSteppersUi(root);
 
-        // Chips de Material
         setupMaterialChips(root);
 
-        // Pills de Classe
-        setupClassPills(root);
-
-        // Segmentos de Contaminação
         setupContaminationSegments(root);
 
-        // Botão Salvar Correção (16a -> 16b)
         MaterialButton btnSave = root.findViewById(R.id.btnSaveCorrection);
         if (btnSave != null) {
             btnSave.setOnClickListener(v -> {
@@ -1089,7 +1036,6 @@ public class AiAnalysisFragment extends Fragment {
             });
         }
 
-        // Botão Cancelar (16a -> volta para 16 restaurando snapshot)
         MaterialButton btnCancel = root.findViewById(R.id.btnCancelCorrection);
         if (btnCancel != null) {
             btnCancel.setOnClickListener(v -> cancelEditView());
@@ -1164,46 +1110,6 @@ public class AiAnalysisFragment extends Fragment {
             chipOutro.setBackgroundResource(R.drawable.bg_chip_gray_selected);
             chipOutro.setTextColor(Color.parseColor("#475569"));
             chipOutro.setText("✓ " + chipOutro.getText().toString().replace("✓ ", ""));
-        }
-    }
-
-    private void setupClassPills(View root) {
-        TextView pillA = root.findViewById(R.id.pillClassA);
-        TextView pillB = root.findViewById(R.id.pillClassB);
-        TextView pillC = root.findViewById(R.id.pillClassC);
-
-        TextView[] pills = {pillA, pillB, pillC};
-        for (TextView pill : pills) {
-            if (pill == null) continue;
-            pill.setOnClickListener(v -> {
-                selectedClass = "Classe " + pill.getText().toString();
-                updateClassPillsUi(root);
-            });
-        }
-        updateClassPillsUi(root);
-    }
-
-    private void updateClassPillsUi(View root) {
-        TextView pillA = root.findViewById(R.id.pillClassA);
-        TextView pillB = root.findViewById(R.id.pillClassB);
-        TextView pillC = root.findViewById(R.id.pillClassC);
-
-        TextView[] pills = {pillA, pillB, pillC};
-        for (TextView p : pills) {
-            if (p == null) continue;
-            p.setBackgroundResource(R.drawable.bg_class_circle_unselected);
-            p.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
-        }
-
-        if (selectedClass.endsWith("A") && pillA != null) {
-            pillA.setBackgroundResource(R.drawable.bg_class_circle_selected);
-            pillA.setTextColor(Color.WHITE);
-        } else if (selectedClass.endsWith("B") && pillB != null) {
-            pillB.setBackgroundResource(R.drawable.bg_class_circle_selected);
-            pillB.setTextColor(Color.WHITE);
-        } else if (selectedClass.endsWith("C") && pillC != null) {
-            pillC.setBackgroundResource(R.drawable.bg_class_circle_selected);
-            pillC.setTextColor(Color.WHITE);
         }
     }
 
@@ -1344,7 +1250,6 @@ public class AiAnalysisFragment extends Fragment {
         }
         if (getView() != null) {
             updateMaterialChipsUi(getView());
-            updateClassPillsUi(getView());
             updateContaminationSegmentsUi(getView());
             updateEditSteppersUi(getView());
         }
@@ -1364,7 +1269,6 @@ public class AiAnalysisFragment extends Fragment {
         }
         if (getView() != null) {
             updateMaterialChipsUi(getView());
-            updateClassPillsUi(getView());
             updateContaminationSegmentsUi(getView());
         }
         switchToResultView();
@@ -1409,18 +1313,18 @@ public class AiAnalysisFragment extends Fragment {
         return String.format(Locale.forLanguageTag("pt-BR"), "%.1f", value);
     }
 
-    /**
-     * Confirmar e gerar relatório: cria a ocorrência e NAVEGA DIRETAMENTE
-     * para a tela de Ocorrência (Figma 17 · 851:4196 / R.id.nav_occurrence_full).
-     */
     private void confirmOccurrence(View v) {
+        if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+            showSubmissionOfflineError(v, true);
+            return;
+        }
         if (btnConfirm != null) {
             btnConfirm.setEnabled(false);
             btnConfirm.setText("Registrando ocorrência...");
         }
         String primary = ReportMetricsCalculator.resolveMaterialFamily(
-                selectedMaterial != null ? selectedMaterial :
-                (analysis != null && analysis.getPrimaryMaterial() != null ? analysis.getPrimaryMaterial() : "Papelão"));
+                (selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial :
+                (analysis != null && analysis.getPrimaryMaterial() != null ? analysis.getPrimaryMaterial() : "Reciclável"));
         String specific = (analysis != null && analysis.getSpecificItem() != null)
                 ? analysis.getSpecificItem()
                 : AiAnalysisJSON.extractSpecificItem(primary);
@@ -1429,12 +1333,6 @@ public class AiAnalysisFragment extends Fragment {
         String unidade = (analysis != null && analysis.getUnidade() != null) ? analysis.getUnidade() : "kg";
         String calculatedPriority = AiAnalysisJSON.calculatePriority(material, selectedContamination, descricao);
 
-        if (!SyncManager.isOnline(requireContext())) {
-            saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
-            return;
-        }
-
-        // Se a foto ainda não tem URL remota do Cloudinary, tenta obter do cache ou sobe agora
         if (remoteImageUrl == null || remoteImageUrl.isEmpty()) {
             if (photoPath != null && !photoPath.isEmpty()) {
                 String cached = CloudinaryUploader.getCachedUrl(photoPath);
@@ -1445,17 +1343,27 @@ public class AiAnalysisFragment extends Fragment {
                 }
                 File imageFile = new File(photoPath);
                 if (imageFile.exists()) {
+                    if (btnConfirm != null) {
+                        btnConfirm.setText("Enviando foto...");
+                    }
                     CloudinaryUploader.uploadImage(requireContext(), imageFile, new CloudinaryUploader.UploadCallback() {
                         @Override
                         public void onSuccess(String remoteUrl, String publicId) {
                             if (!isAdded()) return;
                             remoteImageUrl = remoteUrl;
+                            if (btnConfirm != null) {
+                                btnConfirm.setText("Registrando ocorrência...");
+                            }
                             submitOccurrenceDraftToBackend(v, material, qtd, unidade, remoteUrl, calculatedPriority);
                         }
 
                         @Override
                         public void onError(Exception exception, String fallbackLocalPath) {
                             if (!isAdded()) return;
+                            Log.w("AiAnalysisFragment", "Upload da foto falhou: " + exception.getMessage() + ". Enviando ocorrência sem foto para aprovação no banco.");
+                            if (btnConfirm != null) {
+                                btnConfirm.setText("Registrando ocorrência...");
+                            }
                             submitOccurrenceDraftToBackend(v, material, qtd, unidade, null, calculatedPriority);
                         }
                     });
@@ -1478,26 +1386,44 @@ public class AiAnalysisFragment extends Fragment {
             return;
         }
 
-        final OccurrenceAPI occurrenceApi = ApiClient.get(requireContext()).create(OccurrenceAPI.class);
+        final OccurrenceAPI occurrenceApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
         final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
 
-        // Resolve a área oficial atribuída ao usuário ou o setor selecionado
         qaApi.getMyAreas().enqueue(new Callback<JsonArray>() {
             @Override
             public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> areaResp) {
                 if (!isAdded()) return;
-                String resolvedAreaId = AiAnalysisJSON.resolveAreaId(areaResp.body(), setor);
+
+                if (areaResp.body() != null && areaResp.body().size() > 0) {
+                    for (com.google.gson.JsonElement el : areaResp.body()) {
+                        if (el.isJsonObject()) {
+                            com.google.gson.JsonObject o = el.getAsJsonObject();
+                            if (o.has("id") && !o.get("id").isJsonNull()) {
+                                com.aula.volta.data.local.PrefsHelper.putJson(requireContext(), "cache_areas", o.get("id").getAsString(), o.toString());
+                            }
+                        }
+                    }
+                }
+                String resolvedAreaId = (explicitAreaId != null && !explicitAreaId.isEmpty())
+                        ? explicitAreaId
+                        : AiAnalysisJSON.resolveAreaId(areaResp.body(), setor);
+                if (resolvedAreaId == null && areaResp.body() != null && areaResp.body().size() > 0) {
+                    com.google.gson.JsonElement first = areaResp.body().get(0);
+                    if (first.isJsonObject() && first.getAsJsonObject().has("id")) {
+                        resolvedAreaId = first.getAsJsonObject().get("id").getAsString();
+                    }
+                }
                 if (resolvedAreaId == null) {
-                    resolvedAreaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+                    resolvedAreaId = getCachedOrFallbackAreaId(requireContext());
                 }
                 final String areaId = resolvedAreaId;
 
-                // Resolve a categoria de resíduo oficial cadastrada no banco de dados
                 qaApi.getWasteTypes().enqueue(new Callback<JsonArray>() {
                     @Override
                     public void onResponse(@NonNull Call<JsonArray> call2, @NonNull Response<JsonArray> wasteResp) {
                         if (!isAdded()) return;
-                        String resolvedWasteTypeId = AiAnalysisJSON.resolveWasteTypeId(wasteResp.body(), material);
+                        String searchRef = (selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material;
+                        String resolvedWasteTypeId = AiAnalysisJSON.resolveWasteTypeId(wasteResp.body(), searchRef);
                         if (resolvedWasteTypeId == null) {
                             resolvedWasteTypeId = mapMaterialToWasteTypeId(material);
                         }
@@ -1516,11 +1442,29 @@ public class AiAnalysisFragment extends Fragment {
             @Override
             public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                String fallbackAreaId = "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
+                String fallbackAreaId = (explicitAreaId != null && !explicitAreaId.isEmpty())
+                        ? explicitAreaId
+                        : getCachedOrFallbackAreaId(requireContext());
                 String fallbackWasteTypeId = mapMaterialToWasteTypeId(material);
                 executeCreateCoreIncident(v, occurrenceApi, fallbackAreaId, fallbackWasteTypeId, material, qtd, unidade, photoUrl, calculatedPriority);
             }
         });
+    }
+
+    private String getCachedOrFallbackAreaId(android.content.Context context) {
+        try {
+            android.content.SharedPreferences prefs = context.getSharedPreferences("cache_areas", android.content.Context.MODE_PRIVATE);
+            java.util.Map<String, ?> all = prefs.getAll();
+            if (all != null && !all.isEmpty()) {
+                for (String key : all.keySet()) {
+                    if (key != null && key.length() > 10) {
+                        return key;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "3059a21a-a46d-4e88-a1be-bf69c240ae0c";
     }
 
     private void executeCreateCoreIncident(View v, OccurrenceAPI occurrenceApi, String areaId, String wasteTypeId,
@@ -1542,7 +1486,6 @@ public class AiAnalysisFragment extends Fragment {
             }
         }
 
-        // Garante que photoUrl seja a URL oficial do Cloudinary caso esteja no cache ou disponível
         String finalPhotoUrl = photoUrl;
         if ((finalPhotoUrl == null || finalPhotoUrl.isEmpty()) && photoPath != null) {
             finalPhotoUrl = CloudinaryUploader.getCachedUrl(photoPath);
@@ -1551,6 +1494,18 @@ public class AiAnalysisFragment extends Fragment {
             finalPhotoUrl = remoteImageUrl;
         }
 
+        if (finalPhotoUrl != null) {
+            finalPhotoUrl = finalPhotoUrl.trim();
+            if (!finalPhotoUrl.startsWith("http://") && !finalPhotoUrl.startsWith("https://")) {
+                Log.w("AiAnalysisFragment", "photoUrl não é HTTP/HTTPS válido (" + finalPhotoUrl + "), sanitizando para null para passar pela validação @URL da API");
+                finalPhotoUrl = null;
+            }
+        }
+        if (finalPhotoUrl != null && finalPhotoUrl.isEmpty()) {
+            finalPhotoUrl = null;
+        }
+
+        String apiPriority = IncidentRequestDTO.normalizePriority(calculatedPriority);
         IncidentRequestDTO req = new IncidentRequestDTO(
                 areaId,
                 wasteTypeId,
@@ -1558,7 +1513,7 @@ public class AiAnalysisFragment extends Fragment {
                 singleWordTitle,
                 contaminationLevel,
                 qtd,
-                calculatedPriority
+                apiPriority
         );
 
         final String sentPhotoUrl = finalPhotoUrl;
@@ -1576,64 +1531,105 @@ public class AiAnalysisFragment extends Fragment {
                     createdIncidentId = dbIncidentId;
                     Log.i("AiAnalysisFragment", "Incidente salvo no banco oficial com sucesso! ID: " + dbIncidentId + ", Photo: " + savedPhotoUrl);
 
-                    // Cria rascunho de apoio no chatbot para sincronização contextual
-                    createChatbotDraftAsync(areaId, singleWordTitle, calculatedPriority, savedPhotoUrl, qtd);
-
-                    // Salva na lista e abre a tela de detalhes
-                    handleOccurrenceCreatedSuccess(v, dbIncidentId, material, qtd, unidade, savedPhotoUrl, calculatedPriority);
+                    handleOccurrenceCreatedSuccess(v, dbIncidentId, material, qtd, unidade, savedPhotoUrl, calculatedPriority, true, null);
                 } else {
-                    Log.w("AiAnalysisFragment", "POST /incidents falhou com HTTP " + response.code() + ", tentando fallback");
-                    fallbackToDraftAndSave(v, material, qtd, unidade, sentPhotoUrl, calculatedPriority, areaId, singleWordTitle);
+                    String errDetail = "HTTP " + response.code();
+                    try {
+                        if (response.errorBody() != null) {
+                            String errBody = response.errorBody().string();
+                            Log.w("AiAnalysisFragment", "POST /incidents falhou com " + errDetail + ": " + errBody);
+                            if (errBody.toLowerCase(Locale.ROOT).contains("area")) {
+                                errDetail += " (Área não encontrada)";
+                            } else if (errBody.toLowerCase(Locale.ROOT).contains("waste")) {
+                                errDetail += " (Tipo de resíduo inválido)";
+                            } else if (errBody.toLowerCase(Locale.ROOT).contains("url")) {
+                                errDetail += " (URL da foto inválida)";
+                            }
+                        }
+                    } catch (Exception ignored) {
+                    }
+                    final String failReason = errDetail;
+                    Log.w("AiAnalysisFragment", "POST /incidents falhou com " + failReason + ", tentando retry com área alternativa...");
+                    if (response.code() == 404) {
+                        String altAreaId = getCachedOrFallbackAreaId(requireContext());
+                        if (altAreaId != null && !altAreaId.equals(req.getAreaId())) {
+                            req.setAreaId(altAreaId);
+                            occurrenceApi.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
+                                @Override
+                                public void onResponse(@NonNull Call<IncidentResponseDTO> call2, @NonNull Response<IncidentResponseDTO> resp2) {
+                                    if (!isAdded()) return;
+                                    if (resp2.isSuccessful() && resp2.body() != null && resp2.body().getId() != null) {
+                                        IncidentResponseDTO inc2 = resp2.body();
+                                        handleOccurrenceCreatedSuccess(v, inc2.getId(), material, qtd, unidade, inc2.getPhotoUrl() != null ? inc2.getPhotoUrl() : sentPhotoUrl, calculatedPriority, true, null);
+                                        return;
+                                    }
+                                    fallbackToDraftAndSave(v, material, qtd, unidade, sentPhotoUrl, calculatedPriority, altAreaId, singleWordTitle, failReason);
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull Call<IncidentResponseDTO> call2, @NonNull Throwable t2) {
+                                    if (!isAdded()) return;
+                                    showSubmissionOfflineError(v, !com.aula.volta.util.NetworkUtils.isOnline(requireContext()));
+                                }
+                            });
+                            return;
+                        }
+                    }
+                    fallbackToDraftAndSave(v, material, qtd, unidade, sentPhotoUrl, calculatedPriority, areaId, singleWordTitle, failReason);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                Log.w("AiAnalysisFragment", "POST /incidents erro de rede: " + t.getMessage() + ", tentando fallback");
-                fallbackToDraftAndSave(v, material, qtd, unidade, sentPhotoUrl, calculatedPriority, areaId, singleWordTitle);
+                Log.w("AiAnalysisFragment", "POST /incidents erro de rede: " + t.getMessage());
+                boolean isOffline = !com.aula.volta.util.NetworkUtils.isOnline(requireContext());
+                showSubmissionOfflineError(v, isOffline);
             }
         });
     }
 
-    private void createChatbotDraftAsync(String areaId, String singleWordTitle, String calculatedPriority,
-                                         @Nullable String photoUrl, double qtd) {
-        try {
-            JsonObject draftReq = new JsonObject();
-            draftReq.addProperty("area_id", areaId);
-            draftReq.addProperty("employee_description", singleWordTitle);
-            draftReq.addProperty("priority", calculatedPriority);
-            if (photoUrl != null && !photoUrl.isEmpty()) {
-                draftReq.addProperty("photo_url", photoUrl);
-                draftReq.addProperty("photoUrl", photoUrl);
-                draftReq.addProperty("imageUrl", photoUrl);
+    private void showSubmissionOfflineError(View v, boolean isOffline) {
+        if (!isAdded()) return;
+        if (btnConfirm != null) {
+            btnConfirm.setEnabled(true);
+            btnConfirm.setText("Tentar de novo");
+        }
+        Bundle errArgs = new Bundle();
+        if (isOffline) {
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                    com.aula.volta.ui.error.OfflineErrorFragment.TYPE_SUBMISSION_FAILED);
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Não conseguimos enviar");
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                    "Sua foto e os dados continuam aqui. Confira a conexão e tente de novo.");
+        } else {
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                    com.aula.volta.ui.error.OfflineErrorFragment.TYPE_SERVICE_UNAVAILABLE);
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Fora do ar");
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "O VOLTA não respondeu");
+            errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                    "Não é nada com você: o serviço está fora do ar ou demorou demais pra responder. Tente de novo em alguns minutos.");
+        }
+        View navTarget = v != null ? v : getView();
+        if (navTarget != null) {
+            try {
+                Navigation.findNavController(navTarget).navigate(R.id.nav_offline_error, errArgs);
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "Falha na conexão. Verifique sua internet.", Toast.LENGTH_LONG).show();
             }
-            draftReq.addProperty("estimated_quantity", qtd);
-            if (lastPredictJson != null) {
-                draftReq.add("ai_data", lastPredictJson);
-            } else if (analysis != null && analysis.getRawAiData() != null) {
-                draftReq.add("ai_data", analysis.getRawAiData());
-            }
-            ChatbotAPI chatApi = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
-            chatApi.createOccurrenceDraft(draftReq).enqueue(new Callback<JsonObject>() {
-                @Override
-                public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                    Log.i("AiAnalysisFragment", "Chatbot draft registrado com sucesso.");
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                    Log.w("AiAnalysisFragment", "Falha ao registrar draft no chatbot: " + t.getMessage());
-                }
-            });
-        } catch (Exception e) {
-            Log.w("AiAnalysisFragment", "Erro ao disparar chatbot draft: " + e.getMessage());
         }
     }
 
     private void fallbackToDraftAndSave(View v, String material, double qtd, String unidade,
                                         @Nullable String photoUrl, String calculatedPriority,
                                         String areaId, String singleWordTitle) {
+        fallbackToDraftAndSave(v, material, qtd, unidade, photoUrl, calculatedPriority, areaId, singleWordTitle, null);
+    }
+
+    private void fallbackToDraftAndSave(View v, String material, double qtd, String unidade,
+                                        @Nullable String photoUrl, String calculatedPriority,
+                                        String areaId, String singleWordTitle, @Nullable String reason) {
         JsonObject draftReq = new JsonObject();
         draftReq.addProperty("area_id", areaId);
         draftReq.addProperty("employee_description", singleWordTitle);
@@ -1652,16 +1648,16 @@ public class AiAnalysisFragment extends Fragment {
                 if (!isAdded()) return;
                 if (resp.isSuccessful() && resp.body() != null && resp.body().has("draft_id")) {
                     String draftId = resp.body().get("draft_id").getAsString();
-                    handleOccurrenceCreatedSuccess(v, draftId, material, qtd, unidade, photoUrl, calculatedPriority);
+                    handleOccurrenceCreatedSuccess(v, draftId, material, qtd, unidade, photoUrl, calculatedPriority, false, reason);
                 } else {
-                    saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
+                    saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority, reason);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority);
+                saveOfflineAndNavigateToDetail(v, material, qtd, unidade, calculatedPriority, reason);
             }
         });
     }
@@ -1669,40 +1665,44 @@ public class AiAnalysisFragment extends Fragment {
     private String mapMaterialToWasteTypeId(String material) {
         String lowerMat = material != null ? material.toLowerCase(Locale.ROOT) : "";
         if (lowerMat.contains("papel")) {
-            return "bd985415-4b25-4c07-beca-cc086dce9b13"; // PAPEL
+            return "bd985415-4b25-4c07-beca-cc086dce9b13";
         } else if (lowerMat.contains("plást") || lowerMat.contains("plast")) {
-            return "8b3f6a14-9a27-462f-b414-24329d927af7"; // PLASTICO
+            return "8b3f6a14-9a27-462f-b414-24329d927af7";
         } else if (lowerMat.contains("metal") || lowerMat.contains("aço") || lowerMat.contains("ferro") || lowerMat.contains("alum") || lowerMat.contains("lata")) {
-            return "5ee946da-2975-45e7-80d7-a5a8e49b4b2d"; // METAL
+            return "5ee946da-2975-45e7-80d7-a5a8e49b4b2d";
         } else if (lowerMat.contains("vidro")) {
-            return "2605dca7-b392-4835-a2a7-99a1aa68a7ab"; // VIDRO
+            return "2605dca7-b392-4835-a2a7-99a1aa68a7ab";
         } else if (lowerMat.contains("orgân") || lowerMat.contains("organ")) {
-            return "5cb7e3c8-6dac-45e4-870f-92cc64a2a452"; // ORGANICO
+            return "5cb7e3c8-6dac-45e4-870f-92cc64a2a452";
         } else if (lowerMat.contains("eletrôn") || lowerMat.contains("eletron") || lowerMat.contains("bateria") || lowerMat.contains("pilha")) {
-            return "7807fd3c-7c11-42c3-95be-48884968d3c1"; // ELETRONICO
+            return "7807fd3c-7c11-42c3-95be-48884968d3c1";
         } else if (lowerMat.contains("químic") || lowerMat.contains("quimic") || lowerMat.contains("perigo") || lowerMat.contains("óleo") || lowerMat.contains("oleo")) {
-            return "db21c099-511a-4dbc-82dc-2090b4b6d0a5"; // QUIMICO
+            return "db21c099-511a-4dbc-82dc-2090b4b6d0a5";
         } else if (lowerMat.contains("têxtil") || lowerMat.contains("textil") || lowerMat.contains("tecido") || lowerMat.contains("pano")) {
-            return "9221e10b-b15b-40d8-a798-49f372ab9efb"; // TEXTIL
+            return "9221e10b-b15b-40d8-a798-49f372ab9efb";
         } else if (lowerMat.contains("madeira") || lowerMat.contains("pallet") || lowerMat.contains("palete") || lowerMat.contains("tábua") || lowerMat.contains("tabua") || lowerMat.contains("mobil")) {
-            return "e9e077a8-7464-422d-a3be-44bc770fd5d2"; // MADEIRA
+            return "e9e077a8-7464-422d-a3be-44bc770fd5d2";
         }
-        return "dc9b7d17-cd48-475a-a313-d5de98505854"; // MISTO
+        return "dc9b7d17-cd48-475a-a313-d5de98505854";
     }
 
     private void handleOccurrenceCreatedSuccess(View v, String id, String material, double qtd,
                                                 String unidade, @Nullable String photoUrl, String calculatedPriority) {
+        handleOccurrenceCreatedSuccess(v, id, material, qtd, unidade, photoUrl, calculatedPriority, true, null);
+    }
 
-        // 2. Persiste detalhes completos (foto, material, peso, relatório da IA) no cache local
+    private void handleOccurrenceCreatedSuccess(View v, String id, String material, double qtd,
+                                                String unidade, @Nullable String photoUrl, String calculatedPriority,
+                                                boolean isDatabaseSaved, @Nullable String note) {
+
         persistOccurrenceDetail(id, material, qtd, unidade, calculatedPriority, photoUrl);
 
-        // 3. Adiciona na lista da Home
         String title = AiAnalysisJSON.generateSingleWordTitle(
                 material,
                 descricao,
                 (analysis != null ? analysis.getMaterial() : null)
         );
-        String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily(selectedMaterial != null ? selectedMaterial : material);
+        String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily((selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material);
         Occurrence occ = new Occurrence(
                 id,
                 title,
@@ -1716,14 +1716,20 @@ public class AiAnalysisFragment extends Fragment {
         );
         OccurrenceStore.pushLocal(requireContext(), occ);
 
-        // 4. Auditoria e notificação determinística "Ocorrência #ID enviada"
         AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR",
-                "ocorrencia", id, null, "NOVO");
+                "ocorrencia", id, null, isDatabaseSaved ? "BANCO_OFICIAL" : "OFFLINE");
         pushOccurrenceNotification(id, material);
 
-        Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
+        if (isDatabaseSaved) {
+            Toast.makeText(requireContext(), R.string.ai_registered, Toast.LENGTH_SHORT).show();
+        } else {
+            String msg = "Salvo localmente no celular";
+            if (note != null && !note.isEmpty()) {
+                msg += " (" + note + ")";
+            }
+            Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
+        }
 
-        // 5. Retorna diretamente à Home
         navigateToDetail(v, id);
     }
 
@@ -1809,7 +1815,6 @@ public class AiAnalysisFragment extends Fragment {
             args.putString("imageUrl", remoteImageUrl);
         }
 
-        // 1. Tenta navegar via action explícita declarada no nav_graph.xml
         try {
             navController.navigate(R.id.action_ai_analysis_to_occurrence_full, args);
             return;
@@ -1817,7 +1822,6 @@ public class AiAnalysisFragment extends Fragment {
             Log.w("AiAnalysisFragment", "Falha ao navegar via action explícita: " + e1.getMessage());
         }
 
-        // 2. Tenta navegar diretamente para nav_occurrence_full com popUpTo nav_home
         try {
             NavOptions navOptions = new NavOptions.Builder()
                     .setPopUpTo(R.id.nav_home, false)
@@ -1828,7 +1832,6 @@ public class AiAnalysisFragment extends Fragment {
             Log.w("AiAnalysisFragment", "Falha ao navegar com navOptions: " + e2.getMessage());
         }
 
-        // 3. Tenta navegar direto para nav_occurrence_full sem popUpTo
         try {
             navController.navigate(R.id.nav_occurrence_full, args);
             return;
@@ -1856,6 +1859,10 @@ public class AiAnalysisFragment extends Fragment {
     }
 
     private void saveOfflineAndNavigateToDetail(View v, String material, double qtd, String unidade, String priority) {
+        saveOfflineAndNavigateToDetail(v, material, qtd, unidade, priority, null);
+    }
+
+    private void saveOfflineAndNavigateToDetail(View v, String material, double qtd, String unidade, String priority, @Nullable String reason) {
         if (!isAdded() || getContext() == null) {
             return;
         }
@@ -1878,7 +1885,11 @@ public class AiAnalysisFragment extends Fragment {
         );
         SyncQueue.enqueue(requireContext(), pending);
 
-        Toast.makeText(requireContext(), "Ocorrência salva offline", Toast.LENGTH_SHORT).show();
+        String msg = "Ocorrência salva offline no celular";
+        if (reason != null && !reason.isEmpty()) {
+            msg += " (" + reason + ")";
+        }
+        Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
 
         navigateToDetail(v, offlineId);
     }
@@ -1894,7 +1905,7 @@ public class AiAnalysisFragment extends Fragment {
                 descricao,
                 (analysis != null ? analysis.getMaterial() : null)
         );
-        String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily(selectedMaterial != null ? selectedMaterial : material);
+        String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily((selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material);
         OccurrenceStore.pushLocal(requireContext(), new Occurrence(
                 occurrenceId,
                 title,

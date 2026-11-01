@@ -3,11 +3,6 @@ package com.aula.volta.data.local;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/**
- * Gerenciador de Sessão do usuário VOLTA.
- * Armazena token JWT, credenciais para renovação automática, dados de perfil
- * e o ID da sessão ativa com o Chatbot QA.
- */
 public final class SessionManager {
 
     private static final String PREFS = "session";
@@ -59,7 +54,7 @@ public final class SessionManager {
                     .putString("active_user_email", cleanEmail)
                     .putString("user_name_" + cleanEmail, cleanName)
                     .apply();
-            // Restaura foto de perfil previamente em cache para este usuário caso já exista
+
             String cachedPhotoUrl = persistentPrefs(context).getString("photo_url_" + cleanEmail, "");
             String cachedPhotoLocal = persistentPrefs(context).getString("photo_local_" + cleanEmail, "");
             if (!cachedPhotoUrl.isEmpty() || !cachedPhotoLocal.isEmpty()) {
@@ -119,7 +114,6 @@ public final class SessionManager {
         persistentPrefs(context).edit().remove("active_user_email").apply();
         prefs(context).edit().clear().apply();
 
-        // Limpa cache de rede e shared preferences legadas para evitar vazamento entre contas
         try {
             Context app = context.getApplicationContext();
             app.getSharedPreferences("cache_occurrences", Context.MODE_PRIVATE).edit().clear().apply();
@@ -310,6 +304,32 @@ public final class SessionManager {
             return persistentPrefs(context).getString("photo_local_" + userEmail, "");
         }
         return "";
+    }
+
+    public static void saveCompany(Context context, String name, String cnpj, String address) {
+        SharedPreferences.Editor editor = prefs(context).edit();
+        if (name != null && !name.trim().isEmpty()) {
+            editor.putString("company_name", name.trim());
+        }
+        if (cnpj != null && !cnpj.trim().isEmpty()) {
+            editor.putString("company_cnpj", cnpj.trim());
+        }
+        if (address != null && !address.trim().isEmpty()) {
+            editor.putString("company_address", address.trim());
+        }
+        editor.apply();
+    }
+
+    public static String getCompanyName(Context context) {
+        return prefs(context).getString("company_name", "");
+    }
+
+    public static String getCompanyCnpj(Context context) {
+        return prefs(context).getString("company_cnpj", "");
+    }
+
+    public static String getCompanyAddress(Context context) {
+        return prefs(context).getString("company_address", "");
     }
 
     public static void clearProfilePhoto(Context context) {

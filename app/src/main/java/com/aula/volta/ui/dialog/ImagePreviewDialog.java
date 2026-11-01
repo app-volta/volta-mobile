@@ -27,10 +27,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Modal Imersivo de Visualização e Zoom de Imagens (Lightbox) — Design System VOLTA.
- * Exibe a foto da ocorrência em tela cheia com suporte a Pinch-to-Zoom e Double-Tap.
- */
 public class ImagePreviewDialog extends DialogFragment {
 
     private static final String TAG = "ImagePreviewDialog";

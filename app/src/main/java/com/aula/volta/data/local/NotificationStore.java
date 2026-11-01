@@ -16,10 +16,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Único ponto de leitura/escrita de notificações da UI.
- * Integrado ao Cloud Firestore e Firebase Cloud Messaging com deduplicação rigorosa.
- */
 public final class NotificationStore {
 
     private static final String PREFS = "cache_notifications";
@@ -78,10 +74,6 @@ public final class NotificationStore {
     private NotificationStore() {
     }
 
-    /**
-     * Determina se duas notificações representam o mesmo evento.
-     * Considera id idêntico, mesma ocorrência + tipo, ou mesmo título + descrição.
-     */
     public static boolean isSameNotification(Notification a, Notification b) {
         if (a == null || b == null) {
             return false;
@@ -103,9 +95,6 @@ public final class NotificationStore {
         return false;
     }
 
-    /**
-     * Localiza o índice de uma notificação equivalente na lista.
-     */
     public static int findIndex(List<Notification> list, Notification target) {
         if (list == null || target == null) {
             return -1;
@@ -118,9 +107,6 @@ public final class NotificationStore {
         return -1;
     }
 
-    /**
-     * Sanitiza e deduplica uma lista de notificações preservando a ordem original.
-     */
     public static List<Notification> deduplicate(List<Notification> list) {
         if (list == null || list.size() <= 1) {
             return list != null ? list : new ArrayList<>();
@@ -134,7 +120,6 @@ public final class NotificationStore {
         return result;
     }
 
-    /** Busca na API, mescla com locais (pushLocal) e preserva estado de lidas; se falhar, devolve o cache. */
     public static void refresh(Context context, LoadCallback callback) {
         Context app = context.getApplicationContext();
         NotificationAPI api = ApiClient.get(app).create(NotificationAPI.class);
@@ -163,7 +148,6 @@ public final class NotificationStore {
         });
     }
 
-    /** Lista em memória vinda do cache (sem rede), com sanitização automática de duplicatas antigas. */
     public static List<Notification> cached(Context context) {
         Context app = context.getApplicationContext();
         List<Notification> rawList = PrefsHelper.getList(app, getPrefsName(app), KEY_LIST,
@@ -212,7 +196,6 @@ public final class NotificationStore {
         return count;
     }
 
-    /** Ponto de entrada do Firestore, FCM e notificações locais criadas no app. */
     public static void pushLocal(Context context, Notification notification) {
         if (notification == null) {
             return;
@@ -222,7 +205,7 @@ public final class NotificationStore {
         List<Notification> local = new ArrayList<>(deduplicate(localOnly(app)));
         int existingLocalIdx = findIndex(local, notification);
         if (existingLocalIdx >= 0) {
-            // Já existe; atualiza o registro preservando ou aprimorando dados
+
             local.set(existingLocalIdx, notification);
         } else {
             local.add(0, notification);
@@ -240,13 +223,11 @@ public final class NotificationStore {
         notifyChange();
     }
 
-    /** Locais ainda não vindos da API (sobrevivem ao refresh). */
     static List<Notification> localOnly(Context app) {
         return PrefsHelper.getList(app, getPrefsName(app), KEY_LOCAL,
                 PrefsHelper.listType(Notification.class));
     }
 
-    /** Conjunto de IDs já marcados como lidos pelo usuário (sobrevive ao refresh da API/mock). */
     private static Set<String> readIds(Context app) {
         List<String> stored = PrefsHelper.getList(app, getPrefsName(app), KEY_READ_IDS,
                 PrefsHelper.listType(String.class));
@@ -257,7 +238,6 @@ public final class NotificationStore {
         PrefsHelper.putList(app, getPrefsName(app), KEY_READ_IDS, new ArrayList<>(ids));
     }
 
-    /** Mescla locais no topo com itens da API sem duplicar e preservando estado de leitura. */
     static List<Notification> mergedWithLocal(Context app, List<Notification> api) {
         Set<String> readSet = readIds(app);
         for (Notification c : cached(app)) {

@@ -4,8 +4,6 @@
     android:viewportWidth="100"
     android:viewportHeight="85">
 
-    <!-- Retículo de Câmera / Escaneamento IA VOLTA (Figma 851:3975) -->
-    <!-- Canto Superior Esquerdo -->
     <path
         android:pathData="M 6,20 L 6,6 L 20,6"
         android:strokeColor="#16C784"
@@ -13,7 +11,6 @@
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
-    <!-- Canto Superior Direito -->
     <path
         android:pathData="M 80,6 L 94,6 L 94,20"
         android:strokeColor="#16C784"
@@ -21,7 +18,6 @@
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
-    <!-- Canto Inferior Esquerdo -->
     <path
         android:pathData="M 6,65 L 6,79 L 20,79"
         android:strokeColor="#16C784"
@@ -29,7 +25,6 @@
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
-    <!-- Canto Inferior Direito -->
     <path
         android:pathData="M 80,79 L 94,79 L 94,65"
         android:strokeColor="#16C784"
@@ -37,7 +32,6 @@
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
 
-    <!-- Mira Central Sutil -->
     <path
         android:pathData="M 46,42.5 L 54,42.5 M 50,38.5 L 50,46.5"
         android:strokeColor="#6616C784"

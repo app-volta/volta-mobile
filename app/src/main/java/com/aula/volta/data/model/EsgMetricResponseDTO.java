@@ -2,9 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO de métrica ESG mensal (GET /esg/metrics e POST /esg/metrics).
- */
 public class EsgMetricResponseDTO {
 
     @SerializedName("id")
@@ -27,6 +24,24 @@ public class EsgMetricResponseDTO {
 
     @SerializedName("calculatedAt")
     private String calculatedAt;
+
+    @SerializedName("weeklyTarget")
+    private Double weeklyTarget;
+
+    @SerializedName("weeklyDate")
+    private String weeklyDate;
+
+    @SerializedName("monthlyTarget")
+    private Double monthlyTarget;
+
+    @SerializedName("monthlyDate")
+    private String monthlyDate;
+
+    @SerializedName("quarterlyTarget")
+    private Double quarterlyTarget;
+
+    @SerializedName("quarterlyDate")
+    private String quarterlyDate;
 
     public EsgMetricResponseDTO() {
     }
@@ -85,5 +100,53 @@ public class EsgMetricResponseDTO {
 
     public void setCalculatedAt(String calculatedAt) {
         this.calculatedAt = calculatedAt;
+    }
+
+    public Double getWeeklyTarget() {
+        return weeklyTarget;
+    }
+
+    public void setWeeklyTarget(Double weeklyTarget) {
+        this.weeklyTarget = weeklyTarget;
+    }
+
+    public String getWeeklyDate() {
+        return weeklyDate;
+    }
+
+    public void setWeeklyDate(String weeklyDate) {
+        this.weeklyDate = weeklyDate;
+    }
+
+    public Double getMonthlyTarget() {
+        return monthlyTarget;
+    }
+
+    public void setMonthlyTarget(Double monthlyTarget) {
+        this.monthlyTarget = monthlyTarget;
+    }
+
+    public String getMonthlyDate() {
+        return monthlyDate;
+    }
+
+    public void setMonthlyDate(String monthlyDate) {
+        this.monthlyDate = monthlyDate;
+    }
+
+    public Double getQuarterlyTarget() {
+        return quarterlyTarget;
+    }
+
+    public void setQuarterlyTarget(Double quarterlyTarget) {
+        this.quarterlyTarget = quarterlyTarget;
+    }
+
+    public String getQuarterlyDate() {
+        return quarterlyDate;
+    }
+
+    public void setQuarterlyDate(String quarterlyDate) {
+        this.quarterlyDate = quarterlyDate;
     }
 }

@@ -1,11 +1,12 @@
 package com.aula.volta.ui.occurrence;
 
 import android.app.Dialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -17,15 +18,28 @@ import com.aula.volta.R;
 import com.aula.volta.util.BottomSheetImmersiveHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-/**
- * BottomSheetDialogFragment para seleção de Setor / Local (Figma 851:3836).
- * Abre ancorado na base da tela, idêntico ao NotificationsSheet.
- */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public class SelectSectorSheet extends BottomSheetDialogFragment {
 
+    public static class SectorOption {
+        public final String id;
+        public final String name;
+
+        public SectorOption(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
+
+    @FunctionalInterface
     public interface OnSectorSelectedListener {
-        void onSectorSelected(int index, String sectorName);
+        void onSectorSelected(int index, String sectorName, @Nullable String areaId);
     }
 
     private static final String ARG_CURRENT_INDEX = "arg_current_index";
@@ -67,22 +81,22 @@ public class SelectSectorSheet extends BottomSheetDialogFragment {
             selectedIndex = getArguments().getInt(ARG_CURRENT_INDEX, 0);
         }
 
-        String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
+        final List<SectorOption> sectors = loadSectorOptions();
         RadioGroup rgSectors = view.findViewById(R.id.rgSectors);
         View btnClose = view.findViewById(R.id.btnSectorClose);
         View btnConfirm = view.findViewById(R.id.btnConfirmSector);
 
-        final int[] tempIndex = {selectedIndex};
+        final int[] tempIndex = {Math.max(0, Math.min(selectedIndex, sectors.size() - 1))};
 
         if (rgSectors != null) {
             rgSectors.removeAllViews();
-            for (int i = 0; i < sectors.length; i++) {
+            for (int i = 0; i < sectors.size(); i++) {
                 final int index = i;
                 View itemView = getLayoutInflater().inflate(R.layout.item_sector_option, rgSectors, false);
                 TextView tvName = itemView.findViewById(R.id.tvSectorOptionName);
                 RadioButton rb = itemView.findViewById(R.id.rbSectorOption);
 
-                tvName.setText(sectors[i]);
+                tvName.setText(sectors.get(i).name);
                 boolean isCurrent = (i == tempIndex[0]);
                 rb.setChecked(isCurrent);
                 itemView.setBackgroundResource(isCurrent ? R.drawable.bg_action_row_selected : R.drawable.bg_action_row);
@@ -117,11 +131,47 @@ public class SelectSectorSheet extends BottomSheetDialogFragment {
         if (btnConfirm != null) {
             btnConfirm.setOnClickListener(v -> {
                 selectedIndex = tempIndex[0];
-                if (listener != null && selectedIndex >= 0 && selectedIndex < sectors.length) {
-                    listener.onSectorSelected(selectedIndex, sectors[selectedIndex]);
+                if (listener != null && selectedIndex >= 0 && selectedIndex < sectors.size()) {
+                    SectorOption chosen = sectors.get(selectedIndex);
+                    listener.onSectorSelected(selectedIndex, chosen.name, chosen.id);
                 }
                 dismiss();
             });
         }
+    }
+
+    private List<SectorOption> loadSectorOptions() {
+        List<SectorOption> options = new ArrayList<>();
+        try {
+            SharedPreferences prefs = requireContext().getSharedPreferences("cache_areas", Context.MODE_PRIVATE);
+            Map<String, ?> all = prefs.getAll();
+            if (all != null && !all.isEmpty()) {
+                for (Map.Entry<String, ?> entry : all.entrySet()) {
+                    if (entry.getValue() instanceof String) {
+                        try {
+                            JsonObject obj = JsonParser.parseString((String) entry.getValue()).getAsJsonObject();
+                            String id = obj.has("id") && !obj.get("id").isJsonNull() ? obj.get("id").getAsString() : entry.getKey();
+                            String name = obj.has("sectorName") && !obj.get("sectorName").isJsonNull() ? obj.get("sectorName").getAsString() : null;
+                            if (name != null && !name.trim().isEmpty()) {
+                                options.add(new SectorOption(id, name.trim()));
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        if (!options.isEmpty()) {
+            options.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
+            return options;
+        }
+
+        String[] fallbackNames = getResources().getStringArray(R.array.occurrence_sector_options);
+        for (String fallbackName : fallbackNames) {
+            options.add(new SectorOption(null, fallbackName));
+        }
+        return options;
     }
 }

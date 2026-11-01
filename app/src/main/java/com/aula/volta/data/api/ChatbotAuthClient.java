@@ -24,16 +24,6 @@ import okhttp3.Route;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-/**
- * Cliente HTTP dedicado à API Core/Auth/IA no ambiente QA (https://api.qa.54.210.1.34.sslip.io).
- *
- * Responsabilidades:
- * - Autenticação JWT (POST /auth/login)
- * - Registro de Incidentes e Consulta de Relatório de IA (POST /incidents, GET /incidents/{id}/ai-report)
- * - Injeção automática de Authorization: Bearer <TOKEN>
- * - Renovação automática em caso de 401
- * - Mantém as demais telas operacionais do app isoladas em ApiClient
- */
 public final class ChatbotAuthClient {
 
     private static final String TAG = "ChatbotAuthClient";
@@ -75,7 +65,20 @@ public final class ChatbotAuthClient {
                                 }
                             }
 
-                            return chain.proceed(builder.build());
+                            Response response = chain.proceed(builder.build());
+                            if (response.code() == 401 && !original.url().encodedPath().contains("/auth/login")) {
+                                response.close();
+                                String refreshed = refreshQaTokenBlocking(appContext);
+                                if (refreshed != null && !refreshed.isEmpty()) {
+                                    Request retry = original.newBuilder()
+                                            .header("Host", "api.qa.54.210.1.34.sslip.io")
+                                            .header("Accept", "application/json; charset=utf-8")
+                                            .header("Authorization", "Bearer " + refreshed)
+                                            .build();
+                                    return chain.proceed(retry);
+                                }
+                            }
+                            return response;
                         }
                     })
                     .authenticator(new Authenticator() {
@@ -120,16 +123,13 @@ public final class ChatbotAuthClient {
         return "";
     }
 
-    /**
-     * Renova o token JWT de forma síncrona usando as credenciais salvas no SessionManager
-     * ou as credenciais de QA padrão do ambiente (EMPLOYEE_EMAIL com fallback para ADMIN_EMAIL).
-     */
     @Nullable
     public static synchronized String refreshQaTokenBlocking(Context appContext) {
         String email = SessionManager.email(appContext);
         String password = SessionManager.password(appContext);
 
-        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email) || email.contains("volta.mock")) {
+        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email)
+                || ApiClient.ADMIN_EMAIL.equalsIgnoreCase(email)) {
             email = ApiClient.EMPLOYEE_EMAIL;
             password = ApiClient.EMPLOYEE_PASSWORD;
         } else if (password.isEmpty() || "1234".equals(password)) {
@@ -156,7 +156,7 @@ public final class ChatbotAuthClient {
                     authApi.login(new LoginRequest(email, password)).execute();
 
             if (!loginCall.isSuccessful() || loginCall.body() == null || !loginCall.body().hasToken()) {
-                // Tenta com as credenciais padrão do colaborador de QA (Breno Gomes)
+
                 loginCall = authApi.login(new LoginRequest(ApiClient.EMPLOYEE_EMAIL, ApiClient.EMPLOYEE_PASSWORD)).execute();
             }
 

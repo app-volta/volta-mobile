@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Destinação contextual (Fase 8): cooperativas da ocorrência, backend ordena -->
+
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -55,7 +55,6 @@
             android:layout_marginTop="@dimen/spacing_large"
             android:visibility="gone" />
 
-        <!-- Skeleton da lista de escolha de cooperativa -->
         <include
             android:id="@+id/skeletonCooperativePick"
             layout="@layout/layout_skeleton_cooperatives"

@@ -10,7 +10,6 @@
     android:paddingEnd="24dp"
     android:paddingBottom="28dp">
 
-    <!-- Indicador de arraste / Pill handle -->
     <View
         android:layout_width="40dp"
         android:layout_height="4dp"
@@ -18,7 +17,6 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_sheet_handle" />
 
-    <!-- Título e Subtítulo -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -38,7 +36,6 @@
         android:textColor="@color/vf_text_secondary"
         android:textSize="13.5sp" />
 
-    <!-- Opção 1: Tirar foto -->
     <LinearLayout
         android:id="@+id/btnOptionCamera"
         android:layout_width="match_parent"
@@ -97,7 +94,6 @@
             android:contentDescription="@null" />
     </LinearLayout>
 
-    <!-- Opção 2: Escolher da galeria -->
     <LinearLayout
         android:id="@+id/btnOptionGallery"
         android:layout_width="match_parent"
@@ -156,7 +152,6 @@
             android:contentDescription="@null" />
     </LinearLayout>
 
-    <!-- Opção 3: Remover foto (condicional) -->
     <LinearLayout
         android:id="@+id/btnOptionRemove"
         android:layout_width="match_parent"
@@ -211,7 +206,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Botão Cancelar -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnOptionCancel"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"

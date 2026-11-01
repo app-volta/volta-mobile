@@ -2,9 +2,6 @@ package com.aula.volta.data.model.chat;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Resposta de criação de sessão do Chatbot VOLTA (POST /v1/sessions).
- */
 public class CreateSessionResponse {
 
     @SerializedName(value = "session_id", alternate = {"sessionId", "id"})

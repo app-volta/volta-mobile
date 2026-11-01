@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>VOLTA - Cooperativas Próximas</title>
+  <link rel="stylesheet" href="leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #map { width: 100%; height: 100%; background: #F4F6F8; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+    /* Custom User Pulse Pin (Blue GPS dot) */
+    .user-container {
+      position: relative;
+      width: 24px;
+      height: 24px;
+    }
+    .user-marker {
+      position: absolute;
+      top: 0; left: 0;
+      width: 24px; height: 24px;
+      background: #2563EB;
+      border: 3.5px solid #FFFFFF;
+      border-radius: 50%;
+      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.55);
+      z-index: 2;
+    }
+    .user-pulse {
+      position: absolute;
+      top: -12px; left: -12px;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.35);
+      animation: pulse-ring 2s infinite ease-out;
+      z-index: 1;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* Permanent Tooltip Pill for User Location */
+    .user-tooltip {
+      background: #0F172A !important;
+      color: #FFFFFF !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      border-radius: 8px !important;
+      font-weight: 700 !important;
+      font-size: 11px !important;
+      letter-spacing: 0.2px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+      padding: 4px 9px !important;
+      pointer-events: none;
+    }
+    .user-tooltip::before {
+      border-top-color: #0F172A !important;
+    }
+
+    /* Custom Cooperative Pin */
+    .coop-pin {
+      width: 32px;
+      height: 40px;
+      cursor: pointer;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+      transition: transform 0.2s ease;
+    }
+    .coop-pin:hover, .coop-pin:active {
+      transform: scale(1.15);
+    }
+
+    /* Popup Styling */
+    .leaflet-popup-content-wrapper {
+      background: #FFFFFF;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      padding: 0;
+      overflow: hidden;
+    }
+    .leaflet-popup-content {
+      margin: 12px 14px;
+      line-height: 1.4;
+      font-size: 13px;
+      color: #1A202C;
+    }
+    .popup-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #0E7C48;
+      margin-bottom: 2px;
+    }
+    .popup-dist {
+      font-size: 12px;
+      font-weight: 600;
+      color: #2D3748;
+      margin-bottom: 4px;
+    }
+    .popup-specs {
+      font-size: 11px;
+      color: #718096;
+      margin-bottom: 8px;
+    }
+    .popup-btn {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      background: #0E7C48;
+      color: #FFFFFF;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Remove standard Leaflet controls clutter */
+    .leaflet-control-attribution { font-size: 8px !important; opacity: 0.6; }
+    .leaflet-control-zoom { border: none !important; box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important; margin-right: 12px !important; margin-bottom: 40px !important; }
+    .leaflet-control-zoom a { border-radius: 6px !important; color: #0E7C48 !important; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="leaflet.js"></script>
+  <script>
+    let map = null;
+    let markersLayer = null;
+    let userMarker = null;
+    let coopMarkers = {};
+    let currentUserLat = -23.5320;
+    let currentUserLng = -46.6850;
+
+    function init() {
+      if (map) return;
+      try {
+        if (typeof L === 'undefined') {
+          console.error("Leaflet not available yet.");
+          return;
+        }
+        map = L.map('map', {
+          zoomControl: true,
+          attributionControl: false
+        }).setView([currentUserLat, currentUserLng], 12);
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          subdomains: 'abc'
+        }).addTo(map);
+
+        markersLayer = L.featureGroup().addTo(map);
+
+        // Notifica ponte Android que o mapa inicializou
+        if (window.AndroidBridge && window.AndroidBridge.onMapReady) {
+          window.AndroidBridge.onMapReady();
+        }
+
+        // Tenta obter localização nativa do navegador/WebView também
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(pos) {
+            updateUserLocation(pos.coords.latitude, pos.coords.longitude);
+            if (window.AndroidBridge && window.AndroidBridge.onUserLocationFound) {
+              window.AndroidBridge.onUserLocationFound(pos.coords.latitude, pos.coords.longitude);
+            }
+          }, function(err) {
+            console.log("HTML5 Geolocation info:", err.message);
+          }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
+        }
+      } catch (e) {
+        console.error("Map init error:", e);
+      }
+    }
+
+    function createUserIcon() {
+      return L.divIcon({
+        className: 'user-icon',
+        html: '<div class="user-container"><div class="user-pulse"></div><div class="user-marker"></div></div>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+    }
+
+    function updateUserLocation(lat, lng) {
+      if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return;
+      currentUserLat = lat;
+      currentUserLng = lng;
+      if (!map) return;
+
+      if (!markersLayer) {
+        markersLayer = L.featureGroup().addTo(map);
+      }
+
+      if (userMarker) {
+        userMarker.setLatLng([lat, lng]);
+      } else {
+        userMarker = L.marker([lat, lng], { icon: createUserIcon(), zIndexOffset: 1000 })
+          .bindTooltip('📍 Você está aqui', { permanent: true, direction: 'top', className: 'user-tooltip', offset: [0, -14] })
+          .bindPopup('<div class="popup-title">📍 Sua Localização</div><div class="popup-specs">Coordenadas obtidas via GPS do dispositivo</div>')
+          .addTo(markersLayer);
+      }
+    }
+
+    function renderCooperatives(userLat, userLng, coopsData) {
+      if (!map) init();
+      if (!map) return;
+
+      if (typeof userLat === 'number' && typeof userLng === 'number' && !isNaN(userLat) && !isNaN(userLng)) {
+        currentUserLat = userLat;
+        currentUserLng = userLng;
+      }
+
+      if (markersLayer) {
+        markersLayer.clearLayers();
+      } else {
+        markersLayer = L.featureGroup().addTo(map);
+      }
+      coopMarkers = {};
+
+      // Marcador de localização do usuário (Pino azul pulsante com badge 'Você está aqui')
+      userMarker = L.marker([currentUserLat, currentUserLng], { icon: createUserIcon(), zIndexOffset: 1000 })
+        .bindTooltip('📍 Você está aqui', { permanent: true, direction: 'top', className: 'user-tooltip', offset: [0, -14] })
+        .bindPopup('<div class="popup-title">📍 Sua Localização</div><div class="popup-specs">Coordenadas do dispositivo</div>')
+        .addTo(markersLayer);
+
+      const coopIconSvg = '<svg class="coop-pin" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M16 0C7.163 0 0 7.163 0 16c0 11.2 16 24 16 24s16-12.8 16-24C32 7.163 24.837 0 16 0z" fill="#0E7C48"/>' +
+        '<circle cx="16" cy="15" r="9" fill="#FFFFFF"/>' +
+        '<path d="M16 9.5l3.5 6h-7z" fill="#0E7C48"/>' +
+        '</svg>';
+
+      const customCoopIcon = L.divIcon({
+        className: 'custom-coop-icon',
+        html: coopIconSvg,
+        iconSize: [32, 40],
+        iconAnchor: [16, 40],
+        popupAnchor: [0, -36]
+      });
+
+      let validCount = 0;
+      if (Array.isArray(coopsData)) {
+        coopsData.forEach(function(coop) {
+          const lat = parseFloat(coop.latitude);
+          const lng = parseFloat(coop.longitude);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            validCount++;
+            const nomeEscaped = (coop.nome || 'Cooperativa').replace(/'/g, "\\'");
+            const distFormatted = coop.distanciaKm != null && !isNaN(coop.distanciaKm) ? (Number(coop.distanciaKm).toFixed(1).replace('.', ',') + ' km') : 'Próxima da unidade';
+            const popupHtml = '<div class="popup-title">' + (coop.nome || 'Cooperativa') + '</div>' +
+              '<div class="popup-dist">📍 ' + distFormatted + '</div>' +
+              '<div class="popup-specs">' + (coop.descricao || 'Coleta e triagem de resíduos') + '</div>' +
+              '<button class="popup-btn" onclick="openGps(' + lat + ',' + lng + ',\'' + nomeEscaped + '\')">🗺️ Abrir Rota no GPS</button>';
+
+            const marker = L.marker([lat, lng], { icon: customCoopIcon })
+              .bindPopup(popupHtml)
+              .addTo(markersLayer);
+
+            marker.on('click', function() {
+              if (window.AndroidBridge && window.AndroidBridge.onCooperativeClicked) {
+                window.AndroidBridge.onCooperativeClicked(coop.id || coop.nome);
+              }
+            });
+
+            coopMarkers[coop.id || coop.nome] = marker;
+          }
+        });
+      }
+
+      if (validCount > 0 && markersLayer.getBounds && markersLayer.getBounds().isValid()) {
+        try {
+          map.fitBounds(markersLayer.getBounds(), { padding: [40, 40], maxZoom: 14 });
+        } catch (e) {
+          map.setView([currentUserLat, currentUserLng], 12);
+        }
+      } else {
+        map.setView([currentUserLat, currentUserLng], 13);
+      }
+    }
+
+    function focusCoop(lat, lng, coopId) {
+      if (!map) return;
+      map.flyTo([lat, lng], 15, { duration: 1.0 });
+      if (coopId && coopMarkers[coopId]) {
+        setTimeout(function() {
+          coopMarkers[coopId].openPopup();
+        }, 800);
+      }
+    }
+
+    function recenterMap() {
+      if (!map) return;
+      if (currentUserLat && currentUserLng) {
+        map.flyTo([currentUserLat, currentUserLng], 15, { duration: 0.8 });
+        if (userMarker) {
+          setTimeout(function() {
+            userMarker.openTooltip();
+          }, 600);
+        }
+      } else if (markersLayer && markersLayer.getLayers().length > 0 && markersLayer.getBounds && markersLayer.getBounds().isValid()) {
+        map.fitBounds(markersLayer.getBounds(), { padding: [40, 40], maxZoom: 14 });
+      }
+    }
+
+    function openGps(lat, lng, label) {
+      if (window.AndroidBridge && window.AndroidBridge.openExternalMap) {
+        window.AndroidBridge.openExternalMap(lat, lng, label);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

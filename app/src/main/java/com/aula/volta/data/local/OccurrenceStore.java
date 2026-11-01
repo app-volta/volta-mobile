@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.api.ChatbotAPI;
+import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.ChatbotClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.model.AiAnalysisJSON;
@@ -24,13 +25,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Único ponto de leitura/escrita de ocorrências da UI (lista Home + Ver todas).
- * Conecta-se à API Oficial do Banco de Dados (/incidents) com suporte a fallback offline.
- *
- * <p>Ocorrências lançadas no app entram via {@link #pushLocal} e sobrevivem ao
- * refresh (mesmo padrão do NotificationStore).</p>
- */
 public final class OccurrenceStore {
 
     private static final String TAG = "OccurrenceStore";
@@ -79,7 +73,7 @@ public final class OccurrenceStore {
     }
 
     public static void setupRealtimeSync(Context context) {
-        // Não utilizado - backend oficial REST API ativo
+
     }
 
     public static void updateStatus(Context context, String id, String newStatus) {
@@ -133,19 +127,22 @@ public final class OccurrenceStore {
     private OccurrenceStore() {
     }
 
-    /** Busca na API do Banco (/incidents), mescla com locais (pushLocal) e devolve; se falhar, devolve o cache. */
     public static void refresh(Context context, LoadCallback callback) {
         Context app = context.getApplicationContext();
-        OccurrenceAPI api = ApiClient.get(app).create(OccurrenceAPI.class);
+        OccurrenceAPI api = ChatbotAuthClient.get(app).create(OccurrenceAPI.class);
 
-        // 1. Tenta carregar do backend oficial do banco (/incidents)
         api.getIncidents().enqueue(new Callback<List<IncidentResponseDTO>>() {
             @Override
             public void onResponse(Call<List<IncidentResponseDTO>> call,
                                    Response<List<IncidentResponseDTO>> response) {
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                if (response.isSuccessful() && response.body() != null) {
                     List<Occurrence> list = new ArrayList<>();
                     for (IncidentResponseDTO inc : response.body()) {
+
+                        if (inc.getWasteTypeId() == null && (inc.getPhotoUrl() == null || inc.getPhotoUrl().isEmpty())
+                                && "AGUARDANDO_VALIDACAO".equalsIgnoreCase(inc.getStatus())) {
+                            continue;
+                        }
                         Occurrence occ = Occurrence.fromIncident(inc, app);
                         if (occ != null) {
                             list.add(occ);
@@ -165,6 +162,12 @@ public final class OccurrenceStore {
                                     d.addProperty("titulo", occ.getTitulo());
                                     d.addProperty("status", occ.getStatus());
                                     d.addProperty("prioridade", occ.getPrioridade());
+                                    if (inc.getContaminationLevel() != null && !inc.getContaminationLevel().isEmpty()) {
+                                        d.addProperty("contaminacao", AiAnalysisJSON.mapContaminationLabel(inc.getContaminationLevel()));
+                                    }
+                                    if (inc.getAiDescription() != null && !inc.getAiDescription().trim().isEmpty()) {
+                                        d.addProperty("relatorio_auto", inc.getAiDescription().trim());
+                                    }
                                     if (inc.getRegisteredAt() != null) {
                                         d.addProperty("registeredAt", inc.getRegisteredAt());
                                     }
@@ -179,48 +182,20 @@ public final class OccurrenceStore {
                         }
                     }
                     list = mergedWithLocal(app, list);
-                    Log.d(TAG, "Carregadas " + list.size() + " ocorrências do banco de dados oficial.");
-                    syncDraftsStatusAndComplete(app, list, callback);
+                    PrefsHelper.putList(app, getPrefsName(app), KEY_LIST, list);
+                    callback.onResult(list);
                     return;
                 }
-
-                // 2. Se a rota /incidents não retornou itens ou retornou erro, tenta /occurrences legado
-                fallbackToOccurrencesLegacy(app, api, callback);
+                callback.onResult(cached(app));
             }
 
             @Override
             public void onFailure(Call<List<IncidentResponseDTO>> call, Throwable t) {
-                Log.w(TAG, "Falha ao consultar /incidents, ativando rota de ocorrências legada/cache: " + t.getMessage());
-                fallbackToOccurrencesLegacy(app, api, callback);
-            }
-        });
-    }
-
-    private static void fallbackToOccurrencesLegacy(Context app, OccurrenceAPI api, LoadCallback callback) {
-        api.getOccurrences().enqueue(new Callback<List<OccurrenceJSON>>() {
-            @Override
-            public void onResponse(Call<List<OccurrenceJSON>> call,
-                                   Response<List<OccurrenceJSON>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Occurrence> list = new ArrayList<>();
-                    for (OccurrenceJSON json : response.body()) {
-                        list.add(Occurrence.fromJson(json));
-                    }
-                    list = mergedWithLocal(app, list);
-                    syncDraftsStatusAndComplete(app, list, callback);
-                } else {
-                    callback.onResult(cached(app));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<List<OccurrenceJSON>> call, Throwable t) {
                 callback.onResult(cached(app));
             }
         });
     }
 
-    /** Lista em memória vinda do cache (sem rede); se vazia, carrega o catálogo inicial do app. */
     public static List<Occurrence> cached(Context context) {
         Context app = context.getApplicationContext();
         String prefsName = getPrefsName(app);
@@ -233,41 +208,11 @@ public final class OccurrenceStore {
                 PrefsHelper.putList(app, prefsName, KEY_LIST, list);
                 return list;
             }
-            String email = SessionManager.email(app);
-            if ("breno@volta.com".equalsIgnoreCase(email) || "demo@volta.com".equalsIgnoreCase(email)) {
-                list = loadInitialOccurrencesFromAssets(app);
-                if (!list.isEmpty()) {
-                    PrefsHelper.putList(app, prefsName, KEY_LIST, list);
-                }
-            } else {
-                return new ArrayList<>();
-            }
+            return new ArrayList<>();
         }
         return list != null ? list : new ArrayList<>();
     }
 
-    private static List<Occurrence> loadInitialOccurrencesFromAssets(Context context) {
-        try (java.io.InputStream in = context.getAssets().open("mock/occurrences.json")) {
-            int size = in.available();
-            byte[] buffer = new byte[size];
-            in.read(buffer);
-            String json = new String(buffer, java.nio.charset.StandardCharsets.UTF_8);
-            com.google.gson.reflect.TypeToken<List<OccurrenceJSON>> token =
-                    new com.google.gson.reflect.TypeToken<List<OccurrenceJSON>>() {};
-            List<OccurrenceJSON> jsonList = new com.google.gson.Gson().fromJson(json, token.getType());
-            List<Occurrence> result = new ArrayList<>();
-            if (jsonList != null) {
-                for (OccurrenceJSON j : jsonList) {
-                    result.add(Occurrence.fromJson(j));
-                }
-            }
-            return result;
-        } catch (Exception e) {
-            return new ArrayList<>();
-        }
-    }
-
-    /** Ocorrência lançada no app: topo da lista e sobrevive ao refresh. */
     public static void pushLocal(Context context, Occurrence occurrence) {
         Context app = context.getApplicationContext();
         List<Occurrence> local = new ArrayList<>(localOnly(app));
@@ -279,16 +224,12 @@ public final class OccurrenceStore {
         notifyListeners();
     }
 
-    /**
-     * Atualiza uma ocorrência existente no cache mantendo a ordem e refletindo mutações operacionais.
-     */
     public static void update(Context context, Occurrence updated) {
         if (updated == null || updated.getId() == null) {
             return;
         }
         Context app = context.getApplicationContext();
 
-        // 1. Atualiza na lista local (se existir lá)
         List<Occurrence> local = new ArrayList<>(localOnly(app));
         boolean foundLocal = false;
         for (int i = 0; i < local.size(); i++) {
@@ -303,7 +244,6 @@ public final class OccurrenceStore {
         }
         PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, local);
 
-        // 2. Atualiza na lista geral do cache
         List<Occurrence> list = new ArrayList<>(cached(app));
         for (int i = 0; i < list.size(); i++) {
             if (updated.getId().equals(list.get(i).getId())) {
@@ -315,17 +255,11 @@ public final class OccurrenceStore {
         notifyListeners();
     }
 
-    /** Locais ainda não vindos da API (sobrevivem ao refresh). */
-    static List<Occurrence> localOnly(Context app) {
+    public static List<Occurrence> localOnly(Context app) {
         return PrefsHelper.getList(app, getPrefsName(app), KEY_LOCAL,
                 PrefsHelper.listType(Occurrence.class));
     }
 
-    /**
-     * Mescla ocorrências locais com a API oficial do banco de dados.
-     * Itens retornados pelo banco (/incidents) são a fonte primária de verdade e contêm a URL da foto.
-     * Itens locais ainda pendentes de sincronização permanecem no topo da lista.
-     */
     static List<Occurrence> mergedWithLocal(Context app, List<Occurrence> api) {
         List<Occurrence> local = localOnly(app);
         List<Occurrence> result = new ArrayList<>();
@@ -339,7 +273,6 @@ public final class OccurrenceStore {
             }
         }
 
-        // Mantém no topo apenas itens locais que ainda não estão presentes na resposta do banco
         List<Occurrence> remainingLocal = new ArrayList<>();
         if (local != null) {
             for (Occurrence loc : local) {
@@ -351,7 +284,6 @@ public final class OccurrenceStore {
         }
         PrefsHelper.putList(app, getPrefsName(app), KEY_LOCAL, remainingLocal);
 
-        // Adiciona itens do banco, enriquecendo fotos e dados do cache local caso a API retorne null
         if (api != null) {
             for (Occurrence o : api) {
                 if (o != null && o.getId() != null && localMap.containsKey(o.getId())) {
@@ -419,10 +351,6 @@ public final class OccurrenceStore {
         return result;
     }
 
-    /**
-     * Consulta a API de Rascunhos (/v1/occurrences/drafts) para sincronizar status de aprovação web.
-     * Se uma ocorrência foi aprovada na web (status == 'APROVADO'), atualiza o status na lista e salva em cache.
-     */
     private static void syncDraftsStatusAndComplete(Context app, List<Occurrence> currentList, LoadCallback callback) {
         try {
             ChatbotAPI chatApi = ChatbotClient.get(app).create(ChatbotAPI.class);

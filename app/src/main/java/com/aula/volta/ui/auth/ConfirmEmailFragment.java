@@ -18,11 +18,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * Confirmar e-mail — Figma 790:1055 (Fase 22).
- * 4 caixas com avanço automático + timer regressivo de reenvio de 48s.
- * Mock: aceita qualquer código de 4 números. Args: email, name.
- */
 public class ConfirmEmailFragment extends Fragment {
 
     private static final long RESEND_MILLIS = 48000L;

@@ -2,9 +2,6 @@ package com.aula.volta.data.model.chat;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Representa um item ou mensagem no histórico da sessão (GET /v1/sessions/{session_id}/history).
- */
 public class ChatHistoryItem {
 
     @SerializedName(value = "role", alternate = {"sender", "type", "author"})

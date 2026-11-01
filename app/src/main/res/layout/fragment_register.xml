@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cadastro — Figma 790:1007 -->
+
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -15,7 +15,6 @@
         android:paddingTop="28dp"
         android:paddingBottom="24dp">
 
-        <!-- Barra superior: Logo VOLTA Verde à esquerda + Botão Fechar circular à direita (Figma 790:1007) -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -51,7 +50,6 @@
             </FrameLayout>
         </RelativeLayout>
 
-        <!-- Título e Subtítulo -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -71,7 +69,6 @@
             android:textColor="@color/vf_text_secondary"
             android:textSize="14sp" />
 
-        <!-- 1. Card Nome (Chip pêssego #FFEFE2 + ic_nav_profile + hint "Seu nome e sobrenome") -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
@@ -112,7 +109,6 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- 2. Card E-mail (Chip azul #E4EFFF + ic_mail + hint "nome@empresa.com.br") -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
@@ -153,7 +149,6 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- 3. Card Setor (Chip roxo #EFEAFB + ic_factory + hint "Selecione seu setor" + ic_chevron_down) -->
         <LinearLayout
             android:id="@+id/cardRegisterSector"
             android:layout_width="match_parent"
@@ -200,7 +195,6 @@
                 app:tint="@color/vf_text_secondary" />
         </LinearLayout>
 
-        <!-- 4. Card Senha (Chip verde #E2F7EC + ic_lock + hint "Mínimo de 8 caracteres" + toggle eye) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
@@ -251,7 +245,6 @@
                 app:tint="@color/vf_text_secondary" />
         </LinearLayout>
 
-        <!-- Checkbox Termos de Uso e Política de Privacidade -->
         <LinearLayout
             android:id="@+id/rowTerms"
             android:layout_width="match_parent"
@@ -282,7 +275,6 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <!-- CTA Criar Conta (Fundo gradiente verde oficial) -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnCreateAccount"
             android:layout_width="match_parent"
@@ -297,7 +289,6 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <!-- Rodapé: Já tem conta? Entrar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

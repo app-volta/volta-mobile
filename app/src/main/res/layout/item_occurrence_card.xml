@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Card de ocorrência recente (Figma 790:1706: 74dp, corner 20dp, borda 1dp #EEF0F5, chip 46x46dp r=14dp) -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

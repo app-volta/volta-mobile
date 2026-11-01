@@ -2,9 +2,6 @@ package com.aula.volta.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * DTO de área/setor da empresa (GET /areas/mine e GET /areas).
- */
 public class AreaResponseDTO {
 
     @SerializedName("id")

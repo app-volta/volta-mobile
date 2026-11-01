@@ -27,11 +27,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Login — Figma 790:955 (Fase 13).
- * Realiza a autenticação no app e autentica em background com a API QA (POST /auth/login)
- * para obter o token JWT usado pelo Chatbot e pela Análise de IA.
- */
 public class LoginFragment extends Fragment {
 
     private static final String TAG = "LoginFragment";
@@ -69,15 +64,6 @@ public class LoginFragment extends Fragment {
 
         view.findViewById(R.id.btnLogin).setOnClickListener(v -> tryLogin(v));
 
-        View btnDemo = view.findViewById(R.id.btnDemoLogin);
-        if (btnDemo != null) {
-            btnDemo.setOnClickListener(v -> {
-                etEmail.setText("breno@volta.com");
-                etPassword.setText("1234");
-                tryLogin(v);
-            });
-        }
-
         view.findViewById(R.id.btnGoRegister).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.auth_register));
         view.findViewById(R.id.btnForgotPassword).setOnClickListener(v ->
@@ -85,6 +71,20 @@ public class LoginFragment extends Fragment {
         view.findViewById(R.id.btnGoogle).setOnClickListener(v ->
                 Toast.makeText(requireContext(), R.string.occ_soon,
                         Toast.LENGTH_SHORT).show());
+
+        getParentFragmentManager().setFragmentResultListener(
+                com.aula.volta.ui.error.OfflineErrorFragment.REQUEST_KEY,
+                getViewLifecycleOwner(),
+                (requestKey, result) -> {
+                    if (result.getBoolean(com.aula.volta.ui.error.OfflineErrorFragment.RESULT_ONLINE, false)
+                            && getView() != null && etEmail != null && etPassword != null) {
+                        String em = etEmail.getText().toString().trim();
+                        String pw = etPassword.getText().toString();
+                        if (em.contains("@") && pw.length() >= 4) {
+                            tryLogin(getView().findViewById(R.id.btnLogin));
+                        }
+                    }
+                });
     }
 
     private void tryLogin(View v) {
@@ -97,36 +97,48 @@ public class LoginFragment extends Fragment {
         }
 
         final Context appContext = requireContext().getApplicationContext();
+        if (!com.aula.volta.util.NetworkUtils.isOnline(appContext)) {
+            showOfflineError(v, true);
+            return;
+        }
         final String name = displayName(email);
 
-        // 1. Salva a sessão local do usuário e permite entrada imediata no app
-        SessionManager.login(appContext, email, password, name, "");
-        com.aula.volta.data.api.ApiClient.reset();
-        com.aula.volta.data.api.ChatbotAuthClient.reset();
-
-        // 2. Dispara autenticação em background com a API QA (POST /auth/login) para obter o JWT
         final View btnLogin = v != null ? v.findViewById(R.id.btnLogin) : null;
         if (btnLogin != null) {
             btnLogin.setEnabled(false);
         }
 
-        final String qaEmail = ("breno@volta.com".equalsIgnoreCase(email) || "demo@volta.com".equalsIgnoreCase(email))
-                ? ApiClient.EMPLOYEE_EMAIL : email;
-        final String qaPass = ("breno@volta.com".equalsIgnoreCase(email) || "demo@volta.com".equalsIgnoreCase(email) || "1234".equals(password))
-                ? ApiClient.EMPLOYEE_PASSWORD : password;
-
         try {
             AuthAPI authApi = ChatbotAuthClient.get(appContext).create(AuthAPI.class);
-            authApi.login(new LoginRequest(qaEmail, qaPass)).enqueue(new Callback<LoginResponse>() {
+            authApi.login(new LoginRequest(email, password)).enqueue(new Callback<LoginResponse>() {
                 @Override
                 public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
+
+                        SessionManager.login(appContext, email, password, name, "");
+                        ApiClient.reset();
+                        ChatbotAuthClient.reset();
+
                         String token = response.body().getToken().trim();
                         SessionManager.saveToken(appContext, token);
                         ApiClient.saveToken(appContext, token);
                         Log.i(TAG, "Token JWT da API QA obtido com sucesso no login.");
 
                         try {
+                            authApi.getMyCompany().enqueue(new Callback<com.aula.volta.data.model.CompanyResponseDTO>() {
+                                @Override
+                                public void onResponse(@NonNull Call<com.aula.volta.data.model.CompanyResponseDTO> call,
+                                                       @NonNull Response<com.aula.volta.data.model.CompanyResponseDTO> compResp) {
+                                    if (compResp.isSuccessful() && compResp.body() != null) {
+                                        com.aula.volta.data.model.CompanyResponseDTO c = compResp.body();
+                                        SessionManager.saveCompany(appContext, c.getName(), c.getFormattedCnpj(), c.getAddress());
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull Call<com.aula.volta.data.model.CompanyResponseDTO> call, @NonNull Throwable t) {
+                                }
+                            });
                             authApi.getMe().enqueue(new Callback<com.aula.volta.data.model.UserResponseDTO>() {
                                 @Override
                                 public void onResponse(@NonNull Call<com.aula.volta.data.model.UserResponseDTO> call,
@@ -155,31 +167,28 @@ public class LoginFragment extends Fragment {
                             completeLogin();
                         }
                     } else {
-                        Log.w(TAG, "Login QA retornou status: " + response.code() + ", tentando credenciais padrão");
-                        // Fallback com credencial de colaborador
-                        authApi.login(new LoginRequest(ApiClient.EMPLOYEE_EMAIL, ApiClient.EMPLOYEE_PASSWORD)).enqueue(new Callback<LoginResponse>() {
-                            @Override
-                            public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> resp2) {
-                                if (resp2.isSuccessful() && resp2.body() != null && resp2.body().hasToken()) {
-                                    String token = resp2.body().getToken().trim();
-                                    SessionManager.saveToken(appContext, token);
-                                    ApiClient.saveToken(appContext, token);
-                                }
-                                completeLogin();
-                            }
 
-                            @Override
-                            public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
-                                completeLogin();
-                            }
-                        });
+                        Log.w(TAG, "Falha de autenticação (HTTP " + response.code() + "). Rejeitando login.");
+                        if (btnLogin != null) {
+                            btnLogin.setEnabled(true);
+                        }
+                        if (isAdded() && getContext() != null) {
+                            Toast.makeText(requireContext(), R.string.auth_invalid, Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                     Log.w(TAG, "API QA offline ou inalcançável no login: " + t.getMessage());
-                    completeLogin();
+                    if (btnLogin != null) {
+                        btnLogin.setEnabled(true);
+                    }
+                    if (!isAdded()) {
+                        return;
+                    }
+                    boolean isOffline = !com.aula.volta.util.NetworkUtils.isOnline(appContext);
+                    showOfflineError(v, isOffline);
                 }
 
                 private void completeLogin() {
@@ -189,9 +198,45 @@ public class LoginFragment extends Fragment {
                 }
             });
         } catch (Exception e) {
-            Log.w(TAG, "Erro ao iniciar autenticação QA em background", e);
-            if (isAdded() && getActivity() != null) {
-                ((AuthActivity) requireActivity()).finishLogin();
+            Log.w(TAG, "Erro ao iniciar autenticação", e);
+            if (btnLogin != null) {
+                btnLogin.setEnabled(true);
+            }
+            if (isAdded() && getContext() != null) {
+                Toast.makeText(requireContext(), R.string.auth_invalid, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void showOfflineError(View v, boolean isOffline) {
+        if (!isAdded()) {
+            return;
+        }
+        Bundle args = new Bundle();
+        if (isOffline) {
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                    com.aula.volta.ui.error.OfflineErrorFragment.TYPE_OFFLINE);
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Sem conexão por aqui");
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                    "Você precisa de uma conexão com a internet para entrar no VOLTA. Confira sua rede e tente de novo.");
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_TITLE, "Login bloqueado sem internet");
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_BODY,
+                    "A autenticação valida suas credenciais diretamente no banco de dados da unidade.");
+        } else {
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                    com.aula.volta.ui.error.OfflineErrorFragment.TYPE_SERVICE_UNAVAILABLE);
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Fora do ar");
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "O VOLTA não respondeu");
+            args.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                    "Não é nada com você: o serviço está fora do ar ou demorou demais pra responder. Tente de novo em alguns minutos.");
+        }
+        View navTarget = v != null ? v : getView();
+        if (navTarget != null) {
+            try {
+                Navigation.findNavController(navTarget).navigate(R.id.auth_offline_error, args);
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "Sem conexão com a internet.", Toast.LENGTH_SHORT).show();
             }
         }
     }

@@ -6,10 +6,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Validação do contrato da IA (Fase 15 + Integração QA AiReportResponseDTO).
- * O mock e o backend obedecem a esta estrutura.
- */
 public class AiAnalysisContractTest {
 
     @Test
@@ -60,10 +56,9 @@ public class AiAnalysisContractTest {
         assertEquals("Isolar a área e acionar coleta especializada", mapped.getObservacoes());
         assertEquals("Foi identificado vazamento de óleo próximo à máquina 3.", mapped.getReportText());
 
-        // Edge case: null report returns valid offline fallback
         AiAnalysisJSON fallback = AiAnalysisJSON.fromAiReport(null, 0);
         assertNotNull(fallback);
-        assertEquals("Papelão A", fallback.getMaterial());
+        assertEquals("Papelão", fallback.getMaterial());
         assertEquals("Baixa", fallback.getContaminacao().getNivel());
         assertFalse(fallback.getContaminacao().isPresente());
     }
@@ -86,7 +81,6 @@ public class AiAnalysisContractTest {
                 + "{\"id\":\"wt-metal\",\"category\":\"METAL\"}"
                 + "]").getAsJsonArray();
 
-        // Default description (or empty) selects PAPER instead of index 0 (PLASTIC)
         assertEquals("wt-paper", AiAnalysisJSON.resolveWasteTypeId(wasteTypes, ""));
         assertEquals("wt-paper", AiAnalysisJSON.resolveWasteTypeId(wasteTypes, "Caixas de papelão molhadas"));
         assertEquals("wt-plastic", AiAnalysisJSON.resolveWasteTypeId(wasteTypes, "Bandejas de isopor EPS"));
@@ -133,10 +127,10 @@ public class AiAnalysisContractTest {
         assertEquals("B", AiAnalysisJSON.extractQualityClassLetter("Papelão A", "Classe B"));
         assertEquals("C", AiAnalysisJSON.extractQualityClassLetter("Plástico", "C"));
 
-        assertEquals("Papelão (Classe A)", AiAnalysisJSON.formatMaterialWithClass("Papelão A", "Classe A"));
-        assertEquals("Papelão (Classe B)", AiAnalysisJSON.formatMaterialWithClass("Papelão A", "Classe B"));
-        assertEquals("Plástico (Classe C)", AiAnalysisJSON.formatMaterialWithClass("Plástico (Classe A)", "C"));
-        assertEquals("Papelão (Classe A)", AiAnalysisJSON.formatMaterialWithClass("Papelão", "Classe A"));
+        assertEquals("Papelão", AiAnalysisJSON.formatMaterialWithClass("Papelão A", "Classe A"));
+        assertEquals("Papelão", AiAnalysisJSON.formatMaterialWithClass("Papelão A", "Classe B"));
+        assertEquals("Plástico", AiAnalysisJSON.formatMaterialWithClass("Plástico (Classe A)", "C"));
+        assertEquals("Papelão", AiAnalysisJSON.formatMaterialWithClass("Papelão", "Classe A"));
     }
 
     @Test
@@ -198,33 +192,30 @@ public class AiAnalysisContractTest {
 
     @Test
     public void calculatePriority_chairsAndFurnitureAlwaysLowPriorityUnlessHazardous() {
-        // Cadeiras e móveis inertes secos com contaminação baixa recebem prioridade BAIXA determinística
+
         assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Cadeira de escritório", "Baixa", "Cadeira quebrada"));
-        assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Plástico — Cadeira de escritório (Classe A)", "LOW", ""));
+        assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Plástico — Cadeira de escritório", "LOW", ""));
         assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Palete PBR de madeira", "Baixa", ""));
         assertEquals("BAIXA", AiAnalysisJSON.calculatePriority("Papelão A", "LOW", ""));
 
-        // Alimentos e materiais perecíveis recebem prioridade MEDIA
         assertEquals("MEDIA", AiAnalysisJSON.calculatePriority("Restos de alimentos", "Baixa", ""));
         assertEquals("MEDIA", AiAnalysisJSON.calculatePriority("Papelão molhado", "MÉDIA", ""));
 
-        // Materiais perigosos e contaminados com óleo recebem prioridade ALTA
         assertEquals("ALTA", AiAnalysisJSON.calculatePriority("Óleo lubrificante usado", "Baixa", ""));
         assertEquals("ALTA", AiAnalysisJSON.calculatePriority("Sucata com graxa", "HIGH", ""));
     }
 
     @Test
     public void formatMaterialWithClass_primaryAndSpecificItemComposition() {
-        assertEquals("Plástico — Cadeira de escritório (Classe A)",
+        assertEquals("Plástico — Cadeira de escritório",
                 AiAnalysisJSON.formatMaterialWithClass("Plástico", "Cadeira de escritório", "A"));
-        assertEquals("Madeira — Palete PBR (Classe B)",
+        assertEquals("Madeira — Palete PBR",
                 AiAnalysisJSON.formatMaterialWithClass("Madeira", "Palete PBR", "B"));
-        assertEquals("Papelão (Classe A)",
+        assertEquals("Papelão",
                 AiAnalysisJSON.formatMaterialWithClass("Papelão", "Papelão", "A"));
 
-        // Extração reversa de primary e specific item
-        assertEquals("Plástico", AiAnalysisJSON.extractPrimaryMaterial("Plástico — Cadeira de escritório (Classe A)"));
-        assertEquals("Cadeira de escritório", AiAnalysisJSON.extractSpecificItem("Plástico — Cadeira de escritório (Classe A)"));
+        assertEquals("Plástico", AiAnalysisJSON.extractPrimaryMaterial("Plástico — Cadeira de escritório"));
+        assertEquals("Cadeira de escritório", AiAnalysisJSON.extractSpecificItem("Plástico — Cadeira de escritório"));
     }
 
     @Test
@@ -244,7 +235,7 @@ public class AiAnalysisContractTest {
 
     @Test
     public void resolveMaterialFamily_mapsAllVariationsToCanonicalSixFamilies() {
-        // As 6 famílias canônicas que alimentam filtros e PGRS
+
         assertEquals("Papelão", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Caixas de papelão onduladas com umidade"));
         assertEquals("Papelão", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Cartão kraft"));
         assertEquals("Papelão", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily(null));

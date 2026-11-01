@@ -15,9 +15,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * 23e · Perfil · notificações (Figma 1721:1460).
- */
 public class NotificationSettingsFragment extends Fragment {
 
     private static final String PREFS_NAME = "prefs_notification_settings";
@@ -68,7 +65,6 @@ public class NotificationSettingsFragment extends Fragment {
         switchSector.setOnCheckedChangeListener((btn, checked) ->
                 prefs.edit().putBoolean(KEY_SECTOR, checked).apply());
 
-        // Permitir clicar em toda a linha para alternar o switch
         view.findViewById(R.id.rowNotifApproved).setOnClickListener(v ->
                 switchApproved.setChecked(!switchApproved.isChecked()));
 

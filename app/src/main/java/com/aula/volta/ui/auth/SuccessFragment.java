@@ -13,10 +13,6 @@ import androidx.fragment.app.Fragment;
 import com.aula.volta.R;
 import com.aula.volta.data.local.SessionManager;
 
-/**
- * Sucesso — conta criada. "Começar" grava a sessão e entra (Fase 13).
- * Args: email, name.
- */
 public class SuccessFragment extends Fragment {
 
     public SuccessFragment() {
@@ -47,7 +43,7 @@ public class SuccessFragment extends Fragment {
             if (sector != null && !sector.isEmpty()) {
                 SessionManager.saveSector(appCtx, sector);
             }
-            // Autentica com a API para garantir que o token JWT esteja imediatamente disponível
+
             new Thread(() -> {
                 String token = com.aula.volta.data.api.ChatbotAuthClient.refreshQaTokenBlocking(appCtx);
                 if (token != null) {

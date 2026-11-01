@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 11 · Assistente VOLTA — Figma 790:1911 -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -7,9 +7,6 @@
     android:background="@color/volta_background_light"
     android:orientation="vertical">
 
-    <!-- ========================================================================= -->
-    <!-- CABEÇALHO DO ASSISTENTE (Figma 790:1912: degradê verde c/ cantos 34dp)    -->
-    <!-- ========================================================================= -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="220dp"
@@ -17,7 +14,6 @@
         android:clipChildren="true"
         android:clipToPadding="true">
 
-        <!-- Seta decorativa superior direita (Figma 790:1913) -->
         <ImageView
             android:layout_width="140dp"
             android:layout_height="140dp"
@@ -28,7 +24,6 @@
             android:scaleType="fitCenter"
             android:src="@drawable/ic_cta_arrow_loop" />
 
-        <!-- Seta decorativa inferior esquerda (Figma 790:1916) -->
         <ImageView
             android:layout_width="110dp"
             android:layout_height="110dp"
@@ -39,7 +34,6 @@
             android:scaleType="fitCenter"
             android:src="@drawable/ic_cta_arrow_curve" />
 
-        <!-- Brilho suave atrás do mascote (Figma 790:1919) -->
         <View
             android:layout_width="170dp"
             android:layout_height="170dp"
@@ -48,7 +42,6 @@
             android:layout_marginBottom="-16dp"
             android:background="@drawable/bg_cta_glow" />
 
-        <!-- Mascote VOLTA à direita (Figma 790:1920: 98x162dp) -->
         <ImageView
             android:id="@+id/imgHeaderMascot"
             android:layout_width="104dp"
@@ -60,7 +53,6 @@
             android:scaleType="fitCenter"
             android:src="@drawable/mascote_volta" />
 
-        <!-- Conteúdo do Cabeçalho -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -70,7 +62,6 @@
             android:paddingEnd="24dp"
             android:paddingBottom="18dp">
 
-            <!-- Linha superior: Botão voltar translúcido + VOLTA IA + status online (Figma 790:1922..1929) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -155,7 +146,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Saudação principal (Figma 790:1930 e 790:1931) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -165,6 +155,7 @@
                 android:paddingEnd="108dp">
 
                 <TextView
+                    android:id="@+id/tvAssistantHello"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/font_poppins"
@@ -188,9 +179,6 @@
         </LinearLayout>
     </FrameLayout>
 
-    <!-- ========================================================================= -->
-    <!-- LISTA DE MENSAGENS (Figma 790:1932..1949)                                 -->
-    <!-- ========================================================================= -->
     <ScrollView
         android:id="@+id/scrollAssistant"
         android:layout_width="match_parent"
@@ -210,9 +198,6 @@
             android:paddingBottom="12dp" />
     </ScrollView>
 
-    <!-- ========================================================================= -->
-    <!-- CHIPS DE SUGESTÃO (Figma 790:1950, 790:1952)                              -->
-    <!-- ========================================================================= -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -279,9 +264,6 @@
         </LinearLayout>
     </HorizontalScrollView>
 
-    <!-- ========================================================================= -->
-    <!-- CAMPO DE ENTRADA + BOTÃO ENVIAR (Figma 790:1954 e 790:1959)               -->
-    <!-- ========================================================================= -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -320,10 +302,15 @@
                 android:textSize="14sp" />
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:id="@+id/btnMicAssistant"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:layout_marginStart="8dp"
-                android:importantForAccessibility="no"
+                android:padding="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Falar com o assistente"
                 android:src="@drawable/ic_mic_assistant" />
         </LinearLayout>
 

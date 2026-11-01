@@ -13,10 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Testes unitários para lógica do NotificationStore:
- * Deduplicação, contagem de não lidas, identificação de duplicatas e listeners.
- */
 public class NotificationStoreTest {
 
     @Test
@@ -92,6 +88,6 @@ public class NotificationStoreTest {
 
         NotificationStore.removeListener(listener);
         NotificationStore.notifyChange();
-        assertEquals(2, count.get()); // Não deve incrementar após remoção
+        assertEquals(2, count.get());
     }
 }

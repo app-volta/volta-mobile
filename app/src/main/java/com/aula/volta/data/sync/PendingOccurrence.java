@@ -1,9 +1,5 @@
 package com.aula.volta.data.sync;
 
-/**
- * Representa uma ocorrência registrada sem conexão de rede,
- * enfileirada para sincronização posterior com a API do VOLTA.
- */
 public class PendingOccurrence {
 
     private String localId;

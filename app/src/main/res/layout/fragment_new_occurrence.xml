@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Fluxo de Registro — Figma 851:3792 (12 · Registrar, 13 · Registrar · câmera, 14 · Registrar · foto anexada) -->
+
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/vf_bg">
 
-    <!-- Background oficial com fluidos e setas em marca d'água (Figma 851:3792) -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -14,7 +13,6 @@
         android:scaleType="fitXY"
         android:src="@drawable/bg_home_fluidos" />
 
-    <!-- Conteúdo principal do formulário (12 e 14) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -35,7 +33,6 @@
                 android:paddingEnd="20dp"
                 android:paddingBottom="16dp">
 
-                <!-- Botão Voltar (Sombra blur sem borda - Figma 851:3807) -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/btnBackRegister"
                     android:layout_width="40dp"
@@ -57,7 +54,6 @@
                         app:tint="#1B2430" />
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Título e Subtítulo (Figma 851:3810 / 851:3811) -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -77,7 +73,6 @@
                     android:textColor="@color/vf_text_secondary"
                     android:textSize="14sp" />
 
-                <!-- Progresso 1 de 2: duas barras arredondadas discretas (Figma 851:3812 / 851:3813) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="6dp"
@@ -100,13 +95,11 @@
                         android:background="@drawable/bg_step_track" />
                 </LinearLayout>
 
-                <!-- Card da Foto: Vazio (12) ou Anexado (14) -->
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="22dp">
 
-                    <!-- Estado Vazio: Borda tracejada verde (Figma 851:3814) -->
                     <LinearLayout
                         android:id="@+id/photoEmptyGroup"
                         android:layout_width="match_parent"
@@ -119,7 +112,6 @@
                         android:paddingEnd="20dp"
                         android:paddingBottom="24dp">
 
-                        <!-- Círculo da Câmera 64x64 verde claro perfeito (Figma 851:3815) -->
                         <com.google.android.material.card.MaterialCardView
                             android:layout_width="64dp"
                             android:layout_height="64dp"
@@ -159,7 +151,6 @@
                             android:textColor="@color/vf_text_secondary"
                             android:textSize="12.5sp" />
 
-                        <!-- Botões Câmera e Galeria (Figma 851:3821 / 851:3826) -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -208,7 +199,6 @@
                         </LinearLayout>
                     </LinearLayout>
 
-                    <!-- Estado Foto Anexada (Figma 14 · 851:3904) -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/photoPreviewGroup"
                         android:layout_width="match_parent"
@@ -230,7 +220,6 @@
                                 android:scaleType="centerCrop"
                                 android:src="@drawable/img_caixas_papelao" />
 
-                            <!-- Badge superior esquerdo: "Foto anexada" com checkmark simples (Figma 851:3947) -->
                             <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
@@ -261,7 +250,6 @@
                                     android:textStyle="bold" />
                             </LinearLayout>
 
-                            <!-- Botão inferior direito: "Trocar" -->
                             <LinearLayout
                                 android:id="@+id/btnRetakePhoto"
                                 android:layout_width="wrap_content"
@@ -297,7 +285,53 @@
                     </com.google.android.material.card.MaterialCardView>
                 </FrameLayout>
 
-                <!-- Campo Descrição (opcional) (Figma 851:3832 / 851:3833) -->
+                <LinearLayout
+                    android:id="@+id/cardSubmissionError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_error_card_banner"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_alert_triangle" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvSubmissionErrorTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/font_inter"
+                            android:text="Não conseguimos enviar"
+                            android:textColor="#E5484D"
+                            android:textSize="13.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvSubmissionErrorBody"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/font_inter"
+                            android:lineSpacingExtra="2dp"
+                            android:text="Sua foto e os dados continuam aqui. Confira a conexão e tente de novo."
+                            android:textColor="@color/volta_text_primary_light"
+                            android:textSize="12.5sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -324,7 +358,6 @@
                     android:textColorHint="#93AC9E"
                     android:textSize="14.5sp" />
 
-                <!-- Campo Localização (Figma 851:3835 / 851:3836) -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -382,7 +415,6 @@
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
-        <!-- Barra Inferior Fixa: Botão Enviar para análise (Figma 851:3849 / 851:3972) -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -409,7 +441,6 @@
         </FrameLayout>
     </LinearLayout>
 
-    <!-- Overlay Câmera / Viewfinder (Figma 851:3852 — 13 · Registrar · câmera) -->
     <FrameLayout
         android:id="@+id/cameraViewfinderOverlay"
         android:layout_width="match_parent"
@@ -419,7 +450,6 @@
         android:focusable="true"
         android:visibility="gone">
 
-        <!-- Barra Superior da Câmera -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -429,7 +459,6 @@
             android:paddingEnd="20dp"
             android:paddingBottom="16dp">
 
-            <!-- Fechar Câmera -->
             <FrameLayout
                 android:id="@+id/btnCameraClose"
                 android:layout_width="40dp"
@@ -447,7 +476,6 @@
                     android:src="@drawable/ic_close_white" />
             </FrameLayout>
 
-            <!-- Pill Central: "Enquadre o resíduo" -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -477,7 +505,6 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Flash -->
             <FrameLayout
                 android:id="@+id/btnCameraFlash"
                 android:layout_width="40dp"
@@ -496,7 +523,6 @@
             </FrameLayout>
         </RelativeLayout>
 
-        <!-- Viewfinder Central com Foto e Miras nos cantos -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -530,7 +556,6 @@
                         android:src="@drawable/img_caixas_papelao"
                         android:visibility="gone" />
 
-                    <!-- Corner Brackets (Miras) -->
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
@@ -562,7 +587,6 @@
                         android:rotation="180"
                         android:src="@drawable/ic_camera_mira" />
 
-                    <!-- Dica inferior no visor -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -574,14 +598,13 @@
                         android:paddingTop="5dp"
                         android:paddingEnd="12dp"
                         android:paddingBottom="5dp"
-                        android:text="IA detectará volume e classe"
+                        android:text="IA detectará material e volume"
                         android:textColor="#E0E0E0"
                         android:textSize="11sp" />
                 </FrameLayout>
             </com.google.android.material.card.MaterialCardView>
         </FrameLayout>
 
-        <!-- Barra Inferior de Disparo da Câmera -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="120dp"
@@ -589,7 +612,6 @@
             android:paddingStart="36dp"
             android:paddingEnd="36dp">
 
-            <!-- Botão Galeria / Miniatura -->
             <FrameLayout
                 android:id="@+id/btnCameraPickGallery"
                 android:layout_width="46dp"
@@ -608,7 +630,6 @@
                     app:tint="@color/white" />
             </FrameLayout>
 
-            <!-- Botão Disparador (Shutter) -->
             <FrameLayout
                 android:id="@+id/btnCameraShutter"
                 android:layout_width="76dp"
@@ -625,7 +646,6 @@
                     android:background="@drawable/bg_camera_shutter_inner" />
             </FrameLayout>
 
-            <!-- Botão Inverter Câmera -->
             <FrameLayout
                 android:id="@+id/btnCameraFlip"
                 android:layout_width="46dp"

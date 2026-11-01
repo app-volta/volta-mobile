@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Chip de sugestão inferior do Assistente (Figma 790:1950 / 790:1952: #FFFFFF, borda 1.3dp #CDEBDC, raio 18dp) -->
+
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <solid android:color="#FFFFFF" />

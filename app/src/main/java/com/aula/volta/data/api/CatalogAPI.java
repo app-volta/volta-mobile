@@ -9,9 +9,6 @@ import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
 
-/**
- * Endpoints do Catálogo Oficial de Áreas e Tipos de Resíduo da API VOLTA (https://api.54.210.1.34.sslip.io).
- */
 public interface CatalogAPI {
 
     @Headers({"Accept: application/json; charset=utf-8"})

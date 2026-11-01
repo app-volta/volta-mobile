@@ -19,10 +19,6 @@ import com.aula.volta.util.BottomSheetImmersiveHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
-/**
- * BottomSheetDialogFragment de adicionar observação — Figma 17c (908:6103).
- * Ancorado na base da tela, com atalhos de texto totalmente neutros (sem cor).
- */
 public class AddObservationSheet extends BottomSheetDialogFragment {
 
     public interface OnObservationSavedListener {
@@ -119,7 +115,6 @@ public class AddObservationSheet extends BottomSheetDialogFragment {
         String currentText = etInput != null && etInput.getText() != null ? etInput.getText().toString() : "";
         syncShortcutStyles(currentText, shortcutWet, shortcutBlocked, shortcutEpi);
 
-        // Fechar e Cancelar
         View btnClose = view.findViewById(R.id.btnCloseObsSheet);
         if (btnClose != null) {
             btnClose.setOnClickListener(v -> dismiss());
@@ -130,7 +125,6 @@ public class AddObservationSheet extends BottomSheetDialogFragment {
             btnCancel.setOnClickListener(v -> dismiss());
         }
 
-        // Salvar
         View btnSave = view.findViewById(R.id.btnSaveObservation);
         if (btnSave != null) {
             btnSave.setOnClickListener(v -> {
@@ -150,14 +144,14 @@ public class AddObservationSheet extends BottomSheetDialogFragment {
             String text = etInput.getText() != null ? etInput.getText().toString().trim() : "";
             boolean contains = text.toLowerCase().contains(phrase.toLowerCase());
             if (!contains) {
-                // Adiciona o atalho
+
                 if (text.isEmpty()) {
                     etInput.setText(phrase + ".");
                 } else {
                     etInput.setText(text + " " + phrase + ".");
                 }
             } else {
-                // Remove o atalho
+
                 String replaced = text
                         .replaceAll("(?i)\\b" + java.util.regex.Pattern.quote(phrase) + "\\.?", "")
                         .replaceAll("  +", " ")
@@ -183,11 +177,11 @@ public class AddObservationSheet extends BottomSheetDialogFragment {
     private void paintNeutralChip(TextView chip, boolean active) {
         if (chip == null) return;
         if (active) {
-            // Estilo ativo neutro: cinza suave com borda slate e texto escuro
+
             chip.setBackgroundResource(R.drawable.bg_shortcut_selected_neutral);
             chip.setTextColor(0xFF0F172A);
         } else {
-            // Estilo inativo neutro: fundo branco com borda suave e texto cinza secundário
+
             chip.setBackgroundResource(R.drawable.bg_shortcut_unselected);
             chip.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
         }

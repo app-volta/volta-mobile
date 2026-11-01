@@ -15,9 +15,6 @@ import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 
-/**
- * Endpoints de autenticação e gestão de usuários da API VOLTA (https://api.54.210.1.34.sslip.io).
- */
 public interface AuthAPI {
 
     @Headers({
@@ -51,4 +48,8 @@ public interface AuthAPI {
     @Headers({"Accept: application/json; charset=utf-8"})
     @GET("users")
     Call<List<UserResponseDTO>> getUsers();
+
+    @Headers({"Accept: application/json; charset=utf-8"})
+    @GET("companies/me")
+    Call<com.aula.volta.data.model.CompanyResponseDTO> getMyCompany();
 }

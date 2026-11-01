@@ -19,10 +19,15 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Typeface;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -58,11 +63,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Perfil — Figma 790:3470 (header com dados do colaborador, sobre você, configurações, sair).
- * Números vêm do mesmo GET /reports/summary da Home/Relatórios.
- * Informações de nome, e-mail e setor refletem a sessão ativa com fallbacks canônicos.
- */
 public class ProfileFragment extends Fragment {
 
     private static final String PREFS_REPORTS = "cache_reports";
@@ -81,6 +81,7 @@ public class ProfileFragment extends Fragment {
     private TextView tvOccurrences;
     private TextView tvRecovered;
     private TextView tvNotifCount;
+    private Bitmap currentProfileBitmap;
 
     private File cameraTempFile;
     private ActivityResultLauncher<Uri> takePictureLauncher;
@@ -88,14 +89,13 @@ public class ProfileFragment extends Fragment {
     private ActivityResultLauncher<String> requestCameraPermissionLauncher;
 
     public ProfileFragment() {
-        // Construtor vazio obrigatório
+
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Launcher de captura de foto da câmera
         takePictureLauncher = registerForActivityResult(
                 new ActivityResultContracts.TakePicture(), success -> {
                     if (success && cameraTempFile != null && cameraTempFile.exists()) {
@@ -103,7 +103,6 @@ public class ProfileFragment extends Fragment {
                     }
                 });
 
-        // Launcher de seleção de foto da galeria
         pickImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(), uri -> {
                     if (uri != null) {
@@ -114,7 +113,6 @@ public class ProfileFragment extends Fragment {
                     }
                 });
 
-        // Launcher de permissão de câmera
         requestCameraPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(), isGranted -> {
                     if (isGranted) {
@@ -157,34 +155,35 @@ public class ProfileFragment extends Fragment {
 
         View.OnClickListener openPhotoPicker = v -> showPhotoOptionsSheet();
         if (avatarContainer != null) {
-            avatarContainer.setOnClickListener(openPhotoPicker);
+            avatarContainer.setOnClickListener(v -> {
+                if (hasActivePhoto()) {
+                    showFullPhotoDialog();
+                } else {
+                    showPhotoOptionsSheet();
+                }
+            });
         }
         if (imgProfileCameraBadge != null) {
             imgProfileCameraBadge.setOnClickListener(openPhotoPicker);
         }
-        // Navegação para Editar Perfil (Figma 1721:1264)
+
         View btnEdit = view.findViewById(R.id.btnEditProfile);
         if (btnEdit != null) {
             btnEdit.setOnClickListener(v ->
                     Navigation.findNavController(v).navigate(R.id.nav_edit_profile));
         }
 
-        // Navegação para Notificações (Figma 1721:1460)
         view.findViewById(R.id.rowProfileNotifications).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.nav_notification_settings));
 
-        // Navegação para Minha Unidade (Figma 1721:1606)
         view.findViewById(R.id.rowProfileUnit).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.nav_my_unit));
 
-        // Assistente IA
         view.findViewById(R.id.rowProfileHelp).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.nav_assistant));
 
-        // Diálogo Sair da Conta (Figma 1721:1709)
         view.findViewById(R.id.btnLogout).setOnClickListener(v -> showLogoutDialog());
 
-        // Listener de resultados ao retornar de Editar Perfil ou Alterar Senha (Figma 1723:1366 e 1723:1460)
         getParentFragmentManager().setFragmentResultListener("profile_result", getViewLifecycleOwner(), (requestKey, result) -> {
             if (result.getBoolean("profileSaved", false)) {
                 bindUserData();
@@ -205,7 +204,6 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-        // Nome e Iniciais
         String name = SessionManager.name(requireContext());
         if (name == null || name.trim().isEmpty()) {
             name = "Colaborador";
@@ -225,7 +223,6 @@ public class ProfileFragment extends Fragment {
             tvProfileInitials.setText(initials);
         }
 
-        // E-mail
         String email = SessionManager.email(requireContext());
         if (email == null || email.trim().isEmpty()) {
             email = getString(R.string.profile_email_value);
@@ -234,10 +231,8 @@ public class ProfileFragment extends Fragment {
             tvProfileEmail.setText(email);
         }
 
-        // Foto de Perfil (carrega do armazenamento local ou Cloudinary)
         loadProfilePhoto();
 
-        // Setor / Unidade
         String sector = SessionManager.sector(requireContext());
         if (sector == null || sector.trim().isEmpty()) {
             sector = getString(R.string.profile_unit);
@@ -246,18 +241,40 @@ public class ProfileFragment extends Fragment {
             tvProfileUnit.setText(sector);
         }
         if (tvProfileUnitRow != null) {
-            String shortSector = sector;
-            if (shortSector.contains("—")) {
-                shortSector = shortSector.split("—")[0].trim();
-            } else if (shortSector.contains("·")) {
-                shortSector = shortSector.split("·")[0].trim();
+            String companyName = SessionManager.getCompanyName(requireContext());
+            if (companyName != null && !companyName.trim().isEmpty()) {
+                tvProfileUnitRow.setText(companyName.trim());
+            } else {
+                String shortSector = sector;
+                if (shortSector.contains("—")) {
+                    shortSector = shortSector.split("—")[0].trim();
+                } else if (shortSector.contains("·")) {
+                    shortSector = shortSector.split("·")[0].trim();
+                }
+                tvProfileUnitRow.setText(shortSector);
             }
-            tvProfileUnitRow.setText(shortSector);
         }
 
-        // Atualização em background com os dados do usuário autenticado na API do banco (GET /users/me)
         try {
             AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+            authApi.getMyCompany().enqueue(new Callback<com.aula.volta.data.model.CompanyResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<com.aula.volta.data.model.CompanyResponseDTO> call,
+                                       @NonNull Response<com.aula.volta.data.model.CompanyResponseDTO> compResp) {
+                    if (!isAdded()) return;
+                    if (compResp.isSuccessful() && compResp.body() != null) {
+                        com.aula.volta.data.model.CompanyResponseDTO c = compResp.body();
+                        SessionManager.saveCompany(requireContext(), c.getName(), c.getFormattedCnpj(), c.getAddress());
+                        if (tvProfileUnitRow != null && c.getName() != null && !c.getName().trim().isEmpty()) {
+                            tvProfileUnitRow.setText(c.getName().trim());
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<com.aula.volta.data.model.CompanyResponseDTO> call, @NonNull Throwable t) {
+                }
+            });
             authApi.getMe().enqueue(new Callback<UserResponseDTO>() {
                 @Override
                 public void onResponse(@NonNull Call<UserResponseDTO> call,
@@ -290,7 +307,7 @@ public class ProfileFragment extends Fragment {
                             if (tvProfileUnit != null) {
                                 tvProfileUnit.setText(u.getPosition());
                             }
-                            if (tvProfileUnitRow != null) {
+                            if (tvProfileUnitRow != null && SessionManager.getCompanyName(requireContext()).isEmpty()) {
                                 tvProfileUnitRow.setText(u.getPosition());
                             }
                         }
@@ -325,9 +342,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    /**
-     * Exibe o BottomSheet com opções para tirar foto, escolher da galeria ou remover foto atual.
-     */
     private void showPhotoOptionsSheet() {
         if (!isAdded()) return;
         boolean hasPhoto = false;
@@ -398,11 +412,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    /**
-     * Processa a imagem (EXIF + Center Crop 1:1 quadrado + redimensionamento 512x512),
-     * atualiza o avatar imediatamente na tela e faz o upload assíncrono para o Cloudinary
-     * usando o preset Perfil-Photo e pasta Perfil/Assets/Image.
-     */
     private void processAndSaveProfilePhoto(File sourceFile) {
         if (sourceFile == null || !sourceFile.exists()) {
             return;
@@ -414,7 +423,6 @@ public class ProfileFragment extends Fragment {
                 return;
             }
 
-            // Corrige orientação EXIF se necessário
             try {
                 ExifInterface exif = new ExifInterface(sourceFile.getAbsolutePath());
                 int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
@@ -430,14 +438,12 @@ public class ProfileFragment extends Fragment {
             } catch (Exception ignored) {
             }
 
-            // Recorte quadrado 1:1 centralizado (Center Crop)
             int minDim = Math.min(bitmap.getWidth(), bitmap.getHeight());
             int cropX = (bitmap.getWidth() - minDim) / 2;
             int cropY = (bitmap.getHeight() - minDim) / 2;
             Bitmap square = Bitmap.createBitmap(bitmap, cropX, cropY, minDim, minDim);
             Bitmap finalAvatar = Bitmap.createScaledBitmap(square, 512, 512, true);
 
-            // Salva permanentemente no diretório de arquivos do app com isolamento por usuário
             String myEmail = SessionManager.email(requireContext());
             String cleanEmail = myEmail != null ? myEmail.trim().toLowerCase(Locale.ROOT) : "";
             File avatarFile = !cleanEmail.isEmpty()
@@ -447,17 +453,14 @@ public class ProfileFragment extends Fragment {
                 finalAvatar.compress(Bitmap.CompressFormat.JPEG, 90, fos);
             }
 
-            // Grava caminho local na sessão
             SessionManager.saveProfilePhotoLocal(requireContext(), myEmail, avatarFile.getAbsolutePath());
 
-            // Atualiza UI instantaneamente com avatar circular sem atraso
             displayCircularProfileBitmap(finalAvatar);
 
             Toast.makeText(requireContext(), R.string.profile_photo_uploading, Toast.LENGTH_SHORT).show();
 
             final Context appContext = requireContext().getApplicationContext();
 
-            // Dispara upload para o Cloudinary (preset Perfil-Photo / pasta Perfil/Assets/Image / public_id determinístico)
             CloudinaryUploader.uploadProfileImage(appContext, avatarFile, myEmail, new CloudinaryUploader.UploadCallback() {
                 @Override
                 public void onSuccess(String remoteUrl, String publicId) {
@@ -465,7 +468,6 @@ public class ProfileFragment extends Fragment {
                     SessionManager.saveProfilePhotoLocal(appContext, myEmail, avatarFile.getAbsolutePath());
                     Log.i(TAG, "Foto de perfil enviada ao Cloudinary com sucesso: " + remoteUrl);
 
-                    // 1. Salva no banco de dados oficial via PUT /users/me (API Geral)
                     try {
                         AuthAPI authApi = ApiClient.get(appContext).create(AuthAPI.class);
                         JsonObject body = new JsonObject();
@@ -515,6 +517,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void displayCircularProfileBitmap(Bitmap bmp) {
+        currentProfileBitmap = bmp;
         if (imgProfilePhoto != null && isAdded()) {
             RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
             circular.setCircular(true);
@@ -526,7 +529,106 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    private boolean hasActivePhoto() {
+        if (!isAdded()) return false;
+        if (currentProfileBitmap != null) return true;
+        String localPath = SessionManager.getProfilePhotoLocal(requireContext());
+        if (localPath != null && !localPath.isEmpty() && new File(localPath).exists()) {
+            return true;
+        }
+        String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
+        return remoteUrl != null && !remoteUrl.isEmpty() && remoteUrl.startsWith("http");
+    }
+
+    private void showFullPhotoDialog() {
+        if (!isAdded()) return;
+        android.app.Dialog dialog = new android.app.Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+
+        FrameLayout root = new FrameLayout(requireContext());
+        root.setBackgroundColor(Color.parseColor("#E6000000"));
+
+        ImageView ivFull = new ImageView(requireContext());
+        FrameLayout.LayoutParams ivParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        ivFull.setLayoutParams(ivParams);
+        ivFull.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        ivFull.setPadding(32, 90, 32, 140);
+
+        if (currentProfileBitmap != null) {
+            ivFull.setImageBitmap(currentProfileBitmap);
+        } else {
+            String localPath = SessionManager.getProfilePhotoLocal(requireContext());
+            if (localPath != null && new File(localPath).exists()) {
+                Bitmap bmp = BitmapFactory.decodeFile(localPath);
+                if (bmp != null) {
+                    currentProfileBitmap = bmp;
+                    ivFull.setImageBitmap(bmp);
+                }
+            } else {
+                String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
+                if (remoteUrl != null && remoteUrl.startsWith("http")) {
+                    CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new CloudinaryUploader.BitmapCallback() {
+                        @Override
+                        public void onBitmapLoaded(Bitmap bmp) {
+                            if (dialog.isShowing() && bmp != null && isAdded()) {
+                                requireActivity().runOnUiThread(() -> {
+                                    currentProfileBitmap = bmp;
+                                    ivFull.setImageBitmap(bmp);
+                                });
+                            }
+                        }
+                        @Override
+                        public void onError(Exception e) {}
+                    });
+                }
+            }
+        }
+        root.addView(ivFull);
+
+        ImageView btnClose = new ImageView(requireContext());
+        int btnSize = (int) (44 * getResources().getDisplayMetrics().density);
+        FrameLayout.LayoutParams closeParams = new FrameLayout.LayoutParams(btnSize, btnSize);
+        closeParams.gravity = Gravity.TOP | Gravity.END;
+        closeParams.setMargins(0, (int) (36 * getResources().getDisplayMetrics().density),
+                (int) (20 * getResources().getDisplayMetrics().density), 0);
+        btnClose.setLayoutParams(closeParams);
+        int pad = (int) (10 * getResources().getDisplayMetrics().density);
+        btnClose.setPadding(pad, pad, pad, pad);
+        btnClose.setImageResource(R.drawable.ic_close);
+        btnClose.setColorFilter(Color.WHITE);
+        btnClose.setBackgroundResource(R.drawable.bg_circle_camera_badge);
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        root.addView(btnClose);
+
+        TextView btnChange = new TextView(requireContext());
+        FrameLayout.LayoutParams changeParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                (int) (48 * getResources().getDisplayMetrics().density));
+        changeParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        changeParams.setMargins(0, 0, 0, (int) (36 * getResources().getDisplayMetrics().density));
+        btnChange.setLayoutParams(changeParams);
+        btnChange.setGravity(Gravity.CENTER);
+        btnChange.setText("Alterar foto");
+        btnChange.setTextColor(Color.WHITE);
+        btnChange.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
+        btnChange.setTypeface(null, Typeface.BOLD);
+        btnChange.setPadding((int) (28 * getResources().getDisplayMetrics().density), 0,
+                (int) (28 * getResources().getDisplayMetrics().density), 0);
+        btnChange.setBackgroundResource(R.drawable.bg_button_gradient);
+        btnChange.setOnClickListener(v -> {
+            dialog.dismiss();
+            showPhotoOptionsSheet();
+        });
+        root.addView(btnChange);
+
+        dialog.setContentView(root);
+        dialog.show();
+    }
+
     private void removeProfilePhoto() {
+        currentProfileBitmap = null;
         Context appContext = requireContext().getApplicationContext();
         String email = SessionManager.email(appContext);
         String cleanEmail = email != null ? email.trim().toLowerCase(Locale.ROOT) : "";
@@ -549,7 +651,6 @@ public class ProfileFragment extends Fragment {
             tvProfileInitials.setVisibility(View.VISIBLE);
         }
 
-        // Remove do banco oficial via PUT /users/me
         try {
             AuthAPI authApi = ApiClient.get(appContext).create(AuthAPI.class);
             JsonObject body = new JsonObject();
@@ -582,7 +683,6 @@ public class ProfileFragment extends Fragment {
     private void loadProfilePhoto() {
         if (!isAdded()) return;
 
-        // 1. Prioriza imagem local em cache (associada ao usuário ativo)
         String email = SessionManager.email(requireContext());
         String cleanEmail = email != null ? email.trim().toLowerCase(Locale.ROOT) : "";
         String localPath = SessionManager.getProfilePhotoLocal(requireContext());
@@ -604,7 +704,6 @@ public class ProfileFragment extends Fragment {
             }
         }
 
-        // 2. Se houver URL do Cloudinary (ou determinística), faz download via CloudinaryUploader.fetchRemoteBitmap
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
             final Context appContext = requireContext().getApplicationContext();
@@ -623,6 +722,7 @@ public class ProfileFragment extends Fragment {
                     } catch (Exception ignored) {
                     }
                     if (isAdded()) {
+                        currentProfileBitmap = bmp;
                         displayCircularProfileBitmap(bmp);
                     }
                 }
@@ -630,9 +730,18 @@ public class ProfileFragment extends Fragment {
                 @Override
                 public void onError(Exception e) {
                     Log.w(TAG, "Falha ao carregar foto remota do Cloudinary: " + e.getMessage());
+                    if (isAdded()) {
+                        requireActivity().runOnUiThread(() -> {
+                            if (currentProfileBitmap == null) {
+                                if (imgProfilePhoto != null) imgProfilePhoto.setVisibility(View.GONE);
+                                if (tvProfileInitials != null) tvProfileInitials.setVisibility(View.VISIBLE);
+                            }
+                        });
+                    }
                 }
             });
         } else {
+            currentProfileBitmap = null;
             if (imgProfilePhoto != null) {
                 imgProfilePhoto.setVisibility(View.GONE);
             }
@@ -721,10 +830,10 @@ public class ProfileFragment extends Fragment {
                 applyNumbers(com.google.gson.JsonParser.parseString(json).getAsJsonObject());
                 return;
             } catch (Exception ignored) {
-                // mantém padrão
+
             }
         }
-        // Dados padrão do Figma 790:3470
+
         JsonObject fallback = new JsonObject();
         fallback.addProperty("abertas", 6);
         fallback.addProperty("resolvidas", 46);
@@ -746,7 +855,7 @@ public class ProfileFragment extends Fragment {
                 kg = summary.get("kg_reciclados").getAsInt();
             }
         } catch (Exception ignored) {
-            // usa zeros
+
         }
         if (total == 0) {
             total = 52;
@@ -771,25 +880,14 @@ public class ProfileFragment extends Fragment {
         if (!isAdded() || tvNotifCount == null) {
             return;
         }
-        int unread = NotificationStore.unreadCount(notifications);
-        if (unread > 0) {
-            tvNotifCount.setVisibility(View.VISIBLE);
-            tvNotifCount.setText(getString(R.string.notifications_new, unread));
-        } else {
-            // Em conformidade com o mockup Figma 790:3533 ("3 novas")
-            tvNotifCount.setVisibility(View.VISIBLE);
-            tvNotifCount.setText("3 novas");
-        }
+        tvNotifCount.setVisibility(View.GONE);
     }
 
     private void showLogoutDialog() {
-        // Diálogo customizado conforme Figma 1721:1709
+
         LogoutDialog.newInstance().show(getChildFragmentManager(), "logout_dialog");
     }
 
-    /**
-     * Exibe o Toast animado na parte inferior da tela (Figma 1723:1366 e 1723:1460).
-     */
     private void showFeedbackToast(String title, String subtitle) {
         View toast = getView() != null ? getView().findViewById(R.id.toastProfileFeedback) : null;
         if (toast == null) return;

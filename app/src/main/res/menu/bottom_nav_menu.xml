@@ -8,7 +8,7 @@
         android:id="@+id/nav_cooperatives"
         android:icon="@drawable/ic_nav_coops_figma"
         android:title="@string/nav_coops" />
-    <!-- placeholder central para espaçar o FAB - invisível, nunca selecionável -->
+
     <item
         android:id="@+id/nav_placeholder"
         android:icon="@android:color/transparent"

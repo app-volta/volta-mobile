@@ -45,19 +45,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Assistente VOLTA — Figma 790:1911.
- *
- * Conectado à API do Chatbot QA (https://chat.qa.54.210.1.34.sslip.io) e
- * API de Autenticação QA (https://api.qa.54.210.1.34.sslip.io/auth/login):
- * 1. POST /auth/login -> obtém JWT Bearer Token
- * 2. POST /v1/sessions -> cria e recupera session_id
- * 3. GET /v1/sessions/{session_id}/history -> recupera histórico da sessão
- * 4. POST /v1/chat -> envia mensagem, exibe response.answer, citations, recommended_actions e validação humana
- * 5. POST /v1/sessions/{session_id}/close -> encerra sessão
- * 6. Fallback inteligente local se o servidor QA estiver temporariamente indisponível (503/offline),
- *    preservando 100% do layout visual do Figma 790:1911.
- */
 public class AssistantFragment extends Fragment {
 
     private static final String TAG = "AssistantFragment";
@@ -70,6 +57,18 @@ public class AssistantFragment extends Fragment {
 
     private String currentSessionId;
     private boolean isSending;
+
+    private final androidx.activity.result.ActivityResultLauncher<android.content.Intent> speechLauncher =
+            registerForActivityResult(new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    java.util.ArrayList<String> matches = result.getData().getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+                    if (matches != null && !matches.isEmpty() && input != null) {
+                        String spokenText = matches.get(0);
+                        input.setText(spokenText);
+                        input.setSelection(spokenText.length());
+                    }
+                }
+            });
 
     public AssistantFragment() {
     }
@@ -92,7 +91,33 @@ public class AssistantFragment extends Fragment {
         view.findViewById(R.id.btnBackAssistant).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
-        // Conversa inicial exatamente como no Figma 790:1911 (intro + pergunta isopor + resposta com ações no balão)
+        TextView tvHello = view.findViewById(R.id.tvAssistantHello);
+        if (tvHello != null && getContext() != null) {
+            String fullName = SessionManager.name(requireContext());
+            if (fullName != null && !fullName.trim().isEmpty()) {
+                String firstName = fullName.trim().split("\\s+")[0];
+                tvHello.setText("Oi, " + firstName + "!");
+            }
+        }
+
+        View btnMic = view.findViewById(R.id.btnMicAssistant);
+        if (btnMic != null) {
+            btnMic.setOnClickListener(v -> {
+                try {
+                    android.content.Intent intent = new android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                            android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "pt-BR");
+                    intent.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Fale com o Assistente VOLTA...");
+                    speechLauncher.launch(intent);
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(requireContext(),
+                            "Reconhecimento de voz indisponível no dispositivo",
+                            android.widget.Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         renderDefaultFigmaConversation();
 
         View chipIsopor = view.findViewById(R.id.chipSuggestIsopor);
@@ -121,7 +146,6 @@ public class AssistantFragment extends Fragment {
             }
         });
 
-        // Inicializa autenticação e sessão com o Chatbot QA em segundo plano
         initChatSession();
     }
 
@@ -135,9 +159,6 @@ public class AssistantFragment extends Fragment {
         addBot(getString(R.string.assistant_a_isopor));
     }
 
-    /**
-     * Inicializa a sessão com o Chatbot QA. Se não houver token JWT salvo, autentica primeiro.
-     */
     private void initChatSession() {
         if (!SessionManager.hasToken(requireContext())) {
             authenticateChatbot();
@@ -150,7 +171,7 @@ public class AssistantFragment extends Fragment {
         String email = SessionManager.email(requireContext());
         String password = SessionManager.password(requireContext());
 
-        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email) || email.contains("volta.mock")) {
+        if (email.isEmpty() || "breno@volta.com".equalsIgnoreCase(email)) {
             email = ApiClient.EMPLOYEE_EMAIL;
             password = ApiClient.EMPLOYEE_PASSWORD;
         } else if (password.isEmpty() || "1234".equals(password)) {
@@ -196,9 +217,6 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    /**
-     * Cria uma nova sessão no Chatbot QA (POST /v1/sessions).
-     */
     private void createNewSession() {
         ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
         api.createSession().enqueue(new Callback<CreateSessionResponse>() {
@@ -224,9 +242,6 @@ public class AssistantFragment extends Fragment {
         });
     }
 
-    /**
-     * Carrega o histórico da sessão existente (GET /v1/sessions/{session_id}/history).
-     */
     private void loadSessionHistory(String sessionId) {
         ChatbotAPI api = ChatbotClient.get(requireContext()).create(ChatbotAPI.class);
         api.getHistory(sessionId).enqueue(new Callback<JsonElement>() {
@@ -294,9 +309,6 @@ public class AssistantFragment extends Fragment {
         return false;
     }
 
-    /**
-     * Encerra a sessão ativa no Chatbot QA (POST /v1/sessions/{session_id}/close) e cria uma nova.
-     */
     public void closeAndRestartSession() {
         if (currentSessionId != null && !currentSessionId.trim().isEmpty()) {
             final String sessionToClose = currentSessionId;
@@ -325,9 +337,6 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    /**
-     * Envia pergunta do usuário ao Chatbot QA (POST /v1/chat) com fallback resiliente.
-     */
     private void ask(String text) {
         if (text == null || text.trim().isEmpty()) {
             return;
@@ -453,7 +462,6 @@ public class AssistantFragment extends Fragment {
         }
     }
 
-    /** Fallback inteligente por palavras-chave caso o servidor QA retorne 503/offline. */
     private String answerFor(String text) {
         String q = text.toLowerCase(new Locale("pt", "BR"));
         if (q.contains("isopor") || q.contains("eps")) {
@@ -490,7 +498,7 @@ public class AssistantFragment extends Fragment {
                 }
             }
         } catch (Exception ignored) {
-            // usa fallback
+
         }
         return 1147;
     }
@@ -513,7 +521,6 @@ public class AssistantFragment extends Fragment {
         rowParams.bottomMargin = dp(6);
         row.setLayoutParams(rowParams);
 
-        // Mascote avatar à esquerda alinhado na base do balão (Figma 790:1932 e 790:1937: 28x46dp)
         ImageView mascot = new ImageView(requireContext());
         mascot.setImageResource(R.drawable.mascote_volta);
         mascot.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -522,7 +529,6 @@ public class AssistantFragment extends Fragment {
         mascot.setLayoutParams(mascotParams);
         row.addView(mascot);
 
-        // Balão branco com borda #DCEFE3 (Figma 790:1933 / 790:1938: 300dp largura)
         LinearLayout bubbleBox = new LinearLayout(requireContext());
         bubbleBox.setOrientation(LinearLayout.VERTICAL);
         bubbleBox.setBackgroundResource(R.drawable.bg_assistant_bot_bubble);
@@ -545,7 +551,6 @@ public class AssistantFragment extends Fragment {
         }
         bubbleBox.addView(tv);
 
-        // Badge de validação humana retornado pelo Chatbot QA (requires_human_validation)
         if (requiresHumanValidation) {
             TextView tvValidation = new TextView(requireContext());
             tvValidation.setText(getString(R.string.chatbot_human_validation_badge));
@@ -561,7 +566,6 @@ public class AssistantFragment extends Fragment {
             bubbleBox.addView(tvValidation);
         }
 
-        // Citações retornadas pelo Chatbot QA (response.citations)
         if (citations != null && !citations.isEmpty()) {
             TextView tvCitations = new TextView(requireContext());
             tvCitations.setText("📚 Fontes consultadas: " + citations.size() + " referências");
@@ -577,7 +581,6 @@ public class AssistantFragment extends Fragment {
             bubbleBox.addView(tvCitations);
         }
 
-        // Ações recomendadas retornadas pelo Chatbot QA (response.recommended_actions)
         if (recommendedActions != null && !recommendedActions.isEmpty()) {
             LinearLayout recCol = new LinearLayout(requireContext());
             recCol.setOrientation(LinearLayout.VERTICAL);
@@ -600,7 +603,6 @@ public class AssistantFragment extends Fragment {
             bubbleBox.addView(recCol);
         }
 
-        // Ações contextuais DENTRO do balão (Figma 790:1940 e 790:1945)
         if (text != null && (text.contains("Isopor") || text.contains("EPS"))) {
             LinearLayout actionsRow = new LinearLayout(requireContext());
             actionsRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -632,7 +634,6 @@ public class AssistantFragment extends Fragment {
         scrollToBottom();
     }
 
-    /** Pill interna do balão (#E2F7EC, 30dp altura, ícone 13dp + texto 12sp bold #0E7C48) */
     private View actionPill(int iconRes, String label) {
         LinearLayout pill = new LinearLayout(requireContext());
         pill.setOrientation(LinearLayout.HORIZONTAL);

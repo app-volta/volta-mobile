@@ -8,10 +8,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Testes unitários para as regras de validação e medidor de força do fluxo de autenticação.
- * Valida diretamente a classe de produção AuthValidator.
- */
 public class AuthValidationTest {
 
     @Test

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Bottom Sheet Adicionar Observação — Figma 17c (908:6103) -->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -11,7 +11,6 @@
     android:paddingEnd="20dp"
     android:paddingBottom="24dp">
 
-    <!-- Handle do Bottom Sheet -->
     <View
         android:layout_width="40dp"
         android:layout_height="4dp"
@@ -19,7 +18,6 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_step_track" />
 
-    <!-- Cabeçalho: Título + Subtítulo + Fechar -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -72,7 +70,6 @@
         </FrameLayout>
     </RelativeLayout>
 
-    <!-- Campo de Texto com Borda Verde e Contador (Figma 908:6103) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -109,7 +106,6 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- Atalhos rápidos -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -174,7 +170,6 @@
         </LinearLayout>
     </HorizontalScrollView>
 
-    <!-- Card Anexar foto (Figma 908:6103) -->
     <LinearLayout
         android:id="@+id/cardAttachPhotoObs"
         android:layout_width="match_parent"
@@ -233,7 +228,6 @@
             app:tint="@color/vf_hint" />
     </LinearLayout>
 
-    <!-- Linha de Visibilidade (Ícone de olho) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -257,7 +251,6 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- Linha do Mascote Voltinha -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -281,14 +274,12 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Botão Cancelar mantido invisível para compatibilidade com código existente -->
     <View
         android:id="@+id/btnCancelObservation"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:visibility="gone" />
 
-    <!-- Botão Principal: Salvar observação (Figma 908:6103) -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSaveObservation"
         android:layout_width="match_parent"
