@@ -236,6 +236,12 @@ public final class OccurrenceFilter {
                     return true;
                 }
             }
+
+            if ("RECUSADA".equals(f) || "REJEITADA".equals(f)) {
+                if (s.contains("RECUSAD") || s.contains("REJECT") || s.contains("REJEITAD")) {
+                    return true;
+                }
+            }
         }
         return false;
     }

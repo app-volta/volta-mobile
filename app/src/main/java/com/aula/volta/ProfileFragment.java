@@ -715,6 +715,9 @@ public class ProfileFragment extends Fragment {
         }
 
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
+        if ((remoteUrl == null || remoteUrl.isEmpty()) && !cleanEmail.isEmpty()) {
+            remoteUrl = CloudinaryUploader.getDeterministicProfileUrl(cleanEmail);
+        }
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
             final Context appContext = requireContext().getApplicationContext();
             CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new CloudinaryUploader.BitmapCallback() {

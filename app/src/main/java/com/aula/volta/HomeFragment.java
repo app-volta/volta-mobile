@@ -372,6 +372,9 @@ public class HomeFragment extends Fragment {
         }
 
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
+        if ((remoteUrl == null || remoteUrl.isEmpty()) && !cleanEmail.isEmpty()) {
+            remoteUrl = com.aula.volta.data.upload.CloudinaryUploader.getDeterministicProfileUrl(cleanEmail);
+        }
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
             final Context appContext = requireContext().getApplicationContext();
             com.aula.volta.data.upload.CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new com.aula.volta.data.upload.CloudinaryUploader.BitmapCallback() {

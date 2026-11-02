@@ -58,6 +58,10 @@ public class NewOccurrenceFragment extends Fragment {
     private LinearLayout photoEmptyGroup;
     private View photoPreviewGroup;
     private ImageView imgPhotoPreview;
+    private View badgePhotoRequired;
+    private TextView tvPhotoHint;
+    private View bannerPhotoRequired;
+    private androidx.core.widget.NestedScrollView registerScrollView;
     private MaterialButton btnSendAnalysis;
     private View cardSubmissionError;
     private TextView tvSector;
@@ -154,6 +158,10 @@ public class NewOccurrenceFragment extends Fragment {
         photoEmptyGroup = view.findViewById(R.id.photoEmptyGroup);
         photoPreviewGroup = view.findViewById(R.id.photoPreviewGroup);
         imgPhotoPreview = view.findViewById(R.id.imgPhotoPreview);
+        badgePhotoRequired = view.findViewById(R.id.badgePhotoRequired);
+        tvPhotoHint = view.findViewById(R.id.tvPhotoHint);
+        bannerPhotoRequired = view.findViewById(R.id.bannerPhotoRequired);
+        registerScrollView = view.findViewById(R.id.registerScrollView);
         if (imgPhotoPreview != null) {
             imgPhotoPreview.setOnClickListener(v -> {
                 if (photoFile != null && photoFile.exists()) {
@@ -627,6 +635,17 @@ public class NewOccurrenceFragment extends Fragment {
         photoPreviewGroup.setVisibility(hasPhoto ? View.VISIBLE : View.GONE);
 
         if (hasPhoto) {
+            if (badgePhotoRequired != null) {
+                badgePhotoRequired.setVisibility(View.GONE);
+            }
+            if (bannerPhotoRequired != null) {
+                bannerPhotoRequired.setVisibility(View.GONE);
+            }
+            photoEmptyGroup.setBackgroundResource(R.drawable.bg_photo_card);
+            if (tvPhotoHint != null) {
+                tvPhotoHint.setText(R.string.occurrence_photo_hint);
+                tvPhotoHint.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+            }
             Bitmap bmp = ImageUtils.decodeFileWithExifRotation(photoFile.getAbsolutePath(), MAX_PHOTO_DIMEN);
             imgPhotoPreview.setImageBitmap(bmp);
             btnSendAnalysis.setEnabled(true);
@@ -635,15 +654,35 @@ public class NewOccurrenceFragment extends Fragment {
             btnSendAnalysis.setTextColor(requireContext().getColor(R.color.white));
         } else {
             imgPhotoPreview.setImageDrawable(null);
-            btnSendAnalysis.setEnabled(false);
+            btnSendAnalysis.setEnabled(true);
             btnSendAnalysis.setBackgroundTintList(null);
             btnSendAnalysis.setBackgroundResource(R.drawable.bg_btn_disabled_v);
             btnSendAnalysis.setTextColor(requireContext().getColor(R.color.vf_disabled_text));
         }
     }
 
+    private void showPhotoRequiredError() {
+        if (badgePhotoRequired != null) {
+            badgePhotoRequired.setVisibility(View.VISIBLE);
+        }
+        if (bannerPhotoRequired != null) {
+            bannerPhotoRequired.setVisibility(View.VISIBLE);
+        }
+        if (photoEmptyGroup != null) {
+            photoEmptyGroup.setBackgroundResource(R.drawable.bg_photo_card_error);
+        }
+        if (tvPhotoHint != null) {
+            tvPhotoHint.setText("É obrigatório anexar uma foto para continuar.");
+            tvPhotoHint.setTextColor(android.graphics.Color.parseColor("#E8556C"));
+        }
+        if (registerScrollView != null) {
+            registerScrollView.smoothScrollTo(0, 0);
+        }
+    }
+
     private void sendToAnalysis(View v) {
         if (photoFile == null || !photoFile.exists()) {
+            showPhotoRequiredError();
             return;
         }
         if (!NetworkUtils.isOnline(requireContext())) {

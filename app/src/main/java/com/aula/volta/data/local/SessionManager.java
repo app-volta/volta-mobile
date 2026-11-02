@@ -332,6 +332,8 @@ public final class SessionManager {
             persistentPrefs(context).edit()
                     .putString("photo_local_" + cleanEmail, cleanPath)
                     .putString("photo_local_" + userEmail, cleanPath)
+                    .remove("photo_removed_" + cleanEmail)
+                    .remove("photo_removed_" + userEmail)
                     .apply();
         }
     }
@@ -341,14 +343,6 @@ public final class SessionManager {
     }
 
     public static String getProfilePhotoLocal(Context context, String userEmail) {
-        String path = prefs(context).getString(KEY_PROFILE_PHOTO_LOCAL, "");
-        if (path != null && !path.isEmpty()) {
-            if (new java.io.File(path).exists()) {
-                return path;
-            } else {
-                prefs(context).edit().remove(KEY_PROFILE_PHOTO_LOCAL).apply();
-            }
-        }
         if (userEmail != null && !userEmail.isEmpty()) {
             String cleanEmail = userEmail.trim().toLowerCase(java.util.Locale.ROOT);
             String pPath = persistentPrefs(context).getString("photo_local_" + cleanEmail, "");
@@ -367,6 +361,14 @@ public final class SessionManager {
                 prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, abs).apply();
                 persistentPrefs(context).edit().putString("photo_local_" + cleanEmail, abs).apply();
                 return abs;
+            }
+        }
+        String path = prefs(context).getString(KEY_PROFILE_PHOTO_LOCAL, "");
+        if (path != null && !path.isEmpty()) {
+            if (new java.io.File(path).exists()) {
+                return path;
+            } else {
+                prefs(context).edit().remove(KEY_PROFILE_PHOTO_LOCAL).apply();
             }
         }
         java.io.File legacy = new java.io.File(context.getFilesDir(), "profile_photo.jpg");
