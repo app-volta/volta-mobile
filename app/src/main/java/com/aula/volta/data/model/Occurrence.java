@@ -3,6 +3,8 @@ package com.aula.volta.data.model;
 import android.content.Context;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -72,7 +74,7 @@ public class Occurrence {
         }
         String id = inc.getId() != null ? inc.getId() : "";
         String sector = resolveSector(inc, context);
-        String mat = resolveMaterial(inc);
+        String mat = resolveMaterial(inc, context);
         String singleTitle;
         if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty()) {
             singleTitle = inc.getTitle().trim();
@@ -156,43 +158,38 @@ public class Occurrence {
     }
 
     private static String resolveMaterial(IncidentResponseDTO inc) {
+        return resolveMaterial(inc, null);
+    }
+
+    private static String resolveMaterial(IncidentResponseDTO inc, Context context) {
         if (inc == null) {
             return "Resíduo Reciclável";
         }
+        String wId = inc.getWasteTypeId();
+        if (wId != null && !wId.isEmpty() && context != null) {
+            try {
+                String listStr = PrefsHelper.getJson(context, "cache_waste_types", "list");
+                if (listStr != null && !listStr.isEmpty()) {
+                    JsonArray arr = JsonParser.parseString(listStr).getAsJsonArray();
+                    for (JsonElement el : arr) {
+                        if (el.isJsonObject()) {
+                            JsonObject obj = el.getAsJsonObject();
+                            if (obj.has("id") && !obj.get("id").isJsonNull()
+                                    && wId.equalsIgnoreCase(obj.get("id").getAsString())) {
+                                if (obj.has("description") && !obj.get("description").isJsonNull()) {
+                                    return obj.get("description").getAsString();
+                                }
+                                if (obj.has("category") && !obj.get("category").isJsonNull()) {
+                                    return obj.get("category").getAsString();
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
         String desc = inc.getEmployeeDescription() != null ? inc.getEmployeeDescription().toLowerCase(Locale.ROOT) : "";
-        String wId = inc.getWasteTypeId() != null ? inc.getWasteTypeId().toLowerCase(Locale.ROOT) : "";
-
-        if (wId.contains("bd985415") || wId.contains("4e73b22b")) {
-            return "Aparas de Papelão";
-        }
-        if (wId.contains("8b3f6a14")) {
-            return "Plástico Filme";
-        }
-        if (wId.contains("2605dca7") || wId.contains("976a4df6")) {
-            return "Vidro Misto";
-        }
-        if (wId.contains("5ee946da") || wId.contains("7020bc8b")) {
-            return "Alumínio Limpo";
-        }
-        if (wId.contains("5cb7e3c8")) {
-            return "Orgânico";
-        }
-        if (wId.contains("e9e077a8")) {
-            return "Madeira / Palete";
-        }
-        if (wId.contains("7807fd3c")) {
-            return "Eletrônico";
-        }
-        if (wId.contains("db21c099")) {
-            return "Químico";
-        }
-        if (wId.contains("9221e10b")) {
-            return "Têxtil";
-        }
-        if (wId.contains("dc9b7d17")) {
-            return "Resíduo Misto";
-        }
-
         if (desc.contains("cadeir") || desc.contains("mesa") || desc.contains("móvel") || desc.contains("movel") || desc.contains("mobili")) {
             return "Mobiliário / Madeira";
         }

@@ -83,7 +83,7 @@ public class AiAnalysisJSON {
     }
 
     public double getQuantidadeEstimada() {
-        return quantidadeEstimada > 0 ? quantidadeEstimada : 38.0;
+        return quantidadeEstimada;
     }
 
     public void setQuantidadeEstimada(double quantidadeEstimada) {
@@ -133,7 +133,7 @@ public class AiAnalysisJSON {
     }
 
     public double getConfianca() {
-        return confianca > 0 ? confianca : 0.88;
+        return confianca;
     }
 
     public void setConfianca(double confianca) {
@@ -280,33 +280,26 @@ public class AiAnalysisJSON {
             if (!hasExplicitKg && weight <= 0) weight = 5.0;
         } else if (lower.contains("madeira") || lower.contains("pallet") || lower.contains("palete") || lower.contains("estrado")) {
             u.tipo = "Paletes";
-            u.quantidade = 2;
-            if (!hasExplicitKg && weight <= 0) weight = 18.0;
+            u.quantidade = 0;
         } else if (lower.contains("plást") || lower.contains("plast") || lower.contains("isopor") || lower.contains("eps") || lower.contains("pet")) {
             u.tipo = "Fardos";
-            u.quantidade = 2;
-            if (!hasExplicitKg && weight <= 0) weight = 8.0;
+            u.quantidade = 0;
         } else if (lower.contains("metal") || lower.contains("alumin") || lower.contains("ferr")
                 || lower.contains("aço") || lower.contains("aco")) {
             u.tipo = "Tambores";
-            u.quantidade = 2;
-            if (!hasExplicitKg && weight <= 0) weight = 25.0;
+            u.quantidade = 0;
         } else if (lower.contains("vidro")) {
             u.tipo = "Engradados";
-            u.quantidade = 2;
-            if (!hasExplicitKg && weight <= 0) weight = 12.0;
+            u.quantidade = 0;
         } else if (lower.contains("orgân") || lower.contains("organ")) {
             u.tipo = "Sacos";
-            u.quantidade = 2;
-            if (!hasExplicitKg && weight <= 0) weight = 8.0;
+            u.quantidade = 0;
         } else if (lower.contains("papel") || lower.contains("papelão") || lower.contains("cartao") || lower.contains("cartão")) {
             u.tipo = "Caixas";
-            u.quantidade = 4;
-            if (!hasExplicitKg && weight <= 0) weight = 15.0;
+            u.quantidade = 0;
         } else {
             u.tipo = "Unidades";
-            u.quantidade = 1;
-            if (!hasExplicitKg && weight <= 0) weight = 6.0;
+            u.quantidade = 0;
         }
 
         if (json.has("units_count") && !json.get("units_count").isJsonNull()) {
@@ -321,9 +314,23 @@ public class AiAnalysisJSON {
             if (!ut.trim().isEmpty()) u.tipo = ut.trim();
         }
 
-        res.quantidadeEstimada = weight > 0 ? weight : 5.0;
+        res.quantidadeEstimada = weight > 0 ? weight : (fallbackKg > 0 ? fallbackKg : 0.0);
         res.unidade = "kg";
-        res.confianca = 0.94;
+        if (json.has("confidence") && !json.get("confidence").isJsonNull()) {
+            try {
+                res.confianca = json.get("confidence").getAsDouble();
+            } catch (Exception ignored) {
+                res.confianca = 0.0;
+            }
+        } else if (json.has("confianca") && !json.get("confianca").isJsonNull()) {
+            try {
+                res.confianca = json.get("confianca").getAsDouble();
+            } catch (Exception ignored) {
+                res.confianca = 0.0;
+            }
+        } else {
+            res.confianca = 0.0;
+        }
         res.unidades = u;
 
         return res;
@@ -360,43 +367,35 @@ public class AiAnalysisJSON {
 
         Unidades u = new Unidades();
         String lower = detectedType.toLowerCase(Locale.ROOT);
-        double defaultWeight = 5.0;
         if (lower.contains("cadeira") || lower.contains("mesa") || lower.contains("móvel")
                 || lower.contains("movel") || lower.contains("mobili") || lower.contains("assento")) {
             u.tipo = "Unidades";
             u.quantidade = 1;
-            defaultWeight = 5.0;
         } else if (lower.contains("madeira") || lower.contains("pallet") || lower.contains("palete") || lower.contains("estrado")) {
             u.tipo = "Paletes";
-            u.quantidade = 2;
-            defaultWeight = 18.0;
+            u.quantidade = 0;
         } else if (lower.contains("plást") || lower.contains("plast") || lower.contains("isopor") || lower.contains("eps") || lower.contains("pet")) {
             u.tipo = "Fardos";
-            u.quantidade = 2;
-            defaultWeight = 8.0;
+            u.quantidade = 0;
         } else if (lower.contains("metal") || lower.contains("alumin") || lower.contains("ferr")
                 || lower.contains("aço") || lower.contains("aco")) {
             u.tipo = "Tambores";
-            u.quantidade = 2;
-            defaultWeight = 25.0;
+            u.quantidade = 0;
         } else if (lower.contains("vidro")) {
             u.tipo = "Engradados";
-            u.quantidade = 2;
-            defaultWeight = 12.0;
+            u.quantidade = 0;
         } else if (lower.contains("orgân") || lower.contains("organ")) {
             u.tipo = "Sacos";
-            u.quantidade = 2;
-            defaultWeight = 8.0;
+            u.quantidade = 0;
         } else {
             u.tipo = "Caixas";
-            u.quantidade = 4;
-            defaultWeight = 15.0;
+            u.quantidade = 0;
         }
         json.unidades = u;
 
-        json.quantidadeEstimada = estimatedKg > 0 ? estimatedKg : defaultWeight;
+        json.quantidadeEstimada = estimatedKg > 0 ? estimatedKg : 0.0;
         json.unidade = "kg";
-        json.confianca = 0.92;
+        json.confianca = 0.0;
         return json;
     }
 
@@ -454,59 +453,59 @@ public class AiAnalysisJSON {
             json.primaryMaterial = "Plástico";
             json.specificItem = "Cadeira de escritório";
             json.material = "Cadeira de escritório";
-            json.quantidadeEstimada = 5.0;
+            json.quantidadeEstimada = 0.0;
             Unidades u = new Unidades();
             u.tipo = "Unidades";
-            u.quantidade = 1;
+            u.quantidade = 0;
             json.unidades = u;
         } else if (desc.contains("madeira") || desc.contains("pallet") || desc.contains("palete")) {
             json.primaryMaterial = "Madeira";
             json.specificItem = "Palete PBR";
             json.material = "Palete PBR";
-            json.quantidadeEstimada = 18.0;
+            json.quantidadeEstimada = 0.0;
             Unidades u = new Unidades();
             u.tipo = "Paletes";
-            u.quantidade = 2;
+            u.quantidade = 0;
             json.unidades = u;
         } else if (desc.contains("manuten") || desc.contains("usinagem") || desc.contains("oficina")) {
             json.primaryMaterial = "Metal";
             json.specificItem = "Sucata Metálica";
             json.material = "Sucata Metálica";
-            json.quantidadeEstimada = 35.0;
+            json.quantidadeEstimada = 0.0;
             Unidades u = new Unidades();
             u.tipo = "Lotes";
-            u.quantidade = 1;
+            u.quantidade = 0;
             json.unidades = u;
         } else if (desc.contains("expedi") || desc.contains("embalag") || desc.contains("plast")) {
             json.primaryMaterial = "Plástico";
             json.specificItem = "Plástico Filme";
             json.material = "Plástico Filme";
-            json.quantidadeEstimada = 28.0;
+            json.quantidadeEstimada = 0.0;
             Unidades u = new Unidades();
             u.tipo = "Fardos";
-            u.quantidade = 2;
+            u.quantidade = 0;
             json.unidades = u;
         } else if (desc.contains("papel") || desc.contains("cartao") || desc.contains("kraft")) {
             json.primaryMaterial = "Papelão";
             json.specificItem = "Caixas de Papelão";
             json.material = "Caixas de Papelão";
-            json.quantidadeEstimada = 38.0;
+            json.quantidadeEstimada = 0.0;
             Unidades u = new Unidades();
             u.tipo = "Caixas";
-            u.quantidade = 11;
+            u.quantidade = 0;
             json.unidades = u;
         } else {
             json.primaryMaterial = "Outros";
             json.specificItem = "Resíduo Reciclável";
             json.material = "Resíduo Reciclável";
-            json.quantidadeEstimada = 20.0;
+            json.quantidadeEstimada = 0.0;
             Unidades u = new Unidades();
             u.tipo = "Unidades";
-            u.quantidade = 1;
+            u.quantidade = 0;
             json.unidades = u;
         }
         json.unidade = "kg";
-        json.confianca = 0.88;
+        json.confianca = 0.0;
         json.observacoes = "Guarde num lugar seco e coberto. Coleta em até 24h mantém o material valioso.";
         Contaminacao c = new Contaminacao();
         c.presente = false;

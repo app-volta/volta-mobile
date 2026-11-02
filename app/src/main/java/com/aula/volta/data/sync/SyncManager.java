@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
+import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.incident.IncidentRequestDTO;
 import com.aula.volta.data.model.incident.IncidentResponseDTO;
 
@@ -100,19 +101,19 @@ public final class SyncManager {
         return null;
     }
 
-    private static String mapMaterialToWasteTypeId(String material) {
-        if (material == null) return "bd985415-4b25-4c07-beca-cc086dce9b13";
-        String lower = material.toLowerCase(java.util.Locale.ROOT);
-        if (lower.contains("papel")) return "bd985415-4b25-4c07-beca-cc086dce9b13";
-        if (lower.contains("plast") || lower.contains("plást")) return "8b3f6a14-9a27-462f-b414-24329d927af7";
-        if (lower.contains("metal") || lower.contains("lata") || lower.contains("ferro") || lower.contains("aço") || lower.contains("alum")) return "5ee946da-2975-45e7-80d7-a5a8e49b4b2d";
-        if (lower.contains("vidro")) return "2605dca7-b392-4835-a2a7-99a1aa68a7ab";
-        if (lower.contains("organ") || lower.contains("orgân")) return "5cb7e3c8-6dac-45e4-870f-92cc64a2a452";
-        if (lower.contains("eletron") || lower.contains("eletrôn")) return "7807fd3c-7c11-42c3-95be-48884968d3c1";
-        if (lower.contains("quimic") || lower.contains("químic") || lower.contains("oleo") || lower.contains("óleo")) return "db21c099-511a-4dbc-82dc-2090b4b6d0a5";
-        if (lower.contains("textil") || lower.contains("têxtil") || lower.contains("tecido")) return "9221e10b-b15b-40d8-a798-49f372ab9efb";
-        if (lower.contains("madeira") || lower.contains("pallet") || lower.contains("palete") || lower.contains("tabua") || lower.contains("tábua") || lower.contains("mobil")) return "e9e077a8-7464-422d-a3be-44bc770fd5d2";
-        return "dc9b7d17-cd48-475a-a313-d5de98505854";
+    private static String resolveWasteTypeId(Context context, String material) {
+        try {
+            String listStr = PrefsHelper.getJson(context, "cache_waste_types", "list");
+            if (listStr != null && !listStr.isEmpty()) {
+                com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseString(listStr).getAsJsonArray();
+                String resolved = com.aula.volta.data.model.AiAnalysisJSON.resolveWasteTypeId(arr, material);
+                if (resolved != null && !resolved.isEmpty()) {
+                    return resolved;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     public static synchronized void syncPending(Context context) {
@@ -126,7 +127,10 @@ public final class SyncManager {
 
         for (PendingOccurrence item : pendingList) {
             String areaId = defaultAreaId;
-            String wasteTypeId = mapMaterialToWasteTypeId(item.getMaterial());
+            String wasteTypeId = resolveWasteTypeId(app, item.getMaterial());
+            if (wasteTypeId == null) {
+                continue;
+            }
             String photoUrl = null;
             if (item.getFotoPath() != null && !item.getFotoPath().isEmpty()) {
                 photoUrl = com.aula.volta.data.upload.CloudinaryUploader.getCachedUrl(item.getFotoPath());
@@ -181,13 +185,17 @@ public final class SyncManager {
                     if (photoUrl != null && !photoUrl.startsWith("http://") && !photoUrl.startsWith("https://")) {
                         photoUrl = null;
                     }
+                    String wasteTypeId = resolveWasteTypeId(app, occ.getMaterial());
+                    if (wasteTypeId == null) {
+                        continue;
+                    }
                     IncidentRequestDTO req = new IncidentRequestDTO(
                             defaultAreaId,
-                            mapMaterialToWasteTypeId(occ.getMaterial()),
+                            wasteTypeId,
                             photoUrl,
                             occ.getTitulo() != null ? occ.getTitulo() : occ.getMaterial(),
                             "LOW",
-                            15.0,
+                            1.0,
                             "LOW"
                     );
                     final String offId = occ.getId();

@@ -98,17 +98,17 @@ public class AiAnalysisFragment extends Fragment {
 
     private TextView tvEditWeightValue;
     private TextView tvEditUnitsValue;
-    private int currentWeight = 42;
-    private int currentUnits = 11;
-    private int initialEstimatedWeight = 42;
-    private int initialEstimatedUnits = 11;
+    private int currentWeight = 0;
+    private int currentUnits = 0;
+    private int initialEstimatedWeight = 0;
+    private int initialEstimatedUnits = 0;
     private String selectedMaterial = "";
     private String selectedClass = "";
     private String selectedContamination = "Baixa";
     private boolean isRevised = false;
 
-    private int snapshotWeight = 10;
-    private int snapshotUnits = 1;
+    private int snapshotWeight = 0;
+    private int snapshotUnits = 0;
     private String snapshotMaterial = "";
     private String snapshotClass = "";
     private String snapshotContamination = "Baixa";
@@ -455,33 +455,20 @@ public class AiAnalysisFragment extends Fragment {
         }, remaining);
     }
 
-    private JsonObject createAnalysisBody(@Nullable String imageUrl) {
-        JsonObject body = new JsonObject();
-        body.addProperty("setor", setor == null ? "" : setor);
-        body.addProperty("descricao", descricao == null ? "" : descricao);
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            body.addProperty("photoUrl", imageUrl);
-            body.addProperty("imageUrl", imageUrl);
-            body.addProperty("foto_url", imageUrl);
-        }
-        return body;
-    }
-
     private void analyzePhoto() {
         scanStartTime = System.currentTimeMillis();
         analysisCompleted = false;
 
         scanTimeoutRunnable = () -> {
             if (!isAdded() || analysisCompleted) return;
-            Log.i("AiAnalysisFragment", "Limite de tempo de escaneamento atingido (3.8s). Finalizando via análise contratual.");
-            executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
+            Log.i("AiAnalysisFragment", "Limite de tempo de escaneamento atingido. Abrindo edicao manual.");
+            openManualEditOnAiFailure();
         };
         scanHandler.postDelayed(scanTimeoutRunnable, SCAN_MAX_TIMEOUT_MS);
 
         if (photoPath != null && !photoPath.isEmpty()) {
             final File imageFile = new File(photoPath);
             if (imageFile.exists()) {
-
                 CloudinaryUploader.uploadImage(requireContext(), imageFile, new CloudinaryUploader.UploadCallback() {
                     @Override
                     public void onSuccess(String remoteUrl, String publicId) {
@@ -502,7 +489,7 @@ public class AiAnalysisFragment extends Fragment {
             }
         }
 
-        executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
+        openManualEditOnAiFailure();
     }
 
     private void sendImageDirectlyToAi(File imageFile) {
@@ -528,8 +515,8 @@ public class AiAnalysisFragment extends Fragment {
                     lastPredictJson = predictJson;
                     finishAnalysisWithTransition(AiAnalysisJSON.fromPredict(predictJson, 0));
                 } else {
-                    Log.w("AiAnalysisFragment", "predictWaste retornou HTTP " + response.code() + ", aplicando análise contratual rápida");
-                    executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
+                    Log.w("AiAnalysisFragment", "predictWaste retornou HTTP " + response.code());
+                    openManualEditOnAiFailure();
                 }
             }
 
@@ -538,207 +525,24 @@ public class AiAnalysisFragment extends Fragment {
                 if (!isAdded() || analysisCompleted) {
                     return;
                 }
-                Log.w("AiAnalysisFragment", "predictWaste falhou na rede: " + t.getMessage() + ", aplicando análise contratual rápida");
-                executeLocalContractAnalysis(createAnalysisBody(remoteImageUrl));
+                Log.w("AiAnalysisFragment", "predictWaste falhou na rede: " + t.getMessage());
+                openManualEditOnAiFailure();
             }
         });
     }
 
-    private void executeAiAnalysisRequest(@Nullable String imageUrl) {
-        if (!isAdded()) {
-            return;
-        }
-        final JsonObject body = new JsonObject();
-        body.addProperty("setor", setor == null ? "" : setor);
-        body.addProperty("descricao", descricao == null ? "" : descricao);
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            body.addProperty("photoUrl", imageUrl);
-            body.addProperty("imageUrl", imageUrl);
-            body.addProperty("foto_url", imageUrl);
-        }
-
-        if (imageUrl != null && imageUrl.startsWith("http") && SyncManager.isOnline(requireContext())) {
-            final AiAnalysisAPI qaApi = ChatbotAuthClient.get(requireContext()).create(AiAnalysisAPI.class);
-            tryQaIncidentAiReportFlow(qaApi, imageUrl, body);
-        } else {
-            executeLocalContractAnalysis(body);
-        }
-    }
-
-    private void tryQaIncidentAiReportFlow(final AiAnalysisAPI qaApi,
-                                           final String cloudinaryUrl,
-                                           final JsonObject fallbackBody) {
-        qaApi.getMyAreas().enqueue(new Callback<JsonArray>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> areaResp) {
-                if (!isAdded()) {
-                    return;
-                }
-                final String areaId = AiAnalysisJSON.resolveAreaId(areaResp.body(), setor);
-                if (areaId == null) {
-                    executeLocalContractAnalysis(fallbackBody);
-                    return;
-                }
-                qaApi.getWasteTypes().enqueue(new Callback<JsonArray>() {
-                    @Override
-                    public void onResponse(@NonNull Call<JsonArray> call, @NonNull Response<JsonArray> wasteResp) {
-                        if (!isAdded()) {
-                            return;
-                        }
-                        final String wasteTypeId = AiAnalysisJSON.resolveWasteTypeId(wasteResp.body(), descricao);
-                        if (wasteTypeId == null) {
-                            executeLocalContractAnalysis(fallbackBody);
-                            return;
-                        }
-                        String empDesc = (descricao != null && !descricao.isEmpty())
-                                ? descricao
-                                : "Resíduo registrado via app mobile no setor " + (setor != null ? setor : "Operacional");
-                        IncidentRequestDTO req = new IncidentRequestDTO(
-                                areaId,
-                                wasteTypeId,
-                                cloudinaryUrl,
-                                empDesc,
-                                "LOW",
-                                38.0,
-                                "MEDIUM"
-                        );
-                        qaApi.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
-                            @Override
-                            public void onResponse(@NonNull Call<IncidentResponseDTO> call,
-                                                   @NonNull Response<IncidentResponseDTO> incResp) {
-                                if (!isAdded()) {
-                                    return;
-                                }
-                                if (incResp.isSuccessful() && incResp.body() != null && incResp.body().getId() != null) {
-                                    final String incidentId = incResp.body().getId();
-                                    createdIncidentId = incidentId;
-                                    final double estQty = incResp.body().getEstimatedQuantity() != null
-                                            ? incResp.body().getEstimatedQuantity() : 38.0;
-                                    qaApi.getIncidentAiReport(incidentId).enqueue(new Callback<AiReportResponseDTO>() {
-                                        @Override
-                                        public void onResponse(@NonNull Call<AiReportResponseDTO> call,
-                                                               @NonNull Response<AiReportResponseDTO> reportResp) {
-                                            if (!isAdded()) {
-                                                return;
-                                            }
-                                            if (reportResp.isSuccessful() && reportResp.body() != null) {
-                                                analysis = AiAnalysisJSON.fromAiReport(reportResp.body(), estQty);
-                                                analysis.setIncidentId(incidentId);
-                                                applyAnalysis();
-                                            } else {
-                                                fetchScoringContextOrFallback(qaApi, incidentId, estQty, fallbackBody);
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onFailure(@NonNull Call<AiReportResponseDTO> call, @NonNull Throwable t) {
-                                            if (isAdded()) {
-                                                fetchScoringContextOrFallback(qaApi, incidentId, estQty, fallbackBody);
-                                            }
-                                        }
-                                    });
-                                } else {
-                                    executeLocalContractAnalysis(fallbackBody);
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
-                                if (isAdded()) {
-                                    executeLocalContractAnalysis(fallbackBody);
-                                }
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
-                        if (isAdded()) {
-                            executeLocalContractAnalysis(fallbackBody);
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonArray> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    executeLocalContractAnalysis(fallbackBody);
-                }
-            }
-        });
-    }
-
-    private void fetchScoringContextOrFallback(final AiAnalysisAPI qaApi,
-                                               final String incidentId,
-                                               final double estQty,
-                                               final JsonObject fallbackBody) {
-        qaApi.getIncidentScoringContext(incidentId).enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (response.isSuccessful() && response.body() != null) {
-                    AiAnalysisJSON fromCtx = AiAnalysisJSON.fromScoringContext(response.body(), estQty);
-                    if (fromCtx != null) {
-                        fromCtx.setIncidentId(incidentId);
-                        finishAnalysisWithTransition(fromCtx);
-                        return;
-                    }
-                }
-                executeLocalContractAnalysis(fallbackBody);
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    executeLocalContractAnalysis(fallbackBody);
-                }
-            }
-        });
-    }
-
-    private void executeLocalContractAnalysis(JsonObject body) {
-        if (!isAdded()) {
-            return;
-        }
-        AiAnalysisAPI api = ApiClient.get(requireContext()).create(AiAnalysisAPI.class);
-        api.analyzeOccurrence("novo", body).enqueue(new Callback<AiAnalysisJSON>() {
-            @Override
-            public void onResponse(@NonNull Call<AiAnalysisJSON> call,
-                                   @NonNull Response<AiAnalysisJSON> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (response.isSuccessful() && response.body() != null) {
-                    AiAnalysisJSON res = response.body();
-                    if (createdIncidentId != null && !createdIncidentId.isEmpty()) {
-                        res.setIncidentId(createdIncidentId);
-                    }
-                    finishAnalysisWithTransition(res);
-                } else {
-                    useOfflineAnalysisFallback();
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<AiAnalysisJSON> call, @NonNull Throwable t) {
-                if (!isAdded()) {
-                    return;
-                }
-                useOfflineAnalysisFallback();
-            }
-        });
-    }
-
-    private void useOfflineAnalysisFallback() {
+    private void openManualEditOnAiFailure() {
         if (!isAdded() || analysisCompleted) return;
-        AiAnalysisJSON off = AiAnalysisJSON.createOfflineFallback(setor);
-        if (createdIncidentId != null && !createdIncidentId.isEmpty()) {
-            off.setIncidentId(createdIncidentId);
-        }
-        finishAnalysisWithTransition(off);
+        analysisCompleted = true;
+        scanHandler.removeCallbacks(scanTimeoutRunnable);
+        stopScanAnimation();
+        aiLoadingGroup.setVisibility(View.GONE);
+        aiResultGroup.setVisibility(View.GONE);
+        aiEditGroup.setVisibility(View.VISIBLE);
+        if (bottomBarActionsResult != null) bottomBarActionsResult.setVisibility(View.GONE);
+        if (bottomBarActionsEdit != null) bottomBarActionsEdit.setVisibility(View.VISIBLE);
+        if (tvAiStatusPill != null) tvAiStatusPill.setText("Preenchimento manual");
+        Toast.makeText(requireContext(), "Não foi possível analisar a imagem automaticamente. Por favor, preencha os dados do resíduo.", Toast.LENGTH_LONG).show();
     }
 
     private void applyAnalysis() {
@@ -817,21 +621,29 @@ public class AiAnalysisFragment extends Fragment {
             if (analysis.getQuantidadeEstimada() > 0) {
                 initialEstimatedWeight = (int) Math.round(analysis.getQuantidadeEstimada());
                 currentWeight = initialEstimatedWeight;
+            } else {
+                initialEstimatedWeight = 0;
+                currentWeight = 0;
             }
             if (analysis.getUnidades() != null && analysis.getUnidades().getQuantidade() > 0) {
                 initialEstimatedUnits = analysis.getUnidades().getQuantidade();
                 currentUnits = initialEstimatedUnits;
+            } else {
+                initialEstimatedUnits = 0;
+                currentUnits = 0;
             }
             if (tvEditWeightValue != null) {
-                tvEditWeightValue.setText(String.valueOf(currentWeight));
+                tvEditWeightValue.setText(currentWeight > 0 ? String.valueOf(currentWeight) : "0");
             }
             if (tvEditUnitsValue != null) {
-                tvEditUnitsValue.setText(String.valueOf(currentUnits));
+                tvEditUnitsValue.setText(currentUnits > 0 ? String.valueOf(currentUnits) : "0");
             }
 
             selectPrimaryMaterialFamily(resolvedFamily, false);
             tvAiContamination.setText(selectedContamination);
-            String quantidade = "≈ " + trimNumber(analysis.getQuantidadeEstimada()) + " " + analysis.getUnidade();
+            String quantidade = analysis.getQuantidadeEstimada() > 0
+                    ? "≈ " + trimNumber(analysis.getQuantidadeEstimada()) + " " + analysis.getUnidade()
+                    : "0 kg";
             tvAiQuantity.setText(quantidade);
             badgeQuantityEdited.setVisibility(View.GONE);
             cardAiQuantity.setBackgroundResource(R.drawable.bg_card_stat_recycled);
@@ -851,12 +663,16 @@ public class AiAnalysisFragment extends Fragment {
             }
         }
 
-        if (analysis.getUnidades() != null && analysis.getUnidades().getTipo() != null) {
+        if (analysis.getUnidades() != null && analysis.getUnidades().getTipo() != null && !analysis.getUnidades().getTipo().trim().isEmpty()) {
             tvAiUnitsLabel.setText(analysis.getUnidades().getTipo());
         } else {
-            tvAiUnitsLabel.setText("Caixas");
+            tvAiUnitsLabel.setText("Unidades");
         }
-        tvAiUnits.setText(currentUnits + " un.");
+        if (currentUnits > 0) {
+            tvAiUnits.setText(currentUnits + " un.");
+        } else {
+            tvAiUnits.setText("—");
+        }
 
         if (analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty()) {
             tvAiRecommendation.setText(analysis.getObservacoes());
@@ -1329,7 +1145,16 @@ public class AiAnalysisFragment extends Fragment {
                 ? analysis.getSpecificItem()
                 : AiAnalysisJSON.extractSpecificItem(primary);
         String material = AiAnalysisJSON.formatMaterialWithClass(primary, specific, selectedClass);
-        double qtd = isRevised ? currentWeight : (analysis != null ? analysis.getQuantidadeEstimada() : 5.0);
+        double qtd = isRevised ? currentWeight : (analysis != null ? analysis.getQuantidadeEstimada() : 0.0);
+        if (qtd <= 0) {
+            if (btnConfirm != null) {
+                btnConfirm.setEnabled(true);
+                btnConfirm.setText("Registrar ocorrência");
+            }
+            Toast.makeText(requireContext(), "Por favor, informe a quantidade estimada (kg) antes de registrar.", Toast.LENGTH_LONG).show();
+            switchToEditView();
+            return;
+        }
         String unidade = (analysis != null && analysis.getUnidade() != null) ? analysis.getUnidade() : "kg";
         String calculatedPriority = AiAnalysisJSON.calculatePriority(material, selectedContamination, descricao);
 
@@ -1569,7 +1394,7 @@ public class AiAnalysisFragment extends Fragment {
             }
         } catch (Exception ignored) {
         }
-        return mapMaterialToWasteTypeId(searchRef);
+        return null;
     }
 
     private void executeCreateCoreIncident(View v, OccurrenceAPI occurrenceApi, String areaId, String wasteTypeId,
@@ -1581,6 +1406,15 @@ public class AiAnalysisFragment extends Fragment {
                 btnConfirm.setText("Tentar de novo");
             }
             Toast.makeText(requireContext(), "Nenhuma área operacional encontrada para sua unidade no banco de dados.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (wasteTypeId == null || wasteTypeId.trim().isEmpty()) {
+            if (btnConfirm != null) {
+                btnConfirm.setEnabled(true);
+                btnConfirm.setText("Tentar de novo");
+            }
+            Toast.makeText(requireContext(), "Não foi possível carregar os tipos de resíduo do banco. Verifique sua conexão.", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -1747,30 +1581,6 @@ public class AiAnalysisFragment extends Fragment {
                 Toast.makeText(requireContext(), "Falha na conexão. Verifique sua internet.", Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-    private String mapMaterialToWasteTypeId(String material) {
-        String lowerMat = material != null ? material.toLowerCase(Locale.ROOT) : "";
-        if (lowerMat.contains("papel")) {
-            return "bd985415-4b25-4c07-beca-cc086dce9b13";
-        } else if (lowerMat.contains("plást") || lowerMat.contains("plast")) {
-            return "8b3f6a14-9a27-462f-b414-24329d927af7";
-        } else if (lowerMat.contains("metal") || lowerMat.contains("aço") || lowerMat.contains("ferro") || lowerMat.contains("alum") || lowerMat.contains("lata")) {
-            return "5ee946da-2975-45e7-80d7-a5a8e49b4b2d";
-        } else if (lowerMat.contains("vidro")) {
-            return "2605dca7-b392-4835-a2a7-99a1aa68a7ab";
-        } else if (lowerMat.contains("orgân") || lowerMat.contains("organ")) {
-            return "5cb7e3c8-6dac-45e4-870f-92cc64a2a452";
-        } else if (lowerMat.contains("eletrôn") || lowerMat.contains("eletron") || lowerMat.contains("bateria") || lowerMat.contains("pilha")) {
-            return "7807fd3c-7c11-42c3-95be-48884968d3c1";
-        } else if (lowerMat.contains("químic") || lowerMat.contains("quimic") || lowerMat.contains("perigo") || lowerMat.contains("óleo") || lowerMat.contains("oleo")) {
-            return "db21c099-511a-4dbc-82dc-2090b4b6d0a5";
-        } else if (lowerMat.contains("têxtil") || lowerMat.contains("textil") || lowerMat.contains("tecido") || lowerMat.contains("pano")) {
-            return "9221e10b-b15b-40d8-a798-49f372ab9efb";
-        } else if (lowerMat.contains("madeira") || lowerMat.contains("pallet") || lowerMat.contains("palete") || lowerMat.contains("tábua") || lowerMat.contains("tabua") || lowerMat.contains("mobil")) {
-            return "e9e077a8-7464-422d-a3be-44bc770fd5d2";
-        }
-        return "dc9b7d17-cd48-475a-a313-d5de98505854";
     }
 
     private void handleOccurrenceCreatedSuccess(View v, String id, String material, double qtd,
