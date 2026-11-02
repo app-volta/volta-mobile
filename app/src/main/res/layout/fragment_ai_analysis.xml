@@ -316,7 +316,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Caixas"
+                            android:text="Unidades"
                             android:textColor="@color/vf_purple"
                             android:textSize="12.5sp" />
 
@@ -592,7 +592,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:fontFamily="@font/poppins_bold"
-                                android:text="≈ 38 kg"
+                                android:text="—"
                                 android:textColor="@color/vf_blue"
                                 android:textSize="20sp"
                                 android:textStyle="bold" />
@@ -639,7 +639,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/poppins_semibold"
-                                android:text="Caixas"
+                                android:text="Unidades"
                                 android:textColor="@color/vf_purple"
                                 android:textSize="12.5sp" />
 
@@ -649,7 +649,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:fontFamily="@font/poppins_bold"
-                                android:text="11 un."
+                                android:text="—"
                                 android:textColor="@color/vf_purple"
                                 android:textSize="20sp"
                                 android:textStyle="bold" />
@@ -1097,7 +1097,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:fontFamily="sans-serif"
-                                    android:text="42"
+                                    android:text="0"
                                     android:textColor="@color/vf_text_primary"
                                     android:textSize="20sp"
                                     android:textStyle="bold" />
@@ -1137,7 +1137,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:fontFamily="sans-serif"
-                            android:text="IA estimou ≈ 38 kg"
+                            android:text="—"
                             android:textColor="@color/vf_text_secondary"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -1160,7 +1160,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:fontFamily="sans-serif"
-                                android:text="Caixas"
+                                android:id="@+id/tvEditUnitsTitle"
+                                android:text="Unidades"
                                 android:textColor="@color/vf_text_primary"
                                 android:textSize="13sp"
                                 android:textStyle="bold" />
@@ -1222,7 +1223,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:fontFamily="sans-serif"
-                                    android:text="11"
+                                    android:text="0"
                                     android:textColor="@color/vf_text_primary"
                                     android:textSize="20sp"
                                     android:textStyle="bold" />
@@ -1256,11 +1257,12 @@
                         </LinearLayout>
 
                         <TextView
+                            android:id="@+id/tvEditUnitsEstimateHint"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:fontFamily="sans-serif"
-                            android:text="IA contou 11"
+                            android:text="—"
                             android:textColor="@color/vf_text_secondary"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -1303,7 +1305,8 @@
                             android:layout_marginTop="3dp"
                             android:fontFamily="sans-serif"
                             android:lineSpacingExtra="2dp"
-                            android:text="Da próxima vez, ela acerta o peso desse tipo de caixa na sua unidade."
+                            android:id="@+id/tvCorrectionHintFooter"
+                            android:text="Da próxima vez, ela acerta o peso desse tipo de material na sua unidade."
                             android:textColor="#355443"
                             android:textSize="12.5sp" />
                     </LinearLayout>

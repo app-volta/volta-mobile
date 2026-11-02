@@ -101,7 +101,7 @@ public class OccurrenceDetailFragment extends Fragment {
     private String currentPriority = "BAIXA";
     private String currentContamination = "baixa";
     private String currentSector = "Planta Principal";
-    private String currentWeight = "38 kg";
+    private String currentWeight = "0 kg";
     private final Handler pollHandler = new Handler(Looper.getMainLooper());
     private final Runnable pollStatusRunnable = new Runnable() {
         @Override
@@ -330,7 +330,7 @@ public class OccurrenceDetailFragment extends Fragment {
                     body.addProperty("setor", sector);
                     double peso = (dto.getEstimatedQuantity() != null && dto.getEstimatedQuantity() > 0)
                             ? dto.getEstimatedQuantity()
-                            : (currentDetailJson != null && currentDetailJson.has("peso_estimado") ? currentDetailJson.get("peso_estimado").getAsDouble() : 5.0);
+                            : (currentDetailJson != null && currentDetailJson.has("peso_estimado") ? currentDetailJson.get("peso_estimado").getAsDouble() : 0.0);
                     body.addProperty("peso_estimado", peso);
 
                     if (dto.getContaminationLevel() != null && !dto.getContaminationLevel().isEmpty()) {
@@ -482,7 +482,7 @@ public class OccurrenceDetailFragment extends Fragment {
                 String unidade = opt(json, "unidade", "kg");
                 currentWeight = pesoStr + " " + unidade;
             } catch (Exception e) {
-                String rawPeso = opt(json, "peso_estimado", "38");
+                String rawPeso = opt(json, "peso_estimado", "0");
                 currentWeight = rawPeso.endsWith("kg") ? rawPeso : (rawPeso + " kg");
             }
         }
@@ -495,7 +495,7 @@ public class OccurrenceDetailFragment extends Fragment {
         currentPriority = opt(json, "prioridade", "BAIXA");
         applyPriorityBadge(currentPriority);
 
-        currentSector = opt(json, "setor", "Frigorífico — Setor B2");
+        currentSector = opt(json, "setor", "Planta Principal");
         String quando = opt(json, "quando", opt(json, "data", "hoje, 09:12"));
         currentStatus = opt(json, "status", "EM_ANALISE");
 
