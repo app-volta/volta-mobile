@@ -1,9 +1,5 @@
 package com.aula.volta.data.model;
 
-/**
- * Entrada de auditoria (regra transversal, item 5 do plano).
- * Mock: lista local por ocorrência. Backend: tabela imutável. App nunca apaga log.
- */
 public class OccurrenceHistory {
 
     private String id;

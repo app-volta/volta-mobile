@@ -9,13 +9,12 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.aula.volta.R;
-import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.ChatbotAuthClient;
 import com.aula.volta.data.api.OccurrenceAPI;
 import com.aula.volta.data.local.AuditLog;
-import com.aula.volta.data.local.NotificationStore;
-import com.aula.volta.data.model.Notification;
-import com.google.gson.JsonObject;
+import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.model.incident.IncidentRequestDTO;
+import com.aula.volta.data.model.incident.IncidentResponseDTO;
 
 import java.util.List;
 
@@ -23,9 +22,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * Gerencia a sincronização de dados offline quando a conectividade é restabelecida.
- */
 public final class SyncManager {
 
     private static final String TAG = "VOLTA_SyncManager";
@@ -34,28 +30,32 @@ public final class SyncManager {
     private SyncManager() {
     }
 
-    /**
-     * Verifica se o dispositivo possui conexão com a internet ativa.
-     */
     public static boolean isOnline(Context context) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) {
+        if (context == null) {
             return false;
         }
-        Network activeNetwork = cm.getActiveNetwork();
-        if (activeNetwork == null) {
-            return false;
+        try {
+            ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) {
+                return false;
+            }
+            Network activeNetwork = cm.getActiveNetwork();
+            if (activeNetwork == null) {
+                return false;
+            }
+            NetworkCapabilities capabilities = cm.getNetworkCapabilities(activeNetwork);
+            return capabilities != null &&
+                    (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                            || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                            || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                            || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                            || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN));
+        } catch (Exception e) {
+            Log.w(TAG, "Falha ao verificar conectividade: " + e.getMessage());
+            return true;
         }
-        NetworkCapabilities capabilities = cm.getNetworkCapabilities(activeNetwork);
-        return capabilities != null &&
-                (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
     }
 
-    /**
-     * Registra o monitor de rede para sincronizar automaticamente ao reconectar.
-     */
     public static synchronized void registerNetworkCallback(Context context) {
         if (isRegistered) {
             return;
@@ -85,64 +85,137 @@ public final class SyncManager {
         }
     }
 
-    /**
-     * Processa a fila de ocorrências criadas offline e as envia à API.
-     */
+    private static String getCachedAreaId(Context app) {
+        try {
+            android.content.SharedPreferences prefs = app.getSharedPreferences("cache_areas", Context.MODE_PRIVATE);
+            java.util.Map<String, ?> all = prefs.getAll();
+            if (all != null && !all.isEmpty()) {
+                for (String key : all.keySet()) {
+                    if (key != null && key.length() > 10) {
+                        return key;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private static String resolveWasteTypeId(Context context, String material) {
+        try {
+            String listStr = PrefsHelper.getJson(context, "cache_waste_types", "list");
+            if (listStr != null && !listStr.isEmpty()) {
+                com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseString(listStr).getAsJsonArray();
+                String resolved = com.aula.volta.data.model.AiAnalysisJSON.resolveWasteTypeId(arr, material);
+                if (resolved != null && !resolved.isEmpty()) {
+                    return resolved;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
     public static synchronized void syncPending(Context context) {
         Context app = context.getApplicationContext();
         List<PendingOccurrence> pendingList = SyncQueue.getAll(app);
-        if (pendingList.isEmpty()) {
+        OccurrenceAPI api = ChatbotAuthClient.get(app).create(OccurrenceAPI.class);
+        String defaultAreaId = getCachedAreaId(app);
+        if (defaultAreaId == null || defaultAreaId.isEmpty()) {
             return;
         }
 
-        OccurrenceAPI api = ApiClient.get(app).create(OccurrenceAPI.class);
-
         for (PendingOccurrence item : pendingList) {
-            JsonObject body = new JsonObject();
-            body.addProperty("foto_path", item.getFotoPath());
-            body.addProperty("descricao", item.getDescricao() != null ? item.getDescricao() : "");
-            body.addProperty("setor", item.getSetor() != null ? item.getSetor() : "");
-            body.addProperty("material", item.getMaterial() != null ? item.getMaterial() : "");
-            body.addProperty("quantidade_estimada", item.getQuantidadeEstimada());
+            String areaId = defaultAreaId;
+            String wasteTypeId = resolveWasteTypeId(app, item.getMaterial());
+            if (wasteTypeId == null) {
+                continue;
+            }
+            String photoUrl = null;
+            if (item.getFotoPath() != null && !item.getFotoPath().isEmpty()) {
+                photoUrl = com.aula.volta.data.upload.CloudinaryUploader.getCachedUrl(item.getFotoPath());
+                if (photoUrl != null && !photoUrl.startsWith("http://") && !photoUrl.startsWith("https://")) {
+                    photoUrl = null;
+                }
+            }
 
-            api.createOccurrence(body).enqueue(new Callback<JsonObject>() {
+            IncidentRequestDTO req = new IncidentRequestDTO(
+                    areaId,
+                    wasteTypeId,
+                    photoUrl,
+                    item.getDescricao() != null && !item.getDescricao().isEmpty() ? item.getDescricao() : item.getMaterial(),
+                    "LOW",
+                    item.getQuantidadeEstimada() > 0 ? item.getQuantidadeEstimada() : 10.0,
+                    "LOW"
+            );
+
+            api.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
                 @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        String serverId = response.body().has("id")
-                                ? response.body().get("id").getAsString() : item.getLocalId();
+                public void onResponse(Call<IncidentResponseDTO> call, Response<IncidentResponseDTO> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().getId() != null) {
+                        String serverId = response.body().getId();
 
-                        // Remove da fila pendente
                         SyncQueue.remove(app, item.getLocalId());
+                        com.aula.volta.data.local.OccurrenceStore.remove(app, item.getLocalId());
 
-                        // Registra auditoria da sincronização
                         AuditLog.append(app, "Sistema Offline", "SYNC_ONLINE",
                                 "ocorrencia", serverId, item.getLocalId(), "SINCRONIZADO");
 
-                        // Emite notificação local de sucesso na sincronização
-                        Notification notification = new Notification(
-                                "sync_" + System.currentTimeMillis(),
-                                "SYNC_CONCLUIDO",
-                                app.getString(R.string.sync_success_title, serverId),
-                                app.getString(R.string.sync_success_desc, item.getMaterial(), item.getSetor()),
-                                app.getString(R.string.notif_now),
-                                "check",
-                                "#0E7C48",
-                                "#E2F7EC",
-                                false,
-                                serverId);
-                        NotificationStore.pushLocal(app, notification);
                         com.aula.volta.data.notification.NotificationHelper.notifySyncComplete(
                                 app, serverId, item.getMaterial(), item.getSetor());
-                        Log.d(TAG, "Ocorrência offline " + item.getLocalId() + " sincronizada com sucesso: " + serverId);
+                        Log.d(TAG, "Ocorrência offline " + item.getLocalId() + " sincronizada no banco oficial com sucesso: " + serverId);
                     }
                 }
 
                 @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
+                public void onFailure(Call<IncidentResponseDTO> call, Throwable t) {
                     Log.w(TAG, "Falha temporária ao sincronizar ocorrência " + item.getLocalId() + ". Tentará novamente.", t);
                 }
             });
+        }
+
+        List<com.aula.volta.data.model.Occurrence> locals = com.aula.volta.data.local.OccurrenceStore.localOnly(app);
+        if (locals != null) {
+            for (com.aula.volta.data.model.Occurrence occ : locals) {
+                if (occ != null && occ.getId() != null && occ.getId().startsWith("off_")) {
+                    String photoUrl = occ.getPhotoUrl();
+                    if ((photoUrl == null || photoUrl.isEmpty()) && occ.getPhotoPath() != null) {
+                        photoUrl = com.aula.volta.data.upload.CloudinaryUploader.getCachedUrl(occ.getPhotoPath());
+                    }
+                    if (photoUrl != null && !photoUrl.startsWith("http://") && !photoUrl.startsWith("https://")) {
+                        photoUrl = null;
+                    }
+                    String wasteTypeId = resolveWasteTypeId(app, occ.getMaterial());
+                    if (wasteTypeId == null) {
+                        continue;
+                    }
+                    IncidentRequestDTO req = new IncidentRequestDTO(
+                            defaultAreaId,
+                            wasteTypeId,
+                            photoUrl,
+                            occ.getTitulo() != null ? occ.getTitulo() : occ.getMaterial(),
+                            "LOW",
+                            1.0,
+                            "LOW"
+                    );
+                    final String offId = occ.getId();
+                    api.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
+                        @Override
+                        public void onResponse(Call<IncidentResponseDTO> call, Response<IncidentResponseDTO> response) {
+                            if (response.isSuccessful() && response.body() != null && response.body().getId() != null) {
+                                String serverId = response.body().getId();
+                                com.aula.volta.data.local.OccurrenceStore.remove(app, offId);
+                                Log.i(TAG, "Ocorrência pendente " + offId + " enviada com sucesso ao banco PostgreSQL: " + serverId);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<IncidentResponseDTO> call, Throwable t) {
+                            Log.w(TAG, "Falha ao enviar ocorrência pendente " + offId + ": " + t.getMessage());
+                        }
+                    });
+                }
+            }
         }
     }
 }

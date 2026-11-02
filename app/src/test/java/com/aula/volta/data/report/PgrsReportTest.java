@@ -9,9 +9,6 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-/**
- * Cobre o HTML do PGRS (função pura, sem Android).
- */
 public class PgrsReportTest {
 
     @Test
@@ -22,11 +19,11 @@ public class PgrsReportTest {
         occurrences.add(new Occurrence("2", "Plástico", "Expedição",
                 "ontem", "BAIXA", "RESOLVIDO", "Plástico"));
 
-        String html = PgrsReport.buildHtml(9, 43, 1147, occurrences, "01/10/2026 08:00");
+        String html = PgrsReport.buildHtml(2, 8, 120, occurrences, "01/10/2026 08:00");
 
         assertTrue(html.contains("Relatório PGRS"));
-        assertTrue(html.contains("Ocorrências: 52"));
-        assertTrue(html.contains("Kg reciclados: 1147"));
+        assertTrue(html.contains("Ocorrências: 10"));
+        assertTrue(html.contains("Kg reciclados: 120"));
         assertTrue(html.contains("#1"));
         assertTrue(html.contains("Papelão molhado"));
         assertTrue(html.contains("01/10/2026 08:00"));

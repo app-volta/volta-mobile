@@ -5,9 +5,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Validação do contrato do AIC de Cooperativas recomendadas (Fase 15).
- */
 public class CooperativeContractTest {
 
     @Test

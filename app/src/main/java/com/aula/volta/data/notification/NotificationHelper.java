@@ -6,30 +6,56 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.aula.volta.MainActivity;
 import com.aula.volta.R;
+import com.aula.volta.data.local.NotificationStore;
+import com.aula.volta.data.model.Notification;
 
-/**
- * Utilitário central para criação de canais e emissão de notificações
- * na bandeja do sistema Android.
- * Fase 26 — Canais de Notificação Android & Notificações Locais em Tempo Real.
- */
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public final class NotificationHelper {
+
+    private static final String TAG = "NotificationHelper";
 
     public static final String CHANNEL_OCCURRENCES = "volta_occurrences";
     public static final String CHANNEL_GOALS = "volta_goals";
     public static final String CHANNEL_SYNC = "volta_sync";
 
+    private static final Map<String, Long> sRecentlyEmitted = new ConcurrentHashMap<>();
+    private static final long DEBOUNCE_WINDOW_MS = 3000L;
+
     private NotificationHelper() {
     }
 
-    /**
-     * Inicializa os canais de notificação exigidos no Android 8.0 (API 26) ou superior.
-     */
+    public static int computeNotificationId(String occurrenceId, String title, String body) {
+        if (occurrenceId != null && !occurrenceId.isEmpty()) {
+            return Math.abs(occurrenceId.hashCode());
+        }
+        String key = (title != null ? title : "") + "_" + (body != null ? body : "");
+        return Math.abs(key.hashCode());
+    }
+
+    private static boolean isDuplicateDebounced(String occurrenceId, String title, String body) {
+        long now = System.currentTimeMillis();
+        String key = (occurrenceId != null ? occurrenceId : "") + "|" + (title != null ? title : "") + "|" + (body != null ? body : "");
+        Long last = sRecentlyEmitted.get(key);
+        if (last != null && (now - last) < DEBOUNCE_WINDOW_MS) {
+            Log.d(TAG, "Notificação suprimida por debouncing recente: " + key);
+            return true;
+        }
+        sRecentlyEmitted.put(key, now);
+        if (sRecentlyEmitted.size() > 60) {
+            sRecentlyEmitted.entrySet().removeIf(entry -> (now - entry.getValue()) > 10000L);
+        }
+        return false;
+    }
+
     public static void createChannels(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return;
@@ -40,7 +66,6 @@ public final class NotificationHelper {
             return;
         }
 
-        // 1. Canal de Ocorrências e Coletas (Alta prioridade / som / popup)
         NotificationChannel occChannel = new NotificationChannel(
                 CHANNEL_OCCURRENCES,
                 context.getString(R.string.channel_occurrences_name),
@@ -50,7 +75,6 @@ public final class NotificationHelper {
         occChannel.enableVibration(true);
         manager.createNotificationChannel(occChannel);
 
-        // 2. Canal de Metas e Relatórios PGRS (Importância padrão)
         NotificationChannel goalsChannel = new NotificationChannel(
                 CHANNEL_GOALS,
                 context.getString(R.string.channel_goals_name),
@@ -59,7 +83,6 @@ public final class NotificationHelper {
         goalsChannel.setDescription(context.getString(R.string.channel_goals_desc));
         manager.createNotificationChannel(goalsChannel);
 
-        // 3. Canal de Sincronização Offline (Silencioso)
         NotificationChannel syncChannel = new NotificationChannel(
                 CHANNEL_SYNC,
                 context.getString(R.string.channel_sync_name),
@@ -69,60 +92,255 @@ public final class NotificationHelper {
         manager.createNotificationChannel(syncChannel);
     }
 
-    /**
-     * Emite notificação de nova ocorrência registrada.
-     */
+    public static boolean isNotificationAllowed(Context context, String type) {
+        if (context == null) return true;
+        try {
+            android.content.SharedPreferences prefs = context.getSharedPreferences("prefs_notification_settings", Context.MODE_PRIVATE);
+            if ("APROVACAO".equalsIgnoreCase(type)) {
+                return prefs.getBoolean("notif_approved", true);
+            }
+            if ("COLETA_AGENDADA".equalsIgnoreCase(type) || "DESTINACAO".equalsIgnoreCase(type)) {
+                return prefs.getBoolean("notif_collection", true);
+            }
+            if ("NOVA_OCORRENCIA".equalsIgnoreCase(type)) {
+                return prefs.getBoolean("notif_sector", true);
+            }
+        } catch (Exception ignored) {
+        }
+        return true;
+    }
+
     public static void notifyOccurrenceCreated(Context context, String occurrenceId,
                                               String material, String setor) {
+        if (!isNotificationAllowed(context, "NOVA_OCORRENCIA")) {
+            return;
+        }
         String title = context.getString(R.string.notif_occurrence_title, occurrenceId);
         String body = context.getString(R.string.notif_occurrence_desc, material, setor);
-        showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
+        String singularId = "occ_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                singularId,
+                "NOVA_OCORRENCIA",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "bell",
+                "#C68A10",
+                "#FDF3DE",
+                false,
+                occurrenceId
+        ));
+
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                singularId, title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#C68A10", "#FDF3DE", myEmail);
     }
 
-    /**
-     * Emite notificação de coleta agendada com a cooperativa.
-     */
+    public static void notifyOccurrenceSent(Context context, String occurrenceId,
+                                            String material, String setor) {
+        if (!isNotificationAllowed(context, "NOVA_OCORRENCIA")) {
+            return;
+        }
+        String title = "Ocorrência #" + occurrenceId + " enviada";
+        String body = (material != null && !material.isEmpty())
+                ? material + " · Enviada para análise técnica"
+                : "Enviada para análise · Aguardando validação técnica";
+        String singularId = "sent_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
+                title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                singularId,
+                "NOVA_OCORRENCIA",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "bell",
+                "#12A05E",
+                "#E2F7EC",
+                false,
+                occurrenceId
+        ));
+
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                singularId, title, body, "NOVA_OCORRENCIA", occurrenceId, "bell", "#12A05E", "#E2F7EC", myEmail);
+    }
+
+    public static void notifyOccurrenceApproved(Context context, String occurrenceId, String material) {
+        if (!isNotificationAllowed(context, "APROVACAO")) {
+            return;
+        }
+        String title = "Ocorrência #" + occurrenceId + " aprovada";
+        String body = (material != null && !material.isEmpty())
+                ? material + " · Aprovada e homologada no PGRS"
+                : "Aprovada pela gestão técnica e contabilizada no PGRS";
+        String singularId = "appr_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
+                title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                singularId,
+                "APROVACAO",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "check",
+                "#12A05E",
+                "#E2F7EC",
+                false,
+                occurrenceId
+        ));
+
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                singularId, title, body, "APROVACAO", occurrenceId, "check", "#12A05E", "#E2F7EC", myEmail);
+    }
+
     public static void notifyPickupScheduled(Context context, String coopName, String horario) {
+        if (!isNotificationAllowed(context, "COLETA_AGENDADA")) {
+            return;
+        }
         String title = context.getString(R.string.notif_pickup_title);
         String body = context.getString(R.string.notif_pickup_body, coopName, horario);
-        showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
+        String singularId = "pickup_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString();
+        int notificationId = computeNotificationId(null, title, body);
+
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, null);
+
+        NotificationStore.pushLocal(context, new Notification(
+                singularId,
+                "COLETA_AGENDADA",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "truck",
+                "#3B82F6",
+                "#E4EFFF",
+                false,
+                null
+        ));
+
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                singularId, title, body, "COLETA_AGENDADA", null, "truck", "#3B82F6", "#E4EFFF", myEmail);
     }
 
-    /**
-     * Emite notificação nativa de destinação solicitada para cooperativa.
-     */
     public static void notifyDestinationRequested(Context context, String coopName, String occurrenceId) {
+        if (!isNotificationAllowed(context, "DESTINACAO")) {
+            return;
+        }
         String title = context.getString(R.string.notif_pick_title, coopName);
         String body = context.getString(R.string.notif_pick_desc, occurrenceId);
-        showNotification(context, CHANNEL_OCCURRENCES, (int) System.currentTimeMillis(),
+        String singularId = "dest_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+
+        showNotification(context, CHANNEL_OCCURRENCES, notificationId,
                 title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                singularId,
+                "COLETA_AGENDADA",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "truck",
+                "#3B82F6",
+                "#E4EFFF",
+                false,
+                occurrenceId
+        ));
+
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                singularId, title, body, "COLETA_AGENDADA", occurrenceId, "truck", "#3B82F6", "#E4EFFF", myEmail);
     }
 
-    /**
-     * Emite notificação de ocorrência finalizada no PGRS.
-     */
     public static void notifyPgrsFinalized(Context context, String occurrenceId) {
         String title = context.getString(R.string.notif_pgrs_finalized_title, occurrenceId);
         String body = context.getString(R.string.notif_pgrs_finalized_body);
-        showNotification(context, CHANNEL_GOALS, (int) System.currentTimeMillis(),
+        String singularId = "pgrs_" + occurrenceId + "_" + java.util.UUID.randomUUID().toString();
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+
+        showNotification(context, CHANNEL_GOALS, notificationId,
                 title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                singularId,
+                "META",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "trophy",
+                "#8B6FE0",
+                "#EFEAFB",
+                false,
+                occurrenceId
+        ));
+
+        String myEmail = com.aula.volta.data.local.SessionManager.email(context);
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                singularId, title, body, "META", occurrenceId, "trophy", "#8B6FE0", "#EFEAFB", myEmail);
     }
 
-    /**
-     * Emite notificação quando uma ocorrência offline é sincronizada na nuvem.
-     */
     public static void notifySyncComplete(Context context, String occurrenceId,
                                           String material, String setor) {
         String title = context.getString(R.string.sync_success_title, occurrenceId);
         String body = context.getString(R.string.sync_success_desc, material, setor);
-        showNotification(context, CHANNEL_SYNC, (int) System.currentTimeMillis(),
+        String notifId = "sync_" + occurrenceId;
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+
+        showNotification(context, CHANNEL_SYNC, notificationId,
+                title, body, occurrenceId);
+
+        NotificationStore.pushLocal(context, new Notification(
+                notifId,
+                "SYNC",
+                title,
+                body,
+                context.getString(R.string.notif_now),
+                "check",
+                "#0E7C48",
+                "#E2F7EC",
+                false,
+                occurrenceId
+        ));
+
+        FirestoreNotificationRepository.getInstance().sendNotification(
+                notifId, title, body, "SYNC", occurrenceId, "check", "#0E7C48", "#E2F7EC");
+    }
+
+    public static void notifyRemote(Context context, String channelId, String title,
+                                    String body, String occurrenceId) {
+        if (body != null) {
+            String b = body.toUpperCase(java.util.Locale.ROOT);
+            if (b.contains("APROVAD") && !isNotificationAllowed(context, "APROVACAO")) return;
+            if (b.contains("COLETA") && !isNotificationAllowed(context, "COLETA_AGENDADA")) return;
+            if ((b.contains("OCORRÊNCIA") || b.contains("OCORRENCIA")) && !isNotificationAllowed(context, "NOVA_OCORRENCIA")) return;
+        }
+        if (channelId == null || channelId.isEmpty()) {
+            channelId = CHANNEL_OCCURRENCES;
+        }
+        int notificationId = computeNotificationId(occurrenceId, title, body);
+        showNotification(context, channelId, notificationId,
                 title, body, occurrenceId);
     }
 
     private static void showNotification(Context context, String channelId, int notificationId,
                                         String title, String body, String occurrenceId) {
+        if (isDuplicateDebounced(occurrenceId, title, body)) {
+            return;
+        }
         try {
             NotificationManagerCompat manager = NotificationManagerCompat.from(context);
             if (!manager.areNotificationsEnabled()) {
@@ -153,7 +371,7 @@ public final class NotificationHelper {
 
             manager.notify(notificationId, builder.build());
         } catch (SecurityException ignored) {
-            // Permissão POST_NOTIFICATIONS não concedida pelo usuário
+
         }
     }
 }

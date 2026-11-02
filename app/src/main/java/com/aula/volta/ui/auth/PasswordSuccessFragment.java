@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -12,9 +13,6 @@ import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
 
-/**
- * Senha atualizada — Figma 790:1241. Volta ao login limpando o recovery da pilha.
- */
 public class PasswordSuccessFragment extends Fragment {
 
     public PasswordSuccessFragment() {
@@ -33,5 +31,13 @@ public class PasswordSuccessFragment extends Fragment {
 
         view.findViewById(R.id.btnGoLogin).setOnClickListener(v ->
                 Navigation.findNavController(v).popBackStack(R.id.auth_login, false));
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(),
+                new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        Navigation.findNavController(view).popBackStack(R.id.auth_login, false);
+                    }
+                });
     }
 }

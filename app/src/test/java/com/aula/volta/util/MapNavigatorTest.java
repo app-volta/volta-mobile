@@ -6,10 +6,6 @@ import java.util.Locale;
 
 import static org.junit.Assert.*;
 
-/**
- * Testes unitários para validar a formatação de rotas e coordenadas geográficas.
- * Fase 30 — Integração com Mapas & Navegação de Cooperativas.
- */
 public class MapNavigatorTest {
 
     @Test

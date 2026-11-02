@@ -5,19 +5,16 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Testes unitários para modelo de histórico de auditoria (Fase 15).
- */
 public class AuditLogModelTest {
 
     @Test
     public void occurrenceHistory_gettersAndSerialization() {
         OccurrenceHistory history = new OccurrenceHistory(
-                "uuid-123", "Breno Gomes", "ALTERAR_STATUS", "ocorrencia",
+                "uuid-123", "Operador Teste", "ALTERAR_STATUS", "ocorrencia",
                 "48291", "EM_ANALISE", "EM_TRATAMENTO", "01/10/2026 10:45");
 
         assertEquals("uuid-123", history.getId());
-        assertEquals("Breno Gomes", history.getUsuario());
+        assertEquals("Operador Teste", history.getUsuario());
         assertEquals("ALTERAR_STATUS", history.getAcao());
         assertEquals("ocorrencia", history.getEntidade());
         assertEquals("48291", history.getEntidadeId());

@@ -1,185 +1,203 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Login — Figma 790:955 (Fase 13, mock: qualquer e-mail válido + senha ≥ 4) -->
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_auth_green"
-    android:fillViewport="true">
+    android:background="@drawable/bg_auth_green_gradient">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_login_full" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="@dimen/spacing_large">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="24dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_xlarge"
-            android:text="VOLTA"
-            android:textColor="@color/white"
-            android:textSize="34sp"
-            android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/ivLoginTopLogo"
+            android:layout_width="116dp"
+            android:layout_height="34dp"
+            android:layout_marginBottom="32dp"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitStart"
+            android:src="@drawable/logo_volta_white" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_large"
-            android:text="@string/auth_welcome"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_headline"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/spacing_xs"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:text="@string/auth_welcome_sub"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body_small" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_xs"
-            android:text="@string/auth_email"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/etLoginEmail"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_button_cta_white"
-            android:hint="@string/auth_email_hint"
-            android:importantForAutofill="no"
-            android:inputType="textEmailAddress"
-            android:minHeight="@dimen/button_height_primary"
-            android:paddingStart="@dimen/spacing_normal"
-            android:paddingEnd="@dimen/spacing_normal"
-            android:text="breno@volta.com"
-            android:textColor="@color/auth_input_text"
-            android:textColorHint="@color/auth_input_hint"
-            android:textSize="@dimen/text_size_body" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/font_poppins"
+                android:text="Bem-vindo de"
+                android:textColor="@color/white"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="85dp"
+                android:layout_height="25dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="2dp"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitCenter"
+                android:src="@drawable/logo_volta_white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/font_poppins"
+                android:text="!"
+                android:textColor="@color/white"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="28dp"
+            android:fontFamily="@font/font_inter"
+            android:lineSpacingExtra="3dp"
+            android:text="@string/auth_welcome_sub"
+            android:textColor="@color/login_subtitle_white"
+            android:textSize="13.5sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_xs"
-            android:text="@string/auth_password"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/font_poppins"
+            android:text="@string/auth_email"
             android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <FrameLayout
             android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginBottom="18dp"
+            android:background="@drawable/bg_input_auth_translucent">
+
+            <EditText
+                android:id="@+id/etLoginEmail"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/font_inter"
+                android:hint="@string/auth_email_hint"
+                android:importantForAutofill="no"
+                android:inputType="textEmailAddress"
+                android:paddingStart="18dp"
+                android:paddingEnd="48dp"
+                android:textColor="@color/white"
+                android:textColorHint="@color/login_hint_white"
+                android:textSize="14sp" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center_vertical|end"
+                android:layout_marginEnd="16dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_mail"
+                app:tint="@color/white" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_button_cta_white">
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/font_poppins"
+            android:text="@string/auth_password"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_input_auth_translucent">
 
             <EditText
                 android:id="@+id/etLoginPassword"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:background="@android:color/transparent"
+                android:fontFamily="@font/font_inter"
                 android:hint="••••••••"
                 android:importantForAutofill="no"
                 android:inputType="textPassword"
-                android:minHeight="@dimen/button_height_primary"
-                android:paddingStart="@dimen/spacing_normal"
-                android:paddingEnd="52dp"
-                android:text="1234"
-                android:textColor="@color/auth_input_text"
-                android:textColorHint="@color/auth_input_hint"
-                android:textSize="@dimen/text_size_body" />
+                android:paddingStart="18dp"
+                android:paddingEnd="48dp"
+                android:textColor="@color/white"
+                android:textColorHint="@color/login_hint_white"
+                android:textSize="15sp" />
 
             <ImageView
                 android:id="@+id/btnTogglePassword"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:layout_gravity="center_vertical|end"
-                android:layout_marginEnd="@dimen/spacing_medium"
+                android:layout_marginEnd="16dp"
                 android:clickable="true"
+                android:contentDescription="@null"
                 android:focusable="true"
                 android:src="@drawable/ic_eye"
-                app:tint="@color/auth_input_hint" />
+                app:tint="@color/white" />
         </FrameLayout>
 
         <TextView
             android:id="@+id/btnForgotPassword"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
+            android:layout_gravity="start"
+            android:layout_marginBottom="24dp"
             android:clickable="true"
             android:focusable="true"
-            android:paddingTop="@dimen/spacing_small"
-            android:paddingBottom="@dimen/spacing_small"
+            android:fontFamily="@font/font_inter"
+            android:paddingVertical="4dp"
             android:text="@string/auth_forgot"
             android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body_small"
+            android:textSize="12.5sp"
             android:textStyle="bold" />
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height_primary"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:background="@drawable/bg_button_cta_white"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_button_auth_white"
+            android:fontFamily="@font/font_poppins"
+            android:stateListAnimator="@null"
             android:text="@string/auth_login_btn"
-            android:textColor="@color/volta_green_dark"
-            android:textSize="@dimen/text_size_body"
+            android:textAllCaps="false"
+            android:textColor="@color/login_btn_text_green"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDemoLogin"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height_primary"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:text="@string/auth_demo_btn"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body"
-            android:textStyle="bold"
-            app:cornerRadius="@dimen/corner_radius_button"
-            app:icon="@drawable/ic_sparkle"
-            app:iconGravity="textStart"
-            app:iconTint="@color/white"
-            app:strokeColor="@color/white" />
-
-        <!-- Card informativo com as credenciais padrão de teste -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            android:background="@drawable/bg_pill_dark"
-            android:orientation="vertical"
-            android:padding="@dimen/spacing_medium">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/auth_demo_title"
-                android:textColor="@color/sparkle_light"
-                android:textSize="@dimen/text_size_body_small"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/auth_demo_desc"
-                android:textColor="#E0FFFFFF"
-                android:textSize="@dimen/text_size_caption" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
+            android:layout_marginBottom="16dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -192,11 +210,11 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_medium"
-                android:layout_marginEnd="@dimen/spacing_medium"
+                android:layout_marginHorizontal="16dp"
+                android:fontFamily="@font/font_inter"
                 android:text="@string/auth_or"
                 android:textColor="@color/white"
-                android:textSize="@dimen/text_size_body_small" />
+                android:textSize="12sp" />
 
             <View
                 android:layout_width="0dp"
@@ -205,44 +223,70 @@
                 android:background="#80FFFFFF" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
+        <LinearLayout
             android:id="@+id/btnGoogle"
-            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height_primary"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:text="@string/auth_google"
-            android:textColor="@color/white"
-            android:textSize="@dimen/text_size_body"
-            app:cornerRadius="@dimen/corner_radius_button"
-            app:strokeColor="@color/white" />
+            android:layout_height="52dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_button_auth_google"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/bg_google_circle">
+
+                <ImageView
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_google_logo" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/font_inter"
+                android:text="@string/auth_google"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
+            android:layout_marginBottom="16dp"
             android:gravity="center"
             android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/font_inter"
                 android:text="@string/auth_no_account"
-                android:textColor="@color/white"
-                android:textSize="@dimen/text_size_body_small" />
+                android:textColor="@color/login_subtitle_white"
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/btnGoRegister"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/spacing_xs"
+                android:layout_marginStart="6dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:padding="@dimen/spacing_xs"
+                android:fontFamily="@font/font_poppins"
+                android:padding="4dp"
                 android:text="@string/auth_create"
                 android:textColor="@color/white"
-                android:textSize="@dimen/text_size_body_small"
+                android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
+</FrameLayout>

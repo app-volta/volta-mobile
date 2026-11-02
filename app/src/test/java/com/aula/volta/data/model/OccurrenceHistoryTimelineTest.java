@@ -4,10 +4,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Testes unitários para validar o modelo de histórico de auditoria e linha do tempo.
- * Fase 31 — Visualização Completa de Auditoria & Linha do Tempo de Ocorrências.
- */
 public class OccurrenceHistoryTimelineTest {
 
     @Test
@@ -37,7 +33,7 @@ public class OccurrenceHistoryTimelineTest {
     public void occurrenceHistory_handlesOfflineAndSyncActions() {
         OccurrenceHistory offlineEntry = new OccurrenceHistory(
                 "hist_102",
-                "Breno Gomes",
+                "Operador Teste",
                 "CRIAR_OFFLINE",
                 "ocorrencia",
                 "off_9988",

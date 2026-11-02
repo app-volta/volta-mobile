@@ -8,9 +8,6 @@ import com.google.gson.Gson;
 
 import org.junit.Test;
 
-/**
- * Testes unitários para as ações operacionais e trilha de auditoria (Fase 33).
- */
 public class OccurrenceOperationsTest {
 
     private final Gson gson = new Gson();
@@ -20,7 +17,7 @@ public class OccurrenceOperationsTest {
         String obsText = "Material molhado pela chuva, aguardando nova caçamba.";
         OccurrenceHistory observationEntry = new OccurrenceHistory(
                 "audit-obs-1",
-                "Breno Gomes",
+                "Operador Teste",
                 "ADICIONAR_OBSERVACAO",
                 "ocorrencia",
                 "48291",
@@ -36,7 +33,7 @@ public class OccurrenceOperationsTest {
         String json = gson.toJson(observationEntry);
         OccurrenceHistory parsed = gson.fromJson(json, OccurrenceHistory.class);
         assertEquals(obsText, parsed.getValorNovo());
-        assertEquals("Breno Gomes", parsed.getUsuario());
+        assertEquals("Operador Teste", parsed.getUsuario());
     }
 
     @Test
@@ -45,7 +42,7 @@ public class OccurrenceOperationsTest {
         String novoSetor = "Expedição Central";
         OccurrenceHistory forwardEntry = new OccurrenceHistory(
                 "audit-fwd-2",
-                "Breno Gomes",
+                "Operador Teste",
                 "ENCAMINHAR_SETOR",
                 "ocorrencia",
                 "48291",
@@ -58,7 +55,6 @@ public class OccurrenceOperationsTest {
         assertEquals(setorAnterior, forwardEntry.getValorAnterior());
         assertEquals(novoSetor, forwardEntry.getValorNovo());
 
-        // Validar atualização do modelo Occurrence
         Occurrence original = new Occurrence("48291", "Palete Danificado", setorAnterior, "há 5 min", "ALTA", "NOVO", "Papelão");
         Occurrence updated = new Occurrence(original.getId(), original.getTitulo(), novoSetor, original.getTempoRelativo(), original.getPrioridade(), original.getStatus(), original.getMaterial());
 
@@ -72,7 +68,7 @@ public class OccurrenceOperationsTest {
         String novoMat = "Plástico Filme";
         OccurrenceHistory editClassEntry = new OccurrenceHistory(
                 "audit-cls-3",
-                "Breno Gomes",
+                "Operador Teste",
                 "ALTERAR_CLASSIFICACAO",
                 "ocorrencia",
                 "48291",
@@ -85,7 +81,6 @@ public class OccurrenceOperationsTest {
         assertEquals(matAnterior, editClassEntry.getValorAnterior());
         assertEquals(novoMat, editClassEntry.getValorNovo());
 
-        // Validar atualização do modelo Occurrence
         Occurrence original = new Occurrence("48291", "Resíduo Descartado", "Expedição", "há 5 min", "ALTA", "NOVO", matAnterior);
         Occurrence updated = new Occurrence(original.getId(), original.getTitulo(), original.getSetor(), original.getTempoRelativo(), original.getPrioridade(), original.getStatus(), novoMat);
 
