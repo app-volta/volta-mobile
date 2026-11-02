@@ -432,12 +432,6 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <com.github.mikephil.charting.charts.BarChart
-                    android:id="@+id/chartReportsTimeline"
-                    android:layout_width="match_parent"
-                    android:layout_height="140dp"
-                    android:layout_marginTop="12dp"
-                    android:visibility="gone" />
             </LinearLayout>
 
             <LinearLayout
@@ -516,14 +510,21 @@
                     android:layout_width="match_parent"
                     android:layout_height="9dp"
                     android:background="@drawable/bg_progress_track"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:weightSum="100">
 
                     <View
                         android:id="@+id/viewGoalProgress"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="76"
+                        android:layout_weight="0"
                         android:background="@drawable/bg_progress_filled" />
+
+                    <View
+                        android:id="@+id/viewGoalProgressEmpty"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="100" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -538,26 +539,13 @@
                 android:textStyle="bold" />
 
             <LinearLayout
+                android:id="@+id/materialContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/bg_card_surface"
                 android:orientation="vertical"
-                android:padding="16dp">
-
-                <com.github.mikephil.charting.charts.PieChart
-                    android:id="@+id/chartMaterialsPie"
-                    android:layout_width="match_parent"
-                    android:layout_height="210dp"
-                    android:layout_marginBottom="16dp"
-                    android:visibility="gone" />
-
-                <LinearLayout
-                    android:id="@+id/materialContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
-            </LinearLayout>
+                android:padding="16dp" />
 
             <TextView
                 android:layout_width="wrap_content"

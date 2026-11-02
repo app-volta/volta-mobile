@@ -251,11 +251,15 @@ public final class ReportMetricsCalculator {
         List<Map.Entry<String, Integer>> sortedSectors = new ArrayList<>(sectorKg.entrySet());
         sortedSectors.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
 
-        int maxSectorKg = sortedSectors.isEmpty() ? 1 : Math.max(1, sortedSectors.get(0).getValue());
+        int totalSectorKg = 0;
+        for (int k : sectorKg.values()) {
+            totalSectorKg += k;
+        }
+        int totalForPct = totalSectorKg > 0 ? totalSectorKg : 1;
         for (int i = 0; i < Math.min(3, sortedSectors.size()); i++) {
             Map.Entry<String, Integer> entry = sortedSectors.get(i);
-            int pct = (int) Math.round(entry.getValue() * 100.0 / maxSectorKg);
-            summary.topSectors.add(new SectorStat(entry.getKey(), entry.getValue(), pct));
+            int pct = (int) Math.round(entry.getValue() * 100.0 / totalForPct);
+            summary.topSectors.add(new SectorStat(entry.getKey(), entry.getValue(), Math.max(2, Math.min(100, pct))));
         }
 
         return summary;
