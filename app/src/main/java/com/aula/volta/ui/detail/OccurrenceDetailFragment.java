@@ -792,9 +792,12 @@ public class OccurrenceDetailFragment extends Fragment {
                 OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
                 JsonObject updateBody = new JsonObject();
                 updateBody.addProperty("title", currentMaterialName);
-                JsonArray wasteTypeArr = new JsonArray();
-                wasteTypeArr.add(mapMaterialToWasteTypeId(currentMaterialName));
-                updateBody.add("wasteTypeIds", wasteTypeArr);
+                String resolvedWid = resolveWasteTypeId(currentMaterialName);
+                if (resolvedWid != null && !resolvedWid.isEmpty()) {
+                    JsonArray wasteTypeArr = new JsonArray();
+                    wasteTypeArr.add(resolvedWid);
+                    updateBody.add("wasteTypeIds", wasteTypeArr);
+                }
                 updateBody.addProperty("priority", com.aula.volta.data.model.incident.IncidentRequestDTO.normalizePriority(currentPriority));
                 if (isHazard) {
                     updateBody.addProperty("contaminationLevel", "HIGH");
@@ -821,19 +824,20 @@ public class OccurrenceDetailFragment extends Fragment {
         sheet.show(getChildFragmentManager(), "edit_classification");
     }
 
-    private String mapMaterialToWasteTypeId(String material) {
-        if (material == null) return "bd985415-4b25-4c07-beca-cc086dce9b13";
-        String lower = material.toLowerCase(java.util.Locale.ROOT);
-        if (lower.contains("papel")) return "bd985415-4b25-4c07-beca-cc086dce9b13";
-        if (lower.contains("plast") || lower.contains("plást")) return "8b3f6a14-9a27-462f-b414-24329d927af7";
-        if (lower.contains("metal") || lower.contains("lata") || lower.contains("ferro") || lower.contains("aço") || lower.contains("alum")) return "5ee946da-2975-45e7-80d7-a5a8e49b4b2d";
-        if (lower.contains("vidro")) return "2605dca7-b392-4835-a2a7-99a1aa68a7ab";
-        if (lower.contains("organ") || lower.contains("orgân")) return "5cb7e3c8-6dac-45e4-870f-92cc64a2a452";
-        if (lower.contains("eletron") || lower.contains("eletrôn")) return "7807fd3c-7c11-42c3-95be-48884968d3c1";
-        if (lower.contains("quimic") || lower.contains("químic") || lower.contains("perigo") || lower.contains("oleo") || lower.contains("óleo")) return "db21c099-511a-4dbc-82dc-2090b4b6d0a5";
-        if (lower.contains("textil") || lower.contains("têxtil") || lower.contains("tecido")) return "9221e10b-b15b-40d8-a798-49f372ab9efb";
-        if (lower.contains("madeira") || lower.contains("pallet") || lower.contains("palete") || lower.contains("tabua") || lower.contains("tábua") || lower.contains("mobil")) return "e9e077a8-7464-422d-a3be-44bc770fd5d2";
-        return "dc9b7d17-cd48-475a-a313-d5de98505854";
+    private String resolveWasteTypeId(String material) {
+        if (!isAdded() || getContext() == null) return null;
+        try {
+            String listStr = PrefsHelper.getJson(requireContext(), "cache_waste_types", "list");
+            if (listStr != null && !listStr.isEmpty()) {
+                JsonArray arr = JsonParser.parseString(listStr).getAsJsonArray();
+                String resolved = AiAnalysisJSON.resolveWasteTypeId(arr, material);
+                if (resolved != null && !resolved.isEmpty()) {
+                    return resolved;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     private void showAddObservationSheet(View v) {
