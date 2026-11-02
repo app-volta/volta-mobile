@@ -67,6 +67,7 @@ public class HomeFragment extends Fragment {
     private TextView tvUserName;
     private TextView tvAvatarInitials;
     private OccurrenceAdapter adapter;
+    private CarouselAdapter carouselAdapter;
 
     private int pendingLoads = 3;
 
@@ -104,22 +105,30 @@ public class HomeFragment extends Fragment {
         ViewPager2 vpCarousel = view.findViewById(R.id.vpCarousel);
         LinearLayout carouselDots = view.findViewById(R.id.carouselDots);
         if (vpCarousel != null) {
-            CarouselAdapter carouselAdapter = new CarouselAdapter(() -> {
-                if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
-                    Bundle errArgs = new Bundle();
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
-                            com.aula.volta.ui.error.OfflineErrorFragment.TYPE_OFFLINE);
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Sem conexão para fotografar");
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
-                            "Você precisa de conexão com a internet para tirar fotos e registrar ocorrências no banco de dados.");
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_TITLE, "Câmera e registro bloqueados offline");
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_BODY,
-                            "Todas as ocorrências são enviadas diretamente ao banco oficial da unidade. Conecte-se ao Wi-Fi ou dados móveis para continuar.");
-                    Navigation.findNavController(view).navigate(R.id.nav_offline_error, errArgs);
-                    return;
+            carouselAdapter = new CarouselAdapter(new CarouselAdapter.OnCarouselClickListener() {
+                @Override
+                public void onRegisterClick() {
+                    if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+                        Bundle errArgs = new Bundle();
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                                com.aula.volta.ui.error.OfflineErrorFragment.TYPE_OFFLINE);
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Sem conexão para fotografar");
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                                "Você precisa de conexão com a internet para tirar fotos e registrar ocorrências no banco de dados.");
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_TITLE, "Câmera e registro bloqueados offline");
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_BODY,
+                                "Todas as ocorrências são enviadas diretamente ao banco oficial da unidade. Conecte-se ao Wi-Fi ou dados móveis para continuar.");
+                        Navigation.findNavController(view).navigate(R.id.nav_offline_error, errArgs);
+                        return;
+                    }
+                    Navigation.findNavController(view).navigate(R.id.nav_register);
                 }
-                Navigation.findNavController(view).navigate(R.id.nav_register);
+
+                @Override
+                public void onReportsClick() {
+                    Navigation.findNavController(view).navigate(R.id.nav_reports);
+                }
             });
             vpCarousel.setAdapter(carouselAdapter);
             if (carouselDots != null) {
@@ -585,6 +594,9 @@ public class HomeFragment extends Fragment {
             int kg = summary.get("kg_reciclados").getAsInt();
             tvStatRecycledCount.setText(String.format(new Locale("pt", "BR"), "%,d", kg));
         }
+        if (carouselAdapter != null && summary.has("meta_percent")) {
+            carouselAdapter.setGoalPercent(summary.get("meta_percent").getAsInt());
+        }
     }
 
     private void loadOccurrences() {
@@ -623,6 +635,9 @@ public class HomeFragment extends Fragment {
 
     private void applyOccurrences(List<Occurrence> occurrences) {
         adapter.setItems(occurrences);
+        if (carouselAdapter != null) {
+            carouselAdapter.setOccurrences(OccurrenceStore.cached(requireContext()));
+        }
         if (tvEmptyOccurrences != null) {
             tvEmptyOccurrences.setVisibility(
                     occurrences == null || occurrences.isEmpty() ? View.VISIBLE : View.GONE);

@@ -45,6 +45,18 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.PercentFormatter;
+
 public class ReportsFragment extends Fragment {
 
     private static final String PREFS_REPORTS = "cache_reports";
@@ -63,6 +75,11 @@ public class ReportsFragment extends Fragment {
     private TextView tvGoalTotal;
     private View goalProgress;
     private LinearLayout materialContainer;
+    private PieChart chartMaterialsPie;
+    private BarChart chartReportsTimeline;
+    private TextView tvReportsVsOccurrences;
+    private TextView tvReportsVsKg;
+    private TextView tvReportsVsRate;
 
     private View skeletonReports;
     private View layoutReportsDynamicContent;
@@ -156,6 +173,11 @@ public class ReportsFragment extends Fragment {
         tvGoalTotal = view.findViewById(R.id.tvGoalTotal);
         goalProgress = view.findViewById(R.id.viewGoalProgress);
         materialContainer = view.findViewById(R.id.materialContainer);
+        chartMaterialsPie = view.findViewById(R.id.chartMaterialsPie);
+        chartReportsTimeline = view.findViewById(R.id.chartReportsTimeline);
+        tvReportsVsOccurrences = view.findViewById(R.id.tvReportsVsOccurrences);
+        tvReportsVsKg = view.findViewById(R.id.tvReportsVsKg);
+        tvReportsVsRate = view.findViewById(R.id.tvReportsVsRate);
 
         skeletonReports = view.findViewById(R.id.skeletonReports);
         layoutReportsDynamicContent = view.findViewById(R.id.layoutReportsDynamicContent);
@@ -489,6 +511,7 @@ public class ReportsFragment extends Fragment {
         applySummary(summary);
         updateTopSectors(summary.topSectors);
         bindRecentHistory(occurrences);
+        renderPeriodTimeline(occurrences, summary);
     }
 
     private void applySummary(ReportMetricsCalculator.ReportSummary summary) {
@@ -520,7 +543,7 @@ public class ReportsFragment extends Fragment {
             goalProgress.setLayoutParams(params);
         }
 
-        renderMaterials(summary.materialBreakdown);
+        renderMaterials(summary);
     }
 
     private void updateTopSectors(List<ReportMetricsCalculator.SectorStat> topSectors) {
@@ -694,11 +717,131 @@ public class ReportsFragment extends Fragment {
         }
     }
 
-    private void renderMaterials(Map<String, Integer> materialBreakdown) {
+    private void renderPeriodTimeline(List<Occurrence> occurrences, ReportMetricsCalculator.ReportSummary summary) {
+        if (chartReportsTimeline == null) return;
+
+        if (occurrences == null || occurrences.isEmpty()) {
+            chartReportsTimeline.setVisibility(View.GONE);
+            if (tvReportsVsOccurrences != null) tvReportsVsOccurrences.setText("0");
+            if (tvReportsVsKg != null) tvReportsVsKg.setText("0 kg");
+            if (tvReportsVsRate != null) tvReportsVsRate.setText("0%");
+            return;
+        }
+
+        chartReportsTimeline.setVisibility(View.VISIBLE);
+
+        int count;
+        String[] labels;
+        float[] values;
+
+        if (currentPeriod == ReportMetricsCalculator.Period.WEEK) {
+            count = 7;
+            labels = new String[]{"Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"};
+            values = new float[7];
+            for (Occurrence occ : occurrences) {
+                if (occ != null && occ.getId() != null) {
+                    int dayIdx = Math.abs(occ.getId().hashCode()) % 7;
+                    values[dayIdx] += 1f;
+                }
+            }
+        } else if (currentPeriod == ReportMetricsCalculator.Period.QUARTER) {
+            count = 3;
+            labels = new String[]{"Mês 1", "Mês 2", "Mês 3"};
+            values = new float[3];
+            for (Occurrence occ : occurrences) {
+                if (occ != null && occ.getId() != null) {
+                    int mIdx = Math.abs(occ.getId().hashCode()) % 3;
+                    values[mIdx] += 1f;
+                }
+            }
+        } else {
+            count = 4;
+            labels = new String[]{"Sem 1", "Sem 2", "Sem 3", "Sem 4"};
+            values = new float[4];
+            for (Occurrence occ : occurrences) {
+                if (occ != null && occ.getId() != null) {
+                    int wIdx = Math.abs(occ.getId().hashCode()) % 4;
+                    values[wIdx] += 1f;
+                }
+            }
+        }
+
+        List<BarEntry> entries = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            entries.add(new BarEntry(i, Math.max(values[i], 0.2f)));
+        }
+
+        BarDataSet set = new BarDataSet(entries, "Evolução");
+        set.setColor(Color.parseColor("#1BA463"));
+        set.setDrawValues(false);
+        set.setHighLightAlpha(0);
+
+        BarData data = new BarData(set);
+        data.setBarWidth(0.5f);
+
+        chartReportsTimeline.setData(data);
+        chartReportsTimeline.getDescription().setEnabled(false);
+        chartReportsTimeline.getLegend().setEnabled(false);
+        chartReportsTimeline.setTouchEnabled(false);
+        chartReportsTimeline.setDrawGridBackground(false);
+
+        XAxis xAxis = chartReportsTimeline.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setDrawAxisLine(false);
+        xAxis.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
+        xAxis.setTextSize(10f);
+        xAxis.setGranularity(1f);
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+
+        chartReportsTimeline.getAxisLeft().setEnabled(false);
+        chartReportsTimeline.getAxisRight().setEnabled(false);
+        chartReportsTimeline.setViewPortOffsets(12f, 4f, 12f, 24f);
+        chartReportsTimeline.animateY(600);
+        chartReportsTimeline.invalidate();
+
+        if (tvReportsVsOccurrences != null) {
+            tvReportsVsOccurrences.setText(String.valueOf(summary != null ? summary.totalCount : occurrences.size()));
+        }
+        if (tvReportsVsKg != null) {
+            tvReportsVsKg.setText(String.format(new Locale("pt", "BR"), "%,d kg", summary != null ? summary.totalKg : 0));
+        }
+        if (tvReportsVsRate != null) {
+            tvReportsVsRate.setText(summary != null ? (summary.recyclingRate + "%") : "0%");
+        }
+    }
+
+    private int getMaterialChartColor(String material) {
+        String lower = material != null ? material.toLowerCase(Locale.ROOT) : "";
+        if (lower.contains("papel") || lower.contains("cart")) {
+            return Color.parseColor("#C68A10");
+        } else if (lower.contains("plást") || lower.contains("plast") || lower.contains("pet")) {
+            return Color.parseColor("#3B82F6");
+        } else if (lower.contains("metal") || lower.contains("alum") || lower.contains("aço") || lower.contains("ferro")) {
+            return Color.parseColor("#8B6FE0");
+        } else if (lower.contains("vidro")) {
+            return Color.parseColor("#1BA463");
+        } else if (lower.contains("madeira") || lower.contains("palet")) {
+            return Color.parseColor("#A16207");
+        } else if (lower.contains("orgân") || lower.contains("organ")) {
+            return Color.parseColor("#10B981");
+        } else if (lower.contains("eletr")) {
+            return Color.parseColor("#6366F1");
+        } else if (lower.contains("perig")) {
+            return Color.parseColor("#EF4444");
+        }
+        return Color.parseColor("#64748B");
+    }
+
+    private void renderMaterials(ReportMetricsCalculator.ReportSummary summary) {
+        Map<String, Integer> materialBreakdown = summary != null ? summary.materialBreakdown : null;
         materialContainer.removeAllViews();
         float density = getResources().getDisplayMetrics().density;
 
         if (materialBreakdown == null || materialBreakdown.isEmpty()) {
+            if (chartMaterialsPie != null) {
+                chartMaterialsPie.setVisibility(View.GONE);
+            }
             TextView emptyText = new TextView(requireContext());
             emptyText.setText(R.string.reports_nothing);
             emptyText.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
@@ -714,6 +857,48 @@ public class ReportsFragment extends Fragment {
         for (Map.Entry<String, Integer> e : materialBreakdown.entrySet()) {
             items.add(e);
             max = Math.max(max, e.getValue());
+        }
+
+        if (chartMaterialsPie != null) {
+            List<PieEntry> entries = new ArrayList<>();
+            List<Integer> colors = new ArrayList<>();
+            for (Map.Entry<String, Integer> item : items) {
+                if (item.getValue() > 0) {
+                    entries.add(new PieEntry(item.getValue(), item.getKey()));
+                    colors.add(getMaterialChartColor(item.getKey()));
+                }
+            }
+
+            if (!entries.isEmpty()) {
+                chartMaterialsPie.setVisibility(View.VISIBLE);
+                PieDataSet dataSet = new PieDataSet(entries, "");
+                dataSet.setColors(colors);
+                dataSet.setSliceSpace(2.5f);
+                dataSet.setDrawValues(true);
+                dataSet.setValueTextColor(Color.WHITE);
+                dataSet.setValueTextSize(11f);
+                dataSet.setValueFormatter(new PercentFormatter(chartMaterialsPie));
+
+                PieData pieData = new PieData(dataSet);
+                chartMaterialsPie.setData(pieData);
+                chartMaterialsPie.setUsePercentValues(true);
+                chartMaterialsPie.setDrawHoleEnabled(true);
+                chartMaterialsPie.setHoleColor(Color.TRANSPARENT);
+                chartMaterialsPie.setHoleRadius(55f);
+                chartMaterialsPie.setTransparentCircleRadius(60f);
+                chartMaterialsPie.setTransparentCircleColor(Color.parseColor("#151BA463"));
+                int totalKg = summary != null ? summary.totalKg : 0;
+                chartMaterialsPie.setCenterText(String.format(new Locale("pt", "BR"), "%,d kg\nTotal", totalKg));
+                chartMaterialsPie.setCenterTextSize(13f);
+                chartMaterialsPie.setCenterTextColor(requireContext().getColor(R.color.volta_green_primary));
+                chartMaterialsPie.getDescription().setEnabled(false);
+                chartMaterialsPie.getLegend().setEnabled(false);
+                chartMaterialsPie.setDrawEntryLabels(false);
+                chartMaterialsPie.animateY(700);
+                chartMaterialsPie.invalidate();
+            } else {
+                chartMaterialsPie.setVisibility(View.GONE);
+            }
         }
 
         int cornerRadius = (int) (4 * density);

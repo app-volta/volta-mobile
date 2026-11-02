@@ -331,10 +331,11 @@
                                 android:src="@drawable/ic_arrow_up_green" />
 
                             <TextView
+                                android:id="@+id/tvReportsVsOccurrences"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/font_inter"
-                                android:text="+12"
+                                android:text="—"
                                 android:textColor="#0E7C48"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -370,10 +371,11 @@
                                 android:src="@drawable/ic_arrow_up_green" />
 
                             <TextView
+                                android:id="@+id/tvReportsVsKg"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/font_inter"
-                                android:text="+8%"
+                                android:text="—"
                                 android:textColor="#0E7C48"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -409,10 +411,11 @@
                                 android:src="@drawable/ic_arrow_up_green" />
 
                             <TextView
+                                android:id="@+id/tvReportsVsRate"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/font_inter"
-                                android:text="+3%"
+                                android:text="—"
                                 android:textColor="#0E7C48"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -428,6 +431,13 @@
                             android:textSize="11.5sp" />
                     </LinearLayout>
                 </LinearLayout>
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/chartReportsTimeline"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <LinearLayout
@@ -528,13 +538,26 @@
                 android:textStyle="bold" />
 
             <LinearLayout
-                android:id="@+id/materialContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
                 android:background="@drawable/bg_card_surface"
                 android:orientation="vertical"
-                android:padding="16dp" />
+                android:padding="16dp">
+
+                <com.github.mikephil.charting.charts.PieChart
+                    android:id="@+id/chartMaterialsPie"
+                    android:layout_width="match_parent"
+                    android:layout_height="210dp"
+                    android:layout_marginBottom="16dp"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/materialContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
