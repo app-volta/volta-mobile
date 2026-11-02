@@ -98,6 +98,10 @@ public class AiAnalysisFragment extends Fragment {
 
     private TextView tvEditWeightValue;
     private TextView tvEditUnitsValue;
+    private TextView tvEditWeightEstimateHint;
+    private TextView tvEditUnitsTitle;
+    private TextView tvEditUnitsEstimateHint;
+    private TextView tvCorrectionHintFooter;
     private int currentWeight = 0;
     private int currentUnits = 0;
     private int initialEstimatedWeight = 0;
@@ -536,6 +540,13 @@ public class AiAnalysisFragment extends Fragment {
         analysisCompleted = true;
         scanHandler.removeCallbacks(scanTimeoutRunnable);
         stopScanAnimation();
+        initialEstimatedWeight = 0;
+        initialEstimatedUnits = 0;
+        currentWeight = 0;
+        currentUnits = 0;
+        if (tvEditWeightValue != null) tvEditWeightValue.setText("0");
+        if (tvEditUnitsValue != null) tvEditUnitsValue.setText("0");
+        updateAiEstimateHints();
         aiLoadingGroup.setVisibility(View.GONE);
         aiResultGroup.setVisibility(View.GONE);
         aiEditGroup.setVisibility(View.VISIBLE);
@@ -638,6 +649,7 @@ public class AiAnalysisFragment extends Fragment {
             if (tvEditUnitsValue != null) {
                 tvEditUnitsValue.setText(currentUnits > 0 ? String.valueOf(currentUnits) : "0");
             }
+            updateAiEstimateHints();
 
             selectPrimaryMaterialFamily(resolvedFamily, false);
             tvAiContamination.setText(selectedContamination);
@@ -693,6 +705,10 @@ public class AiAnalysisFragment extends Fragment {
 
         if (userInitiated) {
             updateRecommendationForMaterial(family);
+        }
+        if (tvCorrectionHintFooter != null) {
+            String matName = (family != null && !family.trim().isEmpty()) ? family.trim().toLowerCase(Locale.ROOT) : "material";
+            tvCorrectionHintFooter.setText("Da próxima vez, ela acerta o peso de " + matName + " na sua unidade.");
         }
 
         if (getView() != null) {
@@ -785,6 +801,58 @@ public class AiAnalysisFragment extends Fragment {
     private void setupEditControls(View root) {
         tvEditWeightValue = root.findViewById(R.id.tvEditWeightValue);
         tvEditUnitsValue = root.findViewById(R.id.tvEditUnitsValue);
+        tvEditWeightEstimateHint = root.findViewById(R.id.tvEditWeightEstimateHint);
+        tvEditUnitsTitle = root.findViewById(R.id.tvEditUnitsTitle);
+        tvEditUnitsEstimateHint = root.findViewById(R.id.tvEditUnitsEstimateHint);
+        tvCorrectionHintFooter = root.findViewById(R.id.tvCorrectionHintFooter);
+        if (tvEditWeightValue != null) {
+            tvEditWeightValue.setOnClickListener(v -> {
+                final android.widget.EditText input = new android.widget.EditText(requireContext());
+                input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                input.setText(currentWeight > 0 ? String.valueOf(currentWeight) : "");
+                input.setSelection(input.getText().length());
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Informe o peso (kg)")
+                        .setView(input)
+                        .setPositiveButton("OK", (dialog, which) -> {
+                            String s = input.getText().toString().trim();
+                            if (!s.isEmpty()) {
+                                try {
+                                    currentWeight = Math.max(1, Integer.parseInt(s));
+                                    tvEditWeightValue.setText(String.valueOf(currentWeight));
+                                    updateEditSteppersUi(root);
+                                } catch (Exception ignored) {
+                                }
+                            }
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            });
+        }
+        if (tvEditUnitsValue != null) {
+            tvEditUnitsValue.setOnClickListener(v -> {
+                final android.widget.EditText input = new android.widget.EditText(requireContext());
+                input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                input.setText(currentUnits > 0 ? String.valueOf(currentUnits) : "");
+                input.setSelection(input.getText().length());
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Informe a quantidade de unidades")
+                        .setView(input)
+                        .setPositiveButton("OK", (dialog, which) -> {
+                            String s = input.getText().toString().trim();
+                            if (!s.isEmpty()) {
+                                try {
+                                    currentUnits = Math.max(1, Integer.parseInt(s));
+                                    tvEditUnitsValue.setText(String.valueOf(currentUnits));
+                                    updateEditSteppersUi(root);
+                                } catch (Exception ignored) {
+                                }
+                            }
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            });
+        }
 
         ImageView imgEditPhotoThumb = root.findViewById(R.id.imgEditPhotoThumb);
         if (photoPath != null && imgEditPhotoThumb != null) {
@@ -991,6 +1059,37 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
+    private void updateAiEstimateHints() {
+        if (tvEditWeightEstimateHint != null) {
+            if (initialEstimatedWeight > 0) {
+                String unitStr = (analysis != null && analysis.getUnidade() != null && !analysis.getUnidade().trim().isEmpty())
+                        ? analysis.getUnidade().trim() : "kg";
+                tvEditWeightEstimateHint.setText("IA estimou ≈ " + initialEstimatedWeight + " " + unitStr);
+            } else {
+                tvEditWeightEstimateHint.setText("IA não determinou o peso");
+            }
+        }
+        String unitType = "Unidades";
+        if (analysis != null && analysis.getUnidades() != null && analysis.getUnidades().getTipo() != null && !analysis.getUnidades().getTipo().trim().isEmpty()) {
+            unitType = analysis.getUnidades().getTipo().trim();
+        }
+        if (tvEditUnitsTitle != null) {
+            tvEditUnitsTitle.setText(unitType);
+        }
+        if (tvEditUnitsEstimateHint != null) {
+            if (initialEstimatedUnits > 0) {
+                tvEditUnitsEstimateHint.setText("IA contou " + initialEstimatedUnits + " " + unitType.toLowerCase(Locale.ROOT));
+            } else {
+                tvEditUnitsEstimateHint.setText("IA não contou unidades");
+            }
+        }
+        if (tvCorrectionHintFooter != null) {
+            String matName = (selectedMaterial != null && !selectedMaterial.trim().isEmpty())
+                    ? selectedMaterial.trim().toLowerCase(Locale.ROOT) : "material";
+            tvCorrectionHintFooter.setText("Da próxima vez, ela acerta o peso de " + matName + " na sua unidade.");
+        }
+    }
+
     private void updateEditSteppersUi(View root) {
         if (root == null) return;
         View stepperWeight = root.findViewById(R.id.stepperWeightContainer);
@@ -1064,6 +1163,7 @@ public class AiAnalysisFragment extends Fragment {
         if (tvEditUnitsValue != null) {
             tvEditUnitsValue.setText(String.valueOf(currentUnits));
         }
+        updateAiEstimateHints();
         if (getView() != null) {
             updateMaterialChipsUi(getView());
             updateContaminationSegmentsUi(getView());
@@ -1083,6 +1183,7 @@ public class AiAnalysisFragment extends Fragment {
         if (tvEditUnitsValue != null) {
             tvEditUnitsValue.setText(String.valueOf(currentUnits));
         }
+        updateAiEstimateHints();
         if (getView() != null) {
             updateMaterialChipsUi(getView());
             updateContaminationSegmentsUi(getView());

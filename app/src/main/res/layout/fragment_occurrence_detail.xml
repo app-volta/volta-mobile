@@ -285,7 +285,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:fontFamily="sans-serif"
-                                android:text="Contaminação baixa · ≈ 38 kg"
+                                android:text="—"
                                 android:textColor="@color/vf_text_secondary"
                                 android:textSize="13sp" />
 

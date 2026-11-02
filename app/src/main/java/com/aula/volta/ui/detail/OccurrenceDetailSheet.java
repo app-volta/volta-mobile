@@ -128,7 +128,7 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
                     detail.addProperty("titulo", cleanTitle);
                     detail.addProperty("material", cleanTitle);
                     detail.addProperty("setor", com.aula.volta.data.model.Occurrence.resolveSector(dto, getContext()));
-                    detail.addProperty("peso_estimado", dto.getEstimatedQuantity() != null ? dto.getEstimatedQuantity() : 38.0);
+                    detail.addProperty("peso_estimado", dto.getEstimatedQuantity() != null ? dto.getEstimatedQuantity() : 0.0);
                     detail.addProperty("status", dto.getStatus() != null ? dto.getStatus() : "EM_ANALISE");
                     detail.addProperty("prioridade", dto.getPriority() != null ? dto.getPriority() : "ALTA");
                     detail.addProperty("quando", dto.getRegisteredAt() != null ? dto.getRegisteredAt() : "agora");
