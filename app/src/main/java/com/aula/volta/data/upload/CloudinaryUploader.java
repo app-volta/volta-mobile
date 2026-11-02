@@ -176,7 +176,26 @@ public final class CloudinaryUploader {
         uploadImage(context, imageFile, UPLOAD_PRESET, ASSET_FOLDER, null, callback);
     }
 
+    public static void invalidateCache(String localFilePath) {
+        if (localFilePath == null) return;
+        uploadedUrlCache.remove(localFilePath);
+        uploadedPublicIdCache.remove(localFilePath);
+        List<String> keysToRemove = new ArrayList<>();
+        for (String k : uploadedUrlCache.keySet()) {
+            if (k.startsWith(localFilePath)) {
+                keysToRemove.add(k);
+            }
+        }
+        for (String k : keysToRemove) {
+            uploadedUrlCache.remove(k);
+            uploadedPublicIdCache.remove(k);
+        }
+    }
+
     public static void uploadProfileImage(Context context, File imageFile, String userEmail, UploadCallback callback) {
+        if (imageFile != null) {
+            invalidateCache(imageFile.getAbsolutePath());
+        }
         String publicId = sanitizeEmailForPublicId(userEmail);
         uploadImage(context, imageFile, PROFILE_UPLOAD_PRESET, PROFILE_ASSET_FOLDER, publicId, callback);
     }
