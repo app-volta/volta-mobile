@@ -388,18 +388,32 @@ public class HomeFragment extends Fragment {
                         }
                     } catch (Exception ignored) {
                     }
-                    if (isAdded() && imgAvatar != null) {
-                        RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
-                        circular.setCircular(true);
-                        imgAvatar.setImageDrawable(circular);
-                        imgAvatar.setVisibility(View.VISIBLE);
-                        if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+                    if (isAdded() && getActivity() != null) {
+                        requireActivity().runOnUiThread(() -> {
+                            if (imgAvatar != null) {
+                                RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
+                                circular.setCircular(true);
+                                imgAvatar.setImageDrawable(circular);
+                                imgAvatar.setVisibility(View.VISIBLE);
+                                if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+                            }
+                        });
                     }
                 }
 
                 @Override
                 public void onError(Exception e) {
                     android.util.Log.w("HomeFragment", "Falha ao carregar foto remota de perfil: " + e.getMessage());
+                    if (isAdded() && getActivity() != null) {
+                        requireActivity().runOnUiThread(() -> {
+                            if (imgAvatar != null) {
+                                imgAvatar.setVisibility(View.GONE);
+                            }
+                            if (tvInitials != null) {
+                                tvInitials.setVisibility(View.VISIBLE);
+                            }
+                        });
+                    }
                 }
             });
         } else {

@@ -216,18 +216,23 @@ public class EditProfileFragment extends Fragment {
                         }
                     } catch (Exception ignored) {
                     }
-                    if (isAdded()) {
-                        displayCircularPhoto(bmp);
+                    if (isAdded() && getActivity() != null) {
+                        requireActivity().runOnUiThread(() -> displayCircularPhoto(bmp));
                     }
                 }
 
                 @Override
                 public void onError(Exception e) {
                     Log.w(TAG, "Falha ao carregar foto remota do Cloudinary: " + e.getMessage());
+                    if (isAdded() && getActivity() != null) {
+                        requireActivity().runOnUiThread(() -> {
+                            if (imgEditProfilePhoto != null) imgEditProfilePhoto.setVisibility(View.GONE);
+                            if (tvEditProfileInitials != null) tvEditProfileInitials.setVisibility(View.VISIBLE);
+                        });
+                    }
                 }
             });
         } else {
-
             if (imgEditProfilePhoto != null) imgEditProfilePhoto.setVisibility(View.GONE);
             if (tvEditProfileInitials != null) tvEditProfileInitials.setVisibility(View.VISIBLE);
         }
@@ -244,8 +249,10 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void openPhotoSheet() {
-        boolean hasPhoto = (SessionManager.getProfilePhotoLocal(requireContext()) != null)
-                || (SessionManager.getProfilePhotoUrl(requireContext()) != null);
+        String local = SessionManager.getProfilePhotoLocal(requireContext());
+        String remote = SessionManager.getProfilePhotoUrl(requireContext());
+        boolean hasPhoto = (local != null && !local.isEmpty() && new File(local).exists())
+                || (remote != null && !remote.isEmpty() && remote.startsWith("http"));
         ProfilePhotoSheet sheet = ProfilePhotoSheet.newInstance(hasPhoto);
         sheet.setOnPhotoOptionSelectedListener(new ProfilePhotoSheet.OnPhotoOptionSelectedListener() {
             @Override
