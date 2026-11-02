@@ -8,10 +8,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -33,6 +35,11 @@ public class LoginFragment extends Fragment {
 
     private EditText etEmail;
     private EditText etPassword;
+    private AppCompatButton btnLogin;
+    private ProgressBar pbLoading;
+    private View btnForgotPassword;
+    private View btnGoRegister;
+    private View btnGoogle;
     private boolean passwordVisible;
 
     public LoginFragment() {
@@ -51,6 +58,11 @@ public class LoginFragment extends Fragment {
 
         etEmail = view.findViewById(R.id.etLoginEmail);
         etPassword = view.findViewById(R.id.etLoginPassword);
+        btnLogin = view.findViewById(R.id.btnLogin);
+        pbLoading = view.findViewById(R.id.pbLoginLoading);
+        btnForgotPassword = view.findViewById(R.id.btnForgotPassword);
+        btnGoRegister = view.findViewById(R.id.btnGoRegister);
+        btnGoogle = view.findViewById(R.id.btnGoogle);
 
         view.findViewById(R.id.btnTogglePassword).setOnClickListener(v -> {
             passwordVisible = !passwordVisible;
@@ -62,15 +74,23 @@ public class LoginFragment extends Fragment {
             etPassword.setSelection(etPassword.getText().length());
         });
 
-        view.findViewById(R.id.btnLogin).setOnClickListener(v -> tryLogin(v));
+        if (btnLogin != null) {
+            btnLogin.setOnClickListener(v -> tryLogin(v));
+        }
 
-        view.findViewById(R.id.btnGoRegister).setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.auth_register));
-        view.findViewById(R.id.btnForgotPassword).setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.auth_forgot));
-        view.findViewById(R.id.btnGoogle).setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.occ_soon,
-                        Toast.LENGTH_SHORT).show());
+        if (btnGoRegister != null) {
+            btnGoRegister.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigate(R.id.auth_register));
+        }
+        if (btnForgotPassword != null) {
+            btnForgotPassword.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigate(R.id.auth_forgot));
+        }
+        if (btnGoogle != null) {
+            btnGoogle.setOnClickListener(v ->
+                    Toast.makeText(requireContext(), R.string.occ_soon,
+                            Toast.LENGTH_SHORT).show());
+        }
 
         getParentFragmentManager().setFragmentResultListener(
                 com.aula.volta.ui.error.OfflineErrorFragment.REQUEST_KEY,
@@ -81,10 +101,42 @@ public class LoginFragment extends Fragment {
                         String em = etEmail.getText().toString().trim();
                         String pw = etPassword.getText().toString();
                         if (em.contains("@") && pw.length() >= 4) {
-                            tryLogin(getView().findViewById(R.id.btnLogin));
+                            tryLogin(btnLogin != null ? btnLogin : getView().findViewById(R.id.btnLogin));
                         }
                     }
                 });
+    }
+
+    private void setLoading(boolean loading) {
+        if (!isAdded()) {
+            return;
+        }
+        if (btnLogin != null) {
+            btnLogin.setEnabled(!loading);
+            if (loading) {
+                btnLogin.setText("");
+            } else {
+                btnLogin.setText(R.string.auth_login_btn);
+            }
+        }
+        if (pbLoading != null) {
+            pbLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
+        }
+        if (etEmail != null) {
+            etEmail.setEnabled(!loading);
+        }
+        if (etPassword != null) {
+            etPassword.setEnabled(!loading);
+        }
+        if (btnForgotPassword != null) {
+            btnForgotPassword.setEnabled(!loading);
+        }
+        if (btnGoRegister != null) {
+            btnGoRegister.setEnabled(!loading);
+        }
+        if (btnGoogle != null) {
+            btnGoogle.setEnabled(!loading);
+        }
     }
 
     private void tryLogin(View v) {
@@ -103,10 +155,7 @@ public class LoginFragment extends Fragment {
         }
         final String name = displayName(email);
 
-        final View btnLogin = v != null ? v.findViewById(R.id.btnLogin) : null;
-        if (btnLogin != null) {
-            btnLogin.setEnabled(false);
-        }
+        setLoading(true);
 
         try {
             AuthAPI authApi = ChatbotAuthClient.get(appContext).create(AuthAPI.class);
@@ -114,7 +163,6 @@ public class LoginFragment extends Fragment {
                 @Override
                 public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
-
                         SessionManager.login(appContext, email, password, name, "");
                         ApiClient.reset();
                         ChatbotAuthClient.reset();
@@ -176,11 +224,8 @@ public class LoginFragment extends Fragment {
                             completeLogin();
                         }
                     } else {
-
                         Log.w(TAG, "Falha de autenticação (HTTP " + response.code() + "). Rejeitando login.");
-                        if (btnLogin != null) {
-                            btnLogin.setEnabled(true);
-                        }
+                        setLoading(false);
                         if (isAdded() && getContext() != null) {
                             Toast.makeText(requireContext(), R.string.auth_invalid, Toast.LENGTH_SHORT).show();
                         }
@@ -190,9 +235,7 @@ public class LoginFragment extends Fragment {
                 @Override
                 public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                     Log.w(TAG, "API offline ou inalcançável no login: " + t.getMessage());
-                    if (btnLogin != null) {
-                        btnLogin.setEnabled(true);
-                    }
+                    setLoading(false);
                     if (!isAdded()) {
                         return;
                     }
@@ -208,9 +251,7 @@ public class LoginFragment extends Fragment {
             });
         } catch (Exception e) {
             Log.w(TAG, "Erro ao iniciar autenticação", e);
-            if (btnLogin != null) {
-                btnLogin.setEnabled(true);
-            }
+            setLoading(false);
             if (isAdded() && getContext() != null) {
                 Toast.makeText(requireContext(), R.string.auth_invalid, Toast.LENGTH_SHORT).show();
             }

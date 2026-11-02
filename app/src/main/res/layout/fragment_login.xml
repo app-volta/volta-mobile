@@ -180,19 +180,33 @@
             android:textSize="12.5sp"
             android:textStyle="bold" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnLogin"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_button_auth_white"
-            android:fontFamily="@font/font_poppins"
-            android:stateListAnimator="@null"
-            android:text="@string/auth_login_btn"
-            android:textAllCaps="false"
-            android:textColor="@color/login_btn_text_green"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:layout_marginBottom="16dp">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnLogin"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_button_auth_white"
+                android:fontFamily="@font/font_poppins"
+                android:stateListAnimator="@null"
+                android:text="@string/auth_login_btn"
+                android:textAllCaps="false"
+                android:textColor="@color/login_btn_text_green"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ProgressBar
+                android:id="@+id/pbLoginLoading"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:indeterminateTint="@color/login_btn_text_green"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
