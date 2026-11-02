@@ -171,7 +171,7 @@ public final class OccurrenceStore {
                                         d.addProperty("registeredAt", inc.getRegisteredAt());
                                     }
                                     double weight = (inc.getEstimatedQuantity() != null && inc.getEstimatedQuantity() > 0)
-                                            ? inc.getEstimatedQuantity() : 25.0;
+                                            ? inc.getEstimatedQuantity() : 0.0;
                                     d.addProperty("peso_estimado", weight);
                                     d.addProperty("quantidade", weight);
                                     PrefsHelper.putJson(app, "cache_occurrence_detail", inc.getId(), d.toString());
