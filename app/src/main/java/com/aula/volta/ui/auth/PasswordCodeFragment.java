@@ -17,6 +17,15 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.AuthAPI;
+import com.aula.volta.data.model.auth.ForgotPasswordRequestDTO;
+import com.aula.volta.data.model.auth.VerifyCodeRequestDTO;
+import com.google.gson.JsonObject;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PasswordCodeFragment extends Fragment {
 
@@ -24,8 +33,10 @@ public class PasswordCodeFragment extends Fragment {
 
     private EditText[] boxes;
     private TextView tvResend;
+    private View btnConfirmPasscode;
     private CountDownTimer timer;
     private boolean canResend;
+    private String email = "";
 
     public PasswordCodeFragment() {
     }
@@ -41,7 +52,7 @@ public class PasswordCodeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        String email = getArguments() != null ? getArguments().getString("email") : "";
+        email = getArguments() != null ? getArguments().getString("email", "") : "";
         TextView tvSub = view.findViewById(R.id.tvPasscodeSub);
         TextView tvEmail = view.findViewById(R.id.tvPasscodeEmail);
         if (tvSub != null) {
@@ -98,25 +109,90 @@ public class PasswordCodeFragment extends Fragment {
         if (tvResend != null) {
             tvResend.setOnClickListener(v -> {
                 if (canResend) {
-                    Toast.makeText(requireContext(), R.string.auth_code_sent,
-                            Toast.LENGTH_SHORT).show();
-                    startResendTimer();
+                    resendCode();
                 }
             });
             startResendTimer();
         }
 
-        view.findViewById(R.id.btnConfirmPasscode).setOnClickListener(v -> {
-            StringBuilder code = new StringBuilder();
-            for (EditText box : boxes) {
-                code.append(box.getText().toString());
+        btnConfirmPasscode = view.findViewById(R.id.btnConfirmPasscode);
+        if (btnConfirmPasscode != null) {
+            btnConfirmPasscode.setOnClickListener(v -> verifyCodeAndProceed(v));
+        }
+    }
+
+    private void resendCode() {
+        if (email == null || email.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.auth_invalid, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+        authApi.forgotPassword(new ForgotPasswordRequestDTO(email)).enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), R.string.auth_code_sent, Toast.LENGTH_SHORT).show();
+                startResendTimer();
             }
-            if (code.length() < 4) {
-                Toast.makeText(requireContext(), R.string.auth_bad_code,
-                        Toast.LENGTH_SHORT).show();
-                return;
+
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                Toast.makeText(requireContext(), "Erro ao reenviar código.", Toast.LENGTH_SHORT).show();
+                startResendTimer();
             }
-            Navigation.findNavController(v).navigate(R.id.auth_reset);
+        });
+    }
+
+    private void verifyCodeAndProceed(View v) {
+        StringBuilder codeBuilder = new StringBuilder();
+        for (EditText box : boxes) {
+            if (box != null) {
+                codeBuilder.append(box.getText().toString().trim());
+            }
+        }
+        String code = codeBuilder.toString();
+        if (code.length() < 4) {
+            Toast.makeText(requireContext(), R.string.auth_bad_code, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (btnConfirmPasscode != null) {
+            btnConfirmPasscode.setEnabled(false);
+        }
+
+        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+        authApi.verifyCode(new VerifyCodeRequestDTO(email, code)).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!isAdded()) return;
+                if (btnConfirmPasscode != null) {
+                    btnConfirmPasscode.setEnabled(true);
+                }
+
+                if (response.isSuccessful()) {
+                    Bundle args = new Bundle();
+                    args.putString("email", email);
+                    args.putString("code", code);
+                    Navigation.findNavController(v).navigate(R.id.auth_reset, args);
+                } else {
+                    Toast.makeText(requireContext(), "Código incorreto ou expirado. Verifique seu e-mail.", Toast.LENGTH_SHORT).show();
+                    for (EditText box : boxes) {
+                        if (box != null) box.setText("");
+                    }
+                    if (boxes[0] != null) boxes[0].requestFocus();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                if (btnConfirmPasscode != null) {
+                    btnConfirmPasscode.setEnabled(true);
+                }
+                Toast.makeText(requireContext(), "Falha de conexão. Verifique sua internet.", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
