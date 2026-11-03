@@ -50,7 +50,7 @@ public class Occurrence {
             title = title.replaceAll("(?i)\\s*\\(Classe\\s+[A-Za-z0-9]+\\)", "").trim();
         }
         if (title == null || title.trim().isEmpty()) {
-            title = json.getMaterial() != null ? json.getMaterial() : "Resíduo Reciclável";
+            title = json.getMaterial() != null ? json.getMaterial() : "Nenhum";
         }
         return new Occurrence(
                 json.getId(),
@@ -85,7 +85,7 @@ public class Occurrence {
         } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty()) {
             singleTitle = inc.getEmployeeDescription().trim();
         } else {
-            singleTitle = (mat != null && !mat.trim().isEmpty() && !AiAnalysisJSON.isGenericLabel(mat)) ? mat : "Resíduo Reciclável";
+            singleTitle = (mat != null && !mat.trim().isEmpty() && !AiAnalysisJSON.isGenericLabel(mat)) ? mat : "Nenhum";
         }
         String prio = (inc.getPriority() != null && !inc.getPriority().isEmpty())
                 ? inc.getPriority()
@@ -167,7 +167,7 @@ public class Occurrence {
 
     private static String resolveMaterial(IncidentResponseDTO inc, Context context) {
         if (inc == null) {
-            return "Resíduo Reciclável";
+            return "Nenhum";
         }
         String wId = inc.getWasteTypeId();
         if (wId != null && !wId.isEmpty() && context != null) {
@@ -215,7 +215,7 @@ public class Occurrence {
         if (desc.contains("orgân") || desc.contains("organ") || desc.contains("peotta")) {
             return "Orgânico";
         }
-        return "Resíduo Reciclável";
+        return "Nenhum";
     }
 
     public String getId() {

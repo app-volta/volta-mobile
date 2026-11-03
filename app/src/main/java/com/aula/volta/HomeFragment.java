@@ -37,6 +37,7 @@ import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.Occurrence;
+import com.aula.volta.data.report.ReportMetricsCalculator;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -166,6 +167,13 @@ public class HomeFragment extends Fragment {
         View.OnClickListener openAssistant = v ->
                 Navigation.findNavController(v).navigate(R.id.nav_assistant);
         if (fabMascot != null) {
+            fabMascot.setClipToOutline(true);
+            fabMascot.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override
+                public void getOutline(android.view.View v, android.graphics.Outline outline) {
+                    outline.setOval(0, 0, v.getWidth(), v.getHeight());
+                }
+            });
             fabMascot.setOnClickListener(openAssistant);
         }
         if (balloonMascot != null) {
@@ -433,136 +441,15 @@ public class HomeFragment extends Fragment {
         if (layoutSummaryCards != null) {
             layoutSummaryCards.setVisibility(View.GONE);
         }
-        ReportAPI api = ApiClient.get(requireContext()).create(ReportAPI.class);
-        api.getSummary().enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonObject raw = response.body();
-                    JsonObject summary = parseRealSummary(raw);
-                    PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toString());
-                    applySummary(summary);
+
+        loadSummaryFromCache();
+
+        ReportMetricsCalculator.loadOfficialSummary(requireContext(), ReportMetricsCalculator.Period.MONTH,
+                (summary, occurrences) -> {
+                    if (!isAdded()) return;
+                    applySummary(summary.toJsonObject());
                     onLoadFinished();
-                } else {
-                    fallbackEsgMetrics(api);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    fallbackEsgMetrics(api);
-                }
-            }
-        });
-    }
-
-    private JsonObject parseRealSummary(JsonObject raw) {
-        JsonObject summary = new JsonObject();
-        if (raw.has("kg_reciclados") && raw.has("abertas") && raw.has("resolvidas")) {
-            return raw;
-        }
-
-        int kg = 0;
-        if (raw.has("esgMetrics") && raw.get("esgMetrics").isJsonArray()) {
-            com.google.gson.JsonArray esgArr = raw.getAsJsonArray("esgMetrics");
-            if (esgArr.size() > 0) {
-                JsonObject first = esgArr.get(0).getAsJsonObject();
-                if (first.has("totalRecycledKg") && !first.get("totalRecycledKg").isJsonNull()) {
-                    kg = (int) Math.round(first.get("totalRecycledKg").getAsDouble());
-                }
-                if (first.has("monthlyTarget") && !first.get("monthlyTarget").isJsonNull()) {
-                    summary.addProperty("monthlyTarget", first.get("monthlyTarget").getAsDouble());
-                }
-                if (first.has("weeklyTarget") && !first.get("weeklyTarget").isJsonNull()) {
-                    summary.addProperty("weeklyTarget", first.get("weeklyTarget").getAsDouble());
-                }
-                if (first.has("quarterlyTarget") && !first.get("quarterlyTarget").isJsonNull()) {
-                    summary.addProperty("quarterlyTarget", first.get("quarterlyTarget").getAsDouble());
-                }
-            }
-        }
-
-        int openCount = 0;
-        int resolvedCount = 0;
-        if (raw.has("incidents") && raw.get("incidents").isJsonArray()) {
-            for (com.google.gson.JsonElement el : raw.getAsJsonArray("incidents")) {
-                if (el.isJsonObject()) {
-                    String st = el.getAsJsonObject().has("status") && !el.getAsJsonObject().get("status").isJsonNull()
-                            ? el.getAsJsonObject().get("status").getAsString().toUpperCase() : "";
-                    if ("CLOSED".equals(st) || "FINALIZADA".equals(st) || "RESOLVIDO".equals(st) || "APROVADO".equals(st) || "APROVADA".equals(st)) {
-                        resolvedCount++;
-                    } else {
-                        openCount++;
-                    }
-                }
-            }
-        }
-
-        summary.addProperty("kg_reciclados", kg);
-        summary.addProperty("abertas", openCount);
-        summary.addProperty("resolvidas", resolvedCount);
-
-        if (raw.has("areas") && raw.get("areas").isJsonArray()) {
-            for (com.google.gson.JsonElement el : raw.getAsJsonArray("areas")) {
-                if (el.isJsonObject() && el.getAsJsonObject().has("id")) {
-                    String areaId = el.getAsJsonObject().get("id").getAsString();
-                    PrefsHelper.putJson(requireContext(), "cache_areas", areaId, el.toString());
-                }
-            }
-        }
-
-        if (raw.has("wasteTypes") && raw.get("wasteTypes").isJsonArray()) {
-            PrefsHelper.putJson(requireContext(), "cache_waste_types", "list", raw.getAsJsonArray("wasteTypes").toString());
-        }
-
-        return summary;
-    }
-
-    private void fallbackEsgMetrics(ReportAPI api) {
-        api.getEsgMetrics().enqueue(new Callback<List<EsgMetricResponseDTO>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<EsgMetricResponseDTO>> call,
-                                   @NonNull Response<List<EsgMetricResponseDTO>> response) {
-                if (!isAdded()) return;
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    EsgMetricResponseDTO metric = response.body().get(0);
-                    JsonObject summary = new JsonObject();
-                    int kg = metric.getTotalRecycledKg() != null ? metric.getTotalRecycledKg().intValue() : 0;
-                    int openCount = 0;
-                    int resolvedCount = 0;
-                    List<Occurrence> cachedOccs = OccurrenceStore.cached(requireContext());
-                    if (cachedOccs != null) {
-                        for (Occurrence occ : cachedOccs) {
-                            if (occ.isResolved()) {
-                                resolvedCount++;
-                            } else {
-                                openCount++;
-                            }
-                        }
-                    }
-                    summary.addProperty("kg_reciclados", kg);
-                    summary.addProperty("resolvidas", resolvedCount);
-                    summary.addProperty("abertas", openCount);
-                    PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toString());
-                    applySummary(summary);
-                } else {
-                    loadSummaryFromCache();
-                }
-                onLoadFinished();
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<EsgMetricResponseDTO>> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    loadSummaryFromCache();
-                    onLoadFinished();
-                }
-            }
-        });
+                });
     }
 
     private void loadSummaryFromCache() {
@@ -601,18 +488,30 @@ public class HomeFragment extends Fragment {
     }
 
     private void applySummary(JsonObject summary) {
+        if (summary == null) return;
         if (tvStatOpenCount != null && summary.has("abertas")) {
             tvStatOpenCount.setText(String.valueOf(summary.get("abertas").getAsInt()));
         }
         if (tvStatResolvedCount != null && summary.has("resolvidas")) {
             tvStatResolvedCount.setText(String.valueOf(summary.get("resolvidas").getAsInt()));
         }
-        if (tvStatRecycledCount != null && summary.has("kg_reciclados")) {
-            int kg = summary.get("kg_reciclados").getAsInt();
+        if (tvStatRecycledCount != null) {
+            int kg = 0;
+            if (summary.has("kg_reciclados") && !summary.get("kg_reciclados").isJsonNull()) {
+                kg = summary.get("kg_reciclados").getAsInt();
+            } else if (summary.has("totalKg") && !summary.get("totalKg").isJsonNull()) {
+                kg = summary.get("totalKg").getAsInt();
+            }
             tvStatRecycledCount.setText(String.format(new Locale("pt", "BR"), "%,d", kg));
         }
-        if (carouselAdapter != null && summary.has("meta_percent")) {
-            carouselAdapter.setGoalPercent(summary.get("meta_percent").getAsInt());
+        if (carouselAdapter != null) {
+            int pct = 0;
+            if (summary.has("meta_percent") && !summary.get("meta_percent").isJsonNull()) {
+                pct = summary.get("meta_percent").getAsInt();
+            } else if (summary.has("goalPercent") && !summary.get("goalPercent").isJsonNull()) {
+                pct = summary.get("goalPercent").getAsInt();
+            }
+            carouselAdapter.setGoalPercent(pct);
         }
     }
 

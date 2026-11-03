@@ -73,12 +73,59 @@ public final class PgrsReport {
                 if (sObj.has("quarterlyTarget") && !sObj.get("quarterlyTarget").isJsonNull()) {
                     baseEsg.addProperty("quarterlyTarget", sObj.get("quarterlyTarget").getAsDouble());
                 }
+                if (sObj.has("corporateTotalKg") && !sObj.get("corporateTotalKg").isJsonNull()) {
+                    baseEsg.addProperty("corporateTotalKg", sObj.get("corporateTotalKg").getAsInt());
+                } else if (sObj.has("kg_reciclados") && !sObj.get("kg_reciclados").isJsonNull()) {
+                    baseEsg.addProperty("kg_reciclados", sObj.get("kg_reciclados").getAsInt());
+                }
+                if (sObj.has("corporateRecyclingPercentage") && !sObj.get("corporateRecyclingPercentage").isJsonNull()) {
+                    baseEsg.addProperty("corporateRecyclingPercentage", sObj.get("corporateRecyclingPercentage").getAsInt());
+                }
+                if (sObj.has("abertas") && !sObj.get("abertas").isJsonNull()) {
+                    baseEsg.addProperty("abertas", sObj.get("abertas").getAsInt());
+                }
+                if (sObj.has("resolvidas") && !sObj.get("resolvidas").isJsonNull()) {
+                    baseEsg.addProperty("resolvidas", sObj.get("resolvidas").getAsInt());
+                }
+                if (sObj.has("por_tipo") && sObj.get("por_tipo").isJsonObject()) {
+                    baseEsg.add("por_tipo", sObj.getAsJsonObject("por_tipo"));
+                }
             } catch (Exception ignored) {
             }
         }
 
+        Map<String, Double> weightsById = new java.util.HashMap<>();
+        Map<String, String> materialsById = new java.util.HashMap<>();
+        if (occurrences != null) {
+            for (Occurrence occ : occurrences) {
+                if (occ == null || occ.getId() == null) continue;
+                String cachedStr = PrefsHelper.getJson(app, "cache_occurrence_detail", occ.getId());
+                if (cachedStr != null && !cachedStr.isEmpty()) {
+                    try {
+                        JsonObject d = JsonParser.parseString(cachedStr).getAsJsonObject();
+                        if (d.has("peso_estimado") && !d.get("peso_estimado").isJsonNull()) {
+                            try {
+                                weightsById.put(occ.getId(), d.get("peso_estimado").getAsDouble());
+                            } catch (Exception ignored) {
+                                String wStr = d.get("peso_estimado").getAsString().replaceAll("[^0-9.]", "");
+                                if (!wStr.isEmpty()) {
+                                    weightsById.put(occ.getId(), Double.parseDouble(wStr));
+                                }
+                            }
+                        } else if (d.has("quantidade") && !d.get("quantidade").isJsonNull()) {
+                            weightsById.put(occ.getId(), d.get("quantidade").getAsDouble());
+                        }
+                        if (d.has("material") && !d.get("material").isJsonNull()) {
+                            materialsById.put(occ.getId(), d.get("material").getAsString());
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }
+
         ReportMetricsCalculator.ReportSummary calc = ReportMetricsCalculator.calculate(
-                period, baseEsg, occurrences, null, null);
+                period, baseEsg, occurrences, weightsById, materialsById);
 
         int totalOccurrences = calc.totalCount;
         int totalKg = calc.totalKg;
@@ -136,7 +183,7 @@ public final class PgrsReport {
             PdfDocument.Page page1 = document.startPage(pageInfo1);
             Canvas canvas1 = page1.getCanvas();
 
-            drawPageOne(canvas1, unitName, cnpj, address, numSectors, periodFormatted,
+            drawPageOne(canvas1, period, unitName, cnpj, address, numSectors, periodFormatted,
                     operatorName, operatorRole, emissionTime, monthYearFormatted,
                     totalOccurrences, totalKg, recyclingRate, landfillDiverted,
                     goalKg, goalPercent, calc.materialBreakdown, calc.topSectors, coops);
@@ -164,7 +211,8 @@ public final class PgrsReport {
         }
     }
 
-    private static void drawPageOne(Canvas canvas, String unitName, String cnpj, String address,
+    private static void drawPageOne(Canvas canvas, ReportMetricsCalculator.Period period,
+                                    String unitName, String cnpj, String address,
                                     String numSectors, String periodFormatted, String operatorName,
                                     String operatorRole, String emissionTime, String monthYearFormatted,
                                     int totalOccurrences, int totalKg, int recyclingRate, int landfillDiverted,
@@ -231,7 +279,8 @@ public final class PgrsReport {
         paint.setColor(Color.parseColor("#0F172A"));
         paint.setTextSize(11f);
         paint.setFakeBoldText(true);
-        canvas.drawText("Resumo do mês", 30, secTop, paint);
+        String summaryTitle = period == ReportMetricsCalculator.Period.WEEK ? "Resumo da semana" : (period == ReportMetricsCalculator.Period.QUARTER ? "Resumo do trimestre" : "Resumo do mês");
+        canvas.drawText(summaryTitle, 30, secTop, paint);
 
         paint.setColor(Color.parseColor("#64748B"));
         paint.setTextSize(8f);
@@ -255,7 +304,7 @@ public final class PgrsReport {
         paint.setColor(Color.parseColor("#0F172A"));
         paint.setTextSize(8.5f);
         paint.setFakeBoldText(true);
-        canvas.drawText("Meta do mês: " + String.format(Locale.getDefault(), "%,d kg", totalKg)
+        canvas.drawText(ReportMetricsCalculator.getGoalTitle(period) + ": " + String.format(Locale.getDefault(), "%,d kg", totalKg)
                 + " de " + String.format(Locale.getDefault(), "%,d kg", goalKg), 42, metaTop + 19, paint);
 
         Paint trackPaint = new Paint();
@@ -469,11 +518,25 @@ public final class PgrsReport {
         p.setFakeBoldText(true);
         canvas.drawText("Recuperado por material", x + 12, y + 18, p);
 
-        String[] mats = new String[]{"Papelão", "Plástico", "Metal", "Vidro"};
-        String[] colors = new String[]{"#C68A10", "#3B82F6", "#8B6FE0", "#1BA463"};
+        List<String> displayMats = new ArrayList<>();
+        if (materials != null) {
+            List<Map.Entry<String, Integer>> sortedEntries = new ArrayList<>(materials.entrySet());
+            sortedEntries.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+            for (Map.Entry<String, Integer> e : sortedEntries) {
+                if (e.getValue() > 0 && displayMats.size() < 4) {
+                    displayMats.add(e.getKey());
+                }
+            }
+        }
+        String[] defaults = new String[]{"Papelão", "Plástico", "Metal", "Vidro"};
+        for (String def : defaults) {
+            if (displayMats.size() < 4 && !displayMats.contains(def)) {
+                displayMats.add(def);
+            }
+        }
 
         int maxKg = 1;
-        for (String mat : mats) {
+        for (String mat : displayMats) {
             int val = (materials != null && materials.containsKey(mat)) ? materials.get(mat) : 0;
             if (val > maxKg) maxKg = val;
         }
@@ -483,10 +546,24 @@ public final class PgrsReport {
         trackPaint.setAntiAlias(true);
         trackPaint.setColor(Color.parseColor("#EDF2EE"));
 
-        for (int i = 0; i < mats.length; i++) {
-            String mName = mats[i];
+        for (int i = 0; i < displayMats.size(); i++) {
+            String mName = displayMats.get(i);
             int mKg = (materials != null && materials.containsKey(mName)) ? materials.get(mName) : 0;
             int pct = totalKg > 0 ? (int) Math.round(mKg * 100.0 / totalKg) : 0;
+
+            String colorHex = "#1BA463";
+            String lower = mName.toLowerCase(Locale.ROOT);
+            if (lower.contains("papel")) {
+                colorHex = "#C68A10";
+            } else if (lower.contains("plást") || lower.contains("plast") || lower.contains("pet")) {
+                colorHex = "#3B82F6";
+            } else if (lower.contains("metal") || lower.contains("alum") || lower.contains("aço") || lower.contains("aco") || lower.contains("ferro")) {
+                colorHex = "#8B6FE0";
+            } else if (lower.contains("vidro")) {
+                colorHex = "#1BA463";
+            } else if (lower.contains("nenhum")) {
+                colorHex = "#94A3B8";
+            }
 
             p.setColor(Color.parseColor("#0F172A"));
             p.setTextSize(8f);
@@ -499,7 +576,7 @@ public final class PgrsReport {
 
             Paint fill = new Paint();
             fill.setAntiAlias(true);
-            fill.setColor(Color.parseColor(colors[i]));
+            fill.setColor(Color.parseColor(colorHex));
             float filledW = mKg > 0 ? Math.max(4f, barW * (mKg / (float) maxKg)) : 0f;
             if (filledW > 0) {
                 canvas.drawRoundRect(new RectF(barLeft, rowY - 6, barLeft + filledW, rowY), 3, 3, fill);

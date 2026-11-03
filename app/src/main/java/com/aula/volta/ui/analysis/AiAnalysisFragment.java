@@ -614,7 +614,8 @@ public class AiAnalysisFragment extends Fragment {
                 icMiddleStatus.setVisibility(View.VISIBLE);
             }
         } else {
-            String rawMat = analysis.getMaterial() != null ? analysis.getMaterial().trim() : "Reciclável";
+            String rawMat = (analysis.getMaterial() != null && !AiAnalysisJSON.isGenericLabel(analysis.getMaterial()))
+                    ? analysis.getMaterial().trim() : "Nenhum";
             selectedClass = "";
             String primary = analysis.getPrimaryMaterial();
             String specific = analysis.getSpecificItem();

@@ -127,9 +127,11 @@ public class CarouselAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             }
 
             SimpleDateFormat keyFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT);
+            SimpleDateFormat brFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.ROOT);
             SimpleDateFormat labelFormat = new SimpleDateFormat("EEE", new Locale("pt", "BR"));
 
             String[] dayKeys = new String[7];
+            String[] dayBrs = new String[7];
             String[] dayLabels = new String[7];
             float[] dayCounts = new float[7];
 
@@ -138,6 +140,7 @@ public class CarouselAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             for (int i = 0; i < 7; i++) {
                 Date d = cal.getTime();
                 dayKeys[i] = keyFormat.format(d);
+                dayBrs[i] = brFormat.format(d);
                 String rawLbl = labelFormat.format(d).replace(".", "").trim();
                 dayLabels[i] = rawLbl.length() > 0
                         ? Character.toUpperCase(rawLbl.charAt(0)) + (rawLbl.length() > 1 ? rawLbl.substring(1) : "")
@@ -151,11 +154,23 @@ public class CarouselAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 for (Occurrence occ : occurrences) {
                     if (occ == null) continue;
                     String dateStr = occ.getTempoRelativo();
-                    for (int i = 0; i < 7; i++) {
-                        if (dateStr != null && dateStr.contains(dayKeys[i])) {
-                            dayCounts[i] += 1f;
-                            total7Days += 1f;
-                            break;
+                    if (dateStr == null || dateStr.trim().isEmpty()) {
+                        dateStr = "Hoje";
+                    }
+                    String lower = dateStr.toLowerCase(Locale.ROOT).trim();
+                    if (lower.startsWith("hoje")) {
+                        dayCounts[6] += 1f;
+                        total7Days += 1f;
+                    } else if (lower.startsWith("ontem")) {
+                        dayCounts[5] += 1f;
+                        total7Days += 1f;
+                    } else {
+                        for (int i = 0; i < 7; i++) {
+                            if (dateStr.contains(dayBrs[i]) || dateStr.contains(dayKeys[i])) {
+                                dayCounts[i] += 1f;
+                                total7Days += 1f;
+                                break;
+                            }
                         }
                     }
                 }

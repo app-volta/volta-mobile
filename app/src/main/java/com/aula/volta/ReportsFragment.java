@@ -273,6 +273,13 @@ public class ReportsFragment extends Fragment {
 
         View fabMascot = view.findViewById(R.id.fabMascotReports);
         if (fabMascot != null) {
+            fabMascot.setClipToOutline(true);
+            fabMascot.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override
+                public void getOutline(android.view.View v, android.graphics.Outline outline) {
+                    outline.setOval(0, 0, v.getWidth(), v.getHeight());
+                }
+            });
             fabMascot.setOnClickListener(v ->
                     Navigation.findNavController(v).navigate(R.id.nav_assistant));
         }
@@ -361,122 +368,29 @@ public class ReportsFragment extends Fragment {
 
         fetchAreasCatalog();
 
-        OccurrenceStore.refresh(requireContext(), freshOccurrences -> {
-            if (!isAdded()) return;
-            fetchEsgAndDisplay(freshOccurrences);
+        ReportMetricsCalculator.loadOfficialSummary(requireContext(), currentPeriod, (summary, occurrences) -> {
+            if (!isAdded() || getContext() == null) return;
+
+            if (skeletonReports != null) {
+                com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonReports);
+                skeletonReports.setVisibility(View.GONE);
+            }
+            if (layoutReportsDynamicContent != null) {
+                layoutReportsDynamicContent.setVisibility(View.VISIBLE);
+                layoutReportsDynamicContent.setAlpha(0f);
+                layoutReportsDynamicContent.animate().alpha(1f).setDuration(220).start();
+            }
+
+            applySummary(summary);
+            updateTopSectors(summary.topSectors);
+            bindRecentHistory(occurrences);
+            renderPeriodTimeline(occurrences, summary);
         });
     }
 
     private void fetchAreasCatalog() {
         if (!isAdded() || getContext() == null) return;
         com.aula.volta.data.repository.AreaRepository.loadAreas(requireContext(), null);
-    }
-
-    private void fetchEsgAndDisplay(List<Occurrence> occurrences) {
-        if (!isAdded() || getContext() == null) return;
-        ReportAPI api = ApiClient.get(requireContext()).create(ReportAPI.class);
-        api.getEsgMetrics().enqueue(new Callback<List<EsgMetricResponseDTO>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<EsgMetricResponseDTO>> call,
-                                   @NonNull Response<List<EsgMetricResponseDTO>> response) {
-                if (!isAdded()) return;
-
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    EsgMetricResponseDTO metric = response.body().get(0);
-                    JsonObject baseEsg = new JsonObject();
-                    baseEsg.addProperty("isLiveDatabase", true);
-                    if (metric.getTotalRecycledKg() != null) {
-                        baseEsg.addProperty("corporateTotalKg", metric.getTotalRecycledKg().intValue());
-                    }
-                    if (metric.getRecyclingPercentage() != null) {
-                        baseEsg.addProperty("corporateRecyclingPercentage", metric.getRecyclingPercentage().intValue());
-                    }
-                    if (metric.getMonthlyTarget() != null && metric.getMonthlyTarget().doubleValue() > 0) {
-                        baseEsg.addProperty("monthlyTarget", metric.getMonthlyTarget().doubleValue());
-                    }
-                    if (metric.getWeeklyTarget() != null && metric.getWeeklyTarget().doubleValue() > 0) {
-                        baseEsg.addProperty("weeklyTarget", metric.getWeeklyTarget().doubleValue());
-                    }
-                    if (metric.getQuarterlyTarget() != null && metric.getQuarterlyTarget().doubleValue() > 0) {
-                        baseEsg.addProperty("quarterlyTarget", metric.getQuarterlyTarget().doubleValue());
-                    }
-                    processAndDisplaySummary(occurrences, baseEsg);
-                } else {
-                    JsonObject baseEsg = new JsonObject();
-                    baseEsg.addProperty("isLiveDatabase", true);
-                    processAndDisplaySummary(occurrences, baseEsg);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<EsgMetricResponseDTO>> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    JsonObject baseEsg = new JsonObject();
-                    baseEsg.addProperty("isLiveDatabase", true);
-                    processAndDisplaySummary(occurrences, baseEsg);
-                }
-            }
-        });
-    }
-
-    private void processAndDisplaySummary(List<Occurrence> occurrences, @Nullable JsonObject baseEsg) {
-        if (!isAdded() || getContext() == null) return;
-
-        if (skeletonReports != null) {
-            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonReports);
-            skeletonReports.setVisibility(View.GONE);
-        }
-        if (layoutReportsDynamicContent != null) {
-            layoutReportsDynamicContent.setVisibility(View.VISIBLE);
-            layoutReportsDynamicContent.setAlpha(0f);
-            layoutReportsDynamicContent.animate().alpha(1f).setDuration(220).start();
-        }
-
-        Map<String, Double> weightsById = new HashMap<>();
-        Map<String, String> materialsById = new HashMap<>();
-
-        if (occurrences != null) {
-            for (Occurrence occ : occurrences) {
-                if (occ == null || occ.getId() == null) continue;
-                String cachedStr = PrefsHelper.getJson(requireContext(), "cache_occurrence_detail", occ.getId());
-                if (cachedStr != null && !cachedStr.isEmpty()) {
-                    try {
-                        JsonObject d = JsonParser.parseString(cachedStr).getAsJsonObject();
-                        if (d.has("peso_estimado") && !d.get("peso_estimado").isJsonNull()) {
-                            try {
-                                weightsById.put(occ.getId(), d.get("peso_estimado").getAsDouble());
-                            } catch (Exception ignored) {
-                                String wStr = d.get("peso_estimado").getAsString().replaceAll("[^0-9.]", "");
-                                if (!wStr.isEmpty()) {
-                                    weightsById.put(occ.getId(), Double.parseDouble(wStr));
-                                }
-                            }
-                        } else if (d.has("quantidade") && !d.get("quantidade").isJsonNull()) {
-                            weightsById.put(occ.getId(), d.get("quantidade").getAsDouble());
-                        }
-                        if (d.has("material") && !d.get("material").isJsonNull()) {
-                            materialsById.put(occ.getId(), d.get("material").getAsString());
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-            }
-        }
-
-        if (baseEsg == null) {
-            baseEsg = new JsonObject();
-            baseEsg.addProperty("isLiveDatabase", true);
-        }
-
-        ReportMetricsCalculator.ReportSummary summary = ReportMetricsCalculator.calculate(
-                currentPeriod, baseEsg, occurrences, weightsById, materialsById);
-
-        PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toJsonObject().toString());
-
-        applySummary(summary);
-        updateTopSectors(summary.topSectors);
-        bindRecentHistory(occurrences);
-        renderPeriodTimeline(occurrences, summary);
     }
 
     private void applySummary(ReportMetricsCalculator.ReportSummary summary) {

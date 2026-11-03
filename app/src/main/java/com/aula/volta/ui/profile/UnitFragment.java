@@ -18,6 +18,7 @@ import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.local.SessionManager;
 import com.aula.volta.data.model.CooperativeJSON;
 import com.aula.volta.data.model.Occurrence;
+import com.aula.volta.data.report.ReportMetricsCalculator;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -93,26 +94,74 @@ public class UnitFragment extends Fragment {
             tvUnitManager.setText(managerName);
         }
 
+        if (tvUnitNextCollection != null) {
+            tvUnitNextCollection.setText("Sob demanda");
+        }
+
+        bindCachedSummary();
+
+        ReportMetricsCalculator.loadOfficialSummary(requireContext(), ReportMetricsCalculator.Period.MONTH, (summary, occurrences) -> {
+            if (!isAdded() || getContext() == null) return;
+            bindSummaryValues(summary.totalCount, summary.totalKg, summary.goalKg, summary.goalPercent);
+        });
+
+        if (tvUnitPartnerCoopName != null) {
+            List<CooperativeJSON> coops = PrefsHelper.getList(requireContext(),
+                    "cache_cooperatives_db", "db_list", CooperativeJSON[].class);
+            if (coops != null && !coops.isEmpty()) {
+                tvUnitPartnerCoopName.setText(coops.get(0).getNome());
+            } else {
+                tvUnitPartnerCoopName.setText("Ver parceiras");
+            }
+        }
+    }
+
+    private void bindCachedSummary() {
         int totalOcc = 0;
         int kg = 0;
-        int targetKg = 0;
+        int targetKg = 1500;
+        int percent = 0;
 
         String summaryJson = PrefsHelper.getJson(requireContext(), "cache_reports", "summary");
         if (summaryJson != null && !summaryJson.isEmpty()) {
             try {
                 JsonObject obj = JsonParser.parseString(summaryJson).getAsJsonObject();
-                int ab = obj.has("abertas") ? obj.get("abertas").getAsInt() : 0;
-                int res = obj.has("resolvidas") ? obj.get("resolvidas").getAsInt() : 0;
-                totalOcc = ab + res;
-                if (obj.has("kg_reciclados")) {
+                if (obj.has("totalCount")) {
+                    totalOcc = obj.get("totalCount").getAsInt();
+                } else {
+                    int ab = obj.has("abertas") ? obj.get("abertas").getAsInt() : 0;
+                    int res = obj.has("resolvidas") ? obj.get("resolvidas").getAsInt() : 0;
+                    totalOcc = ab + res;
+                }
+                if (obj.has("totalKg")) {
+                    kg = obj.get("totalKg").getAsInt();
+                } else if (obj.has("kg_reciclados")) {
                     kg = obj.get("kg_reciclados").getAsInt();
                 }
-                if (obj.has("monthlyTarget") && !obj.get("monthlyTarget").isJsonNull()) {
-                    double mt = obj.get("monthlyTarget").getAsDouble();
-                    if (mt > 0) targetKg = (int) Math.round(mt);
+                if (obj.has("goalKg")) {
+                    targetKg = obj.get("goalKg").getAsInt();
+                } else if (obj.has("meta_kg")) {
+                    targetKg = obj.get("meta_kg").getAsInt();
+                } else if (obj.has("monthlyTarget") && !obj.get("monthlyTarget").isJsonNull()) {
+                    targetKg = (int) Math.round(obj.get("monthlyTarget").getAsDouble());
+                } else if (obj.has("targetKg") && !obj.get("targetKg").isJsonNull()) {
+                    targetKg = (int) Math.round(obj.get("targetKg").getAsDouble());
+                }
+                if (obj.has("goalPercent")) {
+                    percent = obj.get("goalPercent").getAsInt();
+                } else if (obj.has("meta_percent")) {
+                    percent = obj.get("meta_percent").getAsInt();
                 }
             } catch (Exception ignored) {
             }
+        }
+
+        if (targetKg <= 0) {
+            targetKg = 1500;
+        }
+
+        if (percent <= 0 && targetKg > 0 && kg > 0) {
+            percent = Math.min(100, (int) Math.round(kg * 100.0 / targetKg));
         }
 
         if (totalOcc == 0) {
@@ -120,19 +169,21 @@ public class UnitFragment extends Fragment {
             totalOcc = list != null ? list.size() : 0;
         }
 
+        bindSummaryValues(totalOcc, kg, targetKg, percent);
+    }
+
+    private void bindSummaryValues(int totalOcc, int kg, int targetKg, int percent) {
+        if (targetKg <= 0) targetKg = 1500;
+        if (percent <= 0 && targetKg > 0 && kg > 0) {
+            percent = Math.min(100, (int) Math.round(kg * 100.0 / targetKg));
+        }
+
         if (tvUnitOccurrences != null) {
             tvUnitOccurrences.setText(totalOcc + " no mês");
         }
-
         if (tvUnitRecovered != null) {
             tvUnitRecovered.setText(String.format(new Locale("pt", "BR"), "%,d kg", kg));
         }
-
-        if (tvUnitNextCollection != null) {
-            tvUnitNextCollection.setText("Sob demanda");
-        }
-
-        int percent = targetKg > 0 ? Math.min(100, (int) Math.round(kg * 100.0 / targetKg)) : 0;
         if (tvUnitGoalBadge != null) {
             tvUnitGoalBadge.setText(percent + "%");
         }
@@ -144,16 +195,6 @@ public class UnitFragment extends Fragment {
         }
         if (pbUnitGoal != null) {
             pbUnitGoal.setProgress(percent);
-        }
-
-        if (tvUnitPartnerCoopName != null) {
-            List<CooperativeJSON> coops = PrefsHelper.getList(requireContext(),
-                    "cache_cooperatives_db", "db_list", CooperativeJSON[].class);
-            if (coops != null && !coops.isEmpty()) {
-                tvUnitPartnerCoopName.setText(coops.get(0).getNome());
-            } else {
-                tvUnitPartnerCoopName.setText("Ver parceiras");
-            }
         }
     }
 

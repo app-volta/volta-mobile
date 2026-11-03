@@ -1087,7 +1087,6 @@
             android:layout_width="104dp"
             android:layout_height="104dp"
             android:layout_gravity="center"
-            android:layout_marginTop="8dp"
             android:background="@drawable/bg_mascot_halo" />
 
         <FrameLayout
@@ -1096,6 +1095,7 @@
             android:layout_height="66dp"
             android:background="@drawable/bg_mascot_circle"
             android:clickable="true"
+            android:clipToOutline="true"
             android:contentDescription="Assistente VOLTA"
             android:elevation="6dp"
             android:focusable="true"

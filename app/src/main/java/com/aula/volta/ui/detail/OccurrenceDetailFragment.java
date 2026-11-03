@@ -111,8 +111,8 @@ public class OccurrenceDetailFragment extends Fragment {
     private String occurrenceId;
     private String currentStatus = "EM_ANALISE";
     private JsonObject currentDetailJson;
-    private String currentMaterial = "Resíduo Reciclável";
-    private String currentMaterialName = "Resíduo";
+    private String currentMaterial = "Nenhum";
+    private String currentMaterialName = "Nenhum";
     private String currentQualityClass = "A";
     private String currentPriority = "BAIXA";
     private String currentContamination = "baixa";
@@ -510,7 +510,7 @@ public class OccurrenceDetailFragment extends Fragment {
                 ? json.get("changes_count").getAsInt()
                 : 0;
 
-        String rawMaterial = opt(json, "material", "Resíduo Reciclável");
+        String rawMaterial = opt(json, "material", "Nenhum");
         String rawClasse = opt(json, "classe", "");
         currentQualityClass = com.aula.volta.data.model.AiAnalysisJSON.extractQualityClassLetter(rawMaterial, rawClasse);
         currentMaterialName = com.aula.volta.data.model.AiAnalysisJSON.extractMaterialName(rawMaterial);
@@ -1210,7 +1210,12 @@ public class OccurrenceDetailFragment extends Fragment {
             String specific = opt(currentDetailJson, "item_especifico", opt(currentDetailJson, "ai_title", ""));
             if (!specific.isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(specific)) {
                 incidentTitle = specific;
+            } else {
+                incidentTitle = "Nenhum";
             }
+        }
+        if (incidentTitle == null || incidentTitle.trim().isEmpty() || "Resíduo Reciclável".equalsIgnoreCase(incidentTitle.trim())) {
+            incidentTitle = "Nenhum";
         }
         String empDescription = incidentTitle;
         String contamination = com.aula.volta.data.model.incident.IncidentRequestDTO.normalizeContamination(

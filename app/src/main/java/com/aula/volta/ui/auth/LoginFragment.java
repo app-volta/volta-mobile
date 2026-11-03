@@ -38,8 +38,6 @@ public class LoginFragment extends Fragment {
     private AppCompatButton btnLogin;
     private ProgressBar pbLoading;
     private View btnForgotPassword;
-    private View btnGoRegister;
-    private View btnGoogle;
     private boolean passwordVisible;
 
     public LoginFragment() {
@@ -61,8 +59,6 @@ public class LoginFragment extends Fragment {
         btnLogin = view.findViewById(R.id.btnLogin);
         pbLoading = view.findViewById(R.id.pbLoginLoading);
         btnForgotPassword = view.findViewById(R.id.btnForgotPassword);
-        btnGoRegister = view.findViewById(R.id.btnGoRegister);
-        btnGoogle = view.findViewById(R.id.btnGoogle);
 
         view.findViewById(R.id.btnTogglePassword).setOnClickListener(v -> {
             passwordVisible = !passwordVisible;
@@ -78,18 +74,9 @@ public class LoginFragment extends Fragment {
             btnLogin.setOnClickListener(v -> tryLogin(v));
         }
 
-        if (btnGoRegister != null) {
-            btnGoRegister.setOnClickListener(v ->
-                    Navigation.findNavController(v).navigate(R.id.auth_register));
-        }
         if (btnForgotPassword != null) {
             btnForgotPassword.setOnClickListener(v ->
                     Navigation.findNavController(v).navigate(R.id.auth_forgot));
-        }
-        if (btnGoogle != null) {
-            btnGoogle.setOnClickListener(v ->
-                    Toast.makeText(requireContext(), R.string.occ_soon,
-                            Toast.LENGTH_SHORT).show());
         }
 
         getParentFragmentManager().setFragmentResultListener(
@@ -130,12 +117,6 @@ public class LoginFragment extends Fragment {
         }
         if (btnForgotPassword != null) {
             btnForgotPassword.setEnabled(!loading);
-        }
-        if (btnGoRegister != null) {
-            btnGoRegister.setEnabled(!loading);
-        }
-        if (btnGoogle != null) {
-            btnGoogle.setEnabled(!loading);
         }
     }
 
