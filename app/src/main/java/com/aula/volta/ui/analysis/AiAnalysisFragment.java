@@ -1519,11 +1519,25 @@ public class AiAnalysisFragment extends Fragment {
             return;
         }
 
-        String singleWordTitle = AiAnalysisJSON.generateSingleWordTitle(
-                material,
-                descricao,
-                (analysis != null ? analysis.getMaterial() : null)
-        );
+        String aiTitle = AiAnalysisJSON.resolveAiTitle(analysis, descricao, lastPredictJson);
+        java.util.List<String> aiPossibilities = AiAnalysisJSON.extractAiCandidateWasteNames(lastPredictJson, analysis, descricao);
+
+        java.util.List<String> resolvedWasteTypeIds = new java.util.ArrayList<>();
+        JsonArray cachedWasteTypes = null;
+        try {
+            String listStr = PrefsHelper.getJson(requireContext(), "cache_waste_types", "list");
+            if (listStr != null && !listStr.isEmpty()) {
+                cachedWasteTypes = com.google.gson.JsonParser.parseString(listStr).getAsJsonArray();
+            }
+        } catch (Exception ignored) {
+        }
+        if (cachedWasteTypes != null && cachedWasteTypes.size() > 0) {
+            resolvedWasteTypeIds = AiAnalysisJSON.resolveAllWasteTypeIds(cachedWasteTypes, aiPossibilities);
+        }
+        if (resolvedWasteTypeIds.isEmpty() && wasteTypeId != null && !wasteTypeId.isEmpty()) {
+            resolvedWasteTypeIds.add(wasteTypeId);
+        }
+        String chosenWasteTypeId = !resolvedWasteTypeIds.isEmpty() ? resolvedWasteTypeIds.get(0) : wasteTypeId;
 
         String contaminationLevel = "LOW";
         if (selectedContamination != null) {
@@ -1554,33 +1568,14 @@ public class AiAnalysisFragment extends Fragment {
             finalPhotoUrl = null;
         }
 
-        String apiPriority = IncidentRequestDTO.normalizePriority(calculatedPriority);
-        String empDescription = (descricao != null && !descricao.trim().isEmpty())
-                ? descricao.trim()
-                : singleWordTitle;
-        IncidentRequestDTO req = new IncidentRequestDTO(
-                areaId,
-                wasteTypeId,
-                finalPhotoUrl,
-                empDescription,
-                contaminationLevel,
-                qtd,
-                apiPriority
-        );
-
         String draftId = "draft_" + System.currentTimeMillis();
         createdIncidentId = draftId;
-        persistOccurrenceDetail(draftId, areaId, wasteTypeId, material, qtd, unidade, calculatedPriority, finalPhotoUrl);
+        persistOccurrenceDetail(draftId, areaId, chosenWasteTypeId, resolvedWasteTypeIds, aiTitle, material, qtd, unidade, calculatedPriority, finalPhotoUrl);
 
-        String title = AiAnalysisJSON.generateSingleWordTitle(
-                material,
-                descricao,
-                (analysis != null ? analysis.getMaterial() : null)
-        );
         String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily((selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material);
         Occurrence occ = new Occurrence(
                 draftId,
-                title,
+                aiTitle,
                 setor == null ? "Planta Principal" : setor,
                 "Hoje",
                 calculatedPriority,
@@ -1677,7 +1672,8 @@ public class AiAnalysisFragment extends Fragment {
         navigateToDetail(v, id);
     }
 
-    private void persistOccurrenceDetail(String id, String areaId, String wasteTypeId, String material, double qtd, String unidade,
+    private void persistOccurrenceDetail(String id, String areaId, String wasteTypeId, java.util.List<String> wasteTypeIds,
+                                         String title, String material, double qtd, String unidade,
                                          String priority, @Nullable String photoUrl) {
         JsonObject detail = new JsonObject();
         detail.addProperty("id", id);
@@ -1686,6 +1682,13 @@ public class AiAnalysisFragment extends Fragment {
         }
         if (wasteTypeId != null && !wasteTypeId.isEmpty()) {
             detail.addProperty("wasteTypeId", wasteTypeId);
+        }
+        if (wasteTypeIds != null && !wasteTypeIds.isEmpty()) {
+            JsonArray arr = new JsonArray();
+            for (String wid : wasteTypeIds) {
+                if (wid != null && !wid.isEmpty()) arr.add(wid);
+            }
+            detail.add("wasteTypeIds", arr);
         }
         detail.addProperty("is_submitted", false);
         detail.addProperty("changes_count", 0);
@@ -1696,7 +1699,8 @@ public class AiAnalysisFragment extends Fragment {
         String primary = (analysis != null && analysis.getPrimaryMaterial() != null)
                 ? analysis.getPrimaryMaterial()
                 : AiAnalysisJSON.extractPrimaryMaterial(material);
-        detail.addProperty("titulo", (descricao != null && !descricao.isEmpty()) ? descricao : specific);
+        detail.addProperty("titulo", title);
+        detail.addProperty("ai_title", title);
         detail.addProperty("material", formattedMat);
         detail.addProperty("material_principal", primary);
         detail.addProperty("item_especifico", specific);
@@ -1726,9 +1730,16 @@ public class AiAnalysisFragment extends Fragment {
         PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", id, detail.toString());
     }
 
+    private void persistOccurrenceDetail(String id, String areaId, String wasteTypeId, String material, double qtd, String unidade,
+                                         String priority, @Nullable String photoUrl) {
+        String defaultTitle = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        persistOccurrenceDetail(id, areaId, wasteTypeId, null, defaultTitle, material, qtd, unidade, priority, photoUrl);
+    }
+
     private void persistOccurrenceDetail(String id, String material, double qtd, String unidade,
                                          String priority, @Nullable String photoUrl) {
-        persistOccurrenceDetail(id, null, null, material, qtd, unidade, priority, photoUrl);
+        String defaultTitle = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        persistOccurrenceDetail(id, null, null, null, defaultTitle, material, qtd, unidade, priority, photoUrl);
     }
 
     private void navigateToDetail(View v, String occId) {

@@ -11,11 +11,17 @@ public class IncidentRequestDTO {
     @SerializedName("areaId")
     private String areaId;
 
+    @SerializedName("wasteTypeId")
+    private String wasteTypeId;
+
     @SerializedName("wasteTypeIds")
     private List<String> wasteTypeIds;
 
     @SerializedName("photoUrl")
     private String photoUrl;
+
+    @SerializedName("title")
+    private String title;
 
     @SerializedName("employeeDescription")
     private String employeeDescription;
@@ -39,6 +45,7 @@ public class IncidentRequestDTO {
         setWasteTypeId(wasteTypeId);
         this.photoUrl = normalizePhotoUrl(photoUrl);
         this.employeeDescription = normalizeDescription(employeeDescription);
+        this.title = this.employeeDescription;
         this.contaminationLevel = normalizeContamination(contaminationLevel);
         this.estimatedQuantity = normalizeQuantity(estimatedQuantity);
         this.priority = normalizePriority(priority);
@@ -49,8 +56,10 @@ public class IncidentRequestDTO {
                               Double estimatedQuantity, String priority) {
         this.areaId = areaId;
         this.wasteTypeIds = wasteTypeIds != null ? new ArrayList<>(wasteTypeIds) : new ArrayList<>();
+        this.wasteTypeId = (!this.wasteTypeIds.isEmpty()) ? this.wasteTypeIds.get(0) : null;
         this.photoUrl = normalizePhotoUrl(photoUrl);
         this.employeeDescription = normalizeDescription(employeeDescription);
+        this.title = this.employeeDescription;
         this.contaminationLevel = normalizeContamination(contaminationLevel);
         this.estimatedQuantity = normalizeQuantity(estimatedQuantity);
         this.priority = normalizePriority(priority);
@@ -127,12 +136,16 @@ public class IncidentRequestDTO {
     }
 
     public String getWasteTypeId() {
+        if (wasteTypeId != null && !wasteTypeId.isEmpty()) {
+            return wasteTypeId;
+        }
         return (wasteTypeIds != null && !wasteTypeIds.isEmpty()) ? wasteTypeIds.get(0) : null;
     }
 
     public void setWasteTypeId(String wasteTypeId) {
-        if (wasteTypeId != null && !wasteTypeId.trim().isEmpty()) {
-            this.wasteTypeIds = new ArrayList<>(Collections.singletonList(wasteTypeId.trim()));
+        this.wasteTypeId = wasteTypeId != null ? wasteTypeId.trim() : null;
+        if (this.wasteTypeId != null && !this.wasteTypeId.isEmpty()) {
+            this.wasteTypeIds = new ArrayList<>(Collections.singletonList(this.wasteTypeId));
         } else {
             this.wasteTypeIds = new ArrayList<>();
         }
@@ -143,7 +156,21 @@ public class IncidentRequestDTO {
     }
 
     public void setWasteTypeIds(List<String> wasteTypeIds) {
-        this.wasteTypeIds = wasteTypeIds;
+        this.wasteTypeIds = wasteTypeIds != null ? new ArrayList<>(wasteTypeIds) : new ArrayList<>();
+        if (!this.wasteTypeIds.isEmpty()) {
+            this.wasteTypeId = this.wasteTypeIds.get(0);
+        }
+    }
+
+    public String getTitle() {
+        return title != null ? title : employeeDescription;
+    }
+
+    public void setTitle(String title) {
+        this.title = title != null ? title.trim() : null;
+        if (this.employeeDescription == null || this.employeeDescription.isEmpty()) {
+            this.employeeDescription = this.title;
+        }
     }
 
     public String getPhotoUrl() {
