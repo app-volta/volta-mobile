@@ -24,9 +24,9 @@
 
 Conheça as principais telas do aplicativo, projetadas com foco em **agilidade no chão de fábrica**, **alta legibilidade** e **feedback em tempo real**:
 
-| 📊 Dashboard Principal | 🤖 Triagem por IA (AIC) | 📋 Detalhe da Ocorrência |
-| :---: | :---: | :---: |
-| <img src="docs/screenshots/home.png" width="220" alt="Tela Inicial (Home)" /> | <img src="docs/screenshots/analise_ia.png" width="220" alt="Classificação por IA" /> | <img src="docs/screenshots/detalhe_ocorrencia.png" width="220" alt="Detalhe da Ocorrência" /> |
+| 🔐 Login Corporativo | 📊 Dashboard Principal | 🤖 Triagem por IA (AIC) | 📋 Detalhe da Ocorrência |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/screenshots/login.png" width="220" alt="Tela de Login" /> | <img src="docs/screenshots/home.png" width="220" alt="Tela Inicial (Home)" /> | <img src="docs/screenshots/analise_ia.png" width="220" alt="Classificação por IA" /> | <img src="docs/screenshots/detalhe_ocorrencia.png" width="220" alt="Detalhe da Ocorrência" /> |
 
 <br/>
 
