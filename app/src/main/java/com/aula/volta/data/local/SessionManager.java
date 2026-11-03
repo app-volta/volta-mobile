@@ -109,6 +109,10 @@ public final class SessionManager {
         return prefs(context).getString(KEY_PASSWORD, "");
     }
 
+    public static void savePassword(Context context, String password) {
+        prefs(context).edit().putString(KEY_PASSWORD, password == null ? "" : password).apply();
+    }
+
     public static void saveChatSessionId(Context context, String sessionId) {
         prefs(context).edit()
                 .putString(KEY_CHAT_SESSION_ID, sessionId == null ? "" : sessionId)
