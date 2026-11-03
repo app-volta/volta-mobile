@@ -37,6 +37,8 @@ public class AuthActivity extends AppCompatActivity {
                         || id == R.id.auth_forgot
                         || id == R.id.auth_passcode
                         || id == R.id.auth_reset
+                        || id == R.id.auth_first_access_password
+                        || id == R.id.auth_first_access_profile
                         || id == R.id.auth_offline_error);
 
                 WindowInsetsControllerCompat insetsController =

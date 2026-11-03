@@ -43,6 +43,7 @@ import com.google.gson.JsonObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Locale;
@@ -469,7 +470,15 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void showSectorDialog() {
-        String[] options = getResources().getStringArray(R.array.occurrence_sector_options);
+        List<String> sectorList = com.aula.volta.data.repository.AreaRepository.getSectorNames(requireContext());
+        if (sectorList.isEmpty()) {
+            String[] fallback = getResources().getStringArray(R.array.occurrence_sector_options);
+            for (String s : fallback) {
+                sectorList.add(s);
+            }
+        }
+        com.aula.volta.data.repository.AreaRepository.preloadAreas(requireContext());
+        final String[] options = sectorList.toArray(new String[0]);
         new AlertDialog.Builder(requireContext())
                 .setTitle("Selecione o setor")
                 .setItems(options, (dialog, which) -> {
@@ -492,12 +501,17 @@ public class EditProfileFragment extends Fragment {
         if (selectedSector != null && !selectedSector.isEmpty()) {
             SessionManager.saveSector(requireContext(), selectedSector);
         }
+        SessionManager.setFirstLoginPending(requireContext(), false);
 
         try {
             AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
             JsonObject body = new JsonObject();
             body.addProperty("name", newName);
             body.addProperty("position", selectedSector);
+            body.addProperty("firstLogin", false);
+            body.addProperty("isFirstLogin", false);
+            body.addProperty("primeiroLogin", false);
+            body.addProperty("first_login", false);
             String photo = SessionManager.getProfilePhotoUrl(requireContext());
             if (photo != null && !photo.isEmpty()) {
                 body.addProperty("photoUrl", photo);

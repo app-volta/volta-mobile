@@ -172,6 +172,11 @@ public class LoginFragment extends Fragment {
                         ApiClient.saveToken(appContext, token);
                         Log.i(TAG, "Token JWT da API obtido com sucesso no login.");
 
+                        final boolean isFirstLogin = Boolean.TRUE.equals(response.body().isFirstLogin());
+                        SessionManager.setFirstLoginPending(appContext, isFirstLogin);
+                        Log.i(TAG, "Primeiro login detectado: " + isFirstLogin);
+                        com.aula.volta.data.repository.AreaRepository.preloadAreas(appContext);
+
                         try {
                             authApi.getMyCompany().enqueue(new Callback<com.aula.volta.data.model.CompanyResponseDTO>() {
                                 @Override
@@ -194,6 +199,7 @@ public class LoginFragment extends Fragment {
                                 @Override
                                 public void onResponse(@NonNull Call<com.aula.volta.data.model.UserResponseDTO> call,
                                                        @NonNull Response<com.aula.volta.data.model.UserResponseDTO> meResp) {
+                                    String resolvedName = name;
                                     if (meResp.isSuccessful() && meResp.body() != null) {
                                         com.aula.volta.data.model.UserResponseDTO u = meResp.body();
                                         if (u.getId() != null && !u.getId().trim().isEmpty()) {
@@ -203,7 +209,8 @@ public class LoginFragment extends Fragment {
                                             SessionManager.saveCompanyId(appContext, u.getCompanyId().trim());
                                         }
                                         if (u.getName() != null && !u.getName().trim().isEmpty()) {
-                                            SessionManager.saveName(appContext, u.getName().trim());
+                                            resolvedName = u.getName().trim();
+                                            SessionManager.saveName(appContext, resolvedName);
                                         }
                                         if (u.getPosition() != null && !u.getPosition().trim().isEmpty()) {
                                             SessionManager.saveSector(appContext, u.getPosition().trim());
@@ -212,16 +219,16 @@ public class LoginFragment extends Fragment {
                                             SessionManager.saveProfilePhotoUrl(appContext, email, u.getPhotoUrl().trim());
                                         }
                                     }
-                                    completeLogin();
+                                    proceedAfterLogin(resolvedName, isFirstLogin);
                                 }
 
                                 @Override
                                 public void onFailure(@NonNull Call<com.aula.volta.data.model.UserResponseDTO> call, @NonNull Throwable t) {
-                                    completeLogin();
+                                    proceedAfterLogin(name, isFirstLogin);
                                 }
                             });
                         } catch (Exception ignored) {
-                            completeLogin();
+                            proceedAfterLogin(name, isFirstLogin);
                         }
                     } else {
                         Log.w(TAG, "Falha de autenticação (HTTP " + response.code() + "). Rejeitando login.");
@@ -241,6 +248,35 @@ public class LoginFragment extends Fragment {
                     }
                     boolean isOffline = !com.aula.volta.util.NetworkUtils.isOnline(appContext);
                     showOfflineError(v, isOffline);
+                }
+
+                private void proceedAfterLogin(String resolvedName, boolean firstLogin) {
+                    if (firstLogin) {
+                        goToFirstAccess(resolvedName);
+                    } else {
+                        completeLogin();
+                    }
+                }
+
+                private void goToFirstAccess(String resolvedName) {
+                    if (isAdded() && getActivity() != null) {
+                        setLoading(false);
+                        Bundle bundle = new Bundle();
+                        bundle.putString("email", email);
+                        bundle.putString("temp_password", password);
+                        bundle.putString("name", resolvedName);
+                        View navTarget = v != null ? v : getView();
+                        if (navTarget != null) {
+                            try {
+                                Navigation.findNavController(navTarget).navigate(R.id.auth_first_access_password, bundle);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Erro ao navegar para o primeiro acesso", e);
+                                completeLogin();
+                            }
+                        } else {
+                            completeLogin();
+                        }
+                    }
                 }
 
                 private void completeLogin() {

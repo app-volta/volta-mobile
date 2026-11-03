@@ -369,30 +369,7 @@ public class ReportsFragment extends Fragment {
 
     private void fetchAreasCatalog() {
         if (!isAdded() || getContext() == null) return;
-        try {
-            CatalogAPI catApi = ApiClient.get(requireContext()).create(CatalogAPI.class);
-            catApi.getMyAreas().enqueue(new Callback<List<AreaResponseDTO>>() {
-                @Override
-                public void onResponse(@NonNull Call<List<AreaResponseDTO>> call,
-                                       @NonNull Response<List<AreaResponseDTO>> response) {
-                    if (isAdded() && response.isSuccessful() && response.body() != null) {
-                        for (AreaResponseDTO area : response.body()) {
-                            if (area.getId() != null && area.getSectorName() != null) {
-                                JsonObject obj = new JsonObject();
-                                obj.addProperty("id", area.getId());
-                                obj.addProperty("sectorName", area.getSectorName());
-                                PrefsHelper.putJson(requireContext(), "cache_areas", area.getId(), obj.toString());
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<List<AreaResponseDTO>> call, @NonNull Throwable t) {
-                }
-            });
-        } catch (Exception ignored) {
-        }
+        com.aula.volta.data.repository.AreaRepository.loadAreas(requireContext(), null);
     }
 
     private void fetchEsgAndDisplay(List<Occurrence> occurrences) {

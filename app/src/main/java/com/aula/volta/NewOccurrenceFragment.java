@@ -36,8 +36,10 @@ import androidx.navigation.Navigation;
 import com.aula.volta.data.api.AiAnalysisAPI;
 import com.aula.volta.data.api.ApiClient;
 import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.local.SessionManager;
 import com.aula.volta.util.ImageUtils;
 import com.aula.volta.util.NetworkUtils;
+import java.util.List;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.JsonArray;
@@ -185,7 +187,19 @@ public class NewOccurrenceFragment extends Fragment {
         cameraPreviewImage = view.findViewById(R.id.cameraPreviewImage);
 
         sectorIndex = 0;
-        tvSector.setText(getResources().getStringArray(R.array.occurrence_sector_options)[0]);
+        String userSector = SessionManager.getSector(requireContext());
+        if (userSector != null && !userSector.trim().isEmpty()) {
+            selectedSectorName = userSector.trim();
+            tvSector.setText(selectedSectorName);
+        } else {
+            List<String> cachedNames = com.aula.volta.data.repository.AreaRepository.getSectorNames(requireContext());
+            if (!cachedNames.isEmpty()) {
+                selectedSectorName = cachedNames.get(0);
+                tvSector.setText(selectedSectorName);
+            } else {
+                tvSector.setText(getResources().getStringArray(R.array.occurrence_sector_options)[0]);
+            }
+        }
         preloadAreasAndWasteTypes();
 
         requireActivity().getOnBackPressedDispatcher().addCallback(
@@ -300,6 +314,7 @@ public class NewOccurrenceFragment extends Fragment {
         if (!isAdded() || getContext() == null) {
             return;
         }
+        com.aula.volta.data.repository.AreaRepository.loadAreas(requireContext(), null);
         AiAnalysisAPI api = ApiClient.get(requireContext()).create(AiAnalysisAPI.class);
         api.getMyAreas().enqueue(new Callback<JsonArray>() {
             @Override

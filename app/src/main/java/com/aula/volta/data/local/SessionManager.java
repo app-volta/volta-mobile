@@ -18,6 +18,7 @@ public final class SessionManager {
     private static final String KEY_COMPANY_ID = "company_id";
     private static final String KEY_PROFILE_PHOTO_URL = "user_profile_photo_url";
     private static final String KEY_PROFILE_PHOTO_LOCAL = "user_profile_photo_local";
+    private static final String KEY_FIRST_LOGIN_PENDING = "first_login_pending";
 
     private SessionManager() {
     }
@@ -34,7 +35,17 @@ public final class SessionManager {
 
     public static boolean isLoggedIn(Context context) {
         String email = email(context);
-        return email != null && !email.isEmpty();
+        return email != null && !email.isEmpty() && !isFirstLoginPending(context);
+    }
+
+    public static void setFirstLoginPending(Context context, boolean pending) {
+        prefs(context).edit()
+                .putBoolean(KEY_FIRST_LOGIN_PENDING, pending)
+                .apply();
+    }
+
+    public static boolean isFirstLoginPending(Context context) {
+        return prefs(context).getBoolean(KEY_FIRST_LOGIN_PENDING, false);
     }
 
     public static void login(Context context, String email, String name) {
@@ -190,6 +201,10 @@ public final class SessionManager {
         return "";
     }
 
+    public static String getEmail(Context context) {
+        return email(context);
+    }
+
     public static void saveName(Context context, String name) {
         if (name == null || name.trim().isEmpty()) {
             return;
@@ -244,6 +259,10 @@ public final class SessionManager {
         return "Colaborador";
     }
 
+    public static String getName(Context context) {
+        return name(context);
+    }
+
     public static void saveSector(Context context, String sector) {
         prefs(context).edit()
                 .putString(KEY_SECTOR, sector == null ? "" : sector)
@@ -252,6 +271,10 @@ public final class SessionManager {
 
     public static String sector(Context context) {
         return prefs(context).getString(KEY_SECTOR, "");
+    }
+
+    public static String getSector(Context context) {
+        return sector(context);
     }
 
     public static void saveUserId(Context context, String userId) {

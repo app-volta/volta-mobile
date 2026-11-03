@@ -90,41 +90,18 @@ public class SelectSectorSheet extends BottomSheetDialogFragment {
 
         final int[] tempIndex = {Math.max(0, Math.min(selectedIndex, sectors.size() - 1))};
 
-        if (rgSectors != null) {
-            rgSectors.removeAllViews();
-            for (int i = 0; i < sectors.size(); i++) {
-                final int index = i;
-                View itemView = getLayoutInflater().inflate(R.layout.item_sector_option, rgSectors, false);
-                TextView tvName = itemView.findViewById(R.id.tvSectorOptionName);
-                RadioButton rb = itemView.findViewById(R.id.rbSectorOption);
+        populateSectors(rgSectors, sectors, tempIndex);
 
-                tvName.setText(sectors.get(i).name);
-                boolean isCurrent = (i == tempIndex[0]);
-                rb.setChecked(isCurrent);
-                itemView.setBackgroundResource(isCurrent ? R.drawable.bg_action_row_selected : R.drawable.bg_action_row);
-
-                View.OnClickListener selectAction = v -> {
-                    tempIndex[0] = index;
-                    for (int j = 0; j < rgSectors.getChildCount(); j++) {
-                        View child = rgSectors.getChildAt(j);
-                        RadioButton childRb = child.findViewById(R.id.rbSectorOption);
-                        boolean isSelected = (j == index);
-                        if (childRb != null) {
-                            childRb.setChecked(isSelected);
-                        }
-                        child.setBackgroundResource(isSelected ? R.drawable.bg_action_row_selected : R.drawable.bg_action_row);
-                    }
-                };
-
-                itemView.setOnClickListener(selectAction);
-                if (rb != null) {
-                    rb.setClickable(true);
-                    rb.setOnClickListener(selectAction);
-                }
-
-                rgSectors.addView(itemView);
+        com.aula.volta.data.repository.AreaRepository.loadAreas(requireContext(), loaded -> {
+            if (!isAdded() || getContext() == null || rgSectors == null) return;
+            List<SectorOption> refreshed = loadSectorOptions();
+            if (refreshed.size() != sectors.size() || !hasSameSectorNames(sectors, refreshed)) {
+                sectors.clear();
+                sectors.addAll(refreshed);
+                tempIndex[0] = Math.max(0, Math.min(selectedIndex, sectors.size() - 1));
+                populateSectors(rgSectors, sectors, tempIndex);
             }
-        }
+        });
 
         if (btnClose != null) {
             btnClose.setOnClickListener(v -> dismiss());
@@ -144,25 +121,14 @@ public class SelectSectorSheet extends BottomSheetDialogFragment {
 
     private List<SectorOption> loadSectorOptions() {
         List<SectorOption> options = new ArrayList<>();
-        try {
-            SharedPreferences prefs = requireContext().getSharedPreferences("cache_areas", Context.MODE_PRIVATE);
-            Map<String, ?> all = prefs.getAll();
-            if (all != null && !all.isEmpty()) {
-                for (Map.Entry<String, ?> entry : all.entrySet()) {
-                    if (entry.getValue() instanceof String) {
-                        try {
-                            JsonObject obj = JsonParser.parseString((String) entry.getValue()).getAsJsonObject();
-                            String id = obj.has("id") && !obj.get("id").isJsonNull() ? obj.get("id").getAsString() : entry.getKey();
-                            String name = obj.has("sectorName") && !obj.get("sectorName").isJsonNull() ? obj.get("sectorName").getAsString() : null;
-                            if (name != null && !name.trim().isEmpty()) {
-                                options.add(new SectorOption(id, name.trim()));
-                            }
-                        } catch (Exception ignored) {
-                        }
-                    }
+        com.aula.volta.data.repository.AreaRepository.preloadAreas(requireContext());
+        List<com.aula.volta.data.model.AreaResponseDTO> areas = com.aula.volta.data.repository.AreaRepository.getCachedAreas(requireContext());
+        if (areas != null && !areas.isEmpty()) {
+            for (com.aula.volta.data.model.AreaResponseDTO a : areas) {
+                if (a.getSectorName() != null && !a.getSectorName().trim().isEmpty()) {
+                    options.add(new SectorOption(a.getId(), a.getSectorName().trim()));
                 }
             }
-        } catch (Exception ignored) {
         }
 
         if (options.isEmpty()) {
@@ -198,5 +164,50 @@ public class SelectSectorSheet extends BottomSheetDialogFragment {
             options.add(new SectorOption(null, fallbackName));
         }
         return options;
+    }
+
+    private void populateSectors(RadioGroup rgSectors, List<SectorOption> sectors, int[] tempIndex) {
+        if (rgSectors == null) return;
+        rgSectors.removeAllViews();
+        for (int i = 0; i < sectors.size(); i++) {
+            final int index = i;
+            View itemView = getLayoutInflater().inflate(R.layout.item_sector_option, rgSectors, false);
+            TextView tvName = itemView.findViewById(R.id.tvSectorOptionName);
+            RadioButton rb = itemView.findViewById(R.id.rbSectorOption);
+
+            tvName.setText(sectors.get(i).name);
+            boolean isCurrent = (i == tempIndex[0]);
+            rb.setChecked(isCurrent);
+            itemView.setBackgroundResource(isCurrent ? R.drawable.bg_action_row_selected : R.drawable.bg_action_row);
+
+            View.OnClickListener selectAction = v -> {
+                tempIndex[0] = index;
+                for (int j = 0; j < rgSectors.getChildCount(); j++) {
+                    View child = rgSectors.getChildAt(j);
+                    RadioButton childRb = child.findViewById(R.id.rbSectorOption);
+                    boolean isSelected = (j == index);
+                    if (childRb != null) {
+                        childRb.setChecked(isSelected);
+                    }
+                    child.setBackgroundResource(isSelected ? R.drawable.bg_action_row_selected : R.drawable.bg_action_row);
+                }
+            };
+
+            itemView.setOnClickListener(selectAction);
+            if (rb != null) {
+                rb.setClickable(true);
+                rb.setOnClickListener(selectAction);
+            }
+
+            rgSectors.addView(itemView);
+        }
+    }
+
+    private boolean hasSameSectorNames(List<SectorOption> a, List<SectorOption> b) {
+        if (a.size() != b.size()) return false;
+        for (int i = 0; i < a.size(); i++) {
+            if (!a.get(i).name.equals(b.get(i).name)) return false;
+        }
+        return true;
     }
 }

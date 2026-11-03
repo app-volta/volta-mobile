@@ -337,4 +337,21 @@
     <string name="notif_pickup_body">A cooperativa %1$s confirmou a coleta para %2$s.</string>
     <string name="notif_pgrs_finalized_title">Ocorrência #%1$s Finalizada</string>
     <string name="notif_pgrs_finalized_body">Resíduo devidamente destinado e contabilizado no relatório PGRS.</string>
+
+    <string name="auth_first_access_title">Crie sua senha</string>
+    <string name="auth_first_access_sub">Troque a senha temporária do convite por uma só sua, com pelo menos 8 caracteres.</string>
+    <string name="auth_first_access_save_continue">Salvar e continuar</string>
+    <string name="auth_first_access_data_title">Confira seus dados</string>
+    <string name="auth_first_access_data_sub">O gestor preencheu pelo convite. Corrija se algo estiver errado.</string>
+    <string name="auth_first_access_full_name">Nome completo</string>
+    <string name="auth_first_access_unit_email">E-mail da unidade</string>
+    <string name="auth_first_access_sector">Setor</string>
+    <string name="auth_first_access_sector_hint">Selecione seu setor</string>
+    <string name="auth_first_access_confirm_enter">Confirmar e entrar</string>
+    <string name="auth_first_access_success_title">Tudo pronto, %1$s!</string>
+    <string name="auth_first_access_success_title_default">Tudo pronto!</string>
+    <string name="auth_first_access_success_sub">Senha criada e dados conferidos. Agora cada resíduo fora do lugar vira informação pra sua unidade.</string>
+    <string name="auth_first_access_start">Começar</string>
+    <string name="auth_first_access_name_required">Informe seu nome completo</string>
+    <string name="auth_first_access_area_loading">Carregando áreas...</string>
 </resources>
