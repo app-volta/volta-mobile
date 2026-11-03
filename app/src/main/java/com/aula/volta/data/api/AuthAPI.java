@@ -2,8 +2,12 @@ package com.aula.volta.data.api;
 
 import com.aula.volta.data.model.UserRequestDTO;
 import com.aula.volta.data.model.UserResponseDTO;
+import com.aula.volta.data.model.auth.ChangePasswordRequestDTO;
+import com.aula.volta.data.model.auth.ForgotPasswordRequestDTO;
 import com.aula.volta.data.model.auth.LoginRequest;
 import com.aula.volta.data.model.auth.LoginResponse;
+import com.aula.volta.data.model.auth.ResetPasswordRequestDTO;
+import com.aula.volta.data.model.auth.VerifyCodeRequestDTO;
 import com.google.gson.JsonObject;
 
 import java.util.List;
@@ -37,6 +41,34 @@ public interface AuthAPI {
     })
     @PUT("users/me")
     Call<UserResponseDTO> updateMe(@Body JsonObject body);
+
+    @Headers({
+            "Content-Type: application/json; charset=utf-8",
+            "Accept: application/json; charset=utf-8"
+    })
+    @PUT("users/me/password")
+    Call<Void> changePassword(@Body ChangePasswordRequestDTO request);
+
+    @Headers({
+            "Content-Type: application/json; charset=utf-8",
+            "Accept: application/json; charset=utf-8"
+    })
+    @POST("auth/forgot-password")
+    Call<JsonObject> forgotPassword(@Body ForgotPasswordRequestDTO request);
+
+    @Headers({
+            "Content-Type: application/json; charset=utf-8",
+            "Accept: application/json; charset=utf-8"
+    })
+    @POST("auth/verify-code")
+    Call<Void> verifyCode(@Body VerifyCodeRequestDTO request);
+
+    @Headers({
+            "Content-Type: application/json; charset=utf-8",
+            "Accept: application/json; charset=utf-8"
+    })
+    @POST("auth/reset-password")
+    Call<Void> resetPassword(@Body ResetPasswordRequestDTO request);
 
     @Headers({
             "Content-Type: application/json; charset=utf-8",

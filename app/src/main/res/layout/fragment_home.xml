@@ -469,6 +469,7 @@
                 android:layout_width="66dp"
                 android:layout_height="66dp"
                 android:background="@drawable/bg_mascot_circle"
+                android:clipToOutline="true"
                 android:clickable="true"
                 android:contentDescription="Assistente VOLTA"
                 android:elevation="6dp"

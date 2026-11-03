@@ -45,6 +45,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+
+
 public class ReportsFragment extends Fragment {
 
     private static final String PREFS_REPORTS = "cache_reports";
@@ -62,7 +64,11 @@ public class ReportsFragment extends Fragment {
     private TextView tvGoalCurrent;
     private TextView tvGoalTotal;
     private View goalProgress;
+    private View viewGoalProgressEmpty;
     private LinearLayout materialContainer;
+    private TextView tvReportsVsOccurrences;
+    private TextView tvReportsVsKg;
+    private TextView tvReportsVsRate;
 
     private View skeletonReports;
     private View layoutReportsDynamicContent;
@@ -155,7 +161,11 @@ public class ReportsFragment extends Fragment {
         tvGoalCurrent = view.findViewById(R.id.tvGoalCurrent);
         tvGoalTotal = view.findViewById(R.id.tvGoalTotal);
         goalProgress = view.findViewById(R.id.viewGoalProgress);
+        viewGoalProgressEmpty = view.findViewById(R.id.viewGoalProgressEmpty);
         materialContainer = view.findViewById(R.id.materialContainer);
+        tvReportsVsOccurrences = view.findViewById(R.id.tvReportsVsOccurrences);
+        tvReportsVsKg = view.findViewById(R.id.tvReportsVsKg);
+        tvReportsVsRate = view.findViewById(R.id.tvReportsVsRate);
 
         skeletonReports = view.findViewById(R.id.skeletonReports);
         layoutReportsDynamicContent = view.findViewById(R.id.layoutReportsDynamicContent);
@@ -263,6 +273,13 @@ public class ReportsFragment extends Fragment {
 
         View fabMascot = view.findViewById(R.id.fabMascotReports);
         if (fabMascot != null) {
+            fabMascot.setClipToOutline(true);
+            fabMascot.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override
+                public void getOutline(android.view.View v, android.graphics.Outline outline) {
+                    outline.setOval(0, 0, v.getWidth(), v.getHeight());
+                }
+            });
             fabMascot.setOnClickListener(v ->
                     Navigation.findNavController(v).navigate(R.id.nav_assistant));
         }
@@ -351,144 +368,29 @@ public class ReportsFragment extends Fragment {
 
         fetchAreasCatalog();
 
-        OccurrenceStore.refresh(requireContext(), freshOccurrences -> {
-            if (!isAdded()) return;
-            fetchEsgAndDisplay(freshOccurrences);
+        ReportMetricsCalculator.loadOfficialSummary(requireContext(), currentPeriod, (summary, occurrences) -> {
+            if (!isAdded() || getContext() == null) return;
+
+            if (skeletonReports != null) {
+                com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonReports);
+                skeletonReports.setVisibility(View.GONE);
+            }
+            if (layoutReportsDynamicContent != null) {
+                layoutReportsDynamicContent.setVisibility(View.VISIBLE);
+                layoutReportsDynamicContent.setAlpha(0f);
+                layoutReportsDynamicContent.animate().alpha(1f).setDuration(220).start();
+            }
+
+            applySummary(summary);
+            updateTopSectors(summary.topSectors);
+            bindRecentHistory(occurrences);
+            renderPeriodTimeline(occurrences, summary);
         });
     }
 
     private void fetchAreasCatalog() {
         if (!isAdded() || getContext() == null) return;
-        try {
-            CatalogAPI catApi = ApiClient.get(requireContext()).create(CatalogAPI.class);
-            catApi.getMyAreas().enqueue(new Callback<List<AreaResponseDTO>>() {
-                @Override
-                public void onResponse(@NonNull Call<List<AreaResponseDTO>> call,
-                                       @NonNull Response<List<AreaResponseDTO>> response) {
-                    if (isAdded() && response.isSuccessful() && response.body() != null) {
-                        for (AreaResponseDTO area : response.body()) {
-                            if (area.getId() != null && area.getSectorName() != null) {
-                                JsonObject obj = new JsonObject();
-                                obj.addProperty("id", area.getId());
-                                obj.addProperty("sectorName", area.getSectorName());
-                                PrefsHelper.putJson(requireContext(), "cache_areas", area.getId(), obj.toString());
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<List<AreaResponseDTO>> call, @NonNull Throwable t) {
-                }
-            });
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void fetchEsgAndDisplay(List<Occurrence> occurrences) {
-        if (!isAdded() || getContext() == null) return;
-        ReportAPI api = ApiClient.get(requireContext()).create(ReportAPI.class);
-        api.getEsgMetrics().enqueue(new Callback<List<EsgMetricResponseDTO>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<EsgMetricResponseDTO>> call,
-                                   @NonNull Response<List<EsgMetricResponseDTO>> response) {
-                if (!isAdded()) return;
-
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    EsgMetricResponseDTO metric = response.body().get(0);
-                    JsonObject baseEsg = new JsonObject();
-                    baseEsg.addProperty("isLiveDatabase", true);
-                    if (metric.getTotalRecycledKg() != null) {
-                        baseEsg.addProperty("corporateTotalKg", metric.getTotalRecycledKg().intValue());
-                    }
-                    if (metric.getRecyclingPercentage() != null) {
-                        baseEsg.addProperty("corporateRecyclingPercentage", metric.getRecyclingPercentage().intValue());
-                    }
-                    if (metric.getMonthlyTarget() != null && metric.getMonthlyTarget().doubleValue() > 0) {
-                        baseEsg.addProperty("monthlyTarget", metric.getMonthlyTarget().doubleValue());
-                    }
-                    if (metric.getWeeklyTarget() != null && metric.getWeeklyTarget().doubleValue() > 0) {
-                        baseEsg.addProperty("weeklyTarget", metric.getWeeklyTarget().doubleValue());
-                    }
-                    if (metric.getQuarterlyTarget() != null && metric.getQuarterlyTarget().doubleValue() > 0) {
-                        baseEsg.addProperty("quarterlyTarget", metric.getQuarterlyTarget().doubleValue());
-                    }
-                    processAndDisplaySummary(occurrences, baseEsg);
-                } else {
-                    JsonObject baseEsg = new JsonObject();
-                    baseEsg.addProperty("isLiveDatabase", true);
-                    processAndDisplaySummary(occurrences, baseEsg);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<EsgMetricResponseDTO>> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    JsonObject baseEsg = new JsonObject();
-                    baseEsg.addProperty("isLiveDatabase", true);
-                    processAndDisplaySummary(occurrences, baseEsg);
-                }
-            }
-        });
-    }
-
-    private void processAndDisplaySummary(List<Occurrence> occurrences, @Nullable JsonObject baseEsg) {
-        if (!isAdded() || getContext() == null) return;
-
-        if (skeletonReports != null) {
-            com.aula.volta.util.SkeletonPulseAnimator.stop(skeletonReports);
-            skeletonReports.setVisibility(View.GONE);
-        }
-        if (layoutReportsDynamicContent != null) {
-            layoutReportsDynamicContent.setVisibility(View.VISIBLE);
-            layoutReportsDynamicContent.setAlpha(0f);
-            layoutReportsDynamicContent.animate().alpha(1f).setDuration(220).start();
-        }
-
-        Map<String, Double> weightsById = new HashMap<>();
-        Map<String, String> materialsById = new HashMap<>();
-
-        if (occurrences != null) {
-            for (Occurrence occ : occurrences) {
-                if (occ == null || occ.getId() == null) continue;
-                String cachedStr = PrefsHelper.getJson(requireContext(), "cache_occurrence_detail", occ.getId());
-                if (cachedStr != null && !cachedStr.isEmpty()) {
-                    try {
-                        JsonObject d = JsonParser.parseString(cachedStr).getAsJsonObject();
-                        if (d.has("peso_estimado") && !d.get("peso_estimado").isJsonNull()) {
-                            try {
-                                weightsById.put(occ.getId(), d.get("peso_estimado").getAsDouble());
-                            } catch (Exception ignored) {
-                                String wStr = d.get("peso_estimado").getAsString().replaceAll("[^0-9.]", "");
-                                if (!wStr.isEmpty()) {
-                                    weightsById.put(occ.getId(), Double.parseDouble(wStr));
-                                }
-                            }
-                        } else if (d.has("quantidade") && !d.get("quantidade").isJsonNull()) {
-                            weightsById.put(occ.getId(), d.get("quantidade").getAsDouble());
-                        }
-                        if (d.has("material") && !d.get("material").isJsonNull()) {
-                            materialsById.put(occ.getId(), d.get("material").getAsString());
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
-            }
-        }
-
-        if (baseEsg == null) {
-            baseEsg = new JsonObject();
-            baseEsg.addProperty("isLiveDatabase", true);
-        }
-
-        ReportMetricsCalculator.ReportSummary summary = ReportMetricsCalculator.calculate(
-                currentPeriod, baseEsg, occurrences, weightsById, materialsById);
-
-        PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toJsonObject().toString());
-
-        applySummary(summary);
-        updateTopSectors(summary.topSectors);
-        bindRecentHistory(occurrences);
+        com.aula.volta.data.repository.AreaRepository.loadAreas(requireContext(), null);
     }
 
     private void applySummary(ReportMetricsCalculator.ReportSummary summary) {
@@ -513,14 +415,11 @@ public class ReportsFragment extends Fragment {
                     String.format(new Locale("pt", "BR"), "%,d kg", summary.goalKg)));
         }
 
-        if (goalProgress != null) {
-            LinearLayout.LayoutParams params =
-                    (LinearLayout.LayoutParams) goalProgress.getLayoutParams();
-            params.weight = Math.max(summary.goalPercent, 2);
-            goalProgress.setLayoutParams(params);
+        if (goalProgress != null && viewGoalProgressEmpty != null) {
+            setBarWeight(goalProgress, viewGoalProgressEmpty, summary.goalPercent);
         }
 
-        renderMaterials(summary.materialBreakdown);
+        renderMaterials(summary);
     }
 
     private void updateTopSectors(List<ReportMetricsCalculator.SectorStat> topSectors) {
@@ -564,7 +463,24 @@ public class ReportsFragment extends Fragment {
 
     private void setBarWeight(View filled, View empty, int pct) {
         if (filled == null || empty == null) return;
-        int clamped = Math.max(2, Math.min(98, pct));
+        int clamped = Math.max(0, Math.min(100, pct));
+        if (clamped == 0) {
+            filled.setVisibility(View.GONE);
+            empty.setVisibility(View.VISIBLE);
+            LinearLayout.LayoutParams eParams = (LinearLayout.LayoutParams) empty.getLayoutParams();
+            eParams.weight = 100;
+            empty.setLayoutParams(eParams);
+            return;
+        }
+        filled.setVisibility(View.VISIBLE);
+        if (clamped == 100) {
+            empty.setVisibility(View.GONE);
+            LinearLayout.LayoutParams fParams = (LinearLayout.LayoutParams) filled.getLayoutParams();
+            fParams.weight = 100;
+            filled.setLayoutParams(fParams);
+            return;
+        }
+        empty.setVisibility(View.VISIBLE);
         LinearLayout.LayoutParams fParams = (LinearLayout.LayoutParams) filled.getLayoutParams();
         fParams.weight = clamped;
         filled.setLayoutParams(fParams);
@@ -694,7 +610,20 @@ public class ReportsFragment extends Fragment {
         }
     }
 
-    private void renderMaterials(Map<String, Integer> materialBreakdown) {
+    private void renderPeriodTimeline(List<Occurrence> occurrences, ReportMetricsCalculator.ReportSummary summary) {
+        if (tvReportsVsOccurrences != null) {
+            tvReportsVsOccurrences.setText(String.valueOf(summary != null ? summary.totalCount : (occurrences != null ? occurrences.size() : 0)));
+        }
+        if (tvReportsVsKg != null) {
+            tvReportsVsKg.setText(String.format(new Locale("pt", "BR"), "%,d kg", summary != null ? summary.totalKg : 0));
+        }
+        if (tvReportsVsRate != null) {
+            tvReportsVsRate.setText(summary != null ? (summary.recyclingRate + "%") : "0%");
+        }
+    }
+
+    private void renderMaterials(ReportMetricsCalculator.ReportSummary summary) {
+        Map<String, Integer> materialBreakdown = summary != null ? summary.materialBreakdown : null;
         materialContainer.removeAllViews();
         float density = getResources().getDisplayMetrics().density;
 
@@ -710,12 +639,12 @@ public class ReportsFragment extends Fragment {
 
         List<Map.Entry<String, Integer>> items = new ArrayList<>();
         int max = 1;
-
         for (Map.Entry<String, Integer> e : materialBreakdown.entrySet()) {
             items.add(e);
             max = Math.max(max, e.getValue());
         }
 
+        int totalMaterialKg = summary != null && summary.totalKg > 0 ? summary.totalKg : max;
         int cornerRadius = (int) (4 * density);
         int trackHeight = (int) (8 * density);
 
@@ -754,10 +683,10 @@ public class ReportsFragment extends Fragment {
             if (lower.contains("papel")) {
                 trackColor = Color.parseColor("#FDF3DE");
                 fillColor = Color.parseColor("#C68A10");
-            } else if (lower.contains("plást") || lower.contains("plast")) {
+            } else if (lower.contains("plást") || lower.contains("plast") || lower.contains("pet")) {
                 trackColor = Color.parseColor("#E4EFFF");
                 fillColor = Color.parseColor("#3B82F6");
-            } else if (lower.contains("metal")) {
+            } else if (lower.contains("metal") || lower.contains("alum") || lower.contains("aço") || lower.contains("ferro")) {
                 trackColor = Color.parseColor("#EFEAFB");
                 fillColor = Color.parseColor("#8B6FE0");
             } else if (lower.contains("vidro")) {
@@ -770,6 +699,7 @@ public class ReportsFragment extends Fragment {
 
             LinearLayout track = new LinearLayout(requireContext());
             track.setOrientation(LinearLayout.HORIZONTAL);
+            track.setWeightSum(100f);
             GradientDrawable trackBg = new GradientDrawable();
             trackBg.setShape(GradientDrawable.RECTANGLE);
             trackBg.setCornerRadius(cornerRadius);
@@ -781,8 +711,9 @@ public class ReportsFragment extends Fragment {
             trackParams.topMargin = (int) (6 * density);
             track.setLayoutParams(trackParams);
 
+            int pct = Math.max(2, Math.min(100, Math.round(item.getValue() * 100f / totalMaterialKg)));
+
             View fill = new View(requireContext());
-            int pct = Math.max(Math.round(item.getValue() * 100f / max), 2);
             fill.setLayoutParams(new LinearLayout.LayoutParams(0,
                     LinearLayout.LayoutParams.MATCH_PARENT, pct));
             GradientDrawable fillBg = new GradientDrawable();

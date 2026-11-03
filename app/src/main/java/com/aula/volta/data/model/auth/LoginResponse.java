@@ -22,7 +22,18 @@ public class LoginResponse {
     @SerializedName(value = "message", alternate = {"msg", "detail", "error"})
     private String message;
 
+    @SerializedName(value = "firstLogin", alternate = {"first_login", "isFirstLogin", "is_first_login"})
+    private Boolean firstLogin;
+
     public LoginResponse() {
+    }
+
+    public Boolean isFirstLogin() {
+        return firstLogin;
+    }
+
+    public void setFirstLogin(Boolean firstLogin) {
+        this.firstLogin = firstLogin;
     }
 
     public String getToken() {

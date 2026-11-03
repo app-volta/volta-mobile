@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:layout_marginStart="4dp"
     android:layout_marginTop="2dp"
-    android:layout_marginEnd="10dp"
+    android:layout_marginEnd="4dp"
     android:layout_marginBottom="14dp"
     android:outlineAmbientShadowColor="#0E7C48"
     android:outlineSpotShadowColor="#0E7C48"
@@ -15,30 +15,111 @@
     app:cardElevation="8dp"
     app:strokeWidth="0dp">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/bg_card_cta"
-        android:gravity="center_vertical"
-        android:orientation="vertical"
-        android:padding="22dp">
+        android:clipChildren="true"
+        android:clipToPadding="true">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:fontFamily="@font/font_poppins"
-            android:includeFontPadding="false"
-            android:text="@string/home_week_title"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+        <ImageView
+            android:layout_width="119dp"
+            android:layout_height="119dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="-18dp"
+            android:layout_marginEnd="-15dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_cta_arrow_loop" />
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="-10dp"
+            android:layout_marginBottom="-15dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_cta_arrow_curve" />
 
         <LinearLayout
-            android:id="@+id/weekBars"
             android:layout_width="match_parent"
-            android:layout_height="106dp"
-            android:gravity="bottom"
-            android:orientation="horizontal" />
-    </LinearLayout>
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="14dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvSlideWeekTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/font_poppins"
+                    android:includeFontPadding="false"
+                    android:text="@string/home_week_title"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSlideWeekSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/font_inter"
+                    android:includeFontPadding="false"
+                    android:lineSpacingExtra="1dp"
+                    android:text="Acompanhe a meta da unidade nos relatórios."
+                    android:textColor="#EBFFFFFF"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:id="@+id/btnSlideReports"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_cta_button_white"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_nav_reports_figma"
+                        app:tint="#0E7C48" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:fontFamily="@font/font_poppins"
+                        android:includeFontPadding="false"
+                        android:text="Ver relatórios"
+                        android:textColor="#0E7C48"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/chartCarouselWeek"
+                android:layout_width="128dp"
+                android:layout_height="104dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+    </FrameLayout>
 </com.google.android.material.card.MaterialCardView>

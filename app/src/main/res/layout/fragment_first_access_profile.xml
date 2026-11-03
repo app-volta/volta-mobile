@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/vf_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="28dp"
+        android:paddingBottom="24dp">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="28dp">
+
+            <ImageView
+                android:layout_width="116dp"
+                android:layout_height="34dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="fitStart"
+                android:src="@drawable/logo_volta_green" />
+
+            <FrameLayout
+                android:id="@+id/btnCloseFirstAccess"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_notification_circle"
+                android:clickable="true"
+                android:contentDescription="@string/cancel"
+                android:elevation="2dp"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_close"
+                    app:tint="@color/vf_text_primary" />
+            </FrameLayout>
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/font_poppins"
+            android:text="@string/auth_first_access_data_title"
+            android:textColor="@color/vf_text_primary"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="24dp"
+            android:fontFamily="@font/font_inter"
+            android:lineSpacingExtra="2dp"
+            android:text="@string/auth_first_access_data_sub"
+            android:textColor="@color/vf_text_secondary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/font_poppins"
+            android:text="@string/auth_first_access_full_name"
+            android:textColor="@color/vf_text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_card_surface_default"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_chip_r9"
+                android:backgroundTint="@color/priority_medium_bg">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_nav_profile"
+                    app:tint="@color/priority_medium_text" />
+            </FrameLayout>
+
+            <EditText
+                android:id="@+id/etFirstAccessName"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/font_inter"
+                android:hint="Seu nome completo"
+                android:importantForAutofill="no"
+                android:inputType="textPersonName|textCapWords"
+                android:textColor="@color/vf_text_primary"
+                android:textColorHint="@color/volta_text_muted_light"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/font_poppins"
+            android:text="@string/auth_first_access_unit_email"
+            android:textColor="@color/vf_text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_card_surface_default"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_chip_r9"
+                android:backgroundTint="@color/vf_blue_bg">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_mail"
+                    app:tint="@color/vf_blue" />
+            </FrameLayout>
+
+            <EditText
+                android:id="@+id/etFirstAccessEmail"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:enabled="false"
+                android:fontFamily="@font/font_inter"
+                android:hint="voce@empresa.com.br"
+                android:importantForAutofill="no"
+                android:inputType="textEmailAddress"
+                android:textColor="@color/vf_text_secondary"
+                android:textColorHint="@color/volta_text_muted_light"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/font_poppins"
+            android:text="@string/auth_first_access_sector"
+            android:textColor="@color/vf_text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/cardFirstAccessSector"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/bg_card_surface_default"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_chip_r9"
+                android:backgroundTint="@color/vf_purple_bg">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_factory"
+                    app:tint="@color/vf_purple" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvFirstAccessSector"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:fontFamily="@font/font_inter"
+                android:text="@string/auth_first_access_sector_hint"
+                android:textColor="@color/volta_text_muted_light"
+                android:textSize="14sp" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_chevron_down"
+                app:tint="@color/vf_text_secondary" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/rowFirstAccessTerms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="28dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/cbFirstAccessTerms"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@drawable/sl_checkbox_terms"
+                android:checked="true"
+                android:paddingStart="10dp"
+                app:buttonTint="@null" />
+
+            <TextView
+                android:id="@+id/tvFirstAccessTerms"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="@font/font_inter"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/auth_register_terms"
+                android:textColor="@color/vf_text_body"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnConfirmFirstAccess"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_button_gradient"
+            android:fontFamily="@font/font_poppins"
+            android:stateListAnimator="@null"
+            android:text="@string/auth_first_access_confirm_enter"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/pbFirstAccessProfileLoading"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:indeterminateTint="@color/login_btn_text_green"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

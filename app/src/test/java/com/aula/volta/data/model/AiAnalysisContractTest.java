@@ -258,4 +258,71 @@ public class AiAnalysisContractTest {
         assertEquals("Orgânico", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Restos de alimentos orgânicos"));
         assertEquals("Orgânico", com.aula.volta.data.report.ReportMetricsCalculator.resolveMaterialFamily("Resíduo organico perecível"));
     }
+
+    @Test
+    public void resolveAiTitle_preservesSpecificItemTitleAndNeverCollapsesToGenericMacroFamily() {
+        com.google.gson.JsonObject predict = new com.google.gson.JsonObject();
+        predict.addProperty("detected_waste_type", "Cadeira de escritório");
+        AiAnalysisJSON analysis = AiAnalysisJSON.fromPredict(predict, 0);
+
+        String resolved = AiAnalysisJSON.resolveAiTitle(analysis, "", predict);
+        assertEquals("Cadeira de escritório", resolved);
+
+        com.google.gson.JsonObject chairPossibilities = new com.google.gson.JsonObject();
+        com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+        arr.add("Cadeira de escritório");
+        arr.add("Polipropileno");
+        chairPossibilities.add("possibilities", arr);
+        assertEquals("Cadeira de escritório", AiAnalysisJSON.resolveAiTitle(null, "", chairPossibilities));
+    }
+
+    @Test
+    public void extractAiCandidateWasteNames_and_resolveAllWasteTypeIds_mapsAllPossibilities() {
+        com.google.gson.JsonObject predict = new com.google.gson.JsonObject();
+        com.google.gson.JsonArray poss = new com.google.gson.JsonArray();
+        poss.add("Cadeira de escritório");
+        poss.add("Caixas de papelão");
+        poss.add("Latas de alumínio");
+        predict.add("possibilities", poss);
+
+        java.util.List<String> candidates = AiAnalysisJSON.extractAiCandidateWasteNames(predict, null, "");
+        assertTrue(candidates.contains("Cadeira de escritório"));
+        assertTrue(candidates.contains("Caixas de papelão"));
+        assertTrue(candidates.contains("Latas de alumínio"));
+
+        com.google.gson.JsonArray catalog = new com.google.gson.JsonArray();
+        com.google.gson.JsonObject plasticType = new com.google.gson.JsonObject();
+        plasticType.addProperty("id", "wid-plastic-001");
+        plasticType.addProperty("category", "PLASTICO");
+        catalog.add(plasticType);
+
+        com.google.gson.JsonObject paperType = new com.google.gson.JsonObject();
+        paperType.addProperty("id", "wid-paper-002");
+        paperType.addProperty("category", "PAPEL");
+        catalog.add(paperType);
+
+        com.google.gson.JsonObject metalType = new com.google.gson.JsonObject();
+        metalType.addProperty("id", "wid-metal-003");
+        metalType.addProperty("category", "METAL");
+        catalog.add(metalType);
+
+        java.util.List<String> resolvedIds = AiAnalysisJSON.resolveAllWasteTypeIds(catalog, candidates);
+        assertTrue(resolvedIds.contains("wid-plastic-001"));
+        assertTrue(resolvedIds.contains("wid-paper-002"));
+        assertTrue(resolvedIds.contains("wid-metal-003"));
+    }
+
+    @Test
+    public void occurrenceFromIncident_preservesTitleFromIncidentAndDoesNotOverrideWithMaterialCategory() {
+        com.aula.volta.data.model.incident.IncidentResponseDTO dto = new com.aula.volta.data.model.incident.IncidentResponseDTO();
+        dto.setId("inc-123");
+        dto.setTitle("Cadeira de escritório danificada");
+        dto.setEmployeeDescription("Cadeira de escritório danificada");
+        dto.setWasteTypeId("wid-plastic-001");
+        dto.setStatus("PENDING");
+
+        Occurrence occ = Occurrence.fromIncident(dto);
+        assertNotNull(occ);
+        assertEquals("Cadeira de escritório danificada", occ.getTitulo());
+    }
 }

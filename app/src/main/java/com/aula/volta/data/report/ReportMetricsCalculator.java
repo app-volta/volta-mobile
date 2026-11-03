@@ -1,5 +1,12 @@
 package com.aula.volta.data.report;
 
+import androidx.annotation.NonNull;
+
+import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.ReportAPI;
+import com.aula.volta.data.local.OccurrenceStore;
+import com.aula.volta.data.local.PrefsHelper;
+import com.aula.volta.data.model.EsgMetricResponseDTO;
 import com.aula.volta.data.model.Occurrence;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -10,6 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public final class ReportMetricsCalculator {
 
@@ -114,6 +125,11 @@ public final class ReportMetricsCalculator {
             obj.addProperty("taxa_reciclagem", recyclingRate);
             obj.addProperty("meta_kg", goalKg);
             obj.addProperty("meta_percent", goalPercent);
+            obj.addProperty("monthlyTarget", (double) goalKg);
+            obj.addProperty("targetKg", goalKg);
+            obj.addProperty("goalPercent", goalPercent);
+            obj.addProperty("corporateTotalKg", totalKg);
+            obj.addProperty("corporateRecyclingPercentage", recyclingRate);
 
             JsonObject porTipo = new JsonObject();
             for (Map.Entry<String, Integer> entry : materialBreakdown.entrySet()) {
@@ -251,19 +267,119 @@ public final class ReportMetricsCalculator {
         List<Map.Entry<String, Integer>> sortedSectors = new ArrayList<>(sectorKg.entrySet());
         sortedSectors.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
 
-        int maxSectorKg = sortedSectors.isEmpty() ? 1 : Math.max(1, sortedSectors.get(0).getValue());
+        int totalSectorKg = 0;
+        for (int k : sectorKg.values()) {
+            totalSectorKg += k;
+        }
+        int totalForPct = totalSectorKg > 0 ? totalSectorKg : 1;
         for (int i = 0; i < Math.min(3, sortedSectors.size()); i++) {
             Map.Entry<String, Integer> entry = sortedSectors.get(i);
-            int pct = (int) Math.round(entry.getValue() * 100.0 / maxSectorKg);
-            summary.topSectors.add(new SectorStat(entry.getKey(), entry.getValue(), pct));
+            int pct = (int) Math.round(entry.getValue() * 100.0 / totalForPct);
+            summary.topSectors.add(new SectorStat(entry.getKey(), entry.getValue(), Math.max(2, Math.min(100, pct))));
         }
 
         return summary;
     }
 
+    public interface SummaryCallback {
+        void onSummaryReady(ReportSummary summary, List<Occurrence> occurrences);
+    }
+
+    public static void loadOfficialSummary(android.content.Context context, Period period, SummaryCallback callback) {
+        if (context == null) return;
+        final android.content.Context appContext = context.getApplicationContext();
+        final Period finalPeriod = period != null ? period : Period.MONTH;
+
+        OccurrenceStore.refresh(appContext, freshOccurrences -> {
+            final List<Occurrence> occs = freshOccurrences != null ? freshOccurrences : OccurrenceStore.cached(appContext);
+            ReportAPI api = ApiClient.get(appContext).create(ReportAPI.class);
+            api.getEsgMetrics().enqueue(new Callback<List<EsgMetricResponseDTO>>() {
+                @Override
+                public void onResponse(@NonNull Call<List<EsgMetricResponseDTO>> call,
+                                       @NonNull Response<List<EsgMetricResponseDTO>> response) {
+                    JsonObject baseEsg = new JsonObject();
+                    baseEsg.addProperty("isLiveDatabase", true);
+                    if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                        EsgMetricResponseDTO metric = response.body().get(0);
+                        if (metric.getTotalRecycledKg() != null) {
+                            baseEsg.addProperty("corporateTotalKg", metric.getTotalRecycledKg().intValue());
+                        }
+                        if (metric.getRecyclingPercentage() != null) {
+                            baseEsg.addProperty("corporateRecyclingPercentage", metric.getRecyclingPercentage().intValue());
+                        }
+                        if (metric.getMonthlyTarget() != null && metric.getMonthlyTarget().doubleValue() > 0) {
+                            baseEsg.addProperty("monthlyTarget", metric.getMonthlyTarget().doubleValue());
+                        }
+                        if (metric.getWeeklyTarget() != null && metric.getWeeklyTarget().doubleValue() > 0) {
+                            baseEsg.addProperty("weeklyTarget", metric.getWeeklyTarget().doubleValue());
+                        }
+                        if (metric.getQuarterlyTarget() != null && metric.getQuarterlyTarget().doubleValue() > 0) {
+                            baseEsg.addProperty("quarterlyTarget", metric.getQuarterlyTarget().doubleValue());
+                        }
+                    }
+                    computeAndNotify(appContext, finalPeriod, occs, baseEsg, callback);
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<List<EsgMetricResponseDTO>> call, @NonNull Throwable t) {
+                    JsonObject baseEsg = new JsonObject();
+                    baseEsg.addProperty("isLiveDatabase", true);
+                    computeAndNotify(appContext, finalPeriod, occs, baseEsg, callback);
+                }
+            });
+        });
+    }
+
+    private static void computeAndNotify(android.content.Context context, Period period,
+                                         List<Occurrence> occurrences, JsonObject baseEsg,
+                                         SummaryCallback callback) {
+        Map<String, Double> weightsById = new HashMap<>();
+        Map<String, String> materialsById = new HashMap<>();
+
+        if (occurrences != null) {
+            for (Occurrence occ : occurrences) {
+                if (occ == null || occ.getId() == null) continue;
+                String cachedStr = PrefsHelper.getJson(context, "cache_occurrence_detail", occ.getId());
+                if (cachedStr != null && !cachedStr.isEmpty()) {
+                    try {
+                        JsonObject d = com.google.gson.JsonParser.parseString(cachedStr).getAsJsonObject();
+                        if (d.has("peso_estimado") && !d.get("peso_estimado").isJsonNull()) {
+                            try {
+                                weightsById.put(occ.getId(), d.get("peso_estimado").getAsDouble());
+                            } catch (Exception ignored) {
+                                String wStr = d.get("peso_estimado").getAsString().replaceAll("[^0-9.]", "");
+                                if (!wStr.isEmpty()) {
+                                    weightsById.put(occ.getId(), Double.parseDouble(wStr));
+                                }
+                            }
+                        } else if (d.has("quantidade") && !d.get("quantidade").isJsonNull()) {
+                            weightsById.put(occ.getId(), d.get("quantidade").getAsDouble());
+                        }
+                        if (d.has("material") && !d.get("material").isJsonNull()) {
+                            materialsById.put(occ.getId(), d.get("material").getAsString());
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+        }
+
+        ReportSummary summary = calculate(period, baseEsg, occurrences, weightsById, materialsById);
+        PrefsHelper.putJson(context, "cache_reports", "summary", summary.toJsonObject().toString());
+        if (callback != null) {
+            callback.onSummaryReady(summary, occurrences);
+        }
+    }
+
     public static String resolveMaterialFamily(String raw) {
         if (raw == null) return "Papelão";
-        String lower = raw.toLowerCase(Locale.ROOT);
+        String lower = raw.toLowerCase(Locale.ROOT).trim();
+        if (lower.isEmpty()) {
+            return "Papelão";
+        }
+        if (lower.equals("nenhum")) {
+            return "Nenhum";
+        }
         if (lower.contains("papel") || lower.contains("cartão") || lower.contains("cartao") || lower.contains("kraft")) {
             return "Papelão";
         }
@@ -291,6 +407,6 @@ public final class ReportMetricsCalculator {
         if (lower.contains("textil") || lower.contains("tecido") || lower.contains("pano")) {
             return "Têxtil";
         }
-        return "Outros";
+        return "Papelão";
     }
 }

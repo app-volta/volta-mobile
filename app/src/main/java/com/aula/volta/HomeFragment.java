@@ -37,6 +37,7 @@ import com.aula.volta.data.local.NotificationStore;
 import com.aula.volta.data.local.OccurrenceStore;
 import com.aula.volta.data.local.PrefsHelper;
 import com.aula.volta.data.model.Occurrence;
+import com.aula.volta.data.report.ReportMetricsCalculator;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
@@ -67,6 +68,7 @@ public class HomeFragment extends Fragment {
     private TextView tvUserName;
     private TextView tvAvatarInitials;
     private OccurrenceAdapter adapter;
+    private CarouselAdapter carouselAdapter;
 
     private int pendingLoads = 3;
 
@@ -104,22 +106,30 @@ public class HomeFragment extends Fragment {
         ViewPager2 vpCarousel = view.findViewById(R.id.vpCarousel);
         LinearLayout carouselDots = view.findViewById(R.id.carouselDots);
         if (vpCarousel != null) {
-            CarouselAdapter carouselAdapter = new CarouselAdapter(() -> {
-                if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
-                    Bundle errArgs = new Bundle();
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
-                            com.aula.volta.ui.error.OfflineErrorFragment.TYPE_OFFLINE);
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Sem conexão para fotografar");
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
-                            "Você precisa de conexão com a internet para tirar fotos e registrar ocorrências no banco de dados.");
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_TITLE, "Câmera e registro bloqueados offline");
-                    errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_BODY,
-                            "Todas as ocorrências são enviadas diretamente ao banco oficial da unidade. Conecte-se ao Wi-Fi ou dados móveis para continuar.");
-                    Navigation.findNavController(view).navigate(R.id.nav_offline_error, errArgs);
-                    return;
+            carouselAdapter = new CarouselAdapter(new CarouselAdapter.OnCarouselClickListener() {
+                @Override
+                public void onRegisterClick() {
+                    if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+                        Bundle errArgs = new Bundle();
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_ERROR_TYPE,
+                                com.aula.volta.ui.error.OfflineErrorFragment.TYPE_OFFLINE);
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_BADGE, "Você está offline");
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_TITLE, "Sem conexão para fotografar");
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_MESSAGE,
+                                "Você precisa de conexão com a internet para tirar fotos e registrar ocorrências no banco de dados.");
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_TITLE, "Câmera e registro bloqueados offline");
+                        errArgs.putString(com.aula.volta.ui.error.OfflineErrorFragment.ARG_INFO_BODY,
+                                "Todas as ocorrências são enviadas diretamente ao banco oficial da unidade. Conecte-se ao Wi-Fi ou dados móveis para continuar.");
+                        Navigation.findNavController(view).navigate(R.id.nav_offline_error, errArgs);
+                        return;
+                    }
+                    Navigation.findNavController(view).navigate(R.id.nav_register);
                 }
-                Navigation.findNavController(view).navigate(R.id.nav_register);
+
+                @Override
+                public void onReportsClick() {
+                    Navigation.findNavController(view).navigate(R.id.nav_reports);
+                }
             });
             vpCarousel.setAdapter(carouselAdapter);
             if (carouselDots != null) {
@@ -157,6 +167,13 @@ public class HomeFragment extends Fragment {
         View.OnClickListener openAssistant = v ->
                 Navigation.findNavController(v).navigate(R.id.nav_assistant);
         if (fabMascot != null) {
+            fabMascot.setClipToOutline(true);
+            fabMascot.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override
+                public void getOutline(android.view.View v, android.graphics.Outline outline) {
+                    outline.setOval(0, 0, v.getWidth(), v.getHeight());
+                }
+            });
             fabMascot.setOnClickListener(openAssistant);
         }
         if (balloonMascot != null) {
@@ -363,6 +380,9 @@ public class HomeFragment extends Fragment {
         }
 
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
+        if ((remoteUrl == null || remoteUrl.isEmpty()) && !cleanEmail.isEmpty()) {
+            remoteUrl = com.aula.volta.data.upload.CloudinaryUploader.getDeterministicProfileUrl(cleanEmail);
+        }
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
             final Context appContext = requireContext().getApplicationContext();
             com.aula.volta.data.upload.CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new com.aula.volta.data.upload.CloudinaryUploader.BitmapCallback() {
@@ -379,18 +399,32 @@ public class HomeFragment extends Fragment {
                         }
                     } catch (Exception ignored) {
                     }
-                    if (isAdded() && imgAvatar != null) {
-                        RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
-                        circular.setCircular(true);
-                        imgAvatar.setImageDrawable(circular);
-                        imgAvatar.setVisibility(View.VISIBLE);
-                        if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+                    if (isAdded() && getActivity() != null) {
+                        requireActivity().runOnUiThread(() -> {
+                            if (imgAvatar != null) {
+                                RoundedBitmapDrawable circular = RoundedBitmapDrawableFactory.create(getResources(), bmp);
+                                circular.setCircular(true);
+                                imgAvatar.setImageDrawable(circular);
+                                imgAvatar.setVisibility(View.VISIBLE);
+                                if (tvInitials != null) tvInitials.setVisibility(View.GONE);
+                            }
+                        });
                     }
                 }
 
                 @Override
                 public void onError(Exception e) {
                     android.util.Log.w("HomeFragment", "Falha ao carregar foto remota de perfil: " + e.getMessage());
+                    if (isAdded() && getActivity() != null) {
+                        requireActivity().runOnUiThread(() -> {
+                            if (imgAvatar != null) {
+                                imgAvatar.setVisibility(View.GONE);
+                            }
+                            if (tvInitials != null) {
+                                tvInitials.setVisibility(View.VISIBLE);
+                            }
+                        });
+                    }
                 }
             });
         } else {
@@ -407,136 +441,15 @@ public class HomeFragment extends Fragment {
         if (layoutSummaryCards != null) {
             layoutSummaryCards.setVisibility(View.GONE);
         }
-        ReportAPI api = ApiClient.get(requireContext()).create(ReportAPI.class);
-        api.getSummary().enqueue(new Callback<JsonObject>() {
-            @Override
-            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                if (!isAdded()) {
-                    return;
-                }
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonObject raw = response.body();
-                    JsonObject summary = parseRealSummary(raw);
-                    PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toString());
-                    applySummary(summary);
+
+        loadSummaryFromCache();
+
+        ReportMetricsCalculator.loadOfficialSummary(requireContext(), ReportMetricsCalculator.Period.MONTH,
+                (summary, occurrences) -> {
+                    if (!isAdded()) return;
+                    applySummary(summary.toJsonObject());
                     onLoadFinished();
-                } else {
-                    fallbackEsgMetrics(api);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    fallbackEsgMetrics(api);
-                }
-            }
-        });
-    }
-
-    private JsonObject parseRealSummary(JsonObject raw) {
-        JsonObject summary = new JsonObject();
-        if (raw.has("kg_reciclados") && raw.has("abertas") && raw.has("resolvidas")) {
-            return raw;
-        }
-
-        int kg = 0;
-        if (raw.has("esgMetrics") && raw.get("esgMetrics").isJsonArray()) {
-            com.google.gson.JsonArray esgArr = raw.getAsJsonArray("esgMetrics");
-            if (esgArr.size() > 0) {
-                JsonObject first = esgArr.get(0).getAsJsonObject();
-                if (first.has("totalRecycledKg") && !first.get("totalRecycledKg").isJsonNull()) {
-                    kg = (int) Math.round(first.get("totalRecycledKg").getAsDouble());
-                }
-                if (first.has("monthlyTarget") && !first.get("monthlyTarget").isJsonNull()) {
-                    summary.addProperty("monthlyTarget", first.get("monthlyTarget").getAsDouble());
-                }
-                if (first.has("weeklyTarget") && !first.get("weeklyTarget").isJsonNull()) {
-                    summary.addProperty("weeklyTarget", first.get("weeklyTarget").getAsDouble());
-                }
-                if (first.has("quarterlyTarget") && !first.get("quarterlyTarget").isJsonNull()) {
-                    summary.addProperty("quarterlyTarget", first.get("quarterlyTarget").getAsDouble());
-                }
-            }
-        }
-
-        int openCount = 0;
-        int resolvedCount = 0;
-        if (raw.has("incidents") && raw.get("incidents").isJsonArray()) {
-            for (com.google.gson.JsonElement el : raw.getAsJsonArray("incidents")) {
-                if (el.isJsonObject()) {
-                    String st = el.getAsJsonObject().has("status") && !el.getAsJsonObject().get("status").isJsonNull()
-                            ? el.getAsJsonObject().get("status").getAsString().toUpperCase() : "";
-                    if ("CLOSED".equals(st) || "FINALIZADA".equals(st) || "RESOLVIDO".equals(st) || "APROVADO".equals(st) || "APROVADA".equals(st)) {
-                        resolvedCount++;
-                    } else {
-                        openCount++;
-                    }
-                }
-            }
-        }
-
-        summary.addProperty("kg_reciclados", kg);
-        summary.addProperty("abertas", openCount);
-        summary.addProperty("resolvidas", resolvedCount);
-
-        if (raw.has("areas") && raw.get("areas").isJsonArray()) {
-            for (com.google.gson.JsonElement el : raw.getAsJsonArray("areas")) {
-                if (el.isJsonObject() && el.getAsJsonObject().has("id")) {
-                    String areaId = el.getAsJsonObject().get("id").getAsString();
-                    PrefsHelper.putJson(requireContext(), "cache_areas", areaId, el.toString());
-                }
-            }
-        }
-
-        if (raw.has("wasteTypes") && raw.get("wasteTypes").isJsonArray()) {
-            PrefsHelper.putJson(requireContext(), "cache_waste_types", "list", raw.getAsJsonArray("wasteTypes").toString());
-        }
-
-        return summary;
-    }
-
-    private void fallbackEsgMetrics(ReportAPI api) {
-        api.getEsgMetrics().enqueue(new Callback<List<EsgMetricResponseDTO>>() {
-            @Override
-            public void onResponse(@NonNull Call<List<EsgMetricResponseDTO>> call,
-                                   @NonNull Response<List<EsgMetricResponseDTO>> response) {
-                if (!isAdded()) return;
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    EsgMetricResponseDTO metric = response.body().get(0);
-                    JsonObject summary = new JsonObject();
-                    int kg = metric.getTotalRecycledKg() != null ? metric.getTotalRecycledKg().intValue() : 0;
-                    int openCount = 0;
-                    int resolvedCount = 0;
-                    List<Occurrence> cachedOccs = OccurrenceStore.cached(requireContext());
-                    if (cachedOccs != null) {
-                        for (Occurrence occ : cachedOccs) {
-                            if (occ.isResolved()) {
-                                resolvedCount++;
-                            } else {
-                                openCount++;
-                            }
-                        }
-                    }
-                    summary.addProperty("kg_reciclados", kg);
-                    summary.addProperty("resolvidas", resolvedCount);
-                    summary.addProperty("abertas", openCount);
-                    PrefsHelper.putJson(requireContext(), PREFS_REPORTS, KEY_SUMMARY, summary.toString());
-                    applySummary(summary);
-                } else {
-                    loadSummaryFromCache();
-                }
-                onLoadFinished();
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<List<EsgMetricResponseDTO>> call, @NonNull Throwable t) {
-                if (isAdded()) {
-                    loadSummaryFromCache();
-                    onLoadFinished();
-                }
-            }
-        });
+                });
     }
 
     private void loadSummaryFromCache() {
@@ -575,15 +488,30 @@ public class HomeFragment extends Fragment {
     }
 
     private void applySummary(JsonObject summary) {
+        if (summary == null) return;
         if (tvStatOpenCount != null && summary.has("abertas")) {
             tvStatOpenCount.setText(String.valueOf(summary.get("abertas").getAsInt()));
         }
         if (tvStatResolvedCount != null && summary.has("resolvidas")) {
             tvStatResolvedCount.setText(String.valueOf(summary.get("resolvidas").getAsInt()));
         }
-        if (tvStatRecycledCount != null && summary.has("kg_reciclados")) {
-            int kg = summary.get("kg_reciclados").getAsInt();
+        if (tvStatRecycledCount != null) {
+            int kg = 0;
+            if (summary.has("kg_reciclados") && !summary.get("kg_reciclados").isJsonNull()) {
+                kg = summary.get("kg_reciclados").getAsInt();
+            } else if (summary.has("totalKg") && !summary.get("totalKg").isJsonNull()) {
+                kg = summary.get("totalKg").getAsInt();
+            }
             tvStatRecycledCount.setText(String.format(new Locale("pt", "BR"), "%,d", kg));
+        }
+        if (carouselAdapter != null) {
+            int pct = 0;
+            if (summary.has("meta_percent") && !summary.get("meta_percent").isJsonNull()) {
+                pct = summary.get("meta_percent").getAsInt();
+            } else if (summary.has("goalPercent") && !summary.get("goalPercent").isJsonNull()) {
+                pct = summary.get("goalPercent").getAsInt();
+            }
+            carouselAdapter.setGoalPercent(pct);
         }
     }
 
@@ -623,6 +551,9 @@ public class HomeFragment extends Fragment {
 
     private void applyOccurrences(List<Occurrence> occurrences) {
         adapter.setItems(occurrences);
+        if (carouselAdapter != null) {
+            carouselAdapter.setOccurrences(OccurrenceStore.cached(requireContext()));
+        }
         if (tvEmptyOccurrences != null) {
             tvEmptyOccurrences.setVisibility(
                     occurrences == null || occurrences.isEmpty() ? View.VISIBLE : View.GONE);

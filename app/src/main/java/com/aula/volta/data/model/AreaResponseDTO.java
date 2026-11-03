@@ -4,16 +4,16 @@ import com.google.gson.annotations.SerializedName;
 
 public class AreaResponseDTO {
 
-    @SerializedName("id")
+    @SerializedName(value = "id", alternate = {"areaId", "area_id"})
     private String id;
 
-    @SerializedName("companyId")
+    @SerializedName(value = "companyId", alternate = {"company_id"})
     private String companyId;
 
-    @SerializedName("sectorName")
+    @SerializedName(value = "sectorName", alternate = {"name", "sector", "nome", "setor"})
     private String sectorName;
 
-    @SerializedName("locationDescription")
+    @SerializedName(value = "locationDescription", alternate = {"location", "description", "descricao"})
     private String locationDescription;
 
     public AreaResponseDTO() {

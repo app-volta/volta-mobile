@@ -18,6 +18,7 @@ public final class SessionManager {
     private static final String KEY_COMPANY_ID = "company_id";
     private static final String KEY_PROFILE_PHOTO_URL = "user_profile_photo_url";
     private static final String KEY_PROFILE_PHOTO_LOCAL = "user_profile_photo_local";
+    private static final String KEY_FIRST_LOGIN_PENDING = "first_login_pending";
 
     private SessionManager() {
     }
@@ -34,7 +35,17 @@ public final class SessionManager {
 
     public static boolean isLoggedIn(Context context) {
         String email = email(context);
-        return email != null && !email.isEmpty();
+        return email != null && !email.isEmpty() && !isFirstLoginPending(context);
+    }
+
+    public static void setFirstLoginPending(Context context, boolean pending) {
+        prefs(context).edit()
+                .putBoolean(KEY_FIRST_LOGIN_PENDING, pending)
+                .apply();
+    }
+
+    public static boolean isFirstLoginPending(Context context) {
+        return prefs(context).getBoolean(KEY_FIRST_LOGIN_PENDING, false);
     }
 
     public static void login(Context context, String email, String name) {
@@ -52,19 +63,41 @@ public final class SessionManager {
                 .apply();
 
         if (!cleanEmail.isEmpty()) {
+            String lowerEmail = cleanEmail.toLowerCase(java.util.Locale.ROOT);
             persistentPrefs(context).edit()
                     .putString("active_user_email", cleanEmail)
                     .putString("user_name_" + cleanEmail, cleanName)
+                    .putString("user_name_" + lowerEmail, cleanName)
                     .apply();
 
-            String cachedPhotoUrl = persistentPrefs(context).getString("photo_url_" + cleanEmail, "");
-            String cachedPhotoLocal = persistentPrefs(context).getString("photo_local_" + cleanEmail, "");
-            if (!cachedPhotoUrl.isEmpty() || !cachedPhotoLocal.isEmpty()) {
-                prefs(context).edit()
-                        .putString(KEY_PROFILE_PHOTO_URL, cachedPhotoUrl)
-                        .putString(KEY_PROFILE_PHOTO_LOCAL, cachedPhotoLocal)
-                        .apply();
+            String cachedPhotoUrl = persistentPrefs(context).getString("photo_url_" + lowerEmail, "");
+            if (cachedPhotoUrl == null || cachedPhotoUrl.isEmpty()) {
+                cachedPhotoUrl = persistentPrefs(context).getString("photo_url_" + cleanEmail, "");
             }
+            String cachedPhotoLocal = persistentPrefs(context).getString("photo_local_" + lowerEmail, "");
+            if (cachedPhotoLocal == null || cachedPhotoLocal.isEmpty()) {
+                cachedPhotoLocal = persistentPrefs(context).getString("photo_local_" + cleanEmail, "");
+            }
+
+            if (cachedPhotoUrl == null || cachedPhotoUrl.isEmpty()) {
+                boolean removed = persistentPrefs(context).getBoolean("photo_removed_" + lowerEmail, false)
+                        || persistentPrefs(context).getBoolean("photo_removed_" + cleanEmail, false);
+                if (!removed) {
+                    cachedPhotoUrl = com.aula.volta.data.upload.CloudinaryUploader.getDeterministicProfileUrl(lowerEmail);
+                }
+            }
+
+            if (cachedPhotoLocal == null || cachedPhotoLocal.isEmpty() || !new java.io.File(cachedPhotoLocal).exists()) {
+                java.io.File hashed = new java.io.File(context.getFilesDir(), "profile_photo_" + Math.abs(lowerEmail.hashCode()) + ".jpg");
+                if (hashed.exists()) {
+                    cachedPhotoLocal = hashed.getAbsolutePath();
+                }
+            }
+
+            prefs(context).edit()
+                    .putString(KEY_PROFILE_PHOTO_URL, cachedPhotoUrl == null ? "" : cachedPhotoUrl)
+                    .putString(KEY_PROFILE_PHOTO_LOCAL, cachedPhotoLocal == null ? "" : cachedPhotoLocal)
+                    .apply();
         }
     }
 
@@ -87,6 +120,10 @@ public final class SessionManager {
         return prefs(context).getString(KEY_PASSWORD, "");
     }
 
+    public static void savePassword(Context context, String password) {
+        prefs(context).edit().putString(KEY_PASSWORD, password == null ? "" : password).apply();
+    }
+
     public static void saveChatSessionId(Context context, String sessionId) {
         prefs(context).edit()
                 .putString(KEY_CHAT_SESSION_ID, sessionId == null ? "" : sessionId)
@@ -107,10 +144,14 @@ public final class SessionManager {
         String currentPhotoLocal = getProfilePhotoLocal(context);
         String currentName = name(context);
         if (currentEmail != null && !currentEmail.isEmpty()) {
+            String lowerEmail = currentEmail.trim().toLowerCase(java.util.Locale.ROOT);
             persistentPrefs(context).edit()
                     .putString("photo_url_" + currentEmail, currentPhotoUrl)
+                    .putString("photo_url_" + lowerEmail, currentPhotoUrl)
                     .putString("photo_local_" + currentEmail, currentPhotoLocal)
+                    .putString("photo_local_" + lowerEmail, currentPhotoLocal)
                     .putString("user_name_" + currentEmail, currentName)
+                    .putString("user_name_" + lowerEmail, currentName)
                     .apply();
         }
         persistentPrefs(context).edit().remove("active_user_email").apply();
@@ -158,6 +199,10 @@ public final class SessionManager {
             return persistent;
         }
         return "";
+    }
+
+    public static String getEmail(Context context) {
+        return email(context);
     }
 
     public static void saveName(Context context, String name) {
@@ -214,6 +259,10 @@ public final class SessionManager {
         return "Colaborador";
     }
 
+    public static String getName(Context context) {
+        return name(context);
+    }
+
     public static void saveSector(Context context, String sector) {
         prefs(context).edit()
                 .putString(KEY_SECTOR, sector == null ? "" : sector)
@@ -222,6 +271,10 @@ public final class SessionManager {
 
     public static String sector(Context context) {
         return prefs(context).getString(KEY_SECTOR, "");
+    }
+
+    public static String getSector(Context context) {
+        return sector(context);
     }
 
     public static void saveUserId(Context context, String userId) {
@@ -306,6 +359,8 @@ public final class SessionManager {
             persistentPrefs(context).edit()
                     .putString("photo_local_" + cleanEmail, cleanPath)
                     .putString("photo_local_" + userEmail, cleanPath)
+                    .remove("photo_removed_" + cleanEmail)
+                    .remove("photo_removed_" + userEmail)
                     .apply();
         }
     }
@@ -315,17 +370,39 @@ public final class SessionManager {
     }
 
     public static String getProfilePhotoLocal(Context context, String userEmail) {
-        String path = prefs(context).getString(KEY_PROFILE_PHOTO_LOCAL, "");
-        if (path != null && !path.isEmpty()) {
-            return path;
-        }
         if (userEmail != null && !userEmail.isEmpty()) {
             String cleanEmail = userEmail.trim().toLowerCase(java.util.Locale.ROOT);
             String pPath = persistentPrefs(context).getString("photo_local_" + cleanEmail, "");
-            if (pPath != null && !pPath.isEmpty()) {
+            if (pPath != null && !pPath.isEmpty() && new java.io.File(pPath).exists()) {
+                prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, pPath).apply();
                 return pPath;
             }
-            return persistentPrefs(context).getString("photo_local_" + userEmail, "");
+            String altPath = persistentPrefs(context).getString("photo_local_" + userEmail, "");
+            if (altPath != null && !altPath.isEmpty() && new java.io.File(altPath).exists()) {
+                prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, altPath).apply();
+                return altPath;
+            }
+            java.io.File hashed = new java.io.File(context.getFilesDir(), "profile_photo_" + Math.abs(cleanEmail.hashCode()) + ".jpg");
+            if (hashed.exists()) {
+                String abs = hashed.getAbsolutePath();
+                prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, abs).apply();
+                persistentPrefs(context).edit().putString("photo_local_" + cleanEmail, abs).apply();
+                return abs;
+            }
+        }
+        String path = prefs(context).getString(KEY_PROFILE_PHOTO_LOCAL, "");
+        if (path != null && !path.isEmpty()) {
+            if (new java.io.File(path).exists()) {
+                return path;
+            } else {
+                prefs(context).edit().remove(KEY_PROFILE_PHOTO_LOCAL).apply();
+            }
+        }
+        java.io.File legacy = new java.io.File(context.getFilesDir(), "profile_photo.jpg");
+        if (legacy.exists()) {
+            String abs = legacy.getAbsolutePath();
+            prefs(context).edit().putString(KEY_PROFILE_PHOTO_LOCAL, abs).apply();
+            return abs;
         }
         return "";
     }
@@ -363,9 +440,13 @@ public final class SessionManager {
                 .remove(KEY_PROFILE_PHOTO_LOCAL)
                 .apply();
         if (currentEmail != null && !currentEmail.isEmpty()) {
+            String cleanEmail = currentEmail.trim().toLowerCase(java.util.Locale.ROOT);
             persistentPrefs(context).edit()
+                    .remove("photo_url_" + cleanEmail)
                     .remove("photo_url_" + currentEmail)
+                    .remove("photo_local_" + cleanEmail)
                     .remove("photo_local_" + currentEmail)
+                    .putBoolean("photo_removed_" + cleanEmail, true)
                     .putBoolean("photo_removed_" + currentEmail, true)
                     .apply();
         }

@@ -57,6 +57,20 @@ public interface OccurrenceAPI {
     @PATCH("incidents/{id}/approve")
     Call<IncidentResponseDTO> approveIncident(@Path("id") String id);
 
+    @Headers({
+            "Content-Type: application/json; charset=utf-8",
+            "Accept: application/json; charset=utf-8"
+    })
+    @PATCH("incidents/{id}/reject")
+    Call<IncidentResponseDTO> rejectIncident(@Path("id") String id, @Body JsonObject body);
+
+    @Headers({
+            "Content-Type: application/json; charset=utf-8",
+            "Accept: application/json; charset=utf-8"
+    })
+    @PATCH("incident/{id}/reject")
+    Call<IncidentResponseDTO> rejectIncidentSingular(@Path("id") String id, @Body JsonObject body);
+
     @PATCH("incidents/{id}/close")
     Call<Void> closeIncident(@Path("id") String id);
 

@@ -715,6 +715,9 @@ public class ProfileFragment extends Fragment {
         }
 
         String remoteUrl = SessionManager.getProfilePhotoUrl(requireContext());
+        if ((remoteUrl == null || remoteUrl.isEmpty()) && !cleanEmail.isEmpty()) {
+            remoteUrl = CloudinaryUploader.getDeterministicProfileUrl(cleanEmail);
+        }
         if (remoteUrl != null && remoteUrl.startsWith("http")) {
             final Context appContext = requireContext().getApplicationContext();
             CloudinaryUploader.fetchRemoteBitmap(remoteUrl, new CloudinaryUploader.BitmapCallback() {
@@ -731,16 +734,18 @@ public class ProfileFragment extends Fragment {
                         }
                     } catch (Exception ignored) {
                     }
-                    if (isAdded()) {
-                        currentProfileBitmap = bmp;
-                        displayCircularProfileBitmap(bmp);
+                    if (isAdded() && getActivity() != null) {
+                        requireActivity().runOnUiThread(() -> {
+                            currentProfileBitmap = bmp;
+                            displayCircularProfileBitmap(bmp);
+                        });
                     }
                 }
 
                 @Override
                 public void onError(Exception e) {
                     Log.w(TAG, "Falha ao carregar foto remota do Cloudinary: " + e.getMessage());
-                    if (isAdded()) {
+                    if (isAdded() && getActivity() != null) {
                         requireActivity().runOnUiThread(() -> {
                             if (currentProfileBitmap == null) {
                                 if (imgProfilePhoto != null) imgProfilePhoto.setVisibility(View.GONE);

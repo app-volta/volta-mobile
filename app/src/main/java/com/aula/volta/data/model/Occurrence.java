@@ -49,8 +49,8 @@ public class Occurrence {
         if (title != null) {
             title = title.replaceAll("(?i)\\s*\\(Classe\\s+[A-Za-z0-9]+\\)", "").trim();
         }
-        if (title == null || title.trim().isEmpty() || title.length() > 30) {
-            title = AiAnalysisJSON.generateSingleWordTitle(json.getMaterial(), title, null);
+        if (title == null || title.trim().isEmpty()) {
+            title = json.getMaterial() != null ? json.getMaterial() : "Nenhum";
         }
         return new Occurrence(
                 json.getId(),
@@ -76,12 +76,16 @@ public class Occurrence {
         String sector = resolveSector(inc, context);
         String mat = resolveMaterial(inc, context);
         String singleTitle;
-        if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty()) {
+        if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty() && !AiAnalysisJSON.isGenericLabel(inc.getTitle())) {
+            singleTitle = inc.getTitle().trim();
+        } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty() && !AiAnalysisJSON.isGenericLabel(inc.getEmployeeDescription())) {
+            singleTitle = inc.getEmployeeDescription().trim();
+        } else if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty()) {
             singleTitle = inc.getTitle().trim();
         } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty()) {
-            singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, inc.getEmployeeDescription(), inc.getWasteTypeId());
+            singleTitle = inc.getEmployeeDescription().trim();
         } else {
-            singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, null, inc.getWasteTypeId());
+            singleTitle = (mat != null && !mat.trim().isEmpty() && !AiAnalysisJSON.isGenericLabel(mat)) ? mat : "Nenhum";
         }
         String prio = (inc.getPriority() != null && !inc.getPriority().isEmpty())
                 ? inc.getPriority()
@@ -163,7 +167,7 @@ public class Occurrence {
 
     private static String resolveMaterial(IncidentResponseDTO inc, Context context) {
         if (inc == null) {
-            return "Resíduo Reciclável";
+            return "Nenhum";
         }
         String wId = inc.getWasteTypeId();
         if (wId != null && !wId.isEmpty() && context != null) {
@@ -211,7 +215,7 @@ public class Occurrence {
         if (desc.contains("orgân") || desc.contains("organ") || desc.contains("peotta")) {
             return "Orgânico";
         }
-        return "Resíduo Reciclável";
+        return "Nenhum";
     }
 
     public String getId() {

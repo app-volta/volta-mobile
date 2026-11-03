@@ -22,7 +22,16 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.AuthAPI;
 import com.aula.volta.data.local.SessionManager;
+import com.aula.volta.data.model.auth.ChangePasswordRequestDTO;
+import com.aula.volta.data.model.auth.ForgotPasswordRequestDTO;
+import com.google.gson.JsonObject;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ChangePasswordFragment extends Fragment {
 
@@ -82,12 +91,30 @@ public class ChangePasswordFragment extends Fragment {
         });
 
         view.findViewById(R.id.btnForgotCurrentPassword).setOnClickListener(v -> {
+            String userEmail = SessionManager.email(requireContext());
+            if (userEmail == null || userEmail.trim().isEmpty()) {
+                userEmail = "sua unidade";
+            }
+            final String targetEmail = userEmail;
             new AlertDialog.Builder(requireContext())
                     .setTitle("Redefinir senha")
-                    .setMessage("Um link de recuperação será enviado para o e-mail cadastrado na sua unidade: "
-                            + SessionManager.email(requireContext()))
-                    .setPositiveButton("Enviar link", (d, w) ->
-                            Toast.makeText(requireContext(), "Link de redefinição enviado!", Toast.LENGTH_SHORT).show())
+                    .setMessage("Deseja receber um código de recuperação no e-mail: " + targetEmail + "?")
+                    .setPositiveButton("Enviar código", (d, w) -> {
+                        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+                        authApi.forgotPassword(new ForgotPasswordRequestDTO(targetEmail)).enqueue(new Callback<JsonObject>() {
+                            @Override
+                            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                                if (!isAdded()) return;
+                                Toast.makeText(requireContext(), "Código de recuperação enviado para seu e-mail!", Toast.LENGTH_LONG).show();
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                                if (!isAdded()) return;
+                                Toast.makeText(requireContext(), "Erro de conexão ao enviar código.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    })
                     .setNegativeButton("Cancelar", null)
                     .show();
         });
@@ -227,12 +254,49 @@ public class ChangePasswordFragment extends Fragment {
             return;
         }
 
-        Bundle result = new Bundle();
-        result.putBoolean("passwordChanged", true);
-        getParentFragmentManager().setFragmentResult("profile_result", result);
-
-        if (getView() != null) {
-            Navigation.findNavController(getView()).navigateUp();
+        View btnSave = getView() != null ? getView().findViewById(R.id.btnSaveNewPassword) : null;
+        if (btnSave != null) {
+            btnSave.setEnabled(false);
         }
+
+        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+        authApi.changePassword(new ChangePasswordRequestDTO(currentPw, newPw)).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!isAdded()) return;
+                if (btnSave != null) {
+                    btnSave.setEnabled(true);
+                }
+
+                if (response.isSuccessful()) {
+                    SessionManager.savePassword(requireContext(), newPw);
+                    Toast.makeText(requireContext(), "Senha alterada com sucesso!", Toast.LENGTH_LONG).show();
+
+                    Bundle result = new Bundle();
+                    result.putBoolean("passwordChanged", true);
+                    getParentFragmentManager().setFragmentResult("profile_result", result);
+
+                    if (getView() != null) {
+                        Navigation.findNavController(getView()).navigateUp();
+                    }
+                } else if (response.code() == 400) {
+                    Toast.makeText(requireContext(), "Senha atual incorreta. Verifique e tente novamente.", Toast.LENGTH_LONG).show();
+                    etCurrentPassword.requestFocus();
+                } else if (response.code() == 401) {
+                    Toast.makeText(requireContext(), "Sessão expirada. Faça login novamente.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(requireContext(), "Não foi possível alterar a senha. Tente novamente.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                if (btnSave != null) {
+                    btnSave.setEnabled(true);
+                }
+                Toast.makeText(requireContext(), "Falha de conexão. Verifique sua internet.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

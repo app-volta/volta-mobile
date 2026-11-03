@@ -72,7 +72,16 @@
     <fragment
         android:id="@+id/auth_reset"
         android:name="com.aula.volta.ui.auth.ResetPasswordFragment"
-        tools:layout="@layout/fragment_reset_password" />
+        tools:layout="@layout/fragment_reset_password">
+        <argument
+            android:name="email"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="code"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/auth_passok"
@@ -98,6 +107,52 @@
         <argument
             android:name="errorType"
             android:defaultValue="OFFLINE"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/auth_first_access_password"
+        android:name="com.aula.volta.ui.auth.FirstAccessPasswordFragment"
+        tools:layout="@layout/fragment_first_access_password">
+        <argument
+            android:name="email"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="temp_password"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="name"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/auth_first_access_profile"
+        android:name="com.aula.volta.ui.auth.FirstAccessProfileFragment"
+        tools:layout="@layout/fragment_first_access_profile">
+        <argument
+            android:name="email"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="password"
+            android:defaultValue=""
+            app:argType="string" />
+        <argument
+            android:name="name"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/auth_first_access_success"
+        android:name="com.aula.volta.ui.auth.FirstAccessSuccessFragment"
+        tools:layout="@layout/fragment_first_access_success">
+        <argument
+            android:name="name"
+            android:defaultValue=""
             app:argType="string" />
     </fragment>
 

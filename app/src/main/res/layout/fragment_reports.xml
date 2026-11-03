@@ -331,10 +331,11 @@
                                 android:src="@drawable/ic_arrow_up_green" />
 
                             <TextView
+                                android:id="@+id/tvReportsVsOccurrences"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/font_inter"
-                                android:text="+12"
+                                android:text="—"
                                 android:textColor="#0E7C48"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -370,10 +371,11 @@
                                 android:src="@drawable/ic_arrow_up_green" />
 
                             <TextView
+                                android:id="@+id/tvReportsVsKg"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/font_inter"
-                                android:text="+8%"
+                                android:text="—"
                                 android:textColor="#0E7C48"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -409,10 +411,11 @@
                                 android:src="@drawable/ic_arrow_up_green" />
 
                             <TextView
+                                android:id="@+id/tvReportsVsRate"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:fontFamily="@font/font_inter"
-                                android:text="+3%"
+                                android:text="—"
                                 android:textColor="#0E7C48"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
@@ -428,6 +431,7 @@
                             android:textSize="11.5sp" />
                     </LinearLayout>
                 </LinearLayout>
+
             </LinearLayout>
 
             <LinearLayout
@@ -506,14 +510,21 @@
                     android:layout_width="match_parent"
                     android:layout_height="9dp"
                     android:background="@drawable/bg_progress_track"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:weightSum="100">
 
                     <View
                         android:id="@+id/viewGoalProgress"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="76"
+                        android:layout_weight="0"
                         android:background="@drawable/bg_progress_filled" />
+
+                    <View
+                        android:id="@+id/viewGoalProgressEmpty"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="100" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -1076,7 +1087,6 @@
             android:layout_width="104dp"
             android:layout_height="104dp"
             android:layout_gravity="center"
-            android:layout_marginTop="8dp"
             android:background="@drawable/bg_mascot_halo" />
 
         <FrameLayout
@@ -1085,6 +1095,7 @@
             android:layout_height="66dp"
             android:background="@drawable/bg_mascot_circle"
             android:clickable="true"
+            android:clipToOutline="true"
             android:contentDescription="Assistente VOLTA"
             android:elevation="6dp"
             android:focusable="true"

@@ -98,6 +98,10 @@ public class AiAnalysisFragment extends Fragment {
 
     private TextView tvEditWeightValue;
     private TextView tvEditUnitsValue;
+    private TextView tvEditWeightEstimateHint;
+    private TextView tvEditUnitsTitle;
+    private TextView tvEditUnitsEstimateHint;
+    private TextView tvCorrectionHintFooter;
     private int currentWeight = 0;
     private int currentUnits = 0;
     private int initialEstimatedWeight = 0;
@@ -536,6 +540,13 @@ public class AiAnalysisFragment extends Fragment {
         analysisCompleted = true;
         scanHandler.removeCallbacks(scanTimeoutRunnable);
         stopScanAnimation();
+        initialEstimatedWeight = 0;
+        initialEstimatedUnits = 0;
+        currentWeight = 0;
+        currentUnits = 0;
+        if (tvEditWeightValue != null) tvEditWeightValue.setText("0");
+        if (tvEditUnitsValue != null) tvEditUnitsValue.setText("0");
+        updateAiEstimateHints();
         aiLoadingGroup.setVisibility(View.GONE);
         aiResultGroup.setVisibility(View.GONE);
         aiEditGroup.setVisibility(View.VISIBLE);
@@ -603,7 +614,8 @@ public class AiAnalysisFragment extends Fragment {
                 icMiddleStatus.setVisibility(View.VISIBLE);
             }
         } else {
-            String rawMat = analysis.getMaterial() != null ? analysis.getMaterial().trim() : "Reciclável";
+            String rawMat = (analysis.getMaterial() != null && !AiAnalysisJSON.isGenericLabel(analysis.getMaterial()))
+                    ? analysis.getMaterial().trim() : "Nenhum";
             selectedClass = "";
             String primary = analysis.getPrimaryMaterial();
             String specific = analysis.getSpecificItem();
@@ -638,6 +650,7 @@ public class AiAnalysisFragment extends Fragment {
             if (tvEditUnitsValue != null) {
                 tvEditUnitsValue.setText(currentUnits > 0 ? String.valueOf(currentUnits) : "0");
             }
+            updateAiEstimateHints();
 
             selectPrimaryMaterialFamily(resolvedFamily, false);
             tvAiContamination.setText(selectedContamination);
@@ -693,6 +706,10 @@ public class AiAnalysisFragment extends Fragment {
 
         if (userInitiated) {
             updateRecommendationForMaterial(family);
+        }
+        if (tvCorrectionHintFooter != null) {
+            String matName = (family != null && !family.trim().isEmpty()) ? family.trim().toLowerCase(Locale.ROOT) : "material";
+            tvCorrectionHintFooter.setText("Da próxima vez, ela acerta o peso de " + matName + " na sua unidade.");
         }
 
         if (getView() != null) {
@@ -785,6 +802,58 @@ public class AiAnalysisFragment extends Fragment {
     private void setupEditControls(View root) {
         tvEditWeightValue = root.findViewById(R.id.tvEditWeightValue);
         tvEditUnitsValue = root.findViewById(R.id.tvEditUnitsValue);
+        tvEditWeightEstimateHint = root.findViewById(R.id.tvEditWeightEstimateHint);
+        tvEditUnitsTitle = root.findViewById(R.id.tvEditUnitsTitle);
+        tvEditUnitsEstimateHint = root.findViewById(R.id.tvEditUnitsEstimateHint);
+        tvCorrectionHintFooter = root.findViewById(R.id.tvCorrectionHintFooter);
+        if (tvEditWeightValue != null) {
+            tvEditWeightValue.setOnClickListener(v -> {
+                final android.widget.EditText input = new android.widget.EditText(requireContext());
+                input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                input.setText(currentWeight > 0 ? String.valueOf(currentWeight) : "");
+                input.setSelection(input.getText().length());
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Informe o peso (kg)")
+                        .setView(input)
+                        .setPositiveButton("OK", (dialog, which) -> {
+                            String s = input.getText().toString().trim();
+                            if (!s.isEmpty()) {
+                                try {
+                                    currentWeight = Math.max(1, Integer.parseInt(s));
+                                    tvEditWeightValue.setText(String.valueOf(currentWeight));
+                                    updateEditSteppersUi(root);
+                                } catch (Exception ignored) {
+                                }
+                            }
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            });
+        }
+        if (tvEditUnitsValue != null) {
+            tvEditUnitsValue.setOnClickListener(v -> {
+                final android.widget.EditText input = new android.widget.EditText(requireContext());
+                input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                input.setText(currentUnits > 0 ? String.valueOf(currentUnits) : "");
+                input.setSelection(input.getText().length());
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Informe a quantidade de unidades")
+                        .setView(input)
+                        .setPositiveButton("OK", (dialog, which) -> {
+                            String s = input.getText().toString().trim();
+                            if (!s.isEmpty()) {
+                                try {
+                                    currentUnits = Math.max(1, Integer.parseInt(s));
+                                    tvEditUnitsValue.setText(String.valueOf(currentUnits));
+                                    updateEditSteppersUi(root);
+                                } catch (Exception ignored) {
+                                }
+                            }
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            });
+        }
 
         ImageView imgEditPhotoThumb = root.findViewById(R.id.imgEditPhotoThumb);
         if (photoPath != null && imgEditPhotoThumb != null) {
@@ -991,6 +1060,37 @@ public class AiAnalysisFragment extends Fragment {
         }
     }
 
+    private void updateAiEstimateHints() {
+        if (tvEditWeightEstimateHint != null) {
+            if (initialEstimatedWeight > 0) {
+                String unitStr = (analysis != null && analysis.getUnidade() != null && !analysis.getUnidade().trim().isEmpty())
+                        ? analysis.getUnidade().trim() : "kg";
+                tvEditWeightEstimateHint.setText("IA estimou ≈ " + initialEstimatedWeight + " " + unitStr);
+            } else {
+                tvEditWeightEstimateHint.setText("IA não determinou o peso");
+            }
+        }
+        String unitType = "Unidades";
+        if (analysis != null && analysis.getUnidades() != null && analysis.getUnidades().getTipo() != null && !analysis.getUnidades().getTipo().trim().isEmpty()) {
+            unitType = analysis.getUnidades().getTipo().trim();
+        }
+        if (tvEditUnitsTitle != null) {
+            tvEditUnitsTitle.setText(unitType);
+        }
+        if (tvEditUnitsEstimateHint != null) {
+            if (initialEstimatedUnits > 0) {
+                tvEditUnitsEstimateHint.setText("IA contou " + initialEstimatedUnits + " " + unitType.toLowerCase(Locale.ROOT));
+            } else {
+                tvEditUnitsEstimateHint.setText("IA não contou unidades");
+            }
+        }
+        if (tvCorrectionHintFooter != null) {
+            String matName = (selectedMaterial != null && !selectedMaterial.trim().isEmpty())
+                    ? selectedMaterial.trim().toLowerCase(Locale.ROOT) : "material";
+            tvCorrectionHintFooter.setText("Da próxima vez, ela acerta o peso de " + matName + " na sua unidade.");
+        }
+    }
+
     private void updateEditSteppersUi(View root) {
         if (root == null) return;
         View stepperWeight = root.findViewById(R.id.stepperWeightContainer);
@@ -1064,6 +1164,7 @@ public class AiAnalysisFragment extends Fragment {
         if (tvEditUnitsValue != null) {
             tvEditUnitsValue.setText(String.valueOf(currentUnits));
         }
+        updateAiEstimateHints();
         if (getView() != null) {
             updateMaterialChipsUi(getView());
             updateContaminationSegmentsUi(getView());
@@ -1083,6 +1184,7 @@ public class AiAnalysisFragment extends Fragment {
         if (tvEditUnitsValue != null) {
             tvEditUnitsValue.setText(String.valueOf(currentUnits));
         }
+        updateAiEstimateHints();
         if (getView() != null) {
             updateMaterialChipsUi(getView());
             updateContaminationSegmentsUi(getView());
@@ -1136,7 +1238,7 @@ public class AiAnalysisFragment extends Fragment {
         }
         if (btnConfirm != null) {
             btnConfirm.setEnabled(false);
-            btnConfirm.setText("Registrando ocorrência...");
+            btnConfirm.setText("Gerando relatório...");
         }
         String primary = ReportMetricsCalculator.resolveMaterialFamily(
                 (selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial :
@@ -1177,7 +1279,7 @@ public class AiAnalysisFragment extends Fragment {
                             if (!isAdded()) return;
                             remoteImageUrl = remoteUrl;
                             if (btnConfirm != null) {
-                                btnConfirm.setText("Registrando ocorrência...");
+                                btnConfirm.setText("Gerando relatório...");
                             }
                             submitOccurrenceDraftToBackend(v, material, qtd, unidade, remoteUrl, calculatedPriority);
                         }
@@ -1187,7 +1289,7 @@ public class AiAnalysisFragment extends Fragment {
                             if (!isAdded()) return;
                             Log.w("AiAnalysisFragment", "Upload da foto falhou: " + exception.getMessage() + ". Enviando ocorrência sem foto para aprovação no banco.");
                             if (btnConfirm != null) {
-                                btnConfirm.setText("Registrando ocorrência...");
+                                btnConfirm.setText("Gerando relatório...");
                             }
                             submitOccurrenceDraftToBackend(v, material, qtd, unidade, null, calculatedPriority);
                         }
@@ -1418,11 +1520,25 @@ public class AiAnalysisFragment extends Fragment {
             return;
         }
 
-        String singleWordTitle = AiAnalysisJSON.generateSingleWordTitle(
-                material,
-                descricao,
-                (analysis != null ? analysis.getMaterial() : null)
-        );
+        String aiTitle = AiAnalysisJSON.resolveAiTitle(analysis, descricao, lastPredictJson);
+        java.util.List<String> aiPossibilities = AiAnalysisJSON.extractAiCandidateWasteNames(lastPredictJson, analysis, descricao);
+
+        java.util.List<String> resolvedWasteTypeIds = new java.util.ArrayList<>();
+        JsonArray cachedWasteTypes = null;
+        try {
+            String listStr = PrefsHelper.getJson(requireContext(), "cache_waste_types", "list");
+            if (listStr != null && !listStr.isEmpty()) {
+                cachedWasteTypes = com.google.gson.JsonParser.parseString(listStr).getAsJsonArray();
+            }
+        } catch (Exception ignored) {
+        }
+        if (cachedWasteTypes != null && cachedWasteTypes.size() > 0) {
+            resolvedWasteTypeIds = AiAnalysisJSON.resolveAllWasteTypeIds(cachedWasteTypes, aiPossibilities);
+        }
+        if (resolvedWasteTypeIds.isEmpty() && wasteTypeId != null && !wasteTypeId.isEmpty()) {
+            resolvedWasteTypeIds.add(wasteTypeId);
+        }
+        String chosenWasteTypeId = !resolvedWasteTypeIds.isEmpty() ? resolvedWasteTypeIds.get(0) : wasteTypeId;
 
         String contaminationLevel = "LOW";
         if (selectedContamination != null) {
@@ -1453,93 +1569,28 @@ public class AiAnalysisFragment extends Fragment {
             finalPhotoUrl = null;
         }
 
-        String apiPriority = IncidentRequestDTO.normalizePriority(calculatedPriority);
-        String empDescription = (descricao != null && !descricao.trim().isEmpty())
-                ? descricao.trim()
-                : singleWordTitle;
-        IncidentRequestDTO req = new IncidentRequestDTO(
-                areaId,
-                wasteTypeId,
+        String draftId = "draft_" + System.currentTimeMillis();
+        createdIncidentId = draftId;
+        persistOccurrenceDetail(draftId, areaId, chosenWasteTypeId, resolvedWasteTypeIds, aiTitle, material, qtd, unidade, calculatedPriority, finalPhotoUrl);
+
+        String primaryFamily = ReportMetricsCalculator.resolveMaterialFamily((selectedMaterial != null && !selectedMaterial.isEmpty()) ? selectedMaterial : material);
+        Occurrence occ = new Occurrence(
+                draftId,
+                aiTitle,
+                setor == null ? "Planta Principal" : setor,
+                "Hoje",
+                calculatedPriority,
+                "EM_ANALISE",
+                primaryFamily,
                 finalPhotoUrl,
-                empDescription,
-                contaminationLevel,
-                qtd,
-                apiPriority
+                photoPath
         );
+        OccurrenceStore.pushLocal(requireContext(), occ);
 
-        final String sentPhotoUrl = finalPhotoUrl;
-        Log.i("AiAnalysisFragment", "Enviando ocorrência diretamente ao banco PostgreSQL (POST /incidents) com photoUrl: " + sentPhotoUrl);
+        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "CRIAR_RASCUNHO",
+                "ocorrencia", draftId, null, "LOCAL");
 
-        occurrenceApi.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
-            @Override
-            public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
-                if (!isAdded()) return;
-                if (response.isSuccessful() && response.body() != null && response.body().getId() != null) {
-                    IncidentResponseDTO inc = response.body();
-                    String dbIncidentId = inc.getId();
-                    String savedPhotoUrl = inc.getPhotoUrl() != null && !inc.getPhotoUrl().isEmpty()
-                            ? inc.getPhotoUrl() : sentPhotoUrl;
-                    createdIncidentId = dbIncidentId;
-                    Log.i("AiAnalysisFragment", "Incidente salvo no banco oficial com sucesso! ID: " + dbIncidentId + ", Photo: " + savedPhotoUrl);
-
-                    handleOccurrenceCreatedSuccess(v, dbIncidentId, material, qtd, unidade, savedPhotoUrl, calculatedPriority, true, null);
-                } else {
-                    String errDetail = "HTTP " + response.code();
-                    try {
-                        if (response.errorBody() != null) {
-                            String errBody = response.errorBody().string();
-                            Log.w("AiAnalysisFragment", "POST /incidents falhou com " + errDetail + ": " + errBody);
-                            if (errBody.toLowerCase(Locale.ROOT).contains("area")) {
-                                errDetail += " (Área não encontrada)";
-                            } else if (errBody.toLowerCase(Locale.ROOT).contains("waste")) {
-                                errDetail += " (Tipo de resíduo inválido)";
-                            } else if (errBody.toLowerCase(Locale.ROOT).contains("url")) {
-                                errDetail += " (URL da foto inválida)";
-                            } else if (response.code() == 403) {
-                                errDetail += " (Perfil sem permissão para registrar ocorrência)";
-                            }
-                        }
-                    } catch (Exception ignored) {
-                    }
-                    final String failReason = errDetail;
-                    Log.w("AiAnalysisFragment", "POST /incidents falhou com " + failReason);
-                    if (response.code() == 404) {
-                        String altAreaId = getCachedOrFallbackAreaId(requireContext());
-                        if (altAreaId != null && !altAreaId.equals(req.getAreaId())) {
-                            req.setAreaId(altAreaId);
-                            occurrenceApi.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
-                                @Override
-                                public void onResponse(@NonNull Call<IncidentResponseDTO> call2, @NonNull Response<IncidentResponseDTO> resp2) {
-                                    if (!isAdded()) return;
-                                    if (resp2.isSuccessful() && resp2.body() != null && resp2.body().getId() != null) {
-                                        IncidentResponseDTO inc2 = resp2.body();
-                                        handleOccurrenceCreatedSuccess(v, inc2.getId(), material, qtd, unidade, inc2.getPhotoUrl() != null ? inc2.getPhotoUrl() : sentPhotoUrl, calculatedPriority, true, null);
-                                        return;
-                                    }
-                                    showDatabaseRegistrationError(v, failReason);
-                                }
-
-                                @Override
-                                public void onFailure(@NonNull Call<IncidentResponseDTO> call2, @NonNull Throwable t2) {
-                                    if (!isAdded()) return;
-                                    showSubmissionOfflineError(v, !com.aula.volta.util.NetworkUtils.isOnline(requireContext()));
-                                }
-                            });
-                            return;
-                        }
-                    }
-                    showDatabaseRegistrationError(v, failReason);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
-                Log.w("AiAnalysisFragment", "POST /incidents erro de rede: " + t.getMessage());
-                boolean isOffline = !com.aula.volta.util.NetworkUtils.isOnline(requireContext());
-                showSubmissionOfflineError(v, isOffline);
-            }
-        });
+        navigateToDetail(v, draftId);
     }
 
     private void showDatabaseRegistrationError(View v, String failReason) {
@@ -1622,10 +1673,37 @@ public class AiAnalysisFragment extends Fragment {
         navigateToDetail(v, id);
     }
 
-    private void persistOccurrenceDetail(String id, String material, double qtd, String unidade,
+    private void persistOccurrenceDetail(String id, String areaId, String wasteTypeId, java.util.List<String> wasteTypeIds,
+                                         String title, String material, double qtd, String unidade,
                                          String priority, @Nullable String photoUrl) {
         JsonObject detail = new JsonObject();
         detail.addProperty("id", id);
+        if (areaId != null && !areaId.isEmpty()) {
+            detail.addProperty("areaId", areaId);
+        }
+        if (wasteTypeId != null && !wasteTypeId.isEmpty()) {
+            detail.addProperty("wasteTypeId", wasteTypeId);
+        }
+        if (wasteTypeIds != null && !wasteTypeIds.isEmpty()) {
+            JsonArray arr = new JsonArray();
+            for (String wid : wasteTypeIds) {
+                if (wid != null && !wid.isEmpty()) arr.add(wid);
+            }
+            detail.add("wasteTypeIds", arr);
+        }
+        detail.addProperty("is_submitted", false);
+        detail.addProperty("changes_count", 0);
+        java.util.List<String> candidatePossibilities = AiAnalysisJSON.extractAiCandidateWasteNames(lastPredictJson, analysis, descricao);
+        if (candidatePossibilities != null && !candidatePossibilities.isEmpty()) {
+            JsonArray pArr = new JsonArray();
+            for (String p : candidatePossibilities) {
+                if (p != null && !p.trim().isEmpty()) pArr.add(p.trim());
+            }
+            detail.add("ai_possibilities", pArr);
+        }
+        if (lastPredictJson != null) {
+            detail.add("raw_predict_json", lastPredictJson);
+        }
         String formattedMat = AiAnalysisJSON.formatMaterialWithClass(material, selectedClass);
         String specific = (analysis != null && analysis.getSpecificItem() != null)
                 ? analysis.getSpecificItem()
@@ -1633,7 +1711,8 @@ public class AiAnalysisFragment extends Fragment {
         String primary = (analysis != null && analysis.getPrimaryMaterial() != null)
                 ? analysis.getPrimaryMaterial()
                 : AiAnalysisJSON.extractPrimaryMaterial(material);
-        detail.addProperty("titulo", (descricao != null && !descricao.isEmpty()) ? descricao : specific);
+        detail.addProperty("titulo", title);
+        detail.addProperty("ai_title", title);
         detail.addProperty("material", formattedMat);
         detail.addProperty("material_principal", primary);
         detail.addProperty("item_especifico", specific);
@@ -1641,7 +1720,7 @@ public class AiAnalysisFragment extends Fragment {
         detail.addProperty("setor", (setor != null && !setor.isEmpty()) ? setor : "Planta Principal");
         detail.addProperty("peso_estimado", qtd);
         detail.addProperty("unidade", unidade);
-        detail.addProperty("status", "AGUARDANDO_VALIDACAO");
+        detail.addProperty("status", "EM_ANALISE");
         detail.addProperty("prioridade", priority);
         detail.addProperty("quando", "agora");
         if (photoPath != null && !photoPath.isEmpty()) {
@@ -1661,6 +1740,18 @@ public class AiAnalysisFragment extends Fragment {
         detail.addProperty("relatorio_auto", relatorio);
 
         PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", id, detail.toString());
+    }
+
+    private void persistOccurrenceDetail(String id, String areaId, String wasteTypeId, String material, double qtd, String unidade,
+                                         String priority, @Nullable String photoUrl) {
+        String defaultTitle = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        persistOccurrenceDetail(id, areaId, wasteTypeId, null, defaultTitle, material, qtd, unidade, priority, photoUrl);
+    }
+
+    private void persistOccurrenceDetail(String id, String material, double qtd, String unidade,
+                                         String priority, @Nullable String photoUrl) {
+        String defaultTitle = (descricao != null && !descricao.isEmpty()) ? descricao : material;
+        persistOccurrenceDetail(id, null, null, null, defaultTitle, material, qtd, unidade, priority, photoUrl);
     }
 
     private void navigateToDetail(View v, String occId) {

@@ -20,6 +20,13 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
+import com.aula.volta.data.api.ApiClient;
+import com.aula.volta.data.api.AuthAPI;
+import com.aula.volta.data.model.auth.ResetPasswordRequestDTO;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ResetPasswordFragment extends Fragment {
 
@@ -32,7 +39,10 @@ public class ResetPasswordFragment extends Fragment {
     private ImageView ivConfirmLock;
     private ImageView ivConfirmMatch;
     private ImageView btnToggleNew;
+    private View btnSavePassword;
     private boolean passwordVisible;
+    private String email = "";
+    private String code = "";
 
     public ResetPasswordFragment() {
     }
@@ -48,6 +58,11 @@ public class ResetPasswordFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        if (getArguments() != null) {
+            email = getArguments().getString("email", "");
+            code = getArguments().getString("code", "");
+        }
+
         etNew = view.findViewById(R.id.etNewPassword);
         etConfirm = view.findViewById(R.id.etConfirmPassword);
         tvStrength = view.findViewById(R.id.tvStrength);
@@ -56,6 +71,7 @@ public class ResetPasswordFragment extends Fragment {
         ivConfirmLock = view.findViewById(R.id.ivConfirmLock);
         ivConfirmMatch = view.findViewById(R.id.ivConfirmMatch);
         btnToggleNew = view.findViewById(R.id.btnToggleNewPassword);
+        btnSavePassword = view.findViewById(R.id.btnSavePassword);
 
         segments = new View[]{
                 view.findViewById(R.id.strength1),
@@ -106,20 +122,52 @@ public class ResetPasswordFragment extends Fragment {
         updateStrength(0);
         updateConfirmState();
 
-        view.findViewById(R.id.btnSavePassword).setOnClickListener(v -> {
-            String first = etNew != null ? etNew.getText().toString() : "";
-            String second = etConfirm != null ? etConfirm.getText().toString() : "";
-            if (!AuthValidator.isValidPassword(first)) {
-                Toast.makeText(requireContext(), R.string.auth_register_pw_min,
-                        Toast.LENGTH_SHORT).show();
-                return;
+        if (btnSavePassword != null) {
+            btnSavePassword.setOnClickListener(v -> resetPasswordAndSave(v));
+        }
+    }
+
+    private void resetPasswordAndSave(View v) {
+        String first = etNew != null ? etNew.getText().toString().trim() : "";
+        String second = etConfirm != null ? etConfirm.getText().toString().trim() : "";
+        if (!AuthValidator.isValidPassword(first)) {
+            Toast.makeText(requireContext(), R.string.auth_register_pw_min, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!first.equals(second)) {
+            Toast.makeText(requireContext(), R.string.auth_pw_mismatch, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (btnSavePassword != null) {
+            btnSavePassword.setEnabled(false);
+        }
+
+        AuthAPI authApi = ApiClient.get(requireContext()).create(AuthAPI.class);
+        authApi.resetPassword(new ResetPasswordRequestDTO(email, code, first)).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (!isAdded()) return;
+                if (btnSavePassword != null) {
+                    btnSavePassword.setEnabled(true);
+                }
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(requireContext(), "Senha redefinida com sucesso!", Toast.LENGTH_LONG).show();
+                    Navigation.findNavController(v).navigate(R.id.auth_passok);
+                } else {
+                    Toast.makeText(requireContext(), "Não foi possível redefinir a senha. O código pode ter expirado.", Toast.LENGTH_LONG).show();
+                }
             }
-            if (!first.equals(second)) {
-                Toast.makeText(requireContext(), R.string.auth_pw_mismatch,
-                        Toast.LENGTH_SHORT).show();
-                return;
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                if (btnSavePassword != null) {
+                    btnSavePassword.setEnabled(true);
+                }
+                Toast.makeText(requireContext(), "Erro de conexão ao redefinir a senha.", Toast.LENGTH_SHORT).show();
             }
-            Navigation.findNavController(v).navigate(R.id.auth_passok);
         });
     }
 

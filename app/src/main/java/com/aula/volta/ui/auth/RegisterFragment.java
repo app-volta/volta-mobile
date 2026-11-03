@@ -27,6 +27,7 @@ import com.aula.volta.data.model.UserResponseDTO;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import java.util.List;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class RegisterFragment extends Fragment {
@@ -73,8 +74,17 @@ public class RegisterFragment extends Fragment {
         }
 
         View cardSector = view.findViewById(R.id.cardRegisterSector);
+        com.aula.volta.data.repository.AreaRepository.preloadAreas(requireContext());
         View.OnClickListener openSectorDialog = v -> {
-            String[] sectors = getResources().getStringArray(R.array.occurrence_sector_options);
+            List<String> sectorList = com.aula.volta.data.repository.AreaRepository.getSectorNames(requireContext());
+            if (sectorList.isEmpty()) {
+                String[] fallback = getResources().getStringArray(R.array.occurrence_sector_options);
+                for (String s : fallback) {
+                    sectorList.add(s);
+                }
+            }
+            com.aula.volta.data.repository.AreaRepository.preloadAreas(requireContext());
+            String[] sectors = sectorList.toArray(new String[0]);
             new MaterialAlertDialogBuilder(requireContext())
                     .setTitle(R.string.auth_register_sector_hint)
                     .setItems(sectors, (dialog, which) -> {

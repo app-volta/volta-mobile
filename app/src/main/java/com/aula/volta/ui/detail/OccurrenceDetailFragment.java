@@ -71,7 +71,23 @@ public class OccurrenceDetailFragment extends Fragment {
     private TextView tvEditClassSub;
     private View rowObserve;
     private TextView tvObserveSub;
+    private View layoutResponsibleActions;
+    private TextView tvResponsibleActionsTitle;
+    private View rowRejectOcc;
+    private View layoutRejectedCard;
+    private TextView tvRejectedSectionTitle;
+    private TextView tvRejectedReasonTitle;
+    private TextView tvRejectedBySub;
+    private TextView tvRejectedHintText;
+    private MaterialButton btnRegisterAgain;
     private MaterialButton btnFinalizeOcc;
+    private boolean isSubmitted = false;
+    private int changesCount = 0;
+    private boolean hasPendingChanges = false;
+    private String pendingMaterial = null;
+    private String pendingPriority = null;
+    private String pendingObservation = null;
+    private boolean isSending = false;
     private View layoutBottomBarOcc;
     private String currentLocalPhoto;
     private String currentRemoteUrl;
@@ -95,13 +111,13 @@ public class OccurrenceDetailFragment extends Fragment {
     private String occurrenceId;
     private String currentStatus = "EM_ANALISE";
     private JsonObject currentDetailJson;
-    private String currentMaterial = "Resíduo Reciclável";
-    private String currentMaterialName = "Resíduo";
+    private String currentMaterial = "Nenhum";
+    private String currentMaterialName = "Nenhum";
     private String currentQualityClass = "A";
     private String currentPriority = "BAIXA";
     private String currentContamination = "baixa";
     private String currentSector = "Planta Principal";
-    private String currentWeight = "38 kg";
+    private String currentWeight = "0 kg";
     private final Handler pollHandler = new Handler(Looper.getMainLooper());
     private final Runnable pollStatusRunnable = new Runnable() {
         @Override
@@ -170,7 +186,19 @@ public class OccurrenceDetailFragment extends Fragment {
         tvEditClassSub = view.findViewById(R.id.tvEditClassSub);
         rowObserve = view.findViewById(R.id.rowObserve);
         tvObserveSub = view.findViewById(R.id.tvObserveSub);
+        layoutResponsibleActions = view.findViewById(R.id.layoutResponsibleActions);
+        tvResponsibleActionsTitle = view.findViewById(R.id.tvResponsibleActionsTitle);
+        rowRejectOcc = view.findViewById(R.id.rowRejectOcc);
+        layoutRejectedCard = view.findViewById(R.id.layoutRejectedCard);
+        tvRejectedSectionTitle = view.findViewById(R.id.tvRejectedSectionTitle);
+        tvRejectedReasonTitle = view.findViewById(R.id.tvRejectedReasonTitle);
+        tvRejectedBySub = view.findViewById(R.id.tvRejectedBySub);
+        tvRejectedHintText = view.findViewById(R.id.tvRejectedHintText);
+        btnRegisterAgain = view.findViewById(R.id.btnRegisterAgain);
         btnFinalizeOcc = view.findViewById(R.id.btnFinalizeOcc);
+        if (rowRejectOcc != null) {
+            rowRejectOcc.setOnClickListener(v -> showRejectSheet());
+        }
         layoutBottomBarOcc = view.findViewById(R.id.layoutBottomBarOcc);
         toastFinalized = view.findViewById(R.id.toastFinalized);
         tvToastFinalizedTitle = view.findViewById(R.id.tvToastFinalizedTitle);
@@ -213,7 +241,7 @@ public class OccurrenceDetailFragment extends Fragment {
         }
 
         if (btnFinalizeOcc != null) {
-            btnFinalizeOcc.setOnClickListener(this::showFinalizeDialog);
+            btnFinalizeOcc.setOnClickListener(this::handleMainActionButtonClick);
         }
 
         View.OnClickListener openPgrsAction = v -> {
@@ -286,6 +314,10 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void loadDetail() {
+        if (occurrenceId != null && occurrenceId.startsWith("draft_")) {
+            loadFromCache();
+            return;
+        }
 
         String cachedStr = PrefsHelper.getJson(requireContext(), PREFS, occurrenceId);
         if (cachedStr != null && !cachedStr.isEmpty()) {
@@ -307,20 +339,24 @@ public class OccurrenceDetailFragment extends Fragment {
                     IncidentResponseDTO dto = response.body();
                     JsonObject body = new JsonObject();
                     body.addProperty("id", dto.getId());
-                    String cleanTitle = (dto.getTitle() != null && !dto.getTitle().trim().isEmpty())
-                            ? dto.getTitle().trim()
-                            : com.aula.volta.data.model.AiAnalysisJSON.generateSingleWordTitle(
-                                    (currentDetailJson != null && currentDetailJson.has("material")) ? currentDetailJson.get("material").getAsString() : null,
-                                    null,
-                                    dto.getEmployeeDescription()
-                            );
-                    if (cleanTitle.isEmpty() || cleanTitle.equalsIgnoreCase("Resíduo")) {
+                    String cleanTitle;
+                    if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(dto.getTitle())) {
+                        cleanTitle = dto.getTitle().trim();
+                    } else if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().trim().isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(dto.getEmployeeDescription())) {
+                        cleanTitle = dto.getEmployeeDescription().trim();
+                    } else if (currentDetailJson != null && currentDetailJson.has("titulo") && !currentDetailJson.get("titulo").isJsonNull() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(currentDetailJson.get("titulo").getAsString())) {
+                        cleanTitle = currentDetailJson.get("titulo").getAsString().trim();
+                    } else if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
+                        cleanTitle = dto.getTitle().trim();
+                    } else if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().trim().isEmpty()) {
+                        cleanTitle = dto.getEmployeeDescription().trim();
+                    } else {
                         cleanTitle = "Resíduo Reciclável";
                     }
                     body.addProperty("titulo", cleanTitle);
                     String resolvedMat = (currentDetailJson != null && currentDetailJson.has("material")
                             && !currentDetailJson.get("material").getAsString().isEmpty()
-                            && !currentDetailJson.get("material").getAsString().equalsIgnoreCase("Resíduo Reciclável"))
+                            && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(currentDetailJson.get("material").getAsString()))
                             ? currentDetailJson.get("material").getAsString()
                             : cleanTitle;
                     body.addProperty("material", resolvedMat);
@@ -330,7 +366,7 @@ public class OccurrenceDetailFragment extends Fragment {
                     body.addProperty("setor", sector);
                     double peso = (dto.getEstimatedQuantity() != null && dto.getEstimatedQuantity() > 0)
                             ? dto.getEstimatedQuantity()
-                            : (currentDetailJson != null && currentDetailJson.has("peso_estimado") ? currentDetailJson.get("peso_estimado").getAsDouble() : 5.0);
+                            : (currentDetailJson != null && currentDetailJson.has("peso_estimado") ? currentDetailJson.get("peso_estimado").getAsDouble() : 0.0);
                     body.addProperty("peso_estimado", peso);
 
                     if (dto.getContaminationLevel() != null && !dto.getContaminationLevel().isEmpty()) {
@@ -420,7 +456,7 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void checkDraftApprovalStatus() {
-        if (occurrenceId == null || occurrenceId.isEmpty() || !isAdded()) return;
+        if (occurrenceId == null || occurrenceId.isEmpty() || occurrenceId.startsWith("draft_") || !isAdded()) return;
         try {
             OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
             occApi.getIncidentById(occurrenceId).enqueue(new Callback<IncidentResponseDTO>() {
@@ -467,7 +503,14 @@ public class OccurrenceDetailFragment extends Fragment {
             return;
         }
 
-        String rawMaterial = opt(json, "material", "Resíduo Reciclável");
+        isSubmitted = json.has("is_submitted")
+                ? json.get("is_submitted").getAsBoolean()
+                : (occurrenceId != null && !occurrenceId.startsWith("draft_"));
+        changesCount = json.has("changes_count")
+                ? json.get("changes_count").getAsInt()
+                : 0;
+
+        String rawMaterial = opt(json, "material", "Nenhum");
         String rawClasse = opt(json, "classe", "");
         currentQualityClass = com.aula.volta.data.model.AiAnalysisJSON.extractQualityClassLetter(rawMaterial, rawClasse);
         currentMaterialName = com.aula.volta.data.model.AiAnalysisJSON.extractMaterialName(rawMaterial);
@@ -482,7 +525,7 @@ public class OccurrenceDetailFragment extends Fragment {
                 String unidade = opt(json, "unidade", "kg");
                 currentWeight = pesoStr + " " + unidade;
             } catch (Exception e) {
-                String rawPeso = opt(json, "peso_estimado", "38");
+                String rawPeso = opt(json, "peso_estimado", "0");
                 currentWeight = rawPeso.endsWith("kg") ? rawPeso : (rawPeso + " kg");
             }
         }
@@ -495,7 +538,7 @@ public class OccurrenceDetailFragment extends Fragment {
         currentPriority = opt(json, "prioridade", "BAIXA");
         applyPriorityBadge(currentPriority);
 
-        currentSector = opt(json, "setor", "Frigorífico — Setor B2");
+        currentSector = opt(json, "setor", "Planta Principal");
         String quando = opt(json, "quando", opt(json, "data", "hoje, 09:12"));
         currentStatus = opt(json, "status", "EM_ANALISE");
 
@@ -541,6 +584,7 @@ public class OccurrenceDetailFragment extends Fragment {
         displayOccurrencePhoto(localPhoto, remoteUrl);
 
         syncFinalizedUi();
+        updateActionButtonsState();
     }
 
     private void applyPriorityBadge(String priority) {
@@ -637,6 +681,69 @@ public class OccurrenceDetailFragment extends Fragment {
         imgOccThumbnail.setImageResource(R.drawable.img_caixas_papelao);
     }
 
+    private void showRejectSheet() {
+        RejectOccurrenceSheet sheet = RejectOccurrenceSheet.newInstance();
+        sheet.setOnRejectConfirmedListener(this::performReject);
+        sheet.show(getChildFragmentManager(), "reject_occurrence_sheet");
+    }
+
+    private void performReject(String reason) {
+        currentStatus = "RECUSADA";
+        String myName = com.aula.volta.data.local.SessionManager.name(requireContext());
+        java.text.SimpleDateFormat timeFmt = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.forLanguageTag("pt-BR"));
+        String nowStr = "hoje, " + timeFmt.format(new java.util.Date());
+
+        if (currentDetailJson == null) {
+            currentDetailJson = new JsonObject();
+        }
+        currentDetailJson.addProperty("status", "RECUSADA");
+        currentDetailJson.addProperty("reject_reason", reason);
+        currentDetailJson.addProperty("rejected_by", myName);
+        currentDetailJson.addProperty("rejected_at", nowStr);
+        PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+
+        OccurrenceStore.updateStatus(requireContext(), occurrenceId, "RECUSADA");
+
+        AuditLog.append(requireContext(), myName, "RECUSAR", "ocorrencia", occurrenceId, "EM_ANALISE", reason);
+
+        try {
+            OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+            JsonObject body = new JsonObject();
+            body.addProperty("reason", reason);
+            body.addProperty("motivo", reason);
+            body.addProperty("rejectedBy", myName);
+            body.addProperty("rejectionReason", reason);
+            occApi.rejectIncident(occurrenceId, body).enqueue(new Callback<IncidentResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
+                    if (!response.isSuccessful()) {
+                        occApi.rejectIncidentSingular(occurrenceId, body).enqueue(new Callback<IncidentResponseDTO>() {
+                            @Override
+                            public void onResponse(@NonNull Call<IncidentResponseDTO> call2, @NonNull Response<IncidentResponseDTO> response2) {}
+                            @Override
+                            public void onFailure(@NonNull Call<IncidentResponseDTO> call2, @NonNull Throwable t) {}
+                        });
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                    try {
+                        occApi.rejectIncidentSingular(occurrenceId, body).enqueue(new Callback<IncidentResponseDTO>() {
+                            @Override
+                            public void onResponse(@NonNull Call<IncidentResponseDTO> call2, @NonNull Response<IncidentResponseDTO> response2) {}
+                            @Override
+                            public void onFailure(@NonNull Call<IncidentResponseDTO> call2, @NonNull Throwable t) {}
+                        });
+                    } catch (Exception ignored) {}
+                }
+            });
+        } catch (Exception ignored) {}
+
+        syncFinalizedUi();
+        showTopBannerToast("Ocorrência recusada", "Quem registrou recebe o motivo", false, true);
+    }
+
     private void syncFinalizedUi() {
         if (!isAdded()) return;
 
@@ -650,6 +757,10 @@ public class OccurrenceDetailFragment extends Fragment {
                 || "FINALIZADO".equalsIgnoreCase(currentStatus)
                 || "CONCLUIDA".equalsIgnoreCase(currentStatus)
                 || "CONCLUIDO".equalsIgnoreCase(currentStatus);
+
+        boolean isRejected = "RECUSADA".equalsIgnoreCase(currentStatus)
+                || "REJECTED".equalsIgnoreCase(currentStatus)
+                || "RECUSADO".equalsIgnoreCase(currentStatus);
 
         if (stepCircle0 != null) {
             stepCircle0.setBackgroundResource(R.drawable.bg_step_done);
@@ -674,7 +785,105 @@ public class OccurrenceDetailFragment extends Fragment {
             stepLabel1.setTextColor(requireContext().getColor(R.color.vf_green_deep));
         }
 
-        if (isDone) {
+        if (isRejected) {
+            if (stepLine1 != null) {
+                stepLine1.setBackgroundColor(android.graphics.Color.parseColor("#E8556C"));
+            }
+            if (stepCircle2 != null) {
+                stepCircle2.setBackgroundResource(R.drawable.bg_step_rejected);
+            }
+            if (stepCheck2 != null) {
+                stepCheck2.setImageResource(R.drawable.ic_close_white);
+                stepCheck2.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+                stepCheck2.setVisibility(View.VISIBLE);
+            }
+            if (stepLabel2 != null) {
+                stepLabel2.setText("Recusada");
+                stepLabel2.setTextColor(android.graphics.Color.parseColor("#E8556C"));
+            }
+
+            if (tvOccStatus != null) {
+                tvOccStatus.setText("RECUSADA");
+                tvOccStatus.setBackgroundResource(R.drawable.bg_badge_recusada);
+                tvOccStatus.setTextColor(android.graphics.Color.parseColor("#E8556C"));
+            }
+
+            if (layoutResponsibleActions != null) {
+                layoutResponsibleActions.setVisibility(View.GONE);
+            }
+            if (tvResponsibleActionsTitle != null) {
+                tvResponsibleActionsTitle.setVisibility(View.GONE);
+            }
+            if (rowEditClass != null) {
+                rowEditClass.setVisibility(View.GONE);
+            }
+            if (rowObserve != null) {
+                rowObserve.setVisibility(View.GONE);
+            }
+            if (btnFinalizeOcc != null) {
+                btnFinalizeOcc.setVisibility(View.GONE);
+            }
+
+            String myName = com.aula.volta.data.local.SessionManager.name(requireContext());
+            String rejectedBy = opt(currentDetailJson, "rejected_by", "");
+            String registeredBy = opt(currentDetailJson, "registered_by", opt(currentDetailJson, "user_name", ""));
+            String rejectReason = opt(currentDetailJson, "reject_reason", "Foto não mostra o resíduo");
+            String rejectAt = opt(currentDetailJson, "rejected_at", "hoje, 09:40");
+
+            boolean isMeWhoRejected = !rejectedBy.isEmpty() && (rejectedBy.equalsIgnoreCase(myName) || "você".equalsIgnoreCase(rejectedBy));
+
+            if (layoutRejectedCard != null) {
+                layoutRejectedCard.setVisibility(View.VISIBLE);
+            }
+            if (tvRejectedReasonTitle != null) {
+                tvRejectedReasonTitle.setText(rejectReason);
+            }
+
+            if (isMeWhoRejected) {
+                if (tvRejectedSectionTitle != null) {
+                    tvRejectedSectionTitle.setText("Motivo da recusa");
+                }
+                if (tvRejectedBySub != null) {
+                    tvRejectedBySub.setText("Recusada por você · " + rejectAt);
+                }
+                if (tvRejectedHintText != null) {
+                    tvRejectedHintText.setText("Quem registrou recebe o motivo e pode registrar de novo.");
+                }
+                if (layoutBottomBarOcc != null) {
+                    layoutBottomBarOcc.setVisibility(View.GONE);
+                }
+                if (btnRegisterAgain != null) {
+                    btnRegisterAgain.setVisibility(View.GONE);
+                }
+            } else {
+                if (tvRejectedSectionTitle != null) {
+                    tvRejectedSectionTitle.setText("Por que foi recusada");
+                }
+                if (tvRejectedBySub != null) {
+                    String displayAuthor = rejectedBy.isEmpty() ? "Ana Souza" : rejectedBy;
+                    tvRejectedBySub.setText("Recusada por " + displayAuthor + " · " + rejectAt);
+                }
+                if (tvRejectedHintText != null) {
+                    tvRejectedHintText.setText("Tire outra foto, com boa luz e o resíduo visível, e registre de novo.");
+                }
+                if (layoutBottomBarOcc != null) {
+                    layoutBottomBarOcc.setVisibility(View.VISIBLE);
+                }
+                if (btnRegisterAgain != null) {
+                    btnRegisterAgain.setVisibility(View.VISIBLE);
+                    btnRegisterAgain.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigate(R.id.nav_register));
+                }
+            }
+        } else if (isDone) {
+            if (layoutRejectedCard != null) {
+                layoutRejectedCard.setVisibility(View.GONE);
+            }
+            if (btnRegisterAgain != null) {
+                btnRegisterAgain.setVisibility(View.GONE);
+            }
+            if (layoutResponsibleActions != null) {
+                layoutResponsibleActions.setVisibility(View.GONE);
+            }
             if (stepLine1 != null) {
                 stepLine1.setBackgroundColor(requireContext().getColor(R.color.vf_green));
             }
@@ -682,9 +891,12 @@ public class OccurrenceDetailFragment extends Fragment {
                 stepCircle2.setBackgroundResource(R.drawable.bg_step_done);
             }
             if (stepCheck2 != null) {
+                stepCheck2.setImageResource(R.drawable.ic_notif_check);
+                stepCheck2.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
                 stepCheck2.setVisibility(View.VISIBLE);
             }
             if (stepLabel2 != null) {
+                stepLabel2.setText(R.string.occ_step_approval);
                 stepLabel2.setTextColor(requireContext().getColor(R.color.vf_green_deep));
             }
 
@@ -706,6 +918,18 @@ public class OccurrenceDetailFragment extends Fragment {
                 btnFinalizeOcc.setVisibility(View.GONE);
             }
         } else {
+            if (layoutRejectedCard != null) {
+                layoutRejectedCard.setVisibility(View.GONE);
+            }
+            if (btnRegisterAgain != null) {
+                btnRegisterAgain.setVisibility(View.GONE);
+            }
+            if (layoutResponsibleActions != null) {
+                layoutResponsibleActions.setVisibility(View.VISIBLE);
+            }
+            if (tvResponsibleActionsTitle != null) {
+                tvResponsibleActionsTitle.setVisibility(View.VISIBLE);
+            }
             if (stepLine1 != null) {
                 stepLine1.setBackgroundColor(requireContext().getColor(R.color.vf_border));
             }
@@ -713,9 +937,12 @@ public class OccurrenceDetailFragment extends Fragment {
                 stepCircle2.setBackgroundResource(R.drawable.bg_notification_circle);
             }
             if (stepCheck2 != null) {
+                stepCheck2.setImageResource(R.drawable.ic_notif_check);
+                stepCheck2.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
                 stepCheck2.setVisibility(View.GONE);
             }
             if (stepLabel2 != null) {
+                stepLabel2.setText(R.string.occ_step_approval);
                 stepLabel2.setTextColor(requireContext().getColor(R.color.vf_text_secondary));
             }
 
@@ -741,6 +968,10 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void showEditClassificationSheet(View v) {
+        if (changesCount >= 1) {
+            Toast.makeText(requireContext(), "As informações só podem ser alteradas uma vez.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         String initialPrio = "Alta";
         if (currentPriority != null) {
             String pUpper = currentPriority.toUpperCase(java.util.Locale.forLanguageTag("pt-BR"));
@@ -767,8 +998,20 @@ public class OccurrenceDetailFragment extends Fragment {
 
             if (currentDetailJson != null) {
                 currentDetailJson.addProperty("material", currentMaterial);
+                currentDetailJson.addProperty("titulo", currentMaterial);
                 currentDetailJson.addProperty("prioridade", currentPriority);
+                String newWid = resolveWasteTypeId(currentMaterial);
+                if (newWid != null && !newWid.isEmpty()) {
+                    currentDetailJson.addProperty("wasteTypeId", newWid);
+                    JsonArray arr = new JsonArray();
+                    arr.add(newWid);
+                    currentDetailJson.add("wasteTypeIds", arr);
+                }
                 PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+            }
+
+            if (tvOccTitle != null) {
+                tvOccTitle.setText(currentMaterial);
             }
 
             OccurrenceStore.update(requireContext(), new Occurrence(
@@ -782,44 +1025,16 @@ public class OccurrenceDetailFragment extends Fragment {
 
             if (tvEditClassSub != null) {
                 tvEditClassSub.setVisibility(View.VISIBLE);
-                tvEditClassSub.setText("✓ Material: " + currentMaterialName + " · prioridade " + priority.toLowerCase());
+                tvEditClassSub.setText("✓ " + currentMaterialName + " · " + priority.toLowerCase(java.util.Locale.forLanguageTag("pt-BR")));
             }
 
             AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ALTERAR_CLASSIFICACAO",
                     "ocorrencia", occurrenceId, prevMaterial, currentMaterial);
 
-            try {
-                OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
-                JsonObject updateBody = new JsonObject();
-                updateBody.addProperty("title", currentMaterialName);
-                String resolvedWid = resolveWasteTypeId(currentMaterialName);
-                if (resolvedWid != null && !resolvedWid.isEmpty()) {
-                    JsonArray wasteTypeArr = new JsonArray();
-                    wasteTypeArr.add(resolvedWid);
-                    updateBody.add("wasteTypeIds", wasteTypeArr);
-                }
-                updateBody.addProperty("priority", com.aula.volta.data.model.incident.IncidentRequestDTO.normalizePriority(currentPriority));
-                if (isHazard) {
-                    updateBody.addProperty("contaminationLevel", "HIGH");
-                }
-                String changeReason = (reason != null && !reason.trim().isEmpty())
-                        ? reason.trim()
-                        : "Classificação revisada no aplicativo para " + currentMaterialName;
-                updateBody.addProperty("changeReason", changeReason);
-                occApi.updateIncident(occurrenceId, updateBody).enqueue(new Callback<IncidentResponseDTO>() {
-                    @Override
-                    public void onResponse(@NonNull Call<IncidentResponseDTO> call,
-                                           @NonNull Response<IncidentResponseDTO> response) {
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
-                    }
-                });
-            } catch (Exception ignored) {
-            }
-
-            Toast.makeText(requireContext(), "Classificação alterada para " + currentMaterialName, Toast.LENGTH_SHORT).show();
+            hasPendingChanges = true;
+            pendingMaterial = currentMaterialName;
+            pendingPriority = currentPriority;
+            updateActionButtonsState();
         });
         sheet.show(getChildFragmentManager(), "edit_classification");
     }
@@ -841,132 +1056,357 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private void showAddObservationSheet(View v) {
+        if (changesCount >= 1) {
+            Toast.makeText(requireContext(), "As informações só podem ser alteradas uma vez.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         AddObservationSheet sheet = AddObservationSheet.newInstance();
         sheet.setOnObservationSavedListener(obs -> {
-
-            if (tvObserveSub != null) {
-                tvObserveSub.setVisibility(View.VISIBLE);
-                tvObserveSub.setText("✓ 1 observação · agora");
-            }
-
-            AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ADICIONAR_OBSERVACAO",
-                    "ocorrencia", occurrenceId, null, obs);
-
             if (obs != null && !obs.trim().isEmpty()) {
-                try {
-                    OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
-                    JsonObject updateBody = new JsonObject();
-                    String baseReport = tvOccAutoReport != null && tvOccAutoReport.getText() != null
-                            ? tvOccAutoReport.getText().toString().trim() : "";
-                    String combinedAiDesc = baseReport.isEmpty() ? obs.trim() : (baseReport + "\nObservação: " + obs.trim());
-                    updateBody.addProperty("aiDescription", combinedAiDesc);
-                    String reason = obs.trim().length() > 190 ? obs.trim().substring(0, 190) : obs.trim();
-                    updateBody.addProperty("changeReason", reason);
-                    occApi.updateIncident(occurrenceId, updateBody).enqueue(new Callback<IncidentResponseDTO>() {
-                        @Override
-                        public void onResponse(@NonNull Call<IncidentResponseDTO> call,
-                                               @NonNull Response<IncidentResponseDTO> response) {
-                        }
-
-                        @Override
-                        public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
-                        }
-                    });
-                } catch (Exception ignored) {
+                String cleanObs = obs.trim();
+                if (tvObserveSub != null) {
+                    tvObserveSub.setVisibility(View.VISIBLE);
+                    tvObserveSub.setText("✓ " + cleanObs);
                 }
-            }
 
-            showTopBannerToast("Observação salva!", "Adicionada ao histórico da ocorrência", false, true);
+                String baseReport = tvOccAutoReport != null && tvOccAutoReport.getText() != null
+                        ? tvOccAutoReport.getText().toString().trim() : "";
+                String combinedReport = baseReport.isEmpty() ? cleanObs : (baseReport + "\n" + cleanObs);
+                if (tvOccAutoReport != null) {
+                    tvOccAutoReport.setText(combinedReport);
+                }
+
+                if (currentDetailJson != null) {
+                    currentDetailJson.addProperty("relatorio_auto", combinedReport);
+                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                }
+
+                AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ADICIONAR_OBSERVACAO",
+                        "ocorrencia", occurrenceId, null, cleanObs);
+
+                hasPendingChanges = true;
+                pendingObservation = cleanObs;
+                updateActionButtonsState();
+            }
         });
         sheet.show(getChildFragmentManager(), "add_observation");
     }
 
-    private void showFinalizeDialog(View v) {
-        View dialogView = LayoutInflater.from(requireContext())
-                .inflate(R.layout.dialog_finalize, null);
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                .setView(dialogView)
-                .create();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+    private void updateActionButtonsState() {
+        if (btnFinalizeOcc == null || !isAdded()) return;
+        boolean isDone = "APPROVED".equalsIgnoreCase(currentStatus)
+                || "APROVADO".equalsIgnoreCase(currentStatus)
+                || "APROVADA".equalsIgnoreCase(currentStatus)
+                || "RECUSADA".equalsIgnoreCase(currentStatus)
+                || "REJECTED".equalsIgnoreCase(currentStatus);
+        if (isDone) {
+            btnFinalizeOcc.setVisibility(View.GONE);
+            return;
         }
-        com.aula.volta.util.BottomSheetImmersiveHelper.configureDialog(dialog);
-
-        TextView tvSummary = dialogView.findViewById(R.id.tvDialogSummaryTitle);
-        TextView tvSector = dialogView.findViewById(R.id.tvDialogSummarySector);
-        if (tvSummary != null) {
-            tvSummary.setText(currentMaterial + " · ≈ " + currentWeight);
+        btnFinalizeOcc.setVisibility(View.VISIBLE);
+        if (isSending) {
+            btnFinalizeOcc.setEnabled(false);
+            btnFinalizeOcc.setText("Enviando ocorrência...");
+            btnFinalizeOcc.setBackgroundResource(R.drawable.bg_btn_disabled_v);
+            btnFinalizeOcc.setTextColor(android.graphics.Color.parseColor("#8E9590"));
+            return;
         }
-        if (tvSector != null) {
-            tvSector.setText(currentSector);
+        if (hasPendingChanges) {
+            btnFinalizeOcc.setEnabled(true);
+            btnFinalizeOcc.setText("Alterar ocorrência");
+            btnFinalizeOcc.setBackgroundResource(R.drawable.bg_btn_primary_v);
+            btnFinalizeOcc.setTextColor(requireContext().getColor(R.color.white));
+        } else if (!isSubmitted) {
+            btnFinalizeOcc.setEnabled(true);
+            btnFinalizeOcc.setText("Enviar ocorrência");
+            btnFinalizeOcc.setBackgroundResource(R.drawable.bg_btn_primary_v);
+            btnFinalizeOcc.setTextColor(requireContext().getColor(R.color.white));
+        } else {
+            btnFinalizeOcc.setEnabled(false);
+            btnFinalizeOcc.setText("Ocorrência enviada");
+            btnFinalizeOcc.setBackgroundResource(R.drawable.bg_btn_disabled_v);
+            btnFinalizeOcc.setTextColor(android.graphics.Color.parseColor("#8E9590"));
+        }
+    }
+
+    private void handleMainActionButtonClick(View v) {
+        if (isSending) return;
+        if (hasPendingChanges) {
+            savePendingChangesToBackend();
+        } else if (!isSubmitted) {
+            executeSendOccurrenceToBackend();
+        }
+    }
+
+    private void executeSendOccurrenceToBackend() {
+        if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+            Toast.makeText(requireContext(), "Sem conexão com a internet. Verifique sua rede.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        isSending = true;
+        updateActionButtonsState();
+
+        String areaId = opt(currentDetailJson, "areaId", "");
+        if (areaId.isEmpty()) {
+            areaId = getCachedOrFallbackAreaId(requireContext());
+        }
+        if (areaId == null || areaId.isEmpty()) {
+            areaId = "00000000-0000-0000-0000-000000000001";
         }
 
-        View btnYes = dialogView.findViewById(R.id.btnFinalizeYes);
-        if (btnYes != null) {
-            btnYes.setOnClickListener(b -> {
-                dialog.dismiss();
-                currentStatus = "EM_ANALISE";
-
-                AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ENVIAR",
-                        "ocorrencia", occurrenceId, "RASCUNHO", "EM_ANALISE");
-
-                Toast.makeText(requireContext(), R.string.occ_finalize_done, Toast.LENGTH_SHORT).show();
-
-                if (currentDetailJson != null) {
-                    currentDetailJson.addProperty("status", "EM_ANALISE");
-                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+        java.util.List<String> wasteTypeIds = new java.util.ArrayList<>();
+        if (currentDetailJson != null && currentDetailJson.has("wasteTypeIds") && currentDetailJson.get("wasteTypeIds").isJsonArray()) {
+            JsonArray arr = currentDetailJson.getAsJsonArray("wasteTypeIds");
+            for (com.google.gson.JsonElement el : arr) {
+                if (el != null && !el.isJsonNull()) {
+                    wasteTypeIds.add(el.getAsString());
                 }
+            }
+        }
+        if (wasteTypeIds.isEmpty()) {
+            try {
+                String listStr = PrefsHelper.getJson(requireContext(), "cache_waste_types", "list");
+                if (listStr != null && !listStr.isEmpty()) {
+                    JsonArray catalog = JsonParser.parseString(listStr).getAsJsonArray();
+                    java.util.List<String> candidates = new java.util.ArrayList<>();
+                    if (currentDetailJson != null && currentDetailJson.has("ai_possibilities") && currentDetailJson.get("ai_possibilities").isJsonArray()) {
+                        for (com.google.gson.JsonElement e : currentDetailJson.getAsJsonArray("ai_possibilities")) {
+                            if (e != null && !e.isJsonNull() && !candidates.contains(e.getAsString())) {
+                                candidates.add(e.getAsString());
+                            }
+                        }
+                    }
+                    if (currentMaterialName != null && !candidates.contains(currentMaterialName)) {
+                        candidates.add(0, currentMaterialName);
+                    }
+                    if (currentMaterial != null && !candidates.contains(currentMaterial)) {
+                        candidates.add(currentMaterial);
+                    }
+                    wasteTypeIds = com.aula.volta.data.model.AiAnalysisJSON.resolveAllWasteTypeIds(catalog, candidates);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (wasteTypeIds.isEmpty()) {
+            String singleWid = opt(currentDetailJson, "wasteTypeId", "");
+            if (singleWid.isEmpty()) {
+                singleWid = resolveWasteTypeId(currentMaterialName != null ? currentMaterialName : currentMaterial);
+            }
+            if (singleWid != null && !singleWid.isEmpty()) {
+                wasteTypeIds.add(singleWid);
+            }
+        }
+        if (wasteTypeIds.isEmpty()) {
+            wasteTypeIds.add("00000000-0000-0000-0000-000000000001");
+        }
 
-                Occurrence occ = new Occurrence(
-                        occurrenceId,
-                        currentMaterial,
-                        currentSector,
-                        getString(R.string.notif_now),
-                        currentPriority,
-                        "EM_ANALISE",
-                        currentMaterial);
-                OccurrenceStore.update(requireContext(), occ);
+        String photoUrl = opt(currentDetailJson, "photoUrl", opt(currentDetailJson, "imageUrl", ""));
+        if (photoUrl != null && (photoUrl.isEmpty() || !photoUrl.startsWith("http"))) {
+            photoUrl = null;
+        }
 
-                try {
-                    OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
-                    occApi.closeIncident(occurrenceId).enqueue(new Callback<Void>() {
-                        @Override
-                        public void onResponse(@NonNull Call<Void> call,
-                                               @NonNull Response<Void> response) {
+        String incidentTitle = opt(currentDetailJson, "titulo", opt(currentDetailJson, "ai_title", currentMaterial));
+        if (com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(incidentTitle)) {
+            String specific = opt(currentDetailJson, "item_especifico", opt(currentDetailJson, "ai_title", ""));
+            if (!specific.isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(specific)) {
+                incidentTitle = specific;
+            } else {
+                incidentTitle = "Nenhum";
+            }
+        }
+        if (incidentTitle == null || incidentTitle.trim().isEmpty() || "Resíduo Reciclável".equalsIgnoreCase(incidentTitle.trim())) {
+            incidentTitle = "Nenhum";
+        }
+        String empDescription = incidentTitle;
+        String contamination = com.aula.volta.data.model.incident.IncidentRequestDTO.normalizeContamination(
+                opt(currentDetailJson, "contaminacao", "LOW"));
+        double qtd = 1.0;
+        if (currentDetailJson != null && currentDetailJson.has("peso_estimado") && !currentDetailJson.get("peso_estimado").isJsonNull()) {
+            try {
+                qtd = currentDetailJson.get("peso_estimado").getAsDouble();
+            } catch (Exception ignored) {
+            }
+        }
+        String prio = com.aula.volta.data.model.incident.IncidentRequestDTO.normalizePriority(currentPriority);
+
+        com.aula.volta.data.model.incident.IncidentRequestDTO req = new com.aula.volta.data.model.incident.IncidentRequestDTO(
+                areaId,
+                wasteTypeIds,
+                photoUrl,
+                empDescription,
+                contamination,
+                qtd,
+                prio
+        );
+        req.setTitle(incidentTitle);
+
+        final String finalPhotoUrl = photoUrl;
+
+        final String finalIncidentTitle = incidentTitle;
+        try {
+            OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+            occApi.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
+                    if (!isAdded()) return;
+                    isSending = false;
+                    if (response.isSuccessful() && response.body() != null && response.body().getId() != null) {
+                        String newId = response.body().getId();
+                        String oldDraftId = occurrenceId;
+                        occurrenceId = newId;
+                        isSubmitted = true;
+                        hasPendingChanges = false;
+
+                        if (currentDetailJson == null) {
+                            currentDetailJson = new JsonObject();
+                        }
+                        currentDetailJson.addProperty("id", newId);
+                        currentDetailJson.addProperty("is_submitted", true);
+                        currentDetailJson.addProperty("changes_count", changesCount);
+                        if (response.body().getPhotoUrl() != null && !response.body().getPhotoUrl().isEmpty()) {
+                            currentDetailJson.addProperty("photoUrl", response.body().getPhotoUrl());
+                        }
+                        PrefsHelper.putJson(requireContext(), PREFS, newId, currentDetailJson.toString());
+
+                        if (oldDraftId != null && !oldDraftId.equals(newId)) {
+                            requireContext().getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE).edit().remove(oldDraftId).apply();
+                            OccurrenceStore.remove(requireContext(), oldDraftId);
                         }
 
-                        @Override
-                        public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
-                        }
-                    });
-                } catch (Exception ignored) {
+                        Occurrence occ = new Occurrence(
+                                newId,
+                                finalIncidentTitle,
+                                currentSector,
+                                getString(R.string.notif_now),
+                                currentPriority,
+                                "AGUARDANDO_VALIDACAO",
+                                currentMaterial,
+                                finalPhotoUrl,
+                                currentLocalPhoto
+                        );
+                        OccurrenceStore.pushLocal(requireContext(), occ);
+
+                        AuditLog.append(requireContext(), com.aula.volta.data.local.SessionManager.name(requireContext()), "ENVIAR",
+                                "ocorrencia", newId, "RASCUNHO", "BANCO_OFICIAL");
+
+                        NotificationHelper.notifyOccurrenceSent(requireContext(), newId, currentMaterial, currentSector);
+
+                        updateActionButtonsState();
+
+                        showTopBannerToast(
+                                "Ocorrência enviada",
+                                "Encaminhada para a central de gestão e análise técnica",
+                                false,
+                                true
+                        );
+                    } else {
+                        updateActionButtonsState();
+                        Toast.makeText(requireContext(), "Erro ao enviar ocorrência ao banco. Tente novamente.", Toast.LENGTH_SHORT).show();
+                    }
                 }
 
-                com.aula.volta.data.notification.NotificationHelper.notifyOccurrenceSent(
-                        requireContext(), occurrenceId, currentMaterial, currentSector);
-
-                currentStatus = "AGUARDANDO_VALIDACAO";
-                if (currentDetailJson != null) {
-                    currentDetailJson.addProperty("status", currentStatus);
-                    PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                @Override
+                public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                    if (!isAdded()) return;
+                    isSending = false;
+                    updateActionButtonsState();
+                    Toast.makeText(requireContext(), "Falha de rede ao enviar ocorrência. Verifique sua conexão.", Toast.LENGTH_SHORT).show();
                 }
-                syncFinalizedUi();
-
-                showTopBannerToast(
-                        "Ocorrência enviada",
-                        "Encaminhada para a central de gestão e análise técnica",
-                        false,
-                        true
-                );
             });
+        } catch (Exception e) {
+            isSending = false;
+            updateActionButtonsState();
+            Toast.makeText(requireContext(), "Erro inesperado ao enviar ocorrência.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void savePendingChangesToBackend() {
+        if (!com.aula.volta.util.NetworkUtils.isOnline(requireContext())) {
+            Toast.makeText(requireContext(), "Sem conexão com a internet. Verifique sua rede.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        isSending = true;
+        updateActionButtonsState();
+
+        if (!isSubmitted) {
+            executeSendOccurrenceToBackend();
+            changesCount = 1;
+            hasPendingChanges = false;
+            if (currentDetailJson != null) {
+                currentDetailJson.addProperty("changes_count", 1);
+                PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+            }
+            return;
         }
 
-        View btnNo = dialogView.findViewById(R.id.btnFinalizeNo);
-        if (btnNo != null) {
-            btnNo.setOnClickListener(b -> dialog.dismiss());
-        }
+        try {
+            OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
+            JsonObject updateBody = new JsonObject();
+            if (pendingMaterial != null && !pendingMaterial.isEmpty()) {
+                updateBody.addProperty("title", pendingMaterial);
+                String wid = resolveWasteTypeId(pendingMaterial);
+                if (wid != null && !wid.isEmpty()) {
+                    JsonArray arr = new JsonArray();
+                    arr.add(wid);
+                    updateBody.add("wasteTypeIds", arr);
+                }
+            }
+            if (pendingPriority != null && !pendingPriority.isEmpty()) {
+                updateBody.addProperty("priority", com.aula.volta.data.model.incident.IncidentRequestDTO.normalizePriority(pendingPriority));
+            }
+            if (pendingObservation != null && !pendingObservation.isEmpty()) {
+                String baseReport = tvOccAutoReport != null && tvOccAutoReport.getText() != null
+                        ? tvOccAutoReport.getText().toString().trim() : "";
+                updateBody.addProperty("aiDescription", baseReport);
+                updateBody.addProperty("changeReason", pendingObservation);
+            } else {
+                updateBody.addProperty("changeReason", "Alteração de classificação pelo usuário");
+            }
 
-        dialog.show();
+            occApi.updateIncident(occurrenceId, updateBody).enqueue(new Callback<IncidentResponseDTO>() {
+                @Override
+                public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
+                    if (!isAdded()) return;
+                    isSending = false;
+                    changesCount = 1;
+                    hasPendingChanges = false;
+                    if (currentDetailJson != null) {
+                        currentDetailJson.addProperty("changes_count", 1);
+                        PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                    }
+                    updateActionButtonsState();
+                    showTopBannerToast("Ocorrência alterada", "Alterações salvas com sucesso", false, true);
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<IncidentResponseDTO> call, @NonNull Throwable t) {
+                    if (!isAdded()) return;
+                    isSending = false;
+                    updateActionButtonsState();
+                    Toast.makeText(requireContext(), "Falha ao salvar alteração no banco. Verifique sua conexão.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (Exception e) {
+            isSending = false;
+            updateActionButtonsState();
+            Toast.makeText(requireContext(), "Erro inesperado ao salvar alteração.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String getCachedOrFallbackAreaId(android.content.Context context) {
+        try {
+            android.content.SharedPreferences prefs = context.getSharedPreferences("cache_areas", android.content.Context.MODE_PRIVATE);
+            java.util.Map<String, ?> all = prefs.getAll();
+            if (all != null && !all.isEmpty()) {
+                for (String key : all.keySet()) {
+                    if (key != null && key.length() > 10) {
+                        return key;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "00000000-0000-0000-0000-000000000001";
     }
 
     private String opt(JsonObject json, String key, String fallback) {

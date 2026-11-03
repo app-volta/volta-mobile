@@ -8,10 +8,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -33,6 +35,9 @@ public class LoginFragment extends Fragment {
 
     private EditText etEmail;
     private EditText etPassword;
+    private AppCompatButton btnLogin;
+    private ProgressBar pbLoading;
+    private View btnForgotPassword;
     private boolean passwordVisible;
 
     public LoginFragment() {
@@ -51,6 +56,9 @@ public class LoginFragment extends Fragment {
 
         etEmail = view.findViewById(R.id.etLoginEmail);
         etPassword = view.findViewById(R.id.etLoginPassword);
+        btnLogin = view.findViewById(R.id.btnLogin);
+        pbLoading = view.findViewById(R.id.pbLoginLoading);
+        btnForgotPassword = view.findViewById(R.id.btnForgotPassword);
 
         view.findViewById(R.id.btnTogglePassword).setOnClickListener(v -> {
             passwordVisible = !passwordVisible;
@@ -62,15 +70,14 @@ public class LoginFragment extends Fragment {
             etPassword.setSelection(etPassword.getText().length());
         });
 
-        view.findViewById(R.id.btnLogin).setOnClickListener(v -> tryLogin(v));
+        if (btnLogin != null) {
+            btnLogin.setOnClickListener(v -> tryLogin(v));
+        }
 
-        view.findViewById(R.id.btnGoRegister).setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.auth_register));
-        view.findViewById(R.id.btnForgotPassword).setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.auth_forgot));
-        view.findViewById(R.id.btnGoogle).setOnClickListener(v ->
-                Toast.makeText(requireContext(), R.string.occ_soon,
-                        Toast.LENGTH_SHORT).show());
+        if (btnForgotPassword != null) {
+            btnForgotPassword.setOnClickListener(v ->
+                    Navigation.findNavController(v).navigate(R.id.auth_forgot));
+        }
 
         getParentFragmentManager().setFragmentResultListener(
                 com.aula.volta.ui.error.OfflineErrorFragment.REQUEST_KEY,
@@ -81,10 +88,36 @@ public class LoginFragment extends Fragment {
                         String em = etEmail.getText().toString().trim();
                         String pw = etPassword.getText().toString();
                         if (em.contains("@") && pw.length() >= 4) {
-                            tryLogin(getView().findViewById(R.id.btnLogin));
+                            tryLogin(btnLogin != null ? btnLogin : getView().findViewById(R.id.btnLogin));
                         }
                     }
                 });
+    }
+
+    private void setLoading(boolean loading) {
+        if (!isAdded()) {
+            return;
+        }
+        if (btnLogin != null) {
+            btnLogin.setEnabled(!loading);
+            if (loading) {
+                btnLogin.setText("");
+            } else {
+                btnLogin.setText(R.string.auth_login_btn);
+            }
+        }
+        if (pbLoading != null) {
+            pbLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
+        }
+        if (etEmail != null) {
+            etEmail.setEnabled(!loading);
+        }
+        if (etPassword != null) {
+            etPassword.setEnabled(!loading);
+        }
+        if (btnForgotPassword != null) {
+            btnForgotPassword.setEnabled(!loading);
+        }
     }
 
     private void tryLogin(View v) {
@@ -103,10 +136,7 @@ public class LoginFragment extends Fragment {
         }
         final String name = displayName(email);
 
-        final View btnLogin = v != null ? v.findViewById(R.id.btnLogin) : null;
-        if (btnLogin != null) {
-            btnLogin.setEnabled(false);
-        }
+        setLoading(true);
 
         try {
             AuthAPI authApi = ChatbotAuthClient.get(appContext).create(AuthAPI.class);
@@ -114,7 +144,6 @@ public class LoginFragment extends Fragment {
                 @Override
                 public void onResponse(@NonNull Call<LoginResponse> call, @NonNull Response<LoginResponse> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().hasToken()) {
-
                         SessionManager.login(appContext, email, password, name, "");
                         ApiClient.reset();
                         ChatbotAuthClient.reset();
@@ -123,6 +152,11 @@ public class LoginFragment extends Fragment {
                         SessionManager.saveToken(appContext, token);
                         ApiClient.saveToken(appContext, token);
                         Log.i(TAG, "Token JWT da API obtido com sucesso no login.");
+
+                        final boolean isFirstLogin = Boolean.TRUE.equals(response.body().isFirstLogin());
+                        SessionManager.setFirstLoginPending(appContext, isFirstLogin);
+                        Log.i(TAG, "Primeiro login detectado: " + isFirstLogin);
+                        com.aula.volta.data.repository.AreaRepository.preloadAreas(appContext);
 
                         try {
                             authApi.getMyCompany().enqueue(new Callback<com.aula.volta.data.model.CompanyResponseDTO>() {
@@ -146,6 +180,7 @@ public class LoginFragment extends Fragment {
                                 @Override
                                 public void onResponse(@NonNull Call<com.aula.volta.data.model.UserResponseDTO> call,
                                                        @NonNull Response<com.aula.volta.data.model.UserResponseDTO> meResp) {
+                                    String resolvedName = name;
                                     if (meResp.isSuccessful() && meResp.body() != null) {
                                         com.aula.volta.data.model.UserResponseDTO u = meResp.body();
                                         if (u.getId() != null && !u.getId().trim().isEmpty()) {
@@ -155,7 +190,8 @@ public class LoginFragment extends Fragment {
                                             SessionManager.saveCompanyId(appContext, u.getCompanyId().trim());
                                         }
                                         if (u.getName() != null && !u.getName().trim().isEmpty()) {
-                                            SessionManager.saveName(appContext, u.getName().trim());
+                                            resolvedName = u.getName().trim();
+                                            SessionManager.saveName(appContext, resolvedName);
                                         }
                                         if (u.getPosition() != null && !u.getPosition().trim().isEmpty()) {
                                             SessionManager.saveSector(appContext, u.getPosition().trim());
@@ -164,23 +200,20 @@ public class LoginFragment extends Fragment {
                                             SessionManager.saveProfilePhotoUrl(appContext, email, u.getPhotoUrl().trim());
                                         }
                                     }
-                                    completeLogin();
+                                    proceedAfterLogin(resolvedName, isFirstLogin);
                                 }
 
                                 @Override
                                 public void onFailure(@NonNull Call<com.aula.volta.data.model.UserResponseDTO> call, @NonNull Throwable t) {
-                                    completeLogin();
+                                    proceedAfterLogin(name, isFirstLogin);
                                 }
                             });
                         } catch (Exception ignored) {
-                            completeLogin();
+                            proceedAfterLogin(name, isFirstLogin);
                         }
                     } else {
-
                         Log.w(TAG, "Falha de autenticação (HTTP " + response.code() + "). Rejeitando login.");
-                        if (btnLogin != null) {
-                            btnLogin.setEnabled(true);
-                        }
+                        setLoading(false);
                         if (isAdded() && getContext() != null) {
                             Toast.makeText(requireContext(), R.string.auth_invalid, Toast.LENGTH_SHORT).show();
                         }
@@ -190,14 +223,41 @@ public class LoginFragment extends Fragment {
                 @Override
                 public void onFailure(@NonNull Call<LoginResponse> call, @NonNull Throwable t) {
                     Log.w(TAG, "API offline ou inalcançável no login: " + t.getMessage());
-                    if (btnLogin != null) {
-                        btnLogin.setEnabled(true);
-                    }
+                    setLoading(false);
                     if (!isAdded()) {
                         return;
                     }
                     boolean isOffline = !com.aula.volta.util.NetworkUtils.isOnline(appContext);
                     showOfflineError(v, isOffline);
+                }
+
+                private void proceedAfterLogin(String resolvedName, boolean firstLogin) {
+                    if (firstLogin) {
+                        goToFirstAccess(resolvedName);
+                    } else {
+                        completeLogin();
+                    }
+                }
+
+                private void goToFirstAccess(String resolvedName) {
+                    if (isAdded() && getActivity() != null) {
+                        setLoading(false);
+                        Bundle bundle = new Bundle();
+                        bundle.putString("email", email);
+                        bundle.putString("temp_password", password);
+                        bundle.putString("name", resolvedName);
+                        View navTarget = v != null ? v : getView();
+                        if (navTarget != null) {
+                            try {
+                                Navigation.findNavController(navTarget).navigate(R.id.auth_first_access_password, bundle);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Erro ao navegar para o primeiro acesso", e);
+                                completeLogin();
+                            }
+                        } else {
+                            completeLogin();
+                        }
+                    }
                 }
 
                 private void completeLogin() {
@@ -208,9 +268,7 @@ public class LoginFragment extends Fragment {
             });
         } catch (Exception e) {
             Log.w(TAG, "Erro ao iniciar autenticação", e);
-            if (btnLogin != null) {
-                btnLogin.setEnabled(true);
-            }
+            setLoading(false);
             if (isAdded() && getContext() != null) {
                 Toast.makeText(requireContext(), R.string.auth_invalid, Toast.LENGTH_SHORT).show();
             }

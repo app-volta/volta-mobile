@@ -450,9 +450,9 @@ public class AiAnalysisJSON {
         AiAnalysisJSON json = new AiAnalysisJSON();
         String desc = description != null ? description.toLowerCase(Locale.ROOT) : "";
         if (desc.contains("cadeira") || desc.contains("mesa") || desc.contains("móvel") || desc.contains("movel")) {
-            json.primaryMaterial = "Plástico";
-            json.specificItem = "Cadeira de escritório";
-            json.material = "Cadeira de escritório";
+            json.primaryMaterial = "Outros";
+            json.specificItem = "Mobiliário";
+            json.material = "Mobiliário";
             json.quantidadeEstimada = 0.0;
             Unidades u = new Unidades();
             u.tipo = "Unidades";
@@ -476,7 +476,7 @@ public class AiAnalysisJSON {
             u.tipo = "Lotes";
             u.quantidade = 0;
             json.unidades = u;
-        } else if (desc.contains("expedi") || desc.contains("embalag") || desc.contains("plast")) {
+        } else if (desc.contains("plast") || desc.contains("plást") || desc.contains("pet") || desc.contains("filme")) {
             json.primaryMaterial = "Plástico";
             json.specificItem = "Plástico Filme";
             json.material = "Plástico Filme";
@@ -495,9 +495,9 @@ public class AiAnalysisJSON {
             u.quantidade = 0;
             json.unidades = u;
         } else {
-            json.primaryMaterial = "Outros";
-            json.specificItem = "Resíduo Reciclável";
-            json.material = "Resíduo Reciclável";
+            json.primaryMaterial = "Nenhum";
+            json.specificItem = "Nenhum";
+            json.material = "Nenhum";
             json.quantidadeEstimada = 0.0;
             Unidades u = new Unidades();
             u.tipo = "Unidades";
@@ -567,38 +567,252 @@ public class AiAnalysisJSON {
         return firstId;
     }
 
+    public static boolean isPureCategoryOrGeneric(String label) {
+        if (label == null) {
+            return true;
+        }
+        String s = normalize(label);
+        return s.isEmpty()
+                || s.equals("nenhum")
+                || s.equals("indefinido")
+                || s.equals("residuo")
+                || s.equals("residuo reciclavel")
+                || s.equals("reciclavel")
+                || s.equals("outros")
+                || s.equals("outro")
+                || s.equals("nao confirmado")
+                || s.equals("plastico")
+                || s.equals("papelao")
+                || s.equals("metal")
+                || s.equals("vidro")
+                || s.equals("madeira")
+                || s.equals("organico")
+                || s.equals("perigoso");
+    }
+
+    public static boolean isGenericLabel(String label) {
+        if (label == null) {
+            return true;
+        }
+        String s = normalize(label);
+        return s.isEmpty()
+                || s.equals("nenhum")
+                || s.equals("indefinido")
+                || s.equals("residuo")
+                || s.equals("residuo reciclavel")
+                || s.equals("reciclavel")
+                || s.equals("outros")
+                || s.equals("outro")
+                || s.equals("nao confirmado");
+    }
+
+    public static String resolveAiTitle(AiAnalysisJSON analysis, String userDescription, JsonObject predictJson) {
+        if (userDescription != null && !userDescription.trim().isEmpty() && !isPureCategoryOrGeneric(userDescription)) {
+            return userDescription.trim();
+        }
+
+        if (predictJson != null) {
+            for (String key : new String[]{"title", "specific_item", "item", "detected_item", "detected_waste_type"}) {
+                if (predictJson.has(key) && !predictJson.get(key).isJsonNull() && predictJson.get(key).isJsonPrimitive()) {
+                    String val = predictJson.get(key).getAsString().trim();
+                    if (!val.isEmpty() && !isPureCategoryOrGeneric(val)) {
+                        return val;
+                    }
+                }
+            }
+
+            for (String arrKey : new String[]{"detected_waste_types", "waste_types", "possibilities", "possible_waste_types", "candidates", "classes"}) {
+                if (predictJson.has(arrKey) && predictJson.get(arrKey).isJsonArray()) {
+                    JsonArray arr = predictJson.getAsJsonArray(arrKey);
+                    for (JsonElement el : arr) {
+                        String candidate = "";
+                        if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
+                            candidate = el.getAsString().trim();
+                        } else if (el.isJsonObject()) {
+                            JsonObject o = el.getAsJsonObject();
+                            for (String p : new String[]{"name", "title", "item", "description", "material", "type"}) {
+                                if (o.has(p) && !o.get(p).isJsonNull()) {
+                                    candidate = o.get(p).getAsString().trim();
+                                    break;
+                                }
+                            }
+                        }
+                        if (!candidate.isEmpty() && !isPureCategoryOrGeneric(candidate)) {
+                            return candidate;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (analysis != null) {
+            if (analysis.getSpecificItem() != null && !analysis.getSpecificItem().trim().isEmpty() && !isPureCategoryOrGeneric(analysis.getSpecificItem())) {
+                return analysis.getSpecificItem().trim();
+            }
+            if (analysis.getMaterial() != null && !analysis.getMaterial().trim().isEmpty() && !isPureCategoryOrGeneric(analysis.getMaterial())) {
+                return analysis.getMaterial().trim();
+            }
+            if (analysis.getPrimaryMaterial() != null && !analysis.getPrimaryMaterial().trim().isEmpty() && !isPureCategoryOrGeneric(analysis.getPrimaryMaterial())) {
+                return analysis.getPrimaryMaterial().trim();
+            }
+        }
+
+        if (predictJson != null) {
+            for (String key : new String[]{"title", "specific_item", "item", "detected_item", "detected_waste_type"}) {
+                if (predictJson.has(key) && !predictJson.get(key).isJsonNull() && predictJson.get(key).isJsonPrimitive()) {
+                    String val = predictJson.get(key).getAsString().trim();
+                    if (!val.isEmpty() && !isGenericLabel(val)) {
+                        return val;
+                    }
+                }
+            }
+        }
+
+        if (userDescription != null && !userDescription.trim().isEmpty() && !isGenericLabel(userDescription)) {
+            return userDescription.trim();
+        }
+        if (analysis != null && analysis.getMaterial() != null && !analysis.getMaterial().trim().isEmpty() && !isGenericLabel(analysis.getMaterial())) {
+            return analysis.getMaterial().trim();
+        }
+        if (analysis != null && analysis.getPrimaryMaterial() != null && !analysis.getPrimaryMaterial().trim().isEmpty() && !isGenericLabel(analysis.getPrimaryMaterial())) {
+            return analysis.getPrimaryMaterial().trim();
+        }
+
+        return "Nenhum";
+    }
+
+    public static java.util.List<String> extractAiCandidateWasteNames(JsonObject predictJson, AiAnalysisJSON analysis, String userDescription) {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        if (predictJson != null) {
+            String[] arrayKeys = new String[]{
+                    "detected_waste_types", "waste_types", "possibilities", "possible_waste_types",
+                    "candidates", "alternatives", "classes", "detected_types", "types",
+                    "categories", "category", "labels", "predicoes", "possibilidades"
+            };
+            for (String key : arrayKeys) {
+                if (predictJson.has(key) && predictJson.get(key).isJsonArray()) {
+                    JsonArray arr = predictJson.getAsJsonArray(key);
+                    for (JsonElement el : arr) {
+                        if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
+                            String val = el.getAsString().trim();
+                            if (!val.isEmpty() && !list.contains(val)) {
+                                list.add(val);
+                            }
+                        } else if (el.isJsonObject()) {
+                            JsonObject o = el.getAsJsonObject();
+                            for (String prop : new String[]{"name", "type", "category", "description", "waste_type", "material", "label", "title", "item"}) {
+                                if (o.has(prop) && !o.get(prop).isJsonNull()) {
+                                    String v = o.get(prop).getAsString().trim();
+                                    if (!v.isEmpty() && !list.contains(v)) {
+                                        list.add(v);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            for (String singleKey : new String[]{"detected_waste_type", "waste_type", "material", "title", "specific_item", "category"}) {
+                if (predictJson.has(singleKey) && !predictJson.get(singleKey).isJsonNull() && predictJson.get(singleKey).isJsonPrimitive()) {
+                    String val = predictJson.get(singleKey).getAsString().trim();
+                    if (!val.isEmpty() && !list.contains(val)) {
+                        list.add(0, val);
+                    }
+                }
+            }
+        }
+        if (analysis != null) {
+            if (analysis.getSpecificItem() != null && !analysis.getSpecificItem().trim().isEmpty()) {
+                String s = analysis.getSpecificItem().trim();
+                if (!list.contains(s)) list.add(0, s);
+            }
+            if (analysis.getMaterial() != null && !analysis.getMaterial().trim().isEmpty()) {
+                String m = analysis.getMaterial().trim();
+                if (!list.contains(m)) list.add(0, m);
+            }
+            if (analysis.getPrimaryMaterial() != null && !analysis.getPrimaryMaterial().trim().isEmpty()) {
+                String p = analysis.getPrimaryMaterial().trim();
+                if (!list.contains(p)) list.add(p);
+            }
+        }
+        if (userDescription != null && !userDescription.trim().isEmpty() && !isGenericLabel(userDescription)) {
+            String u = userDescription.trim();
+            if (!list.contains(u)) list.add(0, u);
+        }
+        return list;
+    }
+
+    public static java.util.List<String> resolveAllWasteTypeIds(JsonArray catalog, java.util.List<String> candidates) {
+        java.util.List<String> resultIds = new java.util.ArrayList<>();
+        if (catalog == null || catalog.size() == 0) {
+            return resultIds;
+        }
+
+        if (candidates != null) {
+            for (String candidate : candidates) {
+                if (candidate == null || candidate.trim().isEmpty() || isGenericLabel(candidate)) continue;
+                String singleId = resolveWasteTypeId(catalog, candidate);
+                if (singleId != null && !resultIds.contains(singleId)) {
+                    resultIds.add(singleId);
+                }
+            }
+        }
+
+        if (resultIds.isEmpty()) {
+            if (candidates != null) {
+                for (String candidate : candidates) {
+                    if (candidate == null || candidate.trim().isEmpty()) continue;
+                    String singleId = resolveWasteTypeId(catalog, candidate);
+                    if (singleId != null && !resultIds.contains(singleId)) {
+                        resultIds.add(singleId);
+                    }
+                }
+            }
+        }
+
+        if (resultIds.isEmpty()) {
+            String defaultId = resolveWasteTypeId(catalog, "");
+            if (defaultId != null) {
+                resultIds.add(defaultId);
+            }
+        }
+        return resultIds;
+    }
+
     public static String resolveWasteTypeId(JsonArray array, String description) {
         if (array == null || array.size() == 0) {
             return null;
         }
         String normDesc = normalize(description);
         String primary = classifyPrimaryMaterial(description, "", "");
+        String normPrimary = normalize(primary);
 
         String[] targetKeywords;
-        if (primary != null && primary.toLowerCase(Locale.ROOT).contains("papel")) {
+        if (normPrimary.contains("papel")) {
             targetKeywords = new String[]{"papel", "paper"};
-        } else if (primary != null && primary.toLowerCase(Locale.ROOT).contains("pl")) {
+        } else if (normPrimary.contains("plast")) {
             targetKeywords = new String[]{"plast", "plastic"};
-        } else if (primary != null && primary.toLowerCase(Locale.ROOT).contains("met")) {
+        } else if (normPrimary.contains("met")) {
             targetKeywords = new String[]{"metal", "alumin", "lata"};
-        } else if (primary != null && primary.toLowerCase(Locale.ROOT).contains("vidr")) {
+        } else if (normPrimary.contains("vidr")) {
             targetKeywords = new String[]{"vidro", "glass"};
-        } else if (primary != null && (primary.toLowerCase(Locale.ROOT).contains("org") || normDesc.contains("organ"))) {
+        } else if (normPrimary.contains("org") || normDesc.contains("organ")) {
             targetKeywords = new String[]{"organ", "biodegrad"};
-        } else if (primary != null && (primary.toLowerCase(Locale.ROOT).contains("madeir") || normDesc.contains("pallet") || normDesc.contains("palete") || normDesc.contains("mobil"))) {
+        } else if (normPrimary.contains("madeir") || normDesc.contains("pallet") || normDesc.contains("palete") || normDesc.contains("mobil")) {
             targetKeywords = new String[]{"madeira", "wood"};
-        } else if (primary != null && (primary.toLowerCase(Locale.ROOT).contains("perig") || normDesc.contains("quimic") || normDesc.contains("oleo"))) {
+        } else if (normPrimary.contains("perig") || normDesc.contains("quimic") || normDesc.contains("oleo")) {
             targetKeywords = new String[]{"quimic", "chemical", "perigo"};
         } else if (normDesc.contains("eletron") || normDesc.contains("bateria") || normDesc.contains("pilha")) {
             targetKeywords = new String[]{"eletron", "electronic"};
         } else if (normDesc.contains("textil") || normDesc.contains("tecido")) {
             targetKeywords = new String[]{"textil", "fabric"};
         } else {
-            targetKeywords = new String[]{"misto", "recicla", "geral", "outro"};
+            targetKeywords = new String[]{"outro", "misto", "geral", "indefinido", "nenhum"};
         }
 
         String firstId = null;
         String fallbackPaperId = null;
+        String fallbackOtherId = null;
         for (JsonElement el : array) {
             if (el.isJsonObject()) {
                 JsonObject obj = el.getAsJsonObject();
@@ -615,6 +829,9 @@ public class AiAnalysisJSON {
                     if (cat.contains("papel") || cat.contains("paper")) {
                         fallbackPaperId = id;
                     }
+                    if (cat.contains("outro") || cat.contains("geral") || cat.contains("misto") || desc.contains("outro") || desc.contains("geral")) {
+                        fallbackOtherId = id;
+                    }
 
                     for (String kw : targetKeywords) {
                         if (cat.contains(kw) || desc.contains(kw)) {
@@ -627,7 +844,7 @@ public class AiAnalysisJSON {
         if (normDesc.isEmpty() && fallbackPaperId != null) {
             return fallbackPaperId;
         }
-        return fallbackPaperId != null ? fallbackPaperId : firstId;
+        return fallbackOtherId != null ? fallbackOtherId : (fallbackPaperId != null ? fallbackPaperId : firstId);
     }
 
     public static String classifyPrimaryMaterial(String detectedItem, String rawText, String userDescription) {
@@ -635,7 +852,7 @@ public class AiAnalysisJSON {
                 + (rawText != null ? rawText : "") + " "
                 + (userDescription != null ? userDescription : ""));
 
-        if (combined.isEmpty()) {
+        if (combined.isEmpty() || combined.equals("nenhum") || combined.equals("indefinido")) {
             return "Outros";
         }
 
@@ -668,8 +885,9 @@ public class AiAnalysisJSON {
         if (combined.contains("plast") || combined.contains("isopor") || combined.contains("eps")
                 || combined.contains("pet") || combined.contains("polietileno") || combined.contains("polipropileno")
                 || combined.contains("pvc") || combined.contains("filme stretch") || combined.contains("bombona")
-                || combined.contains("copo") || combined.contains("sacola") || combined.contains("cadeira")
-                || combined.contains("assento") || combined.contains("poltrona") || combined.contains("mesa")) {
+                || combined.contains("copo plastico") || combined.contains("sacola plastica") || combined.contains("sacola de plastico")
+                || combined.contains("cadeira") || combined.contains("assento") || combined.contains("poltrona")
+                || combined.contains("garrafa pet")) {
             return "Plástico";
         }
 
@@ -689,7 +907,7 @@ public class AiAnalysisJSON {
     }
 
     public static String extractPrimaryMaterial(String rawMaterial) {
-        if (rawMaterial == null || rawMaterial.trim().isEmpty()) {
+        if (rawMaterial == null || rawMaterial.trim().isEmpty() || isGenericLabel(rawMaterial)) {
             return "Outros";
         }
         if (rawMaterial.contains(" — ")) {
@@ -707,8 +925,8 @@ public class AiAnalysisJSON {
     }
 
     public static String extractSpecificItem(String rawMaterial) {
-        if (rawMaterial == null || rawMaterial.trim().isEmpty()) {
-            return "Outros";
+        if (rawMaterial == null || rawMaterial.trim().isEmpty() || isGenericLabel(rawMaterial)) {
+            return "Nenhum";
         }
         String base;
         if (rawMaterial.contains(" — ")) {
@@ -720,7 +938,8 @@ public class AiAnalysisJSON {
         } else {
             base = rawMaterial;
         }
-        return extractMaterialName(base);
+        String clean = extractMaterialName(base);
+        return isGenericLabel(clean) ? "Nenhum" : clean;
     }
 
     public static String extractMaterialName(String rawMaterial) {
@@ -759,11 +978,11 @@ public class AiAnalysisJSON {
     }
 
     public static String formatMaterialWithClass(String primaryMaterial, String specificItem, String classSpec) {
-        String pm = (primaryMaterial != null && !primaryMaterial.trim().isEmpty())
-                ? primaryMaterial.trim() : "Reciclável";
+        String pm = (primaryMaterial != null && !primaryMaterial.trim().isEmpty() && !isGenericLabel(primaryMaterial))
+                ? primaryMaterial.trim() : "Nenhum";
         pm = extractMaterialName(pm);
 
-        if (specificItem != null && !specificItem.trim().isEmpty()) {
+        if (specificItem != null && !specificItem.trim().isEmpty() && !isGenericLabel(specificItem)) {
             String cleanItem = extractMaterialName(specificItem);
             String normItem = normalize(cleanItem);
             String normPm = normalize(pm);
@@ -779,8 +998,8 @@ public class AiAnalysisJSON {
     }
 
     public static String formatMaterialWithClass(String rawMaterial, String classSpec) {
-        if (rawMaterial == null || rawMaterial.trim().isEmpty()) {
-            return "Reciclável";
+        if (rawMaterial == null || rawMaterial.trim().isEmpty() || isGenericLabel(rawMaterial)) {
+            return "Nenhum";
         }
         if (rawMaterial.contains(" — ") || rawMaterial.contains(" - ")) {
             String primary = extractPrimaryMaterial(rawMaterial);
@@ -795,8 +1014,8 @@ public class AiAnalysisJSON {
                 + (description != null ? description : "") + " "
                 + (rawText != null ? rawText : ""));
 
-        if (combined.isEmpty()) {
-            return "Reciclável";
+        if (combined.isEmpty() || combined.equals("nenhum") || combined.equals("indefinido")) {
+            return "Nenhum";
         }
 
         if (combined.contains("cadeir") || combined.contains("mesa") || combined.contains("mobilia") || combined.contains("mobiliari") || combined.contains("moveis") || combined.contains("movel")
@@ -838,8 +1057,8 @@ public class AiAnalysisJSON {
         }
 
         if (combined.contains("plast") || combined.contains("pet") || combined.contains("filme")
-                || combined.contains("isopor") || combined.contains("eps") || combined.contains("sacola")
-                || combined.contains("bombona") || combined.contains("copo") || combined.contains("pvc")) {
+                || combined.contains("isopor") || combined.contains("eps") || combined.contains("sacola plastica")
+                || combined.contains("bombona") || combined.contains("copo plastico") || combined.contains("pvc")) {
             return "Plástico";
         }
 
@@ -860,12 +1079,12 @@ public class AiAnalysisJSON {
         }
 
         String primary = classifyPrimaryMaterial(material, rawText, description);
-        if (primary != null && !primary.trim().isEmpty()) {
+        if (primary != null && !primary.trim().isEmpty() && !isGenericLabel(primary)) {
             String[] words = primary.trim().split("\\s+");
             return words[0];
         }
 
-        return "Reciclável";
+        return "Nenhum";
     }
 
     public static String normalize(String text) {
