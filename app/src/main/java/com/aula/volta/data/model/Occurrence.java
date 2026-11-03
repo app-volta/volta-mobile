@@ -49,8 +49,8 @@ public class Occurrence {
         if (title != null) {
             title = title.replaceAll("(?i)\\s*\\(Classe\\s+[A-Za-z0-9]+\\)", "").trim();
         }
-        if (title == null || title.trim().isEmpty() || title.length() > 30) {
-            title = AiAnalysisJSON.generateSingleWordTitle(json.getMaterial(), title, null);
+        if (title == null || title.trim().isEmpty()) {
+            title = json.getMaterial() != null ? json.getMaterial() : "Resíduo Reciclável";
         }
         return new Occurrence(
                 json.getId(),
@@ -76,12 +76,12 @@ public class Occurrence {
         String sector = resolveSector(inc, context);
         String mat = resolveMaterial(inc, context);
         String singleTitle;
-        if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty()) {
+        if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty() && !inc.getTitle().trim().equalsIgnoreCase("Resíduo")) {
             singleTitle = inc.getTitle().trim();
-        } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty()) {
-            singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, inc.getEmployeeDescription(), inc.getWasteTypeId());
+        } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty() && !inc.getEmployeeDescription().trim().equalsIgnoreCase("Resíduo")) {
+            singleTitle = inc.getEmployeeDescription().trim();
         } else {
-            singleTitle = AiAnalysisJSON.generateSingleWordTitle(mat, null, inc.getWasteTypeId());
+            singleTitle = (mat != null && !mat.trim().isEmpty() && !mat.trim().equalsIgnoreCase("Resíduo")) ? mat : "Resíduo Reciclável";
         }
         String prio = (inc.getPriority() != null && !inc.getPriority().isEmpty())
                 ? inc.getPriority()

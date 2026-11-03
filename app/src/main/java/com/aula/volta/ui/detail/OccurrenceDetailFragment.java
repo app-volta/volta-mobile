@@ -339,14 +339,14 @@ public class OccurrenceDetailFragment extends Fragment {
                     IncidentResponseDTO dto = response.body();
                     JsonObject body = new JsonObject();
                     body.addProperty("id", dto.getId());
-                    String cleanTitle = (dto.getTitle() != null && !dto.getTitle().trim().isEmpty())
-                            ? dto.getTitle().trim()
-                            : com.aula.volta.data.model.AiAnalysisJSON.generateSingleWordTitle(
-                                    (currentDetailJson != null && currentDetailJson.has("material")) ? currentDetailJson.get("material").getAsString() : null,
-                                    null,
-                                    dto.getEmployeeDescription()
-                            );
-                    if (cleanTitle.isEmpty() || cleanTitle.equalsIgnoreCase("Resíduo")) {
+                    String cleanTitle;
+                    if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty() && !dto.getTitle().trim().equalsIgnoreCase("Resíduo")) {
+                        cleanTitle = dto.getTitle().trim();
+                    } else if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().trim().isEmpty() && !dto.getEmployeeDescription().trim().equalsIgnoreCase("Resíduo")) {
+                        cleanTitle = dto.getEmployeeDescription().trim();
+                    } else if (currentDetailJson != null && currentDetailJson.has("titulo") && !currentDetailJson.get("titulo").isJsonNull() && !currentDetailJson.get("titulo").getAsString().trim().isEmpty()) {
+                        cleanTitle = currentDetailJson.get("titulo").getAsString().trim();
+                    } else {
                         cleanTitle = "Resíduo Reciclável";
                     }
                     body.addProperty("titulo", cleanTitle);
@@ -1138,12 +1138,26 @@ public class OccurrenceDetailFragment extends Fragment {
             areaId = "00000000-0000-0000-0000-000000000001";
         }
 
-        String wasteTypeId = opt(currentDetailJson, "wasteTypeId", "");
-        if (wasteTypeId.isEmpty()) {
-            wasteTypeId = resolveWasteTypeId(currentMaterialName != null ? currentMaterialName : currentMaterial);
+        java.util.List<String> wasteTypeIds = new java.util.ArrayList<>();
+        if (currentDetailJson != null && currentDetailJson.has("wasteTypeIds") && currentDetailJson.get("wasteTypeIds").isJsonArray()) {
+            JsonArray arr = currentDetailJson.getAsJsonArray("wasteTypeIds");
+            for (com.google.gson.JsonElement el : arr) {
+                if (el != null && !el.isJsonNull()) {
+                    wasteTypeIds.add(el.getAsString());
+                }
+            }
         }
-        if (wasteTypeId == null || wasteTypeId.isEmpty()) {
-            wasteTypeId = "00000000-0000-0000-0000-000000000001";
+        if (wasteTypeIds.isEmpty()) {
+            String singleWid = opt(currentDetailJson, "wasteTypeId", "");
+            if (singleWid.isEmpty()) {
+                singleWid = resolveWasteTypeId(currentMaterialName != null ? currentMaterialName : currentMaterial);
+            }
+            if (singleWid != null && !singleWid.isEmpty()) {
+                wasteTypeIds.add(singleWid);
+            }
+        }
+        if (wasteTypeIds.isEmpty()) {
+            wasteTypeIds.add("00000000-0000-0000-0000-000000000001");
         }
 
         String photoUrl = opt(currentDetailJson, "photoUrl", opt(currentDetailJson, "imageUrl", ""));
@@ -1151,7 +1165,8 @@ public class OccurrenceDetailFragment extends Fragment {
             photoUrl = null;
         }
 
-        String empDescription = opt(currentDetailJson, "titulo", currentMaterial);
+        String incidentTitle = opt(currentDetailJson, "titulo", opt(currentDetailJson, "ai_title", currentMaterial));
+        String empDescription = incidentTitle;
         String contamination = com.aula.volta.data.model.incident.IncidentRequestDTO.normalizeContamination(
                 opt(currentDetailJson, "contaminacao", "LOW"));
         double qtd = 1.0;
@@ -1165,13 +1180,14 @@ public class OccurrenceDetailFragment extends Fragment {
 
         com.aula.volta.data.model.incident.IncidentRequestDTO req = new com.aula.volta.data.model.incident.IncidentRequestDTO(
                 areaId,
-                wasteTypeId,
+                wasteTypeIds,
                 photoUrl,
                 empDescription,
                 contamination,
                 qtd,
                 prio
         );
+        req.setTitle(incidentTitle);
 
         final String finalPhotoUrl = photoUrl;
         try {
@@ -1206,7 +1222,7 @@ public class OccurrenceDetailFragment extends Fragment {
 
                         Occurrence occ = new Occurrence(
                                 newId,
-                                currentMaterial,
+                                incidentTitle,
                                 currentSector,
                                 getString(R.string.notif_now),
                                 currentPriority,
