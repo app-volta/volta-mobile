@@ -118,11 +118,16 @@ public class OccurrenceDetailSheet extends BottomSheetDialogFragment {
                     IncidentResponseDTO dto = response.body();
                     JsonObject detail = new JsonObject();
                     detail.addProperty("id", dto.getId());
-                    String cleanTitle = (dto.getTitle() != null && !dto.getTitle().trim().isEmpty())
-                            ? dto.getTitle().trim()
-                            : com.aula.volta.data.model.AiAnalysisJSON.generateSingleWordTitle(
-                                    null, null, dto.getEmployeeDescription());
-                    if (cleanTitle.isEmpty() || cleanTitle.equalsIgnoreCase("Resíduo")) {
+                    String cleanTitle;
+                    if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(dto.getTitle())) {
+                        cleanTitle = dto.getTitle().trim();
+                    } else if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().trim().isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(dto.getEmployeeDescription())) {
+                        cleanTitle = dto.getEmployeeDescription().trim();
+                    } else if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
+                        cleanTitle = dto.getTitle().trim();
+                    } else if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().trim().isEmpty()) {
+                        cleanTitle = dto.getEmployeeDescription().trim();
+                    } else {
                         cleanTitle = "Resíduo Reciclável";
                     }
                     detail.addProperty("titulo", cleanTitle);

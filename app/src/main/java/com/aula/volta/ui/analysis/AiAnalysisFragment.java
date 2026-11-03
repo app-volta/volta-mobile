@@ -1692,6 +1692,17 @@ public class AiAnalysisFragment extends Fragment {
         }
         detail.addProperty("is_submitted", false);
         detail.addProperty("changes_count", 0);
+        java.util.List<String> candidatePossibilities = AiAnalysisJSON.extractAiCandidateWasteNames(lastPredictJson, analysis, descricao);
+        if (candidatePossibilities != null && !candidatePossibilities.isEmpty()) {
+            JsonArray pArr = new JsonArray();
+            for (String p : candidatePossibilities) {
+                if (p != null && !p.trim().isEmpty()) pArr.add(p.trim());
+            }
+            detail.add("ai_possibilities", pArr);
+        }
+        if (lastPredictJson != null) {
+            detail.add("raw_predict_json", lastPredictJson);
+        }
         String formattedMat = AiAnalysisJSON.formatMaterialWithClass(material, selectedClass);
         String specific = (analysis != null && analysis.getSpecificItem() != null)
                 ? analysis.getSpecificItem()

@@ -76,12 +76,16 @@ public class Occurrence {
         String sector = resolveSector(inc, context);
         String mat = resolveMaterial(inc, context);
         String singleTitle;
-        if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty() && !inc.getTitle().trim().equalsIgnoreCase("Resíduo")) {
+        if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty() && !AiAnalysisJSON.isGenericLabel(inc.getTitle())) {
             singleTitle = inc.getTitle().trim();
-        } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty() && !inc.getEmployeeDescription().trim().equalsIgnoreCase("Resíduo")) {
+        } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty() && !AiAnalysisJSON.isGenericLabel(inc.getEmployeeDescription())) {
+            singleTitle = inc.getEmployeeDescription().trim();
+        } else if (inc.getTitle() != null && !inc.getTitle().trim().isEmpty()) {
+            singleTitle = inc.getTitle().trim();
+        } else if (inc.getEmployeeDescription() != null && !inc.getEmployeeDescription().trim().isEmpty()) {
             singleTitle = inc.getEmployeeDescription().trim();
         } else {
-            singleTitle = (mat != null && !mat.trim().isEmpty() && !mat.trim().equalsIgnoreCase("Resíduo")) ? mat : "Resíduo Reciclável";
+            singleTitle = (mat != null && !mat.trim().isEmpty() && !AiAnalysisJSON.isGenericLabel(mat)) ? mat : "Resíduo Reciclável";
         }
         String prio = (inc.getPriority() != null && !inc.getPriority().isEmpty())
                 ? inc.getPriority()

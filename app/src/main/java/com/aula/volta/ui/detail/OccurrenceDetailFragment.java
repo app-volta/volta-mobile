@@ -340,19 +340,23 @@ public class OccurrenceDetailFragment extends Fragment {
                     JsonObject body = new JsonObject();
                     body.addProperty("id", dto.getId());
                     String cleanTitle;
-                    if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty() && !dto.getTitle().trim().equalsIgnoreCase("Resíduo")) {
+                    if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(dto.getTitle())) {
                         cleanTitle = dto.getTitle().trim();
-                    } else if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().trim().isEmpty() && !dto.getEmployeeDescription().trim().equalsIgnoreCase("Resíduo")) {
+                    } else if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().trim().isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(dto.getEmployeeDescription())) {
                         cleanTitle = dto.getEmployeeDescription().trim();
-                    } else if (currentDetailJson != null && currentDetailJson.has("titulo") && !currentDetailJson.get("titulo").isJsonNull() && !currentDetailJson.get("titulo").getAsString().trim().isEmpty()) {
+                    } else if (currentDetailJson != null && currentDetailJson.has("titulo") && !currentDetailJson.get("titulo").isJsonNull() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(currentDetailJson.get("titulo").getAsString())) {
                         cleanTitle = currentDetailJson.get("titulo").getAsString().trim();
+                    } else if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
+                        cleanTitle = dto.getTitle().trim();
+                    } else if (dto.getEmployeeDescription() != null && !dto.getEmployeeDescription().trim().isEmpty()) {
+                        cleanTitle = dto.getEmployeeDescription().trim();
                     } else {
                         cleanTitle = "Resíduo Reciclável";
                     }
                     body.addProperty("titulo", cleanTitle);
                     String resolvedMat = (currentDetailJson != null && currentDetailJson.has("material")
                             && !currentDetailJson.get("material").getAsString().isEmpty()
-                            && !currentDetailJson.get("material").getAsString().equalsIgnoreCase("Resíduo Reciclável"))
+                            && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(currentDetailJson.get("material").getAsString()))
                             ? currentDetailJson.get("material").getAsString()
                             : cleanTitle;
                     body.addProperty("material", resolvedMat);
@@ -994,8 +998,20 @@ public class OccurrenceDetailFragment extends Fragment {
 
             if (currentDetailJson != null) {
                 currentDetailJson.addProperty("material", currentMaterial);
+                currentDetailJson.addProperty("titulo", currentMaterial);
                 currentDetailJson.addProperty("prioridade", currentPriority);
+                String newWid = resolveWasteTypeId(currentMaterial);
+                if (newWid != null && !newWid.isEmpty()) {
+                    currentDetailJson.addProperty("wasteTypeId", newWid);
+                    JsonArray arr = new JsonArray();
+                    arr.add(newWid);
+                    currentDetailJson.add("wasteTypeIds", arr);
+                }
                 PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+            }
+
+            if (tvOccTitle != null) {
+                tvOccTitle.setText(currentMaterial);
             }
 
             OccurrenceStore.update(requireContext(), new Occurrence(
@@ -1148,6 +1164,30 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         }
         if (wasteTypeIds.isEmpty()) {
+            try {
+                String listStr = PrefsHelper.getJson(requireContext(), "cache_waste_types", "list");
+                if (listStr != null && !listStr.isEmpty()) {
+                    JsonArray catalog = JsonParser.parseString(listStr).getAsJsonArray();
+                    java.util.List<String> candidates = new java.util.ArrayList<>();
+                    if (currentDetailJson != null && currentDetailJson.has("ai_possibilities") && currentDetailJson.get("ai_possibilities").isJsonArray()) {
+                        for (com.google.gson.JsonElement e : currentDetailJson.getAsJsonArray("ai_possibilities")) {
+                            if (e != null && !e.isJsonNull() && !candidates.contains(e.getAsString())) {
+                                candidates.add(e.getAsString());
+                            }
+                        }
+                    }
+                    if (currentMaterialName != null && !candidates.contains(currentMaterialName)) {
+                        candidates.add(0, currentMaterialName);
+                    }
+                    if (currentMaterial != null && !candidates.contains(currentMaterial)) {
+                        candidates.add(currentMaterial);
+                    }
+                    wasteTypeIds = com.aula.volta.data.model.AiAnalysisJSON.resolveAllWasteTypeIds(catalog, candidates);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (wasteTypeIds.isEmpty()) {
             String singleWid = opt(currentDetailJson, "wasteTypeId", "");
             if (singleWid.isEmpty()) {
                 singleWid = resolveWasteTypeId(currentMaterialName != null ? currentMaterialName : currentMaterial);
@@ -1166,6 +1206,12 @@ public class OccurrenceDetailFragment extends Fragment {
         }
 
         String incidentTitle = opt(currentDetailJson, "titulo", opt(currentDetailJson, "ai_title", currentMaterial));
+        if (com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(incidentTitle)) {
+            String specific = opt(currentDetailJson, "item_especifico", opt(currentDetailJson, "ai_title", ""));
+            if (!specific.isEmpty() && !com.aula.volta.data.model.AiAnalysisJSON.isGenericLabel(specific)) {
+                incidentTitle = specific;
+            }
+        }
         String empDescription = incidentTitle;
         String contamination = com.aula.volta.data.model.incident.IncidentRequestDTO.normalizeContamination(
                 opt(currentDetailJson, "contaminacao", "LOW"));
@@ -1190,6 +1236,8 @@ public class OccurrenceDetailFragment extends Fragment {
         req.setTitle(incidentTitle);
 
         final String finalPhotoUrl = photoUrl;
+
+        final String finalIncidentTitle = incidentTitle;
         try {
             OccurrenceAPI occApi = ChatbotAuthClient.get(requireContext()).create(OccurrenceAPI.class);
             occApi.createIncident(req).enqueue(new Callback<IncidentResponseDTO>() {
@@ -1222,7 +1270,7 @@ public class OccurrenceDetailFragment extends Fragment {
 
                         Occurrence occ = new Occurrence(
                                 newId,
-                                incidentTitle,
+                                finalIncidentTitle,
                                 currentSector,
                                 getString(R.string.notif_now),
                                 currentPriority,
