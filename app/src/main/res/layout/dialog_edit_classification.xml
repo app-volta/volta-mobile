@@ -211,10 +211,9 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/bg_segment_pink_selected"
             android:gravity="center"
             android:text="Alta"
-            android:textColor="#E8556C"
+            android:textColor="@color/vf_text_secondary"
             android:textSize="13sp"
             android:textStyle="bold" />
 
@@ -234,9 +233,10 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:background="@drawable/bg_segment_green_selected"
             android:gravity="center"
             android:text="Baixa"
-            android:textColor="@color/vf_text_secondary"
+            android:textColor="#12A05E"
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>

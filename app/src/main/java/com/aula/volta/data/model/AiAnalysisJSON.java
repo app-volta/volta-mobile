@@ -423,19 +423,22 @@ public class AiAnalysisJSON {
                 ? contaminationLevel.toUpperCase(Locale.ROOT)
                 : "LOW";
 
-        if (contam.contains("HIGH") || contam.contains("ALTA") || contam.contains("CRITICAL")
-                || text.contains("perig") || text.contains("químic") || text.contains("quimic")
-                || text.contains("óleo") || text.contains("oleo") || text.contains("graxa")
+        boolean isPaper = text.contains("papel") || text.contains("cartao") || text.contains("caixa");
+        boolean hasHazard = text.contains("óleo") || text.contains("oleo") || text.contains("graxa")
                 || text.contains("inflam") || text.contains("bateria") || text.contains("pilha")
                 || text.contains("lâmpada") || text.contains("lampada") || text.contains("tóxic")
-                || text.contains("toxic") || text.contains("contaminado com óleo")) {
+                || text.contains("toxic") || text.contains("solvente")
+                || (!isPaper && (text.contains("perig") || text.contains("químic") || text.contains("quimic")))
+                || (isPaper && (text.contains("papelão contaminado com óleo") || text.contains("impregnado com óleo") || text.contains("resíduo perigoso")));
+
+        if (contam.contains("HIGH") || contam.contains("ALTA") || contam.contains("CRITICAL") || hasHazard) {
             return "ALTA";
         }
 
         if (contam.contains("MED") || contam.contains("MÉD")
                 || text.contains("organ") || text.contains("orgân") || text.contains("alimento")
                 || text.contains("comida") || text.contains("perecivel") || text.contains("perecível")
-                || text.contains("molhado")) {
+                || (!isPaper && text.contains("molhado"))) {
             return "MEDIA";
         }
 
@@ -779,9 +782,42 @@ public class AiAnalysisJSON {
         return resultIds;
     }
 
+    public static String getStaticWasteTypeId(String material) {
+        if (material == null) return "bd985415-4b25-4c07-beca-cc086dce9b13";
+        String norm = normalize(material);
+        if (norm.contains("papel") || norm.contains("cartao") || norm.contains("kraft")) {
+            return "bd985415-4b25-4c07-beca-cc086dce9b13";
+        }
+        if (norm.contains("plast") || norm.contains("pet") || norm.contains("pvc")) {
+            return "8b3f6a14-9a27-462f-b414-24329d927af7";
+        }
+        if (norm.contains("metal") || norm.contains("alumin") || norm.contains("ferr") || norm.contains("aco")) {
+            return "5ee946da-2975-45e7-80d7-a5a8e49b4b2d";
+        }
+        if (norm.contains("vidro")) {
+            return "2605dca7-b392-4835-a2a7-99a1aa68a7ab";
+        }
+        if (norm.contains("madeira") || norm.contains("pallet") || norm.contains("palete")) {
+            return "e9e077a8-7464-422d-a3be-44bc770fd5d2";
+        }
+        if (norm.contains("organ") || norm.contains("alimento") || norm.contains("comida")) {
+            return "5cb7e3c8-6dac-45e4-870f-92cc64a2a452";
+        }
+        if (norm.contains("eletron") || norm.contains("bateria") || norm.contains("pilha")) {
+            return "7807fd3c-7c11-42c3-95be-48884968d3c1";
+        }
+        if (norm.contains("quimic") || norm.contains("oleo") || norm.contains("tinta") || norm.contains("solvente")) {
+            return "db21c099-511a-4dbc-82dc-2090b4b6d0a5";
+        }
+        if (norm.contains("textil") || norm.contains("tecido") || norm.contains("pano")) {
+            return "9221e10b-b15b-40d8-a798-49f372ab9efb";
+        }
+        return "dc9b7d17-cd48-475a-a313-d5de98505854";
+    }
+
     public static String resolveWasteTypeId(JsonArray array, String description) {
         if (array == null || array.size() == 0) {
-            return null;
+            return getStaticWasteTypeId(description);
         }
         String normDesc = normalize(description);
         String primary = classifyPrimaryMaterial(description, "", "");
@@ -844,7 +880,7 @@ public class AiAnalysisJSON {
         if (normDesc.isEmpty() && fallbackPaperId != null) {
             return fallbackPaperId;
         }
-        return fallbackOtherId != null ? fallbackOtherId : (fallbackPaperId != null ? fallbackPaperId : firstId);
+        return fallbackOtherId != null ? fallbackOtherId : (fallbackPaperId != null ? fallbackPaperId : (firstId != null ? firstId : getStaticWasteTypeId(description)));
     }
 
     public static String classifyPrimaryMaterial(String detectedItem, String rawText, String userDescription) {

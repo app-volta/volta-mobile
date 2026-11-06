@@ -35,7 +35,7 @@ public class EditClassificationSheet extends BottomSheetDialogFragment {
 
     private String selectedMaterial = "Papelão";
     private String selectedClass = "";
-    private String selectedPriority = "Alta";
+    private String selectedPriority = "Baixa";
     private boolean isHazardous = false;
     private String reasonText = "";
 

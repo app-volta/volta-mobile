@@ -567,7 +567,7 @@ public class OccurrenceDetailFragment extends Fragment {
 
         String autoReport = opt(json, "relatorio_auto",
                 opt(json, "relatorio_automatico",
-                        "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta."));
+                        "Caixas e aparas de papelão reciclável em boas condições. Manter em local seco e coberto."));
         if (tvOccAutoReport != null) {
             tvOccAutoReport.setText(autoReport);
         }
@@ -972,13 +972,15 @@ public class OccurrenceDetailFragment extends Fragment {
             Toast.makeText(requireContext(), "As informações só podem ser alteradas uma vez.", Toast.LENGTH_SHORT).show();
             return;
         }
-        String initialPrio = "Alta";
+        String initialPrio = "Baixa";
         if (currentPriority != null) {
             String pUpper = currentPriority.toUpperCase(java.util.Locale.forLanguageTag("pt-BR"));
-            if (pUpper.contains("BAIX") || pUpper.contains("LOW")) {
-                initialPrio = "Baixa";
+            if (pUpper.contains("ALTA") || pUpper.contains("HIGH")) {
+                initialPrio = "Alta";
             } else if (pUpper.contains("MÉD") || pUpper.contains("MED")) {
                 initialPrio = "Média";
+            } else {
+                initialPrio = "Baixa";
             }
         }
         EditClassificationSheet sheet = EditClassificationSheet.newInstance(
@@ -990,16 +992,32 @@ public class OccurrenceDetailFragment extends Fragment {
             currentMaterial = currentMaterialName;
             currentPriority = priority != null
                     ? priority.toUpperCase(java.util.Locale.forLanguageTag("pt-BR"))
-                    : "ALTA";
+                    : "BAIXA";
+            if (isHazard) {
+                currentContamination = "alta";
+            } else {
+                String normMat = material != null ? material.toLowerCase(java.util.Locale.ROOT) : "";
+                if (normMat.contains("papel") || normMat.contains("plast") || normMat.contains("metal") || normMat.contains("text")) {
+                    currentContamination = "baixa";
+                } else if ("Alta".equalsIgnoreCase(priority)) {
+                    currentContamination = "média";
+                } else {
+                    currentContamination = "baixa";
+                }
+            }
             if (tvOccCardTitle != null) {
                 tvOccCardTitle.setText(currentMaterial);
             }
             applyPriorityBadge(currentPriority);
+            if (tvOccCardLine != null) {
+                tvOccCardLine.setText("Contaminação " + currentContamination + " · ≈ " + currentWeight);
+            }
 
             if (currentDetailJson != null) {
                 currentDetailJson.addProperty("material", currentMaterial);
                 currentDetailJson.addProperty("titulo", currentMaterial);
                 currentDetailJson.addProperty("prioridade", currentPriority);
+                currentDetailJson.addProperty("contaminacao", currentContamination);
                 String newWid = resolveWasteTypeId(currentMaterial);
                 if (newWid != null && !newWid.isEmpty()) {
                     currentDetailJson.addProperty("wasteTypeId", newWid);
@@ -1021,7 +1039,9 @@ public class OccurrenceDetailFragment extends Fragment {
                     getString(R.string.notif_now),
                     currentPriority,
                     currentStatus,
-                    currentMaterial));
+                    currentMaterial,
+                    opt(currentDetailJson, "photoUrl", null),
+                    opt(currentDetailJson, "photoPath", null)));
 
             if (tvEditClassSub != null) {
                 tvEditClassSub.setVisibility(View.VISIBLE);
@@ -1040,7 +1060,7 @@ public class OccurrenceDetailFragment extends Fragment {
     }
 
     private String resolveWasteTypeId(String material) {
-        if (!isAdded() || getContext() == null) return null;
+        if (!isAdded() || getContext() == null) return AiAnalysisJSON.getStaticWasteTypeId(material);
         try {
             String listStr = PrefsHelper.getJson(requireContext(), "cache_waste_types", "list");
             if (listStr != null && !listStr.isEmpty()) {
@@ -1052,7 +1072,7 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         } catch (Exception ignored) {
         }
-        return null;
+        return AiAnalysisJSON.getStaticWasteTypeId(material);
     }
 
     private void showAddObservationSheet(View v) {
@@ -1197,7 +1217,7 @@ public class OccurrenceDetailFragment extends Fragment {
             }
         }
         if (wasteTypeIds.isEmpty()) {
-            wasteTypeIds.add("00000000-0000-0000-0000-000000000001");
+            wasteTypeIds.add(AiAnalysisJSON.getStaticWasteTypeId(currentMaterialName != null ? currentMaterialName : currentMaterial));
         }
 
         String photoUrl = opt(currentDetailJson, "photoUrl", opt(currentDetailJson, "imageUrl", ""));
@@ -1354,6 +1374,14 @@ public class OccurrenceDetailFragment extends Fragment {
             if (pendingPriority != null && !pendingPriority.isEmpty()) {
                 updateBody.addProperty("priority", com.aula.volta.data.model.incident.IncidentRequestDTO.normalizePriority(pendingPriority));
             }
+            String contamEnum = "LOW";
+            if ("alta".equalsIgnoreCase(currentContamination) || "high".equalsIgnoreCase(currentContamination)) {
+                contamEnum = "HIGH";
+            } else if ("média".equalsIgnoreCase(currentContamination) || "media".equalsIgnoreCase(currentContamination) || "medium".equalsIgnoreCase(currentContamination)) {
+                contamEnum = "MEDIUM";
+            }
+            updateBody.addProperty("contaminationLevel", contamEnum);
+
             if (pendingObservation != null && !pendingObservation.isEmpty()) {
                 String baseReport = tvOccAutoReport != null && tvOccAutoReport.getText() != null
                         ? tvOccAutoReport.getText().toString().trim() : "";
@@ -1368,14 +1396,29 @@ public class OccurrenceDetailFragment extends Fragment {
                 public void onResponse(@NonNull Call<IncidentResponseDTO> call, @NonNull Response<IncidentResponseDTO> response) {
                     if (!isAdded()) return;
                     isSending = false;
-                    changesCount = 1;
-                    hasPendingChanges = false;
-                    if (currentDetailJson != null) {
-                        currentDetailJson.addProperty("changes_count", 1);
-                        PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                    if (response.isSuccessful() && response.body() != null) {
+                        changesCount = 1;
+                        hasPendingChanges = false;
+                        if (currentDetailJson != null) {
+                            currentDetailJson.addProperty("changes_count", 1);
+                            PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                        }
+                        OccurrenceStore.refresh(requireContext(), null);
+                        updateActionButtonsState();
+                        showTopBannerToast("Ocorrência alterada", "Alterações salvas com sucesso no banco oficial", false, true);
+                    } else if (response.code() == 403) {
+                        changesCount = 1;
+                        hasPendingChanges = false;
+                        if (currentDetailJson != null) {
+                            currentDetailJson.addProperty("changes_count", 1);
+                            PrefsHelper.putJson(requireContext(), PREFS, occurrenceId, currentDetailJson.toString());
+                        }
+                        updateActionButtonsState();
+                        showTopBannerToast("Salvo localmente", "Alteração salva no app. No servidor, apenas gestores têm permissão de editar.", false, false);
+                    } else {
+                        updateActionButtonsState();
+                        Toast.makeText(requireContext(), "Erro ao salvar alteração no banco (HTTP " + response.code() + ").", Toast.LENGTH_SHORT).show();
                     }
-                    updateActionButtonsState();
-                    showTopBannerToast("Ocorrência alterada", "Alterações salvas com sucesso", false, true);
                 }
 
                 @Override

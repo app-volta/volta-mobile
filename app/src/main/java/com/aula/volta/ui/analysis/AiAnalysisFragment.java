@@ -705,6 +705,18 @@ public class AiAnalysisFragment extends Fragment {
         updatePriorityBadge(currentPriority);
 
         if (userInitiated) {
+            String lower = family != null ? family.toLowerCase(Locale.ROOT) : "";
+            if (lower.contains("papel")) {
+                selectedContamination = "Baixa";
+                if (getView() != null) {
+                    updateContaminationSegmentsUi(getView());
+                }
+                if (tvAiContamination != null) {
+                    tvAiContamination.setText(selectedContamination);
+                }
+                currentPriority = AiAnalysisJSON.calculatePriority(formattedMat, selectedContamination, descricao);
+                updatePriorityBadge(currentPriority);
+            }
             updateRecommendationForMaterial(family);
         }
         if (tvCorrectionHintFooter != null) {
@@ -1539,6 +1551,12 @@ public class AiAnalysisFragment extends Fragment {
             resolvedWasteTypeIds.add(wasteTypeId);
         }
         String chosenWasteTypeId = !resolvedWasteTypeIds.isEmpty() ? resolvedWasteTypeIds.get(0) : wasteTypeId;
+        if (chosenWasteTypeId == null || chosenWasteTypeId.isEmpty() || "00000000-0000-0000-0000-000000000001".equals(chosenWasteTypeId)) {
+            chosenWasteTypeId = AiAnalysisJSON.getStaticWasteTypeId(material);
+        }
+        if (resolvedWasteTypeIds.isEmpty()) {
+            resolvedWasteTypeIds.add(chosenWasteTypeId);
+        }
 
         String contaminationLevel = "LOW";
         if (selectedContamination != null) {
@@ -1736,7 +1754,7 @@ public class AiAnalysisFragment extends Fragment {
                 ? analysis.getReportText()
                 : ((analysis != null && analysis.getObservacoes() != null && !analysis.getObservacoes().isEmpty())
                 ? analysis.getObservacoes()
-                : "Material com umidade superficial, ainda reciclável. Remover em até 24h e guardar em área coberta.");
+                : "Caixas e aparas de papelão reciclável em boas condições. Manter em local seco e coberto.");
         detail.addProperty("relatorio_auto", relatorio);
 
         PrefsHelper.putJson(requireContext(), "cache_occurrence_detail", id, detail.toString());
