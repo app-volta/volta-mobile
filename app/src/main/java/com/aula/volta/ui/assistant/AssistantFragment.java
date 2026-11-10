@@ -19,6 +19,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.navigation.Navigation;
 
 import com.aula.volta.R;
@@ -87,6 +90,42 @@ public class AssistantFragment extends Fragment {
         messages = view.findViewById(R.id.assistantMessages);
         scroll = view.findViewById(R.id.scrollAssistant);
         input = view.findViewById(R.id.etAssistant);
+
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, windowInsets) -> {
+            Insets imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+            Insets navInsets = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            int bottomPadding = Math.max(imeInsets.bottom, navInsets.bottom);
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), bottomPadding);
+            if (imeInsets.bottom > 0 && scroll != null) {
+                scroll.post(() -> scroll.fullScroll(View.FOCUS_DOWN));
+            }
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(view);
+
+        if (input != null) {
+            input.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus && scroll != null) {
+                    scroll.postDelayed(() -> scroll.fullScroll(View.FOCUS_DOWN), 200);
+                }
+            });
+            input.setOnClickListener(v -> {
+                if (scroll != null) {
+                    scroll.postDelayed(() -> scroll.fullScroll(View.FOCUS_DOWN), 200);
+                }
+            });
+            input.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) {
+                    String text = input.getText().toString().trim();
+                    if (!text.isEmpty() && !isSending) {
+                        ask(text);
+                        input.setText("");
+                    }
+                    return true;
+                }
+                return false;
+            });
+        }
 
         view.findViewById(R.id.btnBackAssistant).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
